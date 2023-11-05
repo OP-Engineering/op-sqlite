@@ -1,0 +1,127 @@
+import java.nio.file.Paths
+
+buildscript {
+  repositories {
+    maven {
+      url "https://plugins.gradle.org/m2/"
+    }
+    mavenCentral()
+    google()
+  }
+
+  dependencies {
+    classpath("com.android.tools.build:gradle:7.2.2")
+  }
+}
+
+def resolveBuildType() {
+    Gradle gradle = getGradle()
+    String tskReqStr = gradle.getStartParameter().getTaskRequests()['args'].toString()
+
+    return tskReqStr.contains('Release') ? 'release' : 'debug'
+}
+
+def isNewArchitectureEnabled() {
+  // - Set `newArchEnabled` to true inside the `gradle.properties` file
+  return project.hasProperty("newArchEnabled") && project.newArchEnabled == "true"
+}
+
+def SQLITE_FLAGS = rootProject.properties['OPSQLiteFlags']
+
+apply plugin: 'com.android.library'
+
+def safeExtGet(prop, fallback) {
+  rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+}
+
+def reactNativeArchitectures() {
+  def value = project.getProperties().get("reactNativeArchitectures")
+  return value ? value.split(",") : ["armeabi-v7a", "x86", "x86_64", "arm64-v8a"]
+}
+
+def USE_HERMES = rootProject.ext.hermesEnabled
+
+repositories {
+  mavenCentral()
+}
+
+android {
+  
+  compileSdkVersion safeExtGet("compileSdkVersion", 28)
+  
+  // Used to override the NDK path/version on internal CI or by allowing
+  // users to customize the NDK path/version from their root project (e.g. for M1 support)
+  if (rootProject.hasProperty("ndkPath")) {
+    ndkPath rootProject.ext.ndkPath
+  }
+  if (rootProject.hasProperty("ndkVersion")) {
+    ndkVersion rootProject.ext.ndkVersion
+  }
+
+  buildFeatures {
+    prefab true
+  }
+
+  defaultConfig {
+    minSdkVersion 21 
+    targetSdkVersion safeExtGet('targetSdkVersion', 28)
+    versionCode 1
+    versionName "1.0"
+    
+    externalNativeBuild {
+        cmake {
+            cppFlags "-O2", "-fexceptions", "-frtti", "-std=c++1y", "-DONANDROID"
+            abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+            arguments '-DANDROID_STL=c++_shared',
+              "-DSQLITE_FLAGS='${SQLITE_FLAGS ? SQLITE_FLAGS : ''}'",
+              "-DUSE_HERMES=${USE_HERMES}"
+            abiFilters (*reactNativeArchitectures())
+        }
+    }
+
+    packagingOptions {
+      doNotStrip resolveBuildType() == 'debug' ? "**/**/*.so" : ''
+      excludes = [
+              "META-INF",
+              "META-INF/**",
+              "**/libjsi.so",
+              "**/libreact_nativemodule_core.so",
+              "**/libturbomodulejsijni.so",
+              "**/libc++_shared.so",
+              "**/libfbjni.so"
+      ]
+    }
+    
+  }
+  
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+
+  externalNativeBuild {
+    cmake {
+      path "CMakeLists.txt"
+    }
+  }
+}
+
+dependencies {
+  //noinspection GradleDynamicVersion
+  implementation 'com.facebook.react:react-android:+'
+}
+
+// Resolves "LOCAL_SRC_FILES points to a missing file, Check that libfb.so exists or that its path is correct".
+tasks.whenTaskAdded { task ->
+  if (task.name.contains("configureCMakeDebug")) {
+    rootProject.getTasksByName("packageReactNdkDebugLibs", true).forEach {
+      task.dependsOn(it)
+    }
+  }
+  // We want to add a dependency for both configureCMakeRelease and configureCMakeRelWithDebInfo
+  if (task.name.contains("configureCMakeRel")) {
+    rootProject.getTasksByName("packageReactNdkReleaseLibs", true).forEach {
+      task.dependsOn(it)
+    }
+  }
+}
