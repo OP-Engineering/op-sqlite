@@ -27,23 +27,12 @@ struct BridgeResult
     double insertId;
 };
 
-// TODO get rid of this
-struct SequelBatchOperationResult
+struct BatchResult
 {
     ResultType type;
     std::string message;
     int affectedRows;
     int commands;
-};
-
-/**
- * Describe column information of a resultset
- */
-struct QuickColumnMetadata
-{
-    std::string colunmName;
-    int columnIndex;
-    std::string columnDeclaredType;
 };
 
 
@@ -57,9 +46,9 @@ std::vector<std::any> jsiQueryArgumentsToSequelParam(jsi::Runtime &rt, jsi::Valu
 jsi::Value createResult(jsi::Runtime &rt,
                         BridgeResult status,
                         std::vector<std::shared_ptr<DynamicHostObject>> *results,
-                        std::vector<QuickColumnMetadata> *metadata);
+                        std::vector<std::shared_ptr<DynamicHostObject>> *metadata);
 
-SequelBatchOperationResult importSQLFile(std::string dbName, std::string fileLocation);
+BatchResult importSQLFile(std::string dbName, std::string fileLocation);
 
 }
 

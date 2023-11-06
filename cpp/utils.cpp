@@ -126,7 +126,7 @@ std::vector<std::any> jsiQueryArgumentsToSequelParam(jsi::Runtime &rt, jsi::Valu
 jsi::Value createResult(jsi::Runtime &rt,
                         BridgeResult status,
                         std::vector<std::shared_ptr<DynamicHostObject>> *results,
-                        std::vector<QuickColumnMetadata> *metadata)
+                        std::vector<std::shared_ptr<DynamicHostObject>> *metadata)
 {
     if(status.type == SQLiteError) {
         throw std::invalid_argument(status.message);
@@ -161,11 +161,7 @@ jsi::Value createResult(jsi::Runtime &rt,
         auto column_array = jsi::Array(rt, column_count);
         for (int i = 0; i < column_count; i++) {
             auto column = metadata->at(i);
-            jsi::Object column_object = jsi::Object(rt);
-            column_object.setProperty(rt, "columnName", jsi::String::createFromUtf8(rt, column.colunmName.c_str()));
-            column_object.setProperty(rt, "columnDeclaredType", jsi::String::createFromUtf8(rt, column.columnDeclaredType.c_str()));
-            column_object.setProperty(rt, "columnIndex", jsi::Value(column.columnIndex));
-            column_array.setValueAtIndex(rt, i, std::move(column_object));
+            column_array.setValueAtIndex(rt, i, jsi::Object::createFromHostObject(rt, column));
         }
         res.setProperty(rt, "metadata", std::move(column_array));
     }
@@ -173,7 +169,7 @@ jsi::Value createResult(jsi::Runtime &rt,
     return std::move(res);
 }
 
-SequelBatchOperationResult importSQLFile(std::string dbName, std::string fileLocation)
+BatchResult importSQLFile(std::string dbName, std::string fileLocation)
 {
     std::string line;
     std::ifstream sqFile(fileLocation);

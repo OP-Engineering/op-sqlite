@@ -8,22 +8,21 @@ namespace osp {
 
 namespace jsi = facebook::jsi;
 
-struct QuickQueryArguments {
+struct BatchArguments {
   std::string sql;
   std::shared_ptr<std::vector<std::any>> params;
 };
 
 /**
- * Local Helper method to translate JSI objects QuickQueryArguments datastructure
+ * Local Helper method to translate JSI objects BatchArguments data structure
  * MUST be called in the JavaScript Thread
 */
-void jsiBatchParametersToQuickArguments(jsi::Runtime &rt, jsi::Array const &batchParams, std::vector<QuickQueryArguments> *commands);
+void toBatchArguments(jsi::Runtime &rt, jsi::Array const &batchParams, std::vector<BatchArguments> *commands);
 
 /**
  * Execute a batch of commands in a exclusive transaction
 */
-SequelBatchOperationResult sqliteExecuteBatch(std::string dbName, std::vector<QuickQueryArguments> *commands);
-
+BatchResult sqliteExecuteBatch(std::string dbName, std::vector<BatchArguments> *commands);
 
 }
 
