@@ -27,6 +27,7 @@ I will gladly review bug fixes, but in order for me to continue support and add 
 - Prepared statements
 - Inlining functions
 - Batching queries
+- Update hook
 
 ## Benchmarks
 
@@ -54,7 +55,7 @@ Note that on iOS the file system is sand-boxed, so you cannot access files/direc
 ```typescript
 import {open} from '@op-engineering/op-sqlite'
 
-const db = open('myDb.sqlite')
+const db = open({name: 'myDb.sqlite'})
 
 // The db object contains the following methods:
 db = {
@@ -266,7 +267,7 @@ For example, you could add `SQLITE_ENABLE_FTS5=1` to `GCC_PREPROCESSOR_DEFINITIO
 You can specify flags via `<PROJECT_ROOT>/android/gradle.properties` like so:
 
 ```
-OPSQLiteFlags="<SQLITE_FLAGS>"
+quickSqliteFlags="-DSQLITE_ENABLE_FTS5=1"
 ```
 
 ## Additional configuration
