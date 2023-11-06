@@ -2,12 +2,9 @@
 
 <div align="center">
   <pre align="center">
-    yarn add @ospfranco/op-sqlite
+    yarn add @op-engineering/op-sqlite
     npx pod-install</pre>
   <br />
-  <a align="center" href="https://twitter.com/ospfranco">
-    <img src="https://img.shields.io/twitter/follow/ospfranco?label=By%20%40ospfranco&style=social" />
-  </a>
 </div>
 <br />
 
@@ -15,11 +12,28 @@ OP SQLite embeds the latest version of SQLite and provides a low-level (JSI-back
 
 **Current SQLite version: 3.44.0**
 
+Created by [@ospfranco](https://twitter.com/ospfranco). Also created `react-native-quick-sqlite`, this is the next version. You can expect a new version once Static Hermes is out.
+
 ## Benchmarks
 
-You can find the benchmarking code in the example app. Loading a 300k record database:
+You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). Loading a 300k record database:
 
 ![benchmark](https://raw.githubusercontent.com/OP-Engineering/op-sqlite/main/benchmark.png)
+
+# DB Paths
+
+The library creates/opens databases by appending the passed name plus, the [library directory on iOS](https://github.com/OP-Engineering/op-sqlite/blob/main/ios/OPSQLite.mm#L51) and the [database directory on Android](https://github.com/OP-Engineering/op-sqlite/blob/main/android/src/main/java/com/op/sqlite/OPSQLiteBridge.java#L18). If you are migrating from `react-native-quick-sqlite` you will have to move your library using one of the many react-native fs libraries.
+
+If you have an existing database file you want to load you can navigate from these directories using dot notation. e.g.:
+
+```ts
+const largeDb = open({
+  name: 'largeDB',
+  location: '../files/databases',
+});
+```
+
+Note that on iOS the file system is sand-boxed, so you cannot access files/directories outside your app bundle directories.
 
 ## API
 
@@ -51,7 +65,7 @@ db = {
 The basic query is **synchronous**, it will block rendering on large operations, further below you will find async versions.
 
 ```typescript
-import { open } from 'op-sqlite';
+import { open } from '@op-engineering/op-sqlite';
 
 try {
   const db = open('myDb.sqlite');
@@ -80,7 +94,7 @@ Throwing an error inside the callback will ROLLBACK the transaction.
 If you want to execute a large set of commands as fast as possible you should use the `executeBatch` method, it wraps all the commands in a transaction and has less overhead.
 
 ```typescript
-await OPSQLite.transaction('myDatabase', (tx) => {
+await db.transaction('myDatabase', (tx) => {
   const { status } = tx.execute(
     'UPDATE sometable SET somecolumn = ? where somekey = ?',
     [0, 1]
@@ -114,7 +128,7 @@ const commands = [
   [('INSERT INTO TEST (id) VALUES (?)', [[3], [4], [5], [6]])],
 ];
 
-const res = OPSQLite.executeSqlBatch('myDatabase', commands);
+const res = db.executeSqlBatch('myDatabase', commands);
 
 console.log(`Batch affected ${result.rowsAffected} rows`);
 ```
@@ -127,7 +141,7 @@ This can be done by testing the returned data directly, but in some cases may no
 SQLite datatypes. When fetching data directly from tables or views linked to table columns, SQLite can identify the table declared types:
 
 ```typescript
-let { metadata } = OPSQLite.executeSql(
+let { metadata } = db.executeSql(
   'myDatabase',
   'SELECT int_column_1, bol_column_2 FROM sometable'
 );
@@ -145,7 +159,7 @@ metadata.forEach((column) => {
 You might have too much SQL to process and it will cause your application to freeze. There are async versions for some of the operations. This will offload the SQLite processing to a different thread.
 
 ```ts
-OPSQLite.executeAsync(
+db.executeAsync(
   'myDatabase',
   'SELECT * FROM "User";',
   []).then(({rows}) => {
@@ -167,15 +181,15 @@ SQLite has a limit for attached databases: A default of 10, and a global max of 
 References: [Attach](https://www.sqlite.org/lang_attach.html) - [Detach](https://www.sqlite.org/lang_detach.html)
 
 ```ts
-OPSQLite.attach('mainDatabase', 'statistics', 'stats', '../databases');
+db.attach('mainDatabase', 'statistics', 'stats', '../databases');
 
-const res = OPSQLite.executeSql(
+const res = db.executeSql(
   'mainDatabase',
   'SELECT * FROM some_table_from_mainschema a INNER JOIN stats.some_table b on a.id_column = b.id_column'
 );
 
 // You can detach databases at any moment
-OPSQLite.detach('mainDatabase', 'stats');
+db.detach('mainDatabase', 'stats');
 if (!detachResult.status) {
   // Database de-attached
 }
@@ -186,7 +200,7 @@ if (!detachResult.status) {
 If you have a plain SQL file, you can load it directly, with low memory consumption.
 
 ```typescript
-const { rowsAffected, commands } = OPSQLite.loadFile(
+const { rowsAffected, commands } = db.loadFile(
   'myDatabase',
   '/absolute/path/to/file.sql'
 );
@@ -195,11 +209,9 @@ const { rowsAffected, commands } = OPSQLite.loadFile(
 Or use the async version which will load the file in another native thread
 
 ```typescript
-OPSQLite.loadFileAsync('myDatabase', '/absolute/path/to/file.sql').then(
-  (res) => {
-    const { rowsAffected, commands } = res;
-  }
-);
+db.loadFileAsync('myDatabase', '/absolute/path/to/file.sql').then((res) => {
+  const { rowsAffected, commands } = res;
+});
 ```
 
 ## Use built-in SQLite
@@ -211,12 +223,6 @@ OP_SQLITE_USE_PHONE_VERSION=1 npx pod-install
 ```
 
 On Android, it is not possible to link the OS SQLite. It is also a bad idea due to vendor changes, old android bugs, etc. Unfortunately, this means this library will add some megabytes to your app size.
-
-# Loading existing DBs
-
-The library creates/opens databases by appending the passed name plus, the [library directory on iOS](https://github.com/OP-Engineering/op-sqlite/blob/733e876d98896f5efc80f989ae38120f16533a66/ios/OPSQLite.mm#L34-L35) and the [database directory on Android](https://github.com/OP-Engineering/op-sqlite/blob/main/android/src/main/java/com/op/sqlite/OPSQLiteBridge.java#L16). If you are migrating from `react-native-quick-sqlite` you will have to move your library using one of the many react-native fs libraries.
-
-If you have an existing database file you want to load you can navigate from these directories using dot notation. e.g. `../www/myDb.sqlite`. Note that on iOS the file system is sand-boxed, so you cannot access files/directories outside your app bundle directories.
 
 ## Enable compile-time options
 
