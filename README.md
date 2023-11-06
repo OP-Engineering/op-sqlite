@@ -13,6 +13,8 @@
 
 OP SQLite embeds the latest version of SQLite and provides a low-level (JSI-backed) API to execute SQL queries.
 
+**Current SQLite version: 3.44.0**
+
 ## Benchmarks
 
 You can find the benchmarking code in the example app. Loading a 300k record database:
