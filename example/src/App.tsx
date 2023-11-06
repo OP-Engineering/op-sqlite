@@ -5,6 +5,7 @@ import {
   SafeAreaView,
   ScrollView,
   Text,
+  View,
 } from 'react-native';
 import 'reflect-metadata';
 import {createLargeDB, queryLargeDB} from './Database';
@@ -36,11 +37,9 @@ export default function App() {
   return (
     <SafeAreaView className="flex-1 bg-neutral-900">
       <ScrollView className="p-4">
-        <Text className="font-bold text-white text-lg text-center">
-          OP SQLite
-        </Text>
+        <Text className=" text-white text-xl">OP SQLite</Text>
 
-        <Text className="text-xl text-white">Benchmarks</Text>
+        <Text className="text-lg text-white mt-8">Benchmarks</Text>
         <Button title="Create 300k Record DB" onPress={createLargeDb} />
         <Button title="Query 300k Records" onPress={queryLargeDb} />
         {isLoading && <ActivityIndicator color={'white'} size="large" />}
@@ -51,7 +50,7 @@ export default function App() {
         })}
 
         {!!times.length && (
-          <Text className="text-xl text-green-500 self-center">
+          <Text className="text-lg text-green-500 self-center">
             {(times.reduce((acc, t) => (acc += t), 0) / times.length).toFixed(
               0,
             )}{' '}
@@ -59,30 +58,36 @@ export default function App() {
           </Text>
         )}
 
-        <Text className="text-xl text-white">Tests</Text>
-        {results.map((r: any, i: number) => {
-          if (r.type === 'grouping') {
-            return (
-              <Text key={i} className="mt-3 text-white">
-                {r.description}
-              </Text>
-            );
-          }
+        <Text className="text-lg text-white mt-8">Tests</Text>
+        {results
+          .sort((a: any, b: any) => {
+            return a.type === 'incorrect' ? -1 : 1;
+          })
+          .map((r: any, i: number) => {
+            if (r.type === 'grouping') {
+              return null;
+            }
 
-          if (r.type === 'incorrect') {
-            return (
-              <Text key={i} className="mt-1 text-white">
-                🔴 {r.description}: {r.errorMsg}
-              </Text>
-            );
-          }
+            if (r.type === 'incorrect') {
+              return (
+                <View className="border-b border-neutral-600 py-2 flex-row">
+                  <Text key={i} className="text-white flex-1">
+                    {r.description}: {r.errorMsg}
+                  </Text>
+                  <Text>🟥</Text>
+                </View>
+              );
+            }
 
-          return (
-            <Text key={i} className="mt-1 text-white">
-              🟢 {r.description}
-            </Text>
-          );
-        })}
+            return (
+              <View className="border-b border-neutral-600 py-2 flex-row">
+                <Text key={i} className="text-white flex-1">
+                  {r.description}
+                </Text>
+                <Text>🟩</Text>
+              </View>
+            );
+          })}
       </ScrollView>
     </SafeAreaView>
   );
