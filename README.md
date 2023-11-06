@@ -1,4 +1,4 @@
-![screenshot](https://raw.githubusercontent.com/OP-Engineering/op-sqlite/main/Header.jpg)
+![screenshot](https://raw.githubusercontent.com/OP-Engineering/op-sqlite/main/Header.png)
 
 <div align="center">
   <pre align="center">
