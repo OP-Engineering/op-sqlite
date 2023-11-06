@@ -14,6 +14,8 @@ OP SQLite embeds the latest version of SQLite and provides a low-level (JSI-back
 
 Created by [@ospfranco](https://twitter.com/ospfranco). Also created `react-native-quick-sqlite`, this is the next version. You can expect a new version once Static Hermes is out.
 
+**Please consider Sponsoring**, none of this work is for free. I pay for it with my time and knowledge. If you are a company in need of help with your React Native/React apps feel free to reach out. I also do a lot of C++ and nowadays Rust.
+
 ## Benchmarks
 
 You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). Loading a 300k record database:
