@@ -35,11 +35,11 @@ struct BatchResult
     int commands;
 };
 
-
 std::any toAny(jsi::Runtime &rt, jsi::Value &value);
 
+// TODO I tried to inline this function but it is not working
+// throws an undefined Symbol
 jsi::Value toJSI(jsi::Runtime &rt, std::any value);
-
 
 std::vector<std::any> toAnyVec(jsi::Runtime &rt, jsi::Value const &args);
 

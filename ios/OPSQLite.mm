@@ -32,7 +32,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
   auto callInvoker = bridge.jsCallInvoker;
 
     // Get appGroupID value from Info.plist using key "AppGroup"
-  NSString *appGroupID = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"ReactNativeOPSQLite_AppGroup"];
+  NSString *appGroupID = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"OPSQLite_AppGroup"];
   NSString *documentPath;
 
   if (appGroupID != nil) {
@@ -48,8 +48,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 
     documentPath = [storeUrl path];
   } else {
-    // Get iOS app's document directory (to safely store database .sqlite3 file)
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true);
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, true);
     documentPath = [paths objectAtIndex:0];
   }
 

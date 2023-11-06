@@ -1,4 +1,4 @@
-package com.OPSQLiteexample;
+package com.op.sqlite.example;
 
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;

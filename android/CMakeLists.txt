@@ -1,4 +1,4 @@
-project(ReactNativeOPSQLite)
+project(OPSQLite)
 cmake_minimum_required(VERSION 3.9.0)
 
 set (PACKAGE_NAME "op-sqlite")
@@ -17,20 +17,20 @@ add_definitions(
 add_library(
   ${PACKAGE_NAME}
   SHARED
-  ../cpp/sqliteBridge.cpp
-  ../cpp/sqliteBridge.h
+  ../cpp/bridge.cpp
+  ../cpp/bridge.h
   ../cpp/bindings.cpp
   ../cpp/bindings.h
   ../cpp/sqlite3.h
   ../cpp/sqlite3.c
-  ../cpp/JSIHelper.h
-  ../cpp/JSIHelper.cpp
+  ../cpp/utils.h
+  ../cpp/utils.cpp
   ../cpp/ThreadPool.h
   ../cpp/ThreadPool.cpp
-  ../cpp/sqlfileloader.h
-  ../cpp/sqlfileloader.cpp
   ../cpp/sqlbatchexecutor.h
   ../cpp/sqlbatchexecutor.cpp
+  ../cpp/DynamicHostObject.cpp
+  ../cpp/DynamicHostObject.h
   ../cpp/macros.h
   cpp-adapter.cpp
 )

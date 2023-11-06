@@ -1,4 +1,4 @@
-package com.reactnativeOPSQLite;
+package com.op.sqlite;
 
 import android.util.Log;
 
@@ -14,12 +14,12 @@ public class OPSQLiteBridge {
   public void install(ReactContext context) {
       long jsContextPointer = context.getJavaScriptContextHolder().get();
       CallInvokerHolderImpl jsCallInvokerHolder = (CallInvokerHolderImpl)context.getCatalystInstance().getJSCallInvokerHolder();
-      final String path = context.getFilesDir().getAbsolutePath();
-      
+      // Trick to get the base database path
+      final String dbPath = context.getDatabasePath("defaultDatabase").getAbsolutePath().replace("defaultDatabase", "");
       installNativeJsi(
         jsContextPointer,
         jsCallInvokerHolder,
-        path
+        dbPath
       );
   }
 
