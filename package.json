@@ -1,5 +1,5 @@
 {
-  "name": "op-sqlite",
+  "name": "@ospfranco/op-sqlite",
   "version": "8.0.2",
   "description": "Fast SQLite for react-native",
   "main": "lib/commonjs/index",
