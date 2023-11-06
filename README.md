@@ -35,6 +35,8 @@ You can find the [benchmarking code in the example app](https://github.com/OP-En
 
 ![benchmark](https://raw.githubusercontent.com/OP-Engineering/op-sqlite/main/benchmark2.png)
 
+Memory consumption is also 50% to 80% reduced compared to `react-native-quick-sqlite`. Queries that before might have OOM now can run just fine.
+
 # DB Paths
 
 The library creates/opens databases by appending the passed name plus, the [library directory on iOS](https://github.com/OP-Engineering/op-sqlite/blob/main/ios/OPSQLite.mm#L51) and the [database directory on Android](https://github.com/OP-Engineering/op-sqlite/blob/main/android/src/main/java/com/op/sqlite/OPSQLiteBridge.java#L18). If you are migrating from `react-native-quick-sqlite` you will have to move your library using one of the many react-native fs libraries.
@@ -212,21 +214,14 @@ if (!detachResult.status) {
 
 ### Loading SQL Dump Files
 
-If you have a plain SQL file, you can load it directly, with low memory consumption.
+If you have a SQL dump file, you can load it directly, with low memory consumption:
 
 ```typescript
-const { rowsAffected, commands } = db.loadFile(
-  'myDatabase',
-  '/absolute/path/to/file.sql'
-);
-```
-
-Or use the async version which will load the file in another native thread
-
-```typescript
-db.loadFileAsync('myDatabase', '/absolute/path/to/file.sql').then((res) => {
-  const { rowsAffected, commands } = res;
-});
+const { rowsAffected, commands } = db
+  .loadFile('myDatabase', '/absolute/path/to/file.sql')
+  .then((res) => {
+    const { rowsAffected, commands } = res;
+  });
 ```
 
 ## Use built-in SQLite
