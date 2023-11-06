@@ -16,6 +16,10 @@ Created by [@ospfranco](https://twitter.com/ospfranco). Also created `react-nati
 
 **Please consider Sponsoring**, none of this work is for free. I pay for it with my time and knowledge. If you are a company in need of help with your React Native/React apps feel free to reach out. I also do a lot of C++ and nowadays Rust.
 
+## Known issues
+
+[ArrayBuffer support is commented out right now](https://github.com/OP-Engineering/op-sqlite/blob/main/cpp/bridge.cpp#L247). I will get to it in the next days or feel free to submit a PR.
+
 ## Benchmarks
 
 You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). Loading a 300k record database:
