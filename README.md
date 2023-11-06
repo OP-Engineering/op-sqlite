@@ -33,7 +33,7 @@ I will gladly review bug fixes, but in order for me to continue support and add 
 
 You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). Non JSI libraries are not even a contender anymore, you should expect anywhere between a 5x to a 8x improvement over sqlite-storage, sqlite2 and so on. Loading a 300k record database:
 
-![benchmark](https://raw.githubusercontent.com/OP-Engineering/op-sqlite/main/benchmark.png)
+![benchmark](https://raw.githubusercontent.com/OP-Engineering/op-sqlite/main/benchmark2.png)
 
 # DB Paths
 
