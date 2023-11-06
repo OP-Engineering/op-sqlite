@@ -41,7 +41,7 @@ std::any toAny(jsi::Runtime &rt, jsi::Value &value);
 jsi::Value toJSI(jsi::Runtime &rt, std::any value);
 
 
-std::vector<std::any> jsiQueryArgumentsToSequelParam(jsi::Runtime &rt, jsi::Value const &args);
+std::vector<std::any> toAnyVec(jsi::Runtime &rt, jsi::Value const &args);
 
 jsi::Value createResult(jsi::Runtime &rt,
                         BridgeResult status,

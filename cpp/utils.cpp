@@ -102,9 +102,8 @@ jsi::Value toJSI(jsi::Runtime &rt, std::any value) {
     throw std::invalid_argument("Unsupported scalar type, cannot convert to JSI Value");
 }
 
-std::vector<std::any> jsiQueryArgumentsToSequelParam(jsi::Runtime &rt, jsi::Value const &params)
+std::vector<std::any> toAnyVec(jsi::Runtime &rt, jsi::Value const &params)
 {
-    
     std::vector<std::any> res;
     
     if (params.isNull() || params.isUndefined())
@@ -116,7 +115,6 @@ std::vector<std::any> jsiQueryArgumentsToSequelParam(jsi::Runtime &rt, jsi::Valu
     
     for (int ii = 0; ii < values.length(rt); ii++)
     {
-        
         jsi::Value value = values.getValueAtIndex(rt, ii);
         res.push_back(toAny(rt, value));
     }
