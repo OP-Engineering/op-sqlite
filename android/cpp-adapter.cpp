@@ -8,7 +8,7 @@
 
 struct OPSQLiteBridge : jni::JavaClass<OPSQLiteBridge> {
   static constexpr auto kJavaDescriptor =
-      "Lcom/reactnativeOPSQLite/OPSQLiteBridge;";
+      "Lcom/op/sqlite/OPSQLiteBridge;";
 
   static void registerNatives() {
     javaClassStatic()->registerNatives(

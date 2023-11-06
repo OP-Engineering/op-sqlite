@@ -224,7 +224,7 @@
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = OPSQLite;
 				SKIP_INSTALL = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "Sequel-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "OPSQLite-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};
@@ -243,7 +243,7 @@
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = OPSQLite;
 				SKIP_INSTALL = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "Sequel-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "OPSQLite-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;

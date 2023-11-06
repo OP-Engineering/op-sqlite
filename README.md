@@ -280,7 +280,7 @@ datasource = new DataSource({
 
 # Loading existing DBs
 
-The library creates/opens databases by appending the passed name plus, the [documents directory on iOS](https://github.com/ospfranco/op-sqlite/blob/733e876d98896f5efc80f989ae38120f16533a66/ios/OPSQLite.mm#L34-L35) and the [files directory on Android](https://github.com/ospfranco/op-sqlite/blob/main/android/src/main/java/com/reactnativeOPSQLite/OPSQLiteBridge.java#L16), this differs from other SQL libraries (some place it in a `www` folder, some in androids `databases` folder, etc.).
+The library creates/opens databases by appending the passed name plus, the [documents directory on iOS](https://github.com/ospfranco/op-sqlite/blob/733e876d98896f5efc80f989ae38120f16533a66/ios/OPSQLite.mm#L34-L35) and the [files directory on Android](https://github.com/ospfranco/op-sqlite/blob/main/android/src/main/java/com/op/sqlite/OPSQLiteBridge.java#L16), this differs from other SQL libraries (some place it in a `www` folder, some in androids `databases` folder, etc.).
 
 If you have an existing database file you want to load you can navigate from these directories using dot notation. e.g. `../www/myDb.sqlite`. Note that on iOS the file system is sand-boxed, so you cannot access files/directories outside your app bundle directories.
 
@@ -323,7 +323,7 @@ OPSQLiteFlags="<SQLITE_FLAGS>"
 
 On iOS, the SQLite database can be placed in an app group, in order to make it accessible from other apps in that app group. E.g. for sharing capabilities.
 
-To use an app group, add the app group ID as the value for the `ReactNativeOPSQLite_AppGroup` key in your project's `Info.plist` file. You'll also need to configure the app group in your project settings. (Xcode -> Project Settings -> Signing & Capabilities -> Add Capability -> App Groups)
+To use an app group, add the app group ID as the value for the `OPSQLite_AppGroup` key in your project's `Info.plist` file. You'll also need to configure the app group in your project settings. (Xcode -> Project Settings -> Signing & Capabilities -> Add Capability -> App Groups)
 
 ## License
 

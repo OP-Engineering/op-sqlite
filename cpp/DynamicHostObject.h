@@ -1,25 +1,29 @@
 #ifndef DynamicHostObject_h
 #define DynamicHostObject_h
 
-#include <stdio.h>
 #include <jsi/jsi.h>
 #include <any>
 #include <vector>
+#include <unordered_map>
 
 namespace osp {
 
-namespace jsi = facebook::jsi;
+    namespace jsi = facebook::jsi;
 
-class JSI_EXPORT DynamicHostObject: public jsi::HostObject {
-public:
-    DynamicHostObject() {};
-    
-    std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt);
-    
-    jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID);
-    
-    std::unordered_map<std::string, std::any> fields;
-};
+    class JSI_EXPORT DynamicHostObject: public jsi::HostObject {
+    public:
+        DynamicHostObject() {};
+
+        virtual ~DynamicHostObject() {};
+
+        std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt);
+
+        jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID);
+
+        std::unordered_map<std::string, std::any> fields;
+
+
+    };
 
 }
 

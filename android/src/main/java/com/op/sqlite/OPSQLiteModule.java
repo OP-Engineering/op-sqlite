@@ -1,4 +1,4 @@
-package com.reactnativeOPSQLite;
+package com.op.sqlite;
 
 import androidx.annotation.NonNull;
 import android.util.Log;
@@ -10,10 +10,10 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.turbomodule.core.CallInvokerHolderImpl;
 
-class SequelModule extends ReactContextBaseJavaModule {
-  public static final String NAME = "op-sqlite";
+class OPSQLiteModule extends ReactContextBaseJavaModule {
+  public static final String NAME = "OPSQLite";
   
-  public SequelModule(ReactApplicationContext context) {
+  public OPSQLiteModule(ReactApplicationContext context) {
     super(context);
   }
 
