@@ -1,36 +1,32 @@
-![screenshot](https://raw.githubusercontent.com/ospfranco/op-sqlite/main/header2.png)
+![screenshot](https://raw.githubusercontent.com/OP-Engineering/op-sqlite/main/Header.jpg)
 
 <div align="center">
   <pre align="center">
-    yarn add op-sqlite
+    yarn add @ospfranco/op-sqlite
     npx pod-install</pre>
-  <a align="center" href="https://github.com/ospfranco?tab=followers">
-    <img src="https://img.shields.io/github/followers/ospfranco?label=Follow%20%40ospfranco&style=social" />
-  </a>
   <br />
   <a align="center" href="https://twitter.com/ospfranco">
-    <img src="https://img.shields.io/twitter/follow/ospfranco?label=Follow%20%40ospfranco&style=social" />
+    <img src="https://img.shields.io/twitter/follow/ospfranco?label=By%20%40ospfranco&style=social" />
   </a>
 </div>
 <br />
 
-OP SQLite embeds the latest version of SQLite and provides a low-level JSI-backed API to execute SQL queries.
+OP SQLite embeds the latest version of SQLite and provides a low-level (JSI-backed) API to execute SQL queries.
 
-Performance metrics are intentionally not presented, [anecdotic testimonies](https://dev.to/craftzdog/a-performant-way-to-use-pouchdb7-on-react-native-in-2022-24ej) suggest anywhere between 2x and 5x speed improvement. On small queries you might not notice a difference with the old bridge but as you send large data to JS the speed increase is considerable.
+## Benchmarks
 
-Starting on version `8.0.0` only React-Native `0.71` onwards is supported. This is due to internal changes to React-Native artifacts. If you are on < `0.71` use the latest `7.x.x` version.
+You can find the benchmarking code in the example app. Loading a 300k record database:
 
-TypeORM is officially supported, however, there is currently a parsing issue with React-Native 0.71 and its babel configuration and therefore it will not work, nothing wrong with this package, this is purely an issue on TypeORM.
+![benchmark](https://raw.githubusercontent.com/OP-Engineering/op-sqlite/main/benchmark.png)
 
 ## API
 
 ```typescript
-import {open} from 'op-sqlite'
+import {open} from '@op-engineering/op-sqlite'
 
 const db = open('myDb.sqlite')
 
-// The db object now contains the following methods:
-
+// The db object contains the following methods:
 db = {
   close: () => void,
   delete: () => void,
@@ -44,8 +40,7 @@ db = {
   ) => Promise<QueryResult>,
   executeBatch: (commands: SQLBatchParams[]) => BatchQueryResult,
   executeBatchAsync: (commands: SQLBatchParams[]) => Promise<BatchQueryResult>,
-  loadFile: (location: string) => FileLoadResult;,
-  loadFileAsync: (location: string) => Promise<FileLoadResult>
+  loadFile: (location: string) => Promise<FileLoadResult>
 }
 ```
 
@@ -139,7 +134,7 @@ metadata.forEach((column) => {
   // Output:
   // int_column_1 - INTEGER
   // bol_column_2 - BOOLEAN
-  console.log(`${column.columnName} - ${column.columnDeclaredType}`);
+  console.log(`${column.name} - ${column.type}`);
 });
 ```
 
@@ -213,78 +208,13 @@ On iOS you can use the embedded SQLite, when running `pod-install` add an enviro
 OP_SQLITE_USE_PHONE_VERSION=1 npx pod-install
 ```
 
-On Android, it is not possible to link (using C++) the embedded SQLite. It is also a bad idea due to vendor changes, old android bugs, etc. Unfortunately, this means this library will add some megabytes to your app size.
-
-## TypeORM
-
-This library is pretty barebones, you can write all your SQL queries manually but for any large application, an ORM is recommended.
-
-You can use this library as a driver for [TypeORM](https://github.com/typeorm/typeorm). However, there are some incompatibilities you need to take care of first.
-
-Starting on Node14 all files that need to be accessed by third-party modules need to be explicitly declared, TypeORM does not export its `package.json` which is needed by Metro, we need to expose it and make those changes "permanent" by using [patch-package](https://github.com/ds300/patch-package):
-
-```json
-// package.json stuff up here
-"exports": {
-    "./package.json": "./package.json", // ADD THIS
-    ".": {
-      "types": "./index.d.ts",
-// The rest of the package json here
-```
-
-After you have applied that change, do:
-
-```sh
-yarn patch-package --exclude 'nothing' typeorm
-```
-
-Now every time you install your node_modules that line will be added.
-
-Next, we need to trick TypeORM to resolve the dependency of `react-native-sqlite-storage` to `op-sqlite`, on your `babel.config.js` add the following:
-
-```js
-plugins: [
-  // w/e plugin you already have
-  ...,
-  [
-    'module-resolver',
-    {
-      alias: {
-        "react-native-sqlite-storage": "op-sqlite"
-      },
-    },
-  ],
-]
-```
-
-You will need to install the babel `module-resolver` plugin:
-
-```sh
-yarn add babel-plugin-module-resolver
-```
-
-Finally, you will now be able to start the app without any metro/babel errors (you will also need to follow the instructions on how to setup TypeORM), now we can feed the driver into TypeORM:
-
-```ts
-import { typeORMDriver } from 'op-sqlite'
-
-datasource = new DataSource({
-  type: 'react-native',
-  database: 'typeormdb',
-  location: '.',
-  driver: typeORMDriver,
-  entities: [...],
-  synchronize: true,
-});
-```
+On Android, it is not possible to link the OS SQLite. It is also a bad idea due to vendor changes, old android bugs, etc. Unfortunately, this means this library will add some megabytes to your app size.
 
 # Loading existing DBs
 
-The library creates/opens databases by appending the passed name plus, the [documents directory on iOS](https://github.com/ospfranco/op-sqlite/blob/733e876d98896f5efc80f989ae38120f16533a66/ios/OPSQLite.mm#L34-L35) and the [files directory on Android](https://github.com/ospfranco/op-sqlite/blob/main/android/src/main/java/com/op/sqlite/OPSQLiteBridge.java#L16), this differs from other SQL libraries (some place it in a `www` folder, some in androids `databases` folder, etc.).
+The library creates/opens databases by appending the passed name plus, the [library directory on iOS](https://github.com/OP-Engineering/op-sqlite/blob/733e876d98896f5efc80f989ae38120f16533a66/ios/OPSQLite.mm#L34-L35) and the [database directory on Android](https://github.com/OP-Engineering/op-sqlite/blob/main/android/src/main/java/com/op/sqlite/OPSQLiteBridge.java#L16). If you are migrating from `react-native-quick-sqlite` you will have to move your library using one of the many react-native fs libraries.
 
 If you have an existing database file you want to load you can navigate from these directories using dot notation. e.g. `../www/myDb.sqlite`. Note that on iOS the file system is sand-boxed, so you cannot access files/directories outside your app bundle directories.
-
-Alternatively, you can place/move your database file using one of the many react-native fs libraries.
 
 ## Enable compile-time options
 

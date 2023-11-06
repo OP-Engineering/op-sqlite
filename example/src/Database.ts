@@ -1,12 +1,8 @@
 import performance from 'react-native-performance';
 import Chance from 'chance';
-import {
-  // OPSQLiteConnection,
-  open,
-} from 'op-sqlite';
-
+import {open} from 'op-sqlite';
 // import { Buffer } from 'buffer';
-// let datasource: DataSource;
+
 const chance = new Chance();
 
 export async function createLargeDB() {

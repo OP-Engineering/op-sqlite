@@ -74,12 +74,12 @@ export type QueryResult = {
  */
 export type ColumnMetadata = {
   /** The name used for this column for this resultset */
-  columnName: string;
+  name: string;
   /** The declared column type for this column, when fetched directly from a table or a View resulting from a table column. "UNKNOWN" for dynamic values, like function returned ones. */
-  columnDeclaredType: string;
+  type: string;
   /**
    * The index for this column for this resultset*/
-  columnIndex: number;
+  index: number;
 };
 
 /**
