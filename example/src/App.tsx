@@ -15,6 +15,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<any>([]);
   const [times, setTimes] = useState<number[]>([]);
+  const [accessingTimes, setAccessingTimes] = useState<number[]>([]);
 
   useEffect(() => {
     setResults([]);
@@ -30,7 +31,8 @@ export default function App() {
   const queryLargeDb = async () => {
     setIsLoading(true);
     const times = await queryLargeDB();
-    setTimes(times);
+    setTimes(times.loadFromDb);
+    setAccessingTimes(times.access);
     setIsLoading(false);
   };
 
@@ -43,17 +45,23 @@ export default function App() {
         <Button title="Create 300k Record DB" onPress={createLargeDb} />
         <Button title="Query 300k Records" onPress={queryLargeDb} />
         {isLoading && <ActivityIndicator color={'white'} size="large" />}
-        {times.map(t => {
-          return (
-            <Text className="self-center text-white">{t.toFixed(0)}ms</Text>
-          );
-        })}
 
         {!!times.length && (
           <Text className="text-lg text-green-500 self-center">
+            Load from db{' '}
             {(times.reduce((acc, t) => (acc += t), 0) / times.length).toFixed(
               0,
             )}{' '}
+            ms average
+          </Text>
+        )}
+        {!!accessingTimes.length && (
+          <Text className="text-lg text-green-500 self-center">
+            Read property{' '}
+            {(
+              accessingTimes.reduce((acc, t) => (acc += t), 0) /
+              accessingTimes.length
+            ).toFixed(0)}{' '}
             ms average
           </Text>
         )}
