@@ -28,7 +28,7 @@ export function registerBaseTests() {
     }
   });
 
-  describe('Raw queries', () => {
+  describe('Base tests', () => {
     it('Insert', async () => {
       const id = chance.integer();
       const name = chance.name();
