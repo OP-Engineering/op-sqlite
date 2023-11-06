@@ -185,7 +185,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
         std::vector<std::any> params;
         if(count == 3) {
             const jsi::Value &originalParams = args[2];
-            params = jsiQueryArgumentsToSequelParam(rt, originalParams);
+            params = toAnyVec(rt, originalParams);
         }
         
         std::vector<std::shared_ptr<DynamicHostObject>> results;
@@ -216,7 +216,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
         const std::string query = args[1].asString(rt).utf8(rt);
         const jsi::Value &originalParams = args[2];
         
-        std::vector<std::any> params = jsiQueryArgumentsToSequelParam(rt, originalParams);
+        std::vector<std::any> params = toAnyVec(rt, originalParams);
         
         auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
         auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor", 2) {
