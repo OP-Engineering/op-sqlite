@@ -58,32 +58,33 @@ std::any toAny(jsi::Runtime &rt, jsi::Value &value) {
 }
 
 jsi::Value toJSI(jsi::Runtime &rt, std::any value) {
+    const std::type_info &type(value.type());
     
-    if (value.type() == typeid(NULL) || value.type() == typeid(nullptr))
+    if (type == typeid(NULL) || type == typeid(nullptr))
     {
         return jsi::Value::null();
     }
-    else if (value.type() == typeid(bool))
+    else if (type == typeid(bool))
     {
         return std::any_cast<bool>(value);
     }
-    else if (value.type() == typeid(int))
+    else if (type == typeid(int))
     {
         return jsi::Value(std::any_cast<int>(value));
     }
-    else if (value.type() == typeid(long long))
+    else if (type == typeid(long long))
     {
         return jsi::Value(static_cast<double>(std::any_cast<long long>(value)));
     }
-    else if (value.type() == typeid(double))
+    else if (type == typeid(double))
     {
         return jsi::Value(std::any_cast<double>(value));
     }
-    else if (value.type() == typeid(std::string))
+    else if (type == typeid(std::string))
     {
         return jsi::String::createFromUtf8(rt, std::any_cast<std::string>(value));
     }
-    else if (value.type() == typeid(const char*))
+    else if (type == typeid(const char*))
     {
         return jsi::String::createFromAscii(rt, std::any_cast<const char*>(value));
     }

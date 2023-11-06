@@ -58,6 +58,8 @@ export async function queryLargeDB() {
     let entries = performance.getEntriesByName('queryEnd');
 
     times.push(entries[entries.length - 1].duration);
+    // @ts-ignore
+    global.gc();
   }
 
   return times;
