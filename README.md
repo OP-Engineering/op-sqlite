@@ -14,7 +14,7 @@
 </div>
 <br />
 
-Quick SQLite embeds the latest version of SQLite and provides a low-level JSI-backed API to execute SQL queries.
+OP SQLite embeds the latest version of SQLite and provides a low-level JSI-backed API to execute SQL queries.
 
 Performance metrics are intentionally not presented, [anecdotic testimonies](https://dev.to/craftzdog/a-performant-way-to-use-pouchdb7-on-react-native-in-2022-24ej) suggest anywhere between 2x and 5x speed improvement. On small queries you might not notice a difference with the old bridge but as you send large data to JS the speed increase is considerable.
 
@@ -210,7 +210,7 @@ OPSQLite.loadFileAsync('myDatabase', '/absolute/path/to/file.sql').then(
 On iOS you can use the embedded SQLite, when running `pod-install` add an environment flag:
 
 ```
-QUICK_SQLITE_USE_PHONE_VERSION=1 npx pod-install
+OP_SQLITE_USE_PHONE_VERSION=1 npx pod-install
 ```
 
 On Android, it is not possible to link (using C++) the embedded SQLite. It is also a bad idea due to vendor changes, old android bugs, etc. Unfortunately, this means this library will add some megabytes to your app size.

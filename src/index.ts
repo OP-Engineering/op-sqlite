@@ -9,9 +9,7 @@ if (global.__OPSQLiteProxy == null) {
   const OPSQLiteModule = NativeModules.OPSQLite;
 
   if (OPSQLiteModule == null) {
-    throw new Error(
-      'Base quick-sqlite module not found. Maybe try rebuilding the app.'
-    );
+    throw new Error('Base module not found. Maybe try rebuilding the app.');
   }
 
   // Check if we are running on-device (JSI)
@@ -225,7 +223,7 @@ OPSQLite.transaction = async (
   fn: (tx: Transaction) => Promise<void>
 ): Promise<void> => {
   if (!locks[dbName]) {
-    throw Error(`Quick SQLite Error: No lock found on db: ${dbName}`);
+    throw Error(`SQLite Error: No lock found on db: ${dbName}`);
   }
 
   let isFinalized = false;
@@ -234,7 +232,7 @@ OPSQLite.transaction = async (
   const execute = (query: string, params?: any[]): QueryResult => {
     if (isFinalized) {
       throw Error(
-        `Quick SQLite Error: Cannot execute query on finalized transaction: ${dbName}`
+        `SQLite Error: Cannot execute query on finalized transaction: ${dbName}`
       );
     }
     return OPSQLite.execute(dbName, query, params);
@@ -243,7 +241,7 @@ OPSQLite.transaction = async (
   const executeAsync = (query: string, params?: any[] | undefined) => {
     if (isFinalized) {
       throw Error(
-        `Quick SQLite Error: Cannot execute query on finalized transaction: ${dbName}`
+        `SQLite Error: Cannot execute query on finalized transaction: ${dbName}`
       );
     }
     return OPSQLite.executeAsync(dbName, query, params);
@@ -252,7 +250,7 @@ OPSQLite.transaction = async (
   const commit = () => {
     if (isFinalized) {
       throw Error(
-        `Quick SQLite Error: Cannot execute commit on finalized transaction: ${dbName}`
+        `SQLite Error: Cannot execute commit on finalized transaction: ${dbName}`
       );
     }
     const result = OPSQLite.execute(dbName, 'COMMIT');
@@ -263,7 +261,7 @@ OPSQLite.transaction = async (
   const rollback = () => {
     if (isFinalized) {
       throw Error(
-        `Quick SQLite Error: Cannot execute rollback on finalized transaction: ${dbName}`
+        `SQLite Error: Cannot execute rollback on finalized transaction: ${dbName}`
       );
     }
     const result = OPSQLite.execute(dbName, 'ROLLBACK');

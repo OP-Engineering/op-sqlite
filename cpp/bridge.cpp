@@ -269,7 +269,7 @@ BridgeResult sqliteExecute(std::string const dbName,
                              std::string const &query,
                              std::vector<std::any> *params,
                              std::vector<std::shared_ptr<DynamicHostObject>> *results,
-                             std::vector<QuickColumnMetadata> *metadata)
+                             std::vector<std::shared_ptr<DynamicHostObject>> *metadatas)
 {
     
     if (dbMap.count(dbName) == 0)
@@ -382,23 +382,18 @@ BridgeResult sqliteExecute(std::string const dbName,
                 break;
 
             case SQLITE_DONE:
-                if(metadata != NULL)
+                if(metadatas != nullptr)
                 {
                     i = 0;
                     count = sqlite3_column_count(statement);
                     while (i < count)
                     {
                         column_name = sqlite3_column_name(statement, i);
-                        const char *tp = sqlite3_column_decltype(statement, i);
-                        column_declared_type = tp != NULL ? tp : "UNKNOWN";
-                        
-                        QuickColumnMetadata meta = {
-                            .colunmName = column_name,
-                            .columnIndex = i,
-                            .columnDeclaredType = column_declared_type,
-                        };
-                        
-                        metadata->push_back(meta);
+                        const char *type = sqlite3_column_decltype(statement, i);
+                        auto metadata = std::make_shared<DynamicHostObject>();
+                        metadata->fields["name"] = column_name;
+                        metadata->fields["index"] = i;
+                        metadata->fields["type"] = type;
                         
                         i++;
                     }

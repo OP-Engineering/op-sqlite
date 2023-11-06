@@ -19,7 +19,11 @@ BridgeResult sqliteAttachDb(std::string const mainDBName, std::string const docP
 
 BridgeResult sqliteDetachDb(std::string const mainDBName, std::string const alias);
 
-BridgeResult sqliteExecute(std::string const dbName, std::string const &query, std::vector<std::any> *values, std::vector<std::shared_ptr<DynamicHostObject>> *result, std::vector<QuickColumnMetadata> *metadata);
+BridgeResult sqliteExecute(std::string const dbName,
+                           std::string const &query,
+                           std::vector<std::any> *values,
+                           std::vector<std::shared_ptr<DynamicHostObject>> *result,
+                           std::vector<std::shared_ptr<DynamicHostObject>> *metadata);
 
 BridgeResult sqliteExecuteLiteral(std::string const dbName, std::string const &query);
 

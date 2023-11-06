@@ -189,7 +189,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
         }
         
         std::vector<std::shared_ptr<DynamicHostObject>> results;
-        std::vector<QuickColumnMetadata> metadata;
+        std::vector<std::shared_ptr<DynamicHostObject>> metadata;
         
         try {
             auto status = sqliteExecute(dbName, query, &params, &results, &metadata);
@@ -229,16 +229,22 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
                 try
                 {
                     std::vector<std::shared_ptr<DynamicHostObject>> results;
-                    std::vector<QuickColumnMetadata> metadata;
+                    std::vector<std::shared_ptr<DynamicHostObject>> metadata;
+                    
                     auto status = sqliteExecute(dbName, query, params.get(), &results, &metadata);
                     
-                    invoker->invokeAsync([&rt, results = std::make_shared<std::vector<std::shared_ptr<DynamicHostObject>>>(results), metadata = std::make_shared<std::vector<QuickColumnMetadata>>(metadata), status_copy = std::move(status), resolve, reject] {
-                        if(status_copy.type == SQLiteOk) {
-                            auto jsiResult = createResult(rt, status_copy, results.get(), metadata.get());
+                    invoker->invokeAsync([&rt,
+                                           results = std::make_shared<std::vector<std::shared_ptr<DynamicHostObject>>>(results),
+                                           metadata = std::make_shared<std::vector<std::shared_ptr<DynamicHostObject>>>(metadata),
+                                           status = std::move(status),
+                                           resolve,
+                                           reject] {
+                        if(status.type == SQLiteOk) {
+                            auto jsiResult = createResult(rt, status, results.get(), metadata.get());
                             resolve->asObject(rt).asFunction(rt).call(rt, std::move(jsiResult));
                         } else {
                             auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-                            auto error = errorCtr.callAsConstructor(rt, jsi::String::createFromUtf8(rt, status_copy.message));
+                            auto error = errorCtr.callAsConstructor(rt, jsi::String::createFromUtf8(rt, status.message));
                             reject->asObject(rt).asFunction(rt).call(rt, error);
                         }
                     });
@@ -276,8 +282,8 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
         }
         const std::string dbName = args[0].asString(rt).utf8(rt);
         const jsi::Array &batchParams = params.asObject(rt).asArray(rt);
-        std::vector<QuickQueryArguments> commands;
-        jsiBatchParametersToQuickArguments(rt, batchParams, &commands);
+        std::vector<BatchArguments> commands;
+        toBatchArguments(rt, batchParams, &commands);
         
         auto batchResult = sqliteExecuteBatch(dbName, &commands);
         if (batchResult.type == SQLiteOk)
@@ -311,8 +317,8 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
         const std::string dbName = args[0].asString(rt).utf8(rt);
         const jsi::Array &batchParams = params.asObject(rt).asArray(rt);
         
-        std::vector<QuickQueryArguments> commands;
-        jsiBatchParametersToQuickArguments(rt, batchParams, &commands);
+        std::vector<BatchArguments> commands;
+        toBatchArguments(rt, batchParams, &commands);
         
         auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
         auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor", 2) {
@@ -320,11 +326,10 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
             auto reject = std::make_shared<jsi::Value>(rt, args[1]);
             
             auto task =
-            [&rt, dbName, commands = std::make_shared<std::vector<QuickQueryArguments>>(commands), resolve, reject]()
+            [&rt, dbName, commands = std::make_shared<std::vector<BatchArguments>>(commands), resolve, reject]()
             {
                 try
                 {
-                    // Inside the new worker thread, we can now call sqlite operations
                     auto batchResult = sqliteExecuteBatch(dbName, commands.get());
                     invoker->invokeAsync([&rt, batchResult = std::move(batchResult), resolve, reject]
                                          {

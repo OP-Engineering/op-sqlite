@@ -6,7 +6,7 @@ namespace osp {
  * Batch execution implementation
  */
 
-void jsiBatchParametersToQuickArguments(jsi::Runtime &rt, jsi::Array const &batchParams, std::vector<QuickQueryArguments> *commands)
+void toBatchArguments(jsi::Runtime &rt, jsi::Array const &batchParams, std::vector<BatchArguments> *commands)
 {
     for (int i = 0; i < batchParams.length(rt); i++)
     {
@@ -26,7 +26,7 @@ void jsiBatchParametersToQuickArguments(jsi::Runtime &rt, jsi::Array const &batc
             {
                 const jsi::Value &p = batchUpdateParams.getValueAtIndex(rt, x);
                 auto params = std::make_shared<std::vector<std::any>>(jsiQueryArgumentsToSequelParam(rt, p));
-                commands->push_back(QuickQueryArguments{
+                commands->push_back({
                     query,
                     params
                 });
@@ -35,7 +35,7 @@ void jsiBatchParametersToQuickArguments(jsi::Runtime &rt, jsi::Array const &batc
         else
         {
             auto params = std::make_shared<std::vector<std::any>>(jsiQueryArgumentsToSequelParam(rt, commandParams));
-            commands->push_back(QuickQueryArguments{
+            commands->push_back({
                 query,
                 params
             });
@@ -43,12 +43,12 @@ void jsiBatchParametersToQuickArguments(jsi::Runtime &rt, jsi::Array const &batc
     }
 }
 
-SequelBatchOperationResult sqliteExecuteBatch(std::string dbName, std::vector<QuickQueryArguments> *commands)
+BatchResult sqliteExecuteBatch(std::string dbName, std::vector<BatchArguments> *commands)
 {
     size_t commandCount = commands->size();
     if(commandCount <= 0)
     {
-        return SequelBatchOperationResult {
+        return BatchResult {
             .type = SQLiteError,
             .message = "No SQL commands provided",
         };
@@ -65,7 +65,7 @@ SequelBatchOperationResult sqliteExecuteBatch(std::string dbName, std::vector<Qu
             if(result.type == SQLiteError)
             {
                 sqliteExecuteLiteral(dbName, "ROLLBACK");
-                return SequelBatchOperationResult {
+                return BatchResult {
                     .type = SQLiteError,
                     .message = result.message,
                 };
@@ -75,15 +75,15 @@ SequelBatchOperationResult sqliteExecuteBatch(std::string dbName, std::vector<Qu
             }
         }
         sqliteExecuteLiteral(dbName, "COMMIT");
-        return SequelBatchOperationResult {
+        return BatchResult {
             .type = SQLiteOk,
             .affectedRows = affectedRows,
-            .commands = (int) commandCount,
+            .commands = static_cast<int>(commandCount),
         };
     } catch(std::exception &exc)
     {
         sqliteExecuteLiteral(dbName, "ROLLBACK");
-        return SequelBatchOperationResult {
+        return BatchResult {
             .type = SQLiteError,
             .message = exc.what(),
         };
