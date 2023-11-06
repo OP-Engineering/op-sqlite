@@ -20,6 +20,14 @@ Created by [@ospfranco](https://twitter.com/ospfranco). Also created `react-nati
 
 [ArrayBuffer support is commented out right now](https://github.com/OP-Engineering/op-sqlite/blob/main/cpp/bridge.cpp#L247). I will get to it in the next days or feel free to submit a PR.
 
+## Coming up
+
+I will gladly review bug fixes, but in order for me to continue support and add new features, I ask you to sponsor me. Some of the things that can still be done to make this package faster and more complete:
+
+- Prepared statements
+- Inlining functions
+- Batching queries
+
 ## Benchmarks
 
 You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). Loading a 300k record database:
