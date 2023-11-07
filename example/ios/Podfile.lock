@@ -15,7 +15,7 @@ PODS:
     - hermes-engine/Pre-built (= 0.72.6)
   - hermes-engine/Pre-built (0.72.6)
   - libevent (2.1.12)
-  - op-sqlite (8.0.2):
+  - op-sqlite (1.0.0):
     - React
     - React-callinvoker
     - React-Core
@@ -588,7 +588,7 @@ SPEC CHECKSUMS:
   glog: 04b94705f318337d7ead9e6d17c019bd9b1f6b1b
   hermes-engine: 8057e75cfc1437b178ac86c8654b24e7fead7f60
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
-  op-sqlite: 9833ef03307ff6304e600a9859bebbe9c1021b92
+  op-sqlite: d192fbbc4524a21f3ef6f7a52c1453ae6fbda46f
   RCT-Folly: 424b8c9a7a0b9ab2886ffe9c3b041ef628fd4fb1
   RCTRequired: 28469809442eb4eb5528462705f7d852948c8a74
   RCTTypeSafety: e9c6c409fca2cc584e5b086862d562540cb38d29
@@ -626,6 +626,6 @@ SPEC CHECKSUMS:
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
   Yoga: b76f1acfda8212aa16b7e26bcce3983230c82603
 
-PODFILE CHECKSUM: ee8b9bdb6dfc105c353a6727d6f911ba5659d718
+PODFILE CHECKSUM: 26ccdc83e0f359afd06e140dd34b38263c78e649
 
 COCOAPODS: 1.13.0

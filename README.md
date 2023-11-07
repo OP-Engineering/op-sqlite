@@ -39,7 +39,7 @@ You can find the [benchmarking code in the example app](https://github.com/OP-En
 | ------------ | ------------- | ---------- |
 | quick-sqlite | 2719          | 8851       |
 | expo-sqlite  | 2293          | 10626      |
-| op-sqlite    | 634           | 2220       |
+| op-sqlite    | 579           | 2220       |
 
 Memory consumption is also 50% to 80% reduced compared to `react-native-quick-sqlite`. `expo-sqlite` OOMS itself even when trying to insert 300k elements in a row. Queries that before might have OOM now can run just fine.
 
