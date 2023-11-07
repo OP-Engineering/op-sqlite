@@ -5,11 +5,12 @@ import {open} from 'op-sqlite';
 
 const chance = new Chance();
 
-let rows = 300000;
+const ROWS = 300000;
+const DB_NAME = 'largeDB';
 
 export async function createLargeDB() {
   let largeDb = open({
-    name: 'largeDB',
+    name: DB_NAME,
   });
 
   largeDb.execute('DROP TABLE IF EXISTS Test;');
@@ -17,7 +18,10 @@ export async function createLargeDB() {
     'CREATE TABLE Test ( id INT PRIMARY KEY, v1 TEXT, v2 TEXT, v3 TEXT, v4 TEXT, v5 TEXT, v6 INT, v7 INT, v8 INT, v9 INT, v10 INT, v11 REAL, v12 REAL, v13 REAL, v14 REAL) STRICT;',
   );
 
-  for (let i = 0; i < rows; i++) {
+  for (let i = 0; i < ROWS; i++) {
+    if (i % 100 === 0) {
+      console.log(`Inserted ${i}`);
+    }
     await largeDb.executeAsync(
       'INSERT INTO "Test" (id, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
@@ -40,14 +44,14 @@ export async function createLargeDB() {
     );
   }
 
-  console.warn(`inserted ${rows}`);
+  console.log(`inserted ${ROWS}`);
 
   largeDb.close();
 }
 
 export async function queryLargeDB() {
   let largeDb = open({
-    name: 'largeDB',
+    name: DB_NAME,
   });
 
   let times: {loadFromDb: number[]; access: number[]} = {
