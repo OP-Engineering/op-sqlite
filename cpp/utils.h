@@ -7,11 +7,14 @@
 #include <vector>
 #include <map>
 #include <any>
+#include "types.h"
 #include "DynamicHostObject.h"
 
 namespace osp {
 
 namespace jsi = facebook::jsi;
+
+
 
 enum ResultType
 {
@@ -35,13 +38,11 @@ struct BatchResult
     int commands;
 };
 
-std::any toAny(jsi::Runtime &rt, jsi::Value &value);
+jsVal toAny(jsi::Runtime &rt, jsi::Value &value);
 
-// TODO I tried to inline this function but it is not working
-// throws an undefined Symbol
-jsi::Value toJSI(jsi::Runtime &rt, std::any value);
+jsi::Value toJSI(jsi::Runtime &rt, jsVal value);
 
-std::vector<std::any> toAnyVec(jsi::Runtime &rt, jsi::Value const &args);
+std::vector<jsVal> toAnyVec(jsi::Runtime &rt, jsi::Value const &args);
 
 jsi::Value createResult(jsi::Runtime &rt,
                         BridgeResult status,

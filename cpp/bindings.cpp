@@ -182,7 +182,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
     {
         const std::string dbName = args[0].asString(rt).utf8(rt);
         const std::string query = args[1].asString(rt).utf8(rt);
-        std::vector<std::any> params;
+        std::vector<jsVal> params;
         if(count == 3) {
             const jsi::Value &originalParams = args[2];
             params = toAnyVec(rt, originalParams);
@@ -216,7 +216,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
         const std::string query = args[1].asString(rt).utf8(rt);
         const jsi::Value &originalParams = args[2];
         
-        std::vector<std::any> params = toAnyVec(rt, originalParams);
+        std::vector<jsVal> params = toAnyVec(rt, originalParams);
         
         auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
         auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor", 2) {
@@ -224,7 +224,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
             auto reject = std::make_shared<jsi::Value>(rt, args[1]);
             
             auto task =
-            [&rt, dbName, query, params = std::make_shared<std::vector<std::any>>(params), resolve, reject]()
+            [&rt, dbName, query, params = std::make_shared<std::vector<jsVal>>(params), resolve, reject]()
             {
                 try
                 {
@@ -252,8 +252,10 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
                 }
                 catch (std::exception &exc)
                 {
-                    invoker->invokeAsync([&rt, &exc] {
-                        jsi::JSError(rt, exc.what());
+                    invoker->invokeAsync([&rt, exc = std::move(exc), reject] {
+                        auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+                        auto error = errorCtr.callAsConstructor(rt, jsi::String::createFromAscii(rt, exc.what()));
+                        reject->asObject(rt).asFunction(rt).call(rt, error);
                     });
                 }
             };

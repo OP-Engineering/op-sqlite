@@ -3,6 +3,7 @@
 */
 #include "utils.h"
 #include "bridge.h"
+#include "types.h"
 
 namespace osp {
 
@@ -10,7 +11,7 @@ namespace jsi = facebook::jsi;
 
 struct BatchArguments {
   std::string sql;
-  std::shared_ptr<std::vector<std::any>> params;
+  std::shared_ptr<std::vector<jsVal>> params;
 };
 
 /**

@@ -8,6 +8,7 @@
 #include <map>
 #include "logs.h"
 #include "DynamicHostObject.h"
+#include <variant>
 
 namespace osp {
 
@@ -199,75 +200,54 @@ BridgeResult sqliteRemoveDb(std::string const dbName, std::string const docPath)
     };
 }
 
-void bindStatement(sqlite3_stmt *statement, std::vector<std::any> *values)
+inline void bindStatement(sqlite3_stmt *statement, std::vector<jsVal> *values)
 {
     size_t size = values->size();
-    if (size <= 0)
-    {
-        return;
-    }
     
     for (int ii = 0; ii < size; ii++)
     {
         int sqIndex = ii + 1;
-        std::any value = values->at(ii);
-        
-        if (value.type() == typeid(NULL) || value.type() == typeid(nullptr))
+        jsVal value = values->at(ii);
+
+        if (std::holds_alternative<bool>(value))
         {
-            sqlite3_bind_null(statement, sqIndex);
+            sqlite3_bind_int(statement, sqIndex, std::get<bool>(value));
         }
-        else if (value.type() == typeid(bool))
+        else if (std::holds_alternative<int>(value))
         {
-            sqlite3_bind_int(statement, sqIndex, std::any_cast<bool>(value));
+            sqlite3_bind_int(statement, sqIndex, std::get<int>(value));
         }
-        else if (value.type() == typeid(int))
+        else if (std::holds_alternative<long long>(value))
         {
-            sqlite3_bind_int(statement, sqIndex, std::any_cast<int>(value));
+            sqlite3_bind_double(statement, sqIndex, std::get<long long>(value));
         }
-        else if (value.type() == typeid(long long))
+        else if (std::holds_alternative<double>(value))
         {
-            sqlite3_bind_double(statement, sqIndex, std::any_cast<long long>(value));
+            sqlite3_bind_double(statement, sqIndex, std::get<double>(value));
         }
-        else if (value.type() == typeid(double))
+        else if (std::holds_alternative<std::string>(value))
         {
-            sqlite3_bind_double(statement, sqIndex, std::any_cast<double>(value));
-        }
-        else if (value.type() == typeid(std::string))
-        {
-            std::string str = std::any_cast<std::string>(value);
+            std::string str = std::get<std::string>(value);
             sqlite3_bind_text(statement, sqIndex, str.c_str(), str.length(), SQLITE_TRANSIENT);
+        }
+        else if(std::holds_alternative<JSBuffer>(value))
+        {
+            JSBuffer buffer = std::get<JSBuffer>(value);
+            sqlite3_bind_blob(statement, sqIndex, buffer.data.get(), buffer.size, SQLITE_STATIC);
         } else {
-            throw std::invalid_argument("Unsupported scalar type, cannot convert to JSI Value");
+            sqlite3_bind_null(statement, sqIndex);
         }
 //        else if (value.type() == typeid(const char*))
 //        {
 //            sqlite3_bind_text(statement, sqIndex, str.c_str(), str.length(), SQLITE_TRANSIENT);
 //            return jsi::String::createFromAscii(rt, std::any_cast<const char*>(value));
 //        }
-        // TODO Add support for array buffers
-        //        else if (value.isObject())
-        //        {
-        //            auto obj = value.asObject(rt);
-        //            if(obj.isArrayBuffer(rt)) {
-        //                auto buf = obj.getArrayBuffer(rt);
-        //                sqlite3_bind_blob(statement, sqIndex, buf.data(rt), buf.size(rt), SQLITE_STATIC);
-        //            }
-        //
-//        else if (dataType == ARRAY_BUFFER)
-//        {
-//            
-//        }
-//        sqlite3_bind_blob(statement, sqIndex, value.arrayBufferValue.get(), value.arrayBufferSize, SQLITE_STATIC);
-        //        }
-        
-        
-        
     }
 }
 
 BridgeResult sqliteExecute(std::string const dbName,
                              std::string const &query,
-                             std::vector<std::any> *params,
+                             std::vector<jsVal> *params,
                              std::vector<std::shared_ptr<DynamicHostObject>> *results,
                              std::vector<std::shared_ptr<DynamicHostObject>> *metadatas)
 {
@@ -287,11 +267,7 @@ BridgeResult sqliteExecute(std::string const dbName,
     
     int statementStatus = sqlite3_prepare_v2(db, query.c_str(), -1, &statement, NULL);
     
-    if (statementStatus == SQLITE_OK) // statemnet is correct, bind the passed parameters
-    {
-        bindStatement(statement, params);
-    }
-    else
+    if (statementStatus == SQLITE_ERROR)
     {
         const char *message = sqlite3_errmsg(db);
         return {
@@ -299,6 +275,8 @@ BridgeResult sqliteExecute(std::string const dbName,
             .message = "[op-sqlite] SQL execution error: " + std::string(message),
             .affectedRows = 0};
     }
+    
+    bindStatement(statement, params);
     
     bool isConsuming = true;
     bool isFailed = false;
@@ -338,14 +316,14 @@ BridgeResult sqliteExecute(std::string const dbName,
                              * only represent Integers up to 53 bits
                              */
                             double column_value = sqlite3_column_double(statement, i);
-                            row->fields[column_name] = std::any(column_value);
+                            row->fields[column_name] = jsVal(column_value);
                             break;
                         }
                             
                         case SQLITE_FLOAT:
                         {
                             double column_value = sqlite3_column_double(statement, i);
-                            row->fields[column_name] = std::any(column_value);
+                            row->fields[column_name] = jsVal(column_value);
                             break;
                         }
                             
@@ -354,7 +332,7 @@ BridgeResult sqliteExecute(std::string const dbName,
                             const char *column_value = reinterpret_cast<const char *>(sqlite3_column_text(statement, i));
                             int byteLen = sqlite3_column_bytes(statement, i);
                             // Specify length too; in case string contains NULL in the middle (which SQLite supports!)
-                            row->fields[column_name] = std::any(std::string(column_value, byteLen));
+                            row->fields[column_name] = jsVal(std::string(column_value, byteLen));
                             break;
                         }
                             
@@ -364,8 +342,10 @@ BridgeResult sqliteExecute(std::string const dbName,
                             const void *blob = sqlite3_column_blob(statement, i);
                             uint8_t *data = new uint8_t[blob_size];
                             memcpy(data, blob, blob_size);
-                            // TODO array buffer support
-                            //                            row[column_name] = createArrayBufferQuickValue(data, blob_size);
+                            row->fields[column_name] = jsVal(JSBuffer {
+                                .data =  std::shared_ptr<uint8_t>{data},
+                                .size =  static_cast<size_t>(blob_size)
+                            });
                             break;
                         }
                             
@@ -373,7 +353,7 @@ BridgeResult sqliteExecute(std::string const dbName,
                             // Intentionally left blank
 
                         default:
-                            row->fields[column_name] = std::any(NULL);
+                            row->fields[column_name] = jsVal(NULL);
                             break;
                     }
                     i++;
@@ -426,7 +406,8 @@ BridgeResult sqliteExecute(std::string const dbName,
     return {
         .type = SQLiteOk,
         .affectedRows = changedRowCount,
-        .insertId = static_cast<double>(latestInsertRowId)};
+        .insertId = static_cast<double>(latestInsertRowId)
+    };
 }
 
 BridgeResult sqliteExecuteLiteral(std::string const dbName, std::string const &query)

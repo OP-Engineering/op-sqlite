@@ -5,6 +5,7 @@
 #include <any>
 #include <vector>
 #include <unordered_map>
+#include "types.h"
 
 namespace osp {
 
@@ -20,9 +21,7 @@ namespace osp {
 
         jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID);
 
-        std::unordered_map<std::string, std::any> fields;
-
-
+        std::unordered_map<std::string, jsVal> fields;
     };
 
 }

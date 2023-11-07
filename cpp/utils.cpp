@@ -8,14 +8,14 @@ namespace osp {
 
 namespace jsi = facebook::jsi;
 
-std::any toAny(jsi::Runtime &rt, jsi::Value &value) {
+jsVal toAny(jsi::Runtime &rt, jsi::Value &value) {
     if (value.isNull() || value.isUndefined())
     {
-        return std::any(nullptr);
+        return jsVal(nullptr);
     }
     else if (value.isBool())
     {
-        return std::any(value.getBool());
+        return jsVal(value.getBool());
     }
     else if (value.isNumber())
     {
@@ -24,87 +24,81 @@ std::any toAny(jsi::Runtime &rt, jsi::Value &value) {
         long long longVal = (long)doubleVal;
         if (intVal == doubleVal)
         {
-            return std::any(intVal);
+            return jsVal(intVal);
         }
         else if (longVal == doubleVal)
         {
-            return std::any(longVal);
+            return jsVal(longVal);
         }
         else
         {
-            return std::any(doubleVal);
+            return jsVal(doubleVal);
         }
     }
     else if (value.isString())
     {
         std::string strVal = value.asString(rt).utf8(rt);
-        return std::any(strVal);
+        return jsVal(strVal);
     }
-    //    else if (value.isObject())
-    //    {
-    //        auto obj = value.asObject(rt);
-    //        if (obj.isArrayBuffer(rt))
-    //        {
-    //            auto buf = obj.getArrayBuffer(rt);
-    //            target->push_back(createArrayBufferQuickValue(buf.data(rt), buf.size(rt)));
-    //        }
-    //    }
-    //    else
-    //    {
-    //        target->push_back(createNullQuickValue());
-    //    }
+    else if (value.isObject())
+    {
+        auto object = value.asObject(rt);
+        if (object.isArrayBuffer(rt))
+        {
+            auto buffer = object.getArrayBuffer(rt);
+            return jsVal(JSBuffer {
+                .data =  std::shared_ptr<uint8_t>{buffer.data(rt)},
+                .size =  buffer.size(rt)
+            });
+        }
+    }
     
     throw new std::invalid_argument("Unknown JSI to any value conversion");
 }
 
-jsi::Value toJSI(jsi::Runtime &rt, std::any value) {
-    const std::type_info &type(value.type());
+jsi::Value toJSI(jsi::Runtime &rt, jsVal value) {
     
-    if (type == typeid(NULL) || type == typeid(nullptr))
+    if (std::holds_alternative<bool>(value))
     {
-        return jsi::Value::null();
+        return std::get<bool>(value);
     }
-    else if (type == typeid(bool))
+    else if (std::holds_alternative<int>(value))
     {
-        return std::any_cast<bool>(value);
+        return jsi::Value(std::get<int>(value));
     }
-    else if (type == typeid(int))
+    else if (std::holds_alternative<long long>(value))
     {
-        return jsi::Value(std::any_cast<int>(value));
+        return jsi::Value(static_cast<double>(std::get<long long>(value)));
     }
-    else if (type == typeid(long long))
+    else if (std::holds_alternative<double>(value))
     {
-        return jsi::Value(static_cast<double>(std::any_cast<long long>(value)));
+        return jsi::Value(std::get<double>(value));
     }
-    else if (type == typeid(double))
+    else if (std::holds_alternative<std::string>(value))
     {
-        return jsi::Value(std::any_cast<double>(value));
+        return jsi::String::createFromUtf8(rt, std::get<std::string>(value));
     }
-    else if (type == typeid(std::string))
+//    else if (std::holds_alternative<const char*>(value))
+//    {
+//        return jsi::String::createFromAscii(rt, std::get<const char*>(value));
+//    }
+    else if (std::holds_alternative<JSBuffer>(value))
     {
-        return jsi::String::createFromUtf8(rt, std::any_cast<std::string>(value));
+        auto jsBuffer = std::get<JSBuffer>(value);
+        jsi::Function array_buffer_ctor = rt.global().getPropertyAsFunction(rt, "ArrayBuffer");
+        jsi::Object o = array_buffer_ctor.callAsConstructor(rt, (int)jsBuffer.size).getObject(rt);
+        jsi::ArrayBuffer buf = o.getArrayBuffer(rt);
+        // It's a shame we have to copy here: see https://github.com/facebook/hermes/pull/419 and https://github.com/facebook/hermes/issues/564.
+        memcpy(buf.data(rt), jsBuffer.data.get(), jsBuffer.size);
+        return buf;
     }
-    else if (type == typeid(const char*))
-    {
-        return jsi::String::createFromAscii(rt, std::any_cast<const char*>(value));
-    }
-    // TODO Add support for array buffers
-    //        else if (value.isObject())
-    //        {
-    //            auto obj = value.asObject(rt);
-    //            if(obj.isArrayBuffer(rt)) {
-    //                auto buf = obj.getArrayBuffer(rt);
-    //                sqlite3_bind_blob(statement, sqIndex, buf.data(rt), buf.size(rt), SQLITE_STATIC);
-    //            }
-    //
-    //        }
     
-    throw std::invalid_argument("Unsupported scalar type, cannot convert to JSI Value");
+    return jsi::Value::null();
 }
 
-std::vector<std::any> toAnyVec(jsi::Runtime &rt, jsi::Value const &params)
+std::vector<jsVal> toAnyVec(jsi::Runtime &rt, jsi::Value const &params)
 {
-    std::vector<std::any> res;
+    std::vector<jsVal> res;
     
     if (params.isNull() || params.isUndefined())
     {
