@@ -10,6 +10,7 @@ import {
 import 'reflect-metadata';
 import {createLargeDB, queryLargeDB} from './Database';
 import {registerBaseTests, runTests} from './tests/index';
+import packageInfo from '../package.json';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +46,7 @@ export default function App() {
     <SafeAreaView className="flex-1 bg-neutral-900">
       <View className="p-4">
         <ScrollView>
-          <Text className=" text-white text-xl">OP SQLite</Text>
+          <Text className=" text-white text-xl">{packageInfo.name}</Text>
 
           <Text className="text-lg text-white mt-8">Benchmarks</Text>
           <Button title="Create 300k Record DB" onPress={createLargeDb} />

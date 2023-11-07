@@ -60,6 +60,9 @@ export async function queryLargeDB() {
   };
 
   for (let i = 0; i < 10; i++) {
+    // @ts-ignore
+    global.gc();
+
     performance.mark('queryStart');
     const results = await largeDb.executeAsync('SELECT * FROM Test');
     const measurement = performance.measure('queryEnd', 'queryStart');
@@ -76,10 +79,6 @@ export async function queryLargeDB() {
       'accessingStart',
     );
     times.access.push(accessMeasurement.duration);
-
-    console.warn(`done iterating`);
-    // @ts-ignore
-    global.gc();
   }
 
   return times;
