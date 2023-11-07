@@ -19,12 +19,14 @@ std::vector<jsi::PropNameID> DynamicHostObject::getPropertyNames(jsi::Runtime &r
 jsi::Value DynamicHostObject::get(jsi::Runtime &rt, const jsi::PropNameID &propNameID) {
     auto name = propNameID.utf8(rt);
     
-    if(fields.find(name) == fields.end()) {
-        return {};
-    } else {
-        jsVal val = fields[name];
-        return toJSI(rt, val);
+    for (auto field: fields) {
+        auto fieldName = field.first;
+        if(fieldName == name) {
+            return toJSI(rt, field.second);
+        }
     }
+    
+    return {};
 }
 
 }
