@@ -141,8 +141,14 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
-        
     }
+
+//     packagingOptions {
+//       pickFirst 'lib/x86/lobop-sqlite.so'
+//       pickFirst 'lib/x86_64/lobop-sqlite.so'
+//       pickFirst 'lib/armeabi-v7a/lobop-sqlite.so'
+//       pickFirst 'lib/arm64-v8a/lobop-sqlite.so'
+//   }
 
     splits {
         abi {

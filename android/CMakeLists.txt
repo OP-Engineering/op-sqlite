@@ -32,6 +32,7 @@ add_library(
   ../cpp/DynamicHostObject.cpp
   ../cpp/DynamicHostObject.h
   ../cpp/macros.h
+  ../cpp/types.h
   cpp-adapter.cpp
 )
 
