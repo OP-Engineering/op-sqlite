@@ -1,6 +1,6 @@
 import performance from 'react-native-performance';
 import Chance from 'chance';
-import {open} from 'op-sqlite';
+import {open} from '@op-engineering/op-sqlite';
 // import { Buffer } from 'buffer';
 
 const chance = new Chance();

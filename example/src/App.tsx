@@ -10,6 +10,7 @@ import {
 import 'reflect-metadata';
 import {createLargeDB, queryLargeDB} from './Database';
 import {registerBaseTests, runTests} from './tests/index';
+// @ts-ignore
 import packageInfo from '../package.json';
 
 export default function App() {
