@@ -68,10 +68,10 @@ export async function queryLargeDB() {
     const measurement = performance.measure('queryEnd', 'queryStart');
     times.loadFromDb.push(measurement.duration);
 
-    console.warn(`iterating ${results.rows!.length}`);
     performance.mark('accessingStart');
-    for (let i = 0; i < results.rows!.length; i++) {
-      const v1 = results.rows!._array[i].v14;
+    const rows = results.rows!._array;
+    for (let i = 0; i < rows.length; i++) {
+      const v1 = rows[i].v14;
     }
 
     const accessMeasurement = performance.measure(
