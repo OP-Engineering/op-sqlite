@@ -5,7 +5,7 @@
 #include <ctime>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <map>
+#include <unordered_map>
 #include "logs.h"
 #include "DynamicHostObject.h"
 #include <variant>
@@ -316,14 +316,14 @@ BridgeResult sqliteExecute(std::string const dbName,
                              * only represent Integers up to 53 bits
                              */
                             double column_value = sqlite3_column_double(statement, i);
-                            row->fields[column_name] = jsVal(column_value);
+                            row->fields.push_back(std::make_pair(column_name, jsVal(column_value)));
                             break;
                         }
                             
                         case SQLITE_FLOAT:
                         {
                             double column_value = sqlite3_column_double(statement, i);
-                            row->fields[column_name] = jsVal(column_value);
+                            row->fields.push_back(std::make_pair(column_name, jsVal(column_value)));
                             break;
                         }
                             
@@ -332,7 +332,7 @@ BridgeResult sqliteExecute(std::string const dbName,
                             const char *column_value = reinterpret_cast<const char *>(sqlite3_column_text(statement, i));
                             int byteLen = sqlite3_column_bytes(statement, i);
                             // Specify length too; in case string contains NULL in the middle (which SQLite supports!)
-                            row->fields[column_name] = jsVal(std::string(column_value, byteLen));
+                            row->fields.push_back(std::make_pair(column_name, jsVal(std::string(column_value, byteLen))));
                             break;
                         }
                             
@@ -342,10 +342,10 @@ BridgeResult sqliteExecute(std::string const dbName,
                             const void *blob = sqlite3_column_blob(statement, i);
                             uint8_t *data = new uint8_t[blob_size];
                             memcpy(data, blob, blob_size);
-                            row->fields[column_name] = jsVal(JSBuffer {
+                            row->fields.push_back(std::make_pair(column_name, jsVal(JSBuffer {
                                 .data =  std::shared_ptr<uint8_t>{data},
                                 .size =  static_cast<size_t>(blob_size)
-                            });
+                            })));
                             break;
                         }
                             
@@ -353,7 +353,7 @@ BridgeResult sqliteExecute(std::string const dbName,
                             // Intentionally left blank
 
                         default:
-                            row->fields[column_name] = jsVal(NULL);
+                            row->fields.push_back(std::make_pair(column_name, jsVal(NULL)));
                             break;
                     }
                     i++;
@@ -371,9 +371,9 @@ BridgeResult sqliteExecute(std::string const dbName,
                         column_name = sqlite3_column_name(statement, i);
                         const char *type = sqlite3_column_decltype(statement, i);
                         auto metadata = std::make_shared<DynamicHostObject>();
-                        metadata->fields["name"] = column_name;
-                        metadata->fields["index"] = i;
-                        metadata->fields["type"] = type;
+                        metadata->fields.push_back(std::make_pair("name", column_name));
+                        metadata->fields.push_back(std::make_pair("index", i));
+                        metadata->fields.push_back(std::make_pair("type", type));
                         
                         i++;
                     }
