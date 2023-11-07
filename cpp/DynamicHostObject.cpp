@@ -22,7 +22,7 @@ jsi::Value DynamicHostObject::get(jsi::Runtime &rt, const jsi::PropNameID &propN
     if(fields.find(name) == fields.end()) {
         return {};
     } else {
-        std::any val = fields[name];
+        jsVal val = fields[name];
         return toJSI(rt, val);
     }
 }
