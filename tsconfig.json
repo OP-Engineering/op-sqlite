@@ -2,7 +2,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "op-sqlite": ["./src/index"]
+      "@op-engineering/op-sqlite": ["./src/index"]
     },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
