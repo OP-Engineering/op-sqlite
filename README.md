@@ -31,15 +31,13 @@ I will gladly review bug fixes, but in order for me to continue support and add 
 
 ## Benchmarks
 
-You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). Non JSI libraries are not even a contender anymore, you should expect anywhere between a 5x to a 8x improvement over sqlite-storage, sqlite2 and so on. Loading a 300k record database.
-
-![benchmark](https://raw.githubusercontent.com/OP-Engineering/op-sqlite/main/benchmark3.png)
+You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). Non JSI libraries are not even a contender anymore, you should expect anywhere between a 5x to a 8x improvement over sqlite-storage, sqlite2 and so on. Loading a 300k record database (in ms).
 
 | Library      | iPhone 15 Pro | Galaxy S22 |
 | ------------ | ------------- | ---------- |
 | quick-sqlite | 2719          | 8851       |
 | expo-sqlite  | 2293          | 10626      |
-| op-sqlite    | 579           | 2220       |
+| op-sqlite    | 579           | 1511       |
 
 Memory consumption is also 50% to 80% reduced compared to `react-native-quick-sqlite`. `expo-sqlite` OOMS itself even when trying to insert 300k elements in a row. Queries that before might have OOM now can run just fine.
 

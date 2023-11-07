@@ -11,7 +11,6 @@ module.exports = {
         alias: {
           [pak.name]: path.join(__dirname, '..', pak.source),
           stream: 'stream-browserify',
-          'react-native-sqlite-storage': 'op-sqlite',
         },
       },
     ],

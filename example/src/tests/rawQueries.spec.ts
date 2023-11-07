@@ -1,5 +1,9 @@
 import Chance from 'chance';
-import {open, OPSQLiteConnection, SQLBatchTuple} from 'op-sqlite';
+import {
+  open,
+  OPSQLiteConnection,
+  SQLBatchTuple,
+} from '@op-engineering/op-sqlite';
 import {beforeEach, describe, it} from './MochaRNAdapter';
 import chai from 'chai';
 
