@@ -8,6 +8,7 @@
 #include <string>
 #include "macros.h"
 #include <iostream>
+#include "DumbHostObject.h"
 
 namespace osp {
 
@@ -188,17 +189,17 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
             params = toAnyVec(rt, originalParams);
         }
         
-        std::vector<std::shared_ptr<DynamicHostObject>> results;
-        std::vector<std::shared_ptr<DynamicHostObject>> metadata;
+        std::vector<DumbHostObject> results;
+        std::shared_ptr<std::vector<DynamicHostObject>> metadata = std::make_shared<std::vector<DynamicHostObject>>();
         
         try {
-            auto status = sqliteExecute(dbName, query, &params, &results, &metadata);
+            auto status = sqliteExecute(dbName, query, &params, &results, metadata);
             
             if(status.type == SQLiteError) {
                 throw jsi::JSError(rt, status.message);
             }
             
-            auto jsiResult = createResult(rt, status, &results, &metadata);
+            auto jsiResult = createResult(rt, status, &results, metadata);
             return jsiResult;
         } catch(std::exception &e) {
             throw jsi::JSError(rt, e.what());
@@ -228,19 +229,19 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
             {
                 try
                 {
-                    std::vector<std::shared_ptr<DynamicHostObject>> results;
-                    std::vector<std::shared_ptr<DynamicHostObject>> metadata;
+                    std::vector<DumbHostObject> results;
+                    std::shared_ptr<std::vector<DynamicHostObject>> metadata = std::make_shared<std::vector<DynamicHostObject>>();;
                     
-                    auto status = sqliteExecute(dbName, query, params.get(), &results, &metadata);
-                    
+                    auto status = sqliteExecute(dbName, query, params.get(), &results, metadata);
+                
                     invoker->invokeAsync([&rt,
-                                           results = std::make_shared<std::vector<std::shared_ptr<DynamicHostObject>>>(results),
-                                           metadata = std::make_shared<std::vector<std::shared_ptr<DynamicHostObject>>>(metadata),
+                                           results = std::make_shared<std::vector<DumbHostObject>>(results),
+                                           metadata,
                                            status = std::move(status),
                                            resolve,
                                            reject] {
                         if(status.type == SQLiteOk) {
-                            auto jsiResult = createResult(rt, status, results.get(), metadata.get());
+                            auto jsiResult = createResult(rt, status, results.get(), metadata);
                             resolve->asObject(rt).asFunction(rt).call(rt, std::move(jsiResult));
                         } else {
                             auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");

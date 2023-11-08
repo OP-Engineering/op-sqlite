@@ -4,6 +4,7 @@
 #include "utils.h"
 #include <vector>
 #include "DynamicHostObject.h"
+#include "DumbHostObject.h"
 #include "types.h"
 
 namespace osp {
@@ -23,8 +24,8 @@ BridgeResult sqliteDetachDb(std::string const mainDBName, std::string const alia
 BridgeResult sqliteExecute(std::string const dbName,
                            std::string const &query,
                            std::vector<jsVal> *values,
-                           std::vector<std::shared_ptr<DynamicHostObject>> *result,
-                           std::vector<std::shared_ptr<DynamicHostObject>> *metadata);
+                           std::vector<DumbHostObject> *results,
+                           std::shared_ptr<std::vector<DynamicHostObject>> metadatas);
 
 BridgeResult sqliteExecuteLiteral(std::string const dbName, std::string const &query);
 

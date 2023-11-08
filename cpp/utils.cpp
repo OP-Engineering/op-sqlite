@@ -118,8 +118,8 @@ std::vector<jsVal> toAnyVec(jsi::Runtime &rt, jsi::Value const &params)
 
 jsi::Value createResult(jsi::Runtime &rt,
                         BridgeResult status,
-                        std::vector<std::shared_ptr<DynamicHostObject>> *results,
-                        std::vector<std::shared_ptr<DynamicHostObject>> *metadata)
+                        std::vector<DumbHostObject> *results,
+                        std::shared_ptr<std::vector<DynamicHostObject>> metadata)
 {
     if(status.type == SQLiteError) {
         throw std::invalid_argument(status.message);
@@ -142,7 +142,8 @@ jsi::Value createResult(jsi::Runtime &rt,
         auto array = jsi::Array(rt, rowCount);
         for (int i = 0; i < rowCount; i++)
         {
-            array.setValueAtIndex(rt, i, jsi::Object::createFromHostObject(rt, results->at(i)));
+            auto obj = results->at(i);
+            array.setValueAtIndex(rt, i, jsi::Object::createFromHostObject(rt, std::make_shared<DumbHostObject>(obj)));
         }
         rows.setProperty(rt, "_array", std::move(array));
         res.setProperty(rt, "rows", std::move(rows));
@@ -154,7 +155,7 @@ jsi::Value createResult(jsi::Runtime &rt,
         auto column_array = jsi::Array(rt, column_count);
         for (int i = 0; i < column_count; i++) {
             auto column = metadata->at(i);
-            column_array.setValueAtIndex(rt, i, jsi::Object::createFromHostObject(rt, column));
+            column_array.setValueAtIndex(rt, i, jsi::Object::createFromHostObject(rt, std::make_shared<DynamicHostObject>(column)));
         }
         res.setProperty(rt, "metadata", std::move(column_array));
     }
