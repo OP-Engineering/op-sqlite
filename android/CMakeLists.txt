@@ -31,6 +31,8 @@ add_library(
   ../cpp/sqlbatchexecutor.cpp
   ../cpp/DynamicHostObject.cpp
   ../cpp/DynamicHostObject.h
+  ../cpp/DumbHostObject.cpp
+  ../cpp/DumbHostObject.h
   ../cpp/macros.h
   ../cpp/types.h
   cpp-adapter.cpp

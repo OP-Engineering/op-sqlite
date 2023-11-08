@@ -9,6 +9,7 @@
 #include <any>
 #include "types.h"
 #include "DynamicHostObject.h"
+#include "DumbHostObject.h"
 
 namespace osp {
 
@@ -46,8 +47,8 @@ std::vector<jsVal> toAnyVec(jsi::Runtime &rt, jsi::Value const &args);
 
 jsi::Value createResult(jsi::Runtime &rt,
                         BridgeResult status,
-                        std::vector<std::shared_ptr<DynamicHostObject>> *results,
-                        std::vector<std::shared_ptr<DynamicHostObject>> *metadata);
+                        std::vector<DumbHostObject> *results,
+                        std::shared_ptr<std::vector<DynamicHostObject>> metadata);
 
 BatchResult importSQLFile(std::string dbName, std::string fileLocation);
 

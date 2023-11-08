@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include "logs.h"
 #include "DynamicHostObject.h"
+#include "DumbHostObject.h"
 #include <variant>
 
 namespace osp {
@@ -208,7 +209,7 @@ inline void bindStatement(sqlite3_stmt *statement, std::vector<jsVal> *values)
     {
         int sqIndex = ii + 1;
         jsVal value = values->at(ii);
-
+        
         if (std::holds_alternative<bool>(value))
         {
             sqlite3_bind_int(statement, sqIndex, std::get<bool>(value));
@@ -237,22 +238,22 @@ inline void bindStatement(sqlite3_stmt *statement, std::vector<jsVal> *values)
         } else {
             sqlite3_bind_null(statement, sqIndex);
         }
-//        else if (value.type() == typeid(const char*))
-//        {
-//            sqlite3_bind_text(statement, sqIndex, str.c_str(), str.length(), SQLITE_TRANSIENT);
-//            return jsi::String::createFromAscii(rt, std::any_cast<const char*>(value));
-//        }
+        //        else if (value.type() == typeid(const char*))
+        //        {
+        //            sqlite3_bind_text(statement, sqIndex, str.c_str(), str.length(), SQLITE_TRANSIENT);
+        //            return jsi::String::createFromAscii(rt, std::any_cast<const char*>(value));
+        //        }
     }
 }
 
 BridgeResult sqliteExecute(std::string const dbName,
-                             std::string const &query,
-                             std::vector<jsVal> *params,
-                             std::vector<std::shared_ptr<DynamicHostObject>> *results,
-                             std::vector<std::shared_ptr<DynamicHostObject>> *metadatas)
+                           std::string const &query,
+                           std::vector<jsVal> *params,
+                           std::vector<DumbHostObject> *results,
+                           std::shared_ptr<std::vector<DynamicHostObject>> metadatas)
 {
     
-    if (dbMap.count(dbName) == 0)
+    if (dbMap.find(dbName) == dbMap.end())
     {
         return {
             .type = SQLiteError,
@@ -283,7 +284,6 @@ BridgeResult sqliteExecute(std::string const dbName,
     
     int result, i, count, column_type;
     std::string column_name, column_declared_type;
-    std::shared_ptr<DynamicHostObject> row;
     
     while (isConsuming)
     {
@@ -291,24 +291,23 @@ BridgeResult sqliteExecute(std::string const dbName,
         
         switch (result)
         {
-            case SQLITE_ROW:
+            case SQLITE_ROW: {
                 if(results == NULL)
                 {
                     break;
                 }
                 
                 i = 0;
-                row = std::make_shared<DynamicHostObject>();
+                DumbHostObject row = DumbHostObject(metadatas);
+                
                 count = sqlite3_column_count(statement);
                 
                 while (i < count)
                 {
                     column_type = sqlite3_column_type(statement, i);
-                    column_name = sqlite3_column_name(statement, i);
                     
                     switch (column_type)
                     {
-                            
                         case SQLITE_INTEGER:
                         {
                             /**
@@ -316,14 +315,14 @@ BridgeResult sqliteExecute(std::string const dbName,
                              * only represent Integers up to 53 bits
                              */
                             double column_value = sqlite3_column_double(statement, i);
-                            row->fields.push_back(std::make_pair(column_name, jsVal(column_value)));
+                            row.values.push_back(jsVal(column_value));
                             break;
                         }
                             
                         case SQLITE_FLOAT:
                         {
                             double column_value = sqlite3_column_double(statement, i);
-                            row->fields.push_back(std::make_pair(column_name, jsVal(column_value)));
+                            row.values.push_back(jsVal(column_value));
                             break;
                         }
                             
@@ -332,7 +331,7 @@ BridgeResult sqliteExecute(std::string const dbName,
                             const char *column_value = reinterpret_cast<const char *>(sqlite3_column_text(statement, i));
                             int byteLen = sqlite3_column_bytes(statement, i);
                             // Specify length too; in case string contains NULL in the middle (which SQLite supports!)
-                            row->fields.push_back(std::make_pair(column_name, jsVal(std::string(column_value, byteLen))));
+                            row.values.push_back(jsVal(std::string(column_value, byteLen)));
                             break;
                         }
                             
@@ -342,42 +341,43 @@ BridgeResult sqliteExecute(std::string const dbName,
                             const void *blob = sqlite3_column_blob(statement, i);
                             uint8_t *data = new uint8_t[blob_size];
                             memcpy(data, blob, blob_size);
-                            row->fields.push_back(std::make_pair(column_name, jsVal(JSBuffer {
+                            row.values.push_back(jsVal(JSBuffer {
                                 .data =  std::shared_ptr<uint8_t>{data},
                                 .size =  static_cast<size_t>(blob_size)
-                            })));
+                            }));
                             break;
                         }
                             
                         case SQLITE_NULL:
                             // Intentionally left blank
-
+                            
                         default:
-                            row->fields.push_back(std::make_pair(column_name, jsVal(NULL)));
+                            row.values.push_back(jsVal(NULL));
                             break;
                     }
                     i++;
                 }
                 results->push_back(row);
                 break;
-
+            }
+                
             case SQLITE_DONE:
-                if(metadatas != nullptr)
+                i = 0;
+                count = sqlite3_column_count(statement);
+                
+                while (i < count)
                 {
-                    i = 0;
-                    count = sqlite3_column_count(statement);
-                    while (i < count)
-                    {
-                        column_name = sqlite3_column_name(statement, i);
-                        const char *type = sqlite3_column_decltype(statement, i);
-                        auto metadata = std::make_shared<DynamicHostObject>();
-                        metadata->fields.push_back(std::make_pair("name", column_name));
-                        metadata->fields.push_back(std::make_pair("index", i));
-                        metadata->fields.push_back(std::make_pair("type", type));
-                        
-                        i++;
-                    }
+                    column_name = sqlite3_column_name(statement, i);
+                    const char *type = sqlite3_column_decltype(statement, i);
+                    auto metadata = DynamicHostObject();
+                    metadata.fields.push_back(std::make_pair("name", column_name));
+                    metadata.fields.push_back(std::make_pair("index", i));
+                    metadata.fields.push_back(std::make_pair("type", type));
+                    
+                    metadatas->push_back(metadata);
+                    i++;
                 }
+                
                 isConsuming = false;
                 break;
                 
