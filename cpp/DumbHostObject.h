@@ -9,7 +9,7 @@
 #include "types.h"
 #include "DynamicHostObject.h"
 
-namespace osp {
+namespace opsqlite {
 
     namespace jsi = facebook::jsi;
 

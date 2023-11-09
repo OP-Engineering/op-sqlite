@@ -51,14 +51,14 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         documentPath = [paths objectAtIndex:0];
     }
     
-    osp::install(runtime, callInvoker, [documentPath UTF8String]);
+    opsqlite::install(runtime, callInvoker, [documentPath UTF8String]);
     
     NSLog(@"OP-SQLite initialized");
     return @true;
 }
 
 - (void)invalidate {
-    osp::clearState();
+    opsqlite::clearState();
 }
 
 @end

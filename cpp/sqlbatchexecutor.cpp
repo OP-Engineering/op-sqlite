@@ -1,6 +1,6 @@
 #include "sqlbatchexecutor.h"
 
-namespace osp {
+namespace opsqlite {
 
 /**
  * Batch execution implementation

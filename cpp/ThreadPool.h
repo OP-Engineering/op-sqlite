@@ -9,7 +9,7 @@
 #include <thread>
 #include <vector>
 
-namespace osp {
+namespace opsqlite {
 
 class ThreadPool {
 public:

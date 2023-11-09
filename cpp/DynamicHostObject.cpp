@@ -2,7 +2,7 @@
 #include "utils.h"
 #include <iostream>
 
-namespace osp {
+namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 
