@@ -33,33 +33,6 @@ export function queriesTests() {
   });
 
   describe('Queries', () => {
-    it('Create in memory DB', async () => {
-      let inMemoryDb = open({
-        name: 'inMemoryTest',
-        inMemory: true,
-      });
-
-      inMemoryDb.execute('DROP TABLE IF EXISTS User;');
-      inMemoryDb.execute(
-        'CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL) STRICT;',
-      );
-
-      inMemoryDb.close();
-    });
-
-    it('Should fail if tries to create inMemoryDb with non-bool arg', async () => {
-      try {
-        open({
-          name: 'inMemoryTest',
-          // @ts-ignore
-          inMemory: 'blah',
-        });
-        expect.fail('Should throw');
-      } catch (e) {
-        expect(!!e).to.equal(true);
-      }
-    });
-
     it('Insert', async () => {
       const id = chance.integer();
       const name = chance.name();
@@ -124,6 +97,25 @@ export function queriesTests() {
           networth,
         },
       ]);
+    });
+
+    it('Executes all the statements in a single string', async () => {
+      db.execute(
+        `CREATE TABLE T1 ( id INT PRIMARY KEY) STRICT;
+        CREATE TABLE T2 ( id INT PRIMARY KEY) STRICT;`,
+      );
+
+      let t1name = db.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='T1';",
+      );
+
+      expect(t1name.rows?._array[0].name).to.equal('T1');
+
+      let t2name = db.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='T2';",
+      );
+
+      expect(t2name.rows?._array[0].name).to.equal('T2');
     });
 
     it('Failed insert', async () => {

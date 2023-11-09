@@ -252,146 +252,151 @@ BridgeResult sqliteExecute(std::string const dbName,
     {
         return {
             .type = SQLiteError,
-            .message = "[op-sqlite]: Database " + dbName + " is not open",
-            .affectedRows = 0
+            .message = "[op-sqlite]: Database " + dbName + " is not open"
         };
     }
     
     sqlite3 *db = dbMap[dbName];
     
     sqlite3_stmt *statement;
-    
-    int statementStatus = sqlite3_prepare_v2(db, query.c_str(), -1, &statement, NULL);
-    
-    if (statementStatus == SQLITE_ERROR)
-    {
-        const char *message = sqlite3_errmsg(db);
-        return {
-            .type = SQLiteError,
-            .message = "[op-sqlite] SQL execution error: " + std::string(message),
-            .affectedRows = 0};
-    }
-    
-    bindStatement(statement, params);
+    const char *remainingStatement = nullptr;
     
     bool isConsuming = true;
     bool isFailed = false;
     
-    int result, i, count, column_type;
-    std::string column_name, column_declared_type;
-    
-    while (isConsuming)
-    {
-        result = sqlite3_step(statement);
+    do {
+        const char *queryStr = remainingStatement == nullptr ? query.c_str() : remainingStatement;
         
-        switch (result)
+        int statementStatus = sqlite3_prepare_v2(db, queryStr, -1, &statement, &remainingStatement);
+        
+        if (statementStatus == SQLITE_ERROR)
         {
-            case SQLITE_ROW: {
-                if(results == NULL)
-                {
+            const char *message = sqlite3_errmsg(db);
+            return {
+                .type = SQLiteError,
+                .message = "[op-sqlite] SQL execution error: " + std::string(message),
+            };
+        }
+        
+        bindStatement(statement, params);
+        
+        isConsuming = true;
+        
+        int result, i, count, column_type;
+        std::string column_name, column_declared_type;
+        
+        while (isConsuming)
+        {
+            result = sqlite3_step(statement);
+            
+            switch (result)
+            {
+                case SQLITE_ROW: {
+                    if(results == NULL)
+                    {
+                        break;
+                    }
+                    
+                    i = 0;
+                    DumbHostObject row = DumbHostObject(metadatas);
+                    
+                    count = sqlite3_column_count(statement);
+                    
+                    while (i < count)
+                    {
+                        column_type = sqlite3_column_type(statement, i);
+                        
+                        switch (column_type)
+                        {
+                            case SQLITE_INTEGER:
+                            {
+                                /**
+                                 * Warning this will loose precision because JS can
+                                 * only represent Integers up to 53 bits
+                                 */
+                                double column_value = sqlite3_column_double(statement, i);
+                                row.values.push_back(JSVariant(column_value));
+                                break;
+                            }
+                                
+                            case SQLITE_FLOAT:
+                            {
+                                double column_value = sqlite3_column_double(statement, i);
+                                row.values.push_back(JSVariant(column_value));
+                                break;
+                            }
+                                
+                            case SQLITE_TEXT:
+                            {
+                                const char *column_value = reinterpret_cast<const char *>(sqlite3_column_text(statement, i));
+                                int byteLen = sqlite3_column_bytes(statement, i);
+                                // Specify length too; in case string contains NULL in the middle (which SQLite supports!)
+                                row.values.push_back(JSVariant(std::string(column_value, byteLen)));
+                                break;
+                            }
+                                
+                            case SQLITE_BLOB:
+                            {
+                                int blob_size = sqlite3_column_bytes(statement, i);
+                                const void *blob = sqlite3_column_blob(statement, i);
+                                uint8_t *data = new uint8_t[blob_size];
+                                memcpy(data, blob, blob_size);
+                                row.values.push_back(JSVariant(ArrayBuffer {
+                                    .data =  std::shared_ptr<uint8_t>{data},
+                                    .size =  static_cast<size_t>(blob_size)
+                                }));
+                                break;
+                            }
+                                
+                            case SQLITE_NULL:
+                                // Intentionally left blank
+                                
+                            default:
+                                row.values.push_back(JSVariant(NULL));
+                                break;
+                        }
+                        i++;
+                    }
+                    results->push_back(row);
                     break;
                 }
-                
-                i = 0;
-                DumbHostObject row = DumbHostObject(metadatas);
-                
-                count = sqlite3_column_count(statement);
-                
-                while (i < count)
-                {
-                    column_type = sqlite3_column_type(statement, i);
                     
-                    switch (column_type)
+                case SQLITE_DONE:
+                    i = 0;
+                    count = sqlite3_column_count(statement);
+                    
+                    while (i < count)
                     {
-                        case SQLITE_INTEGER:
-                        {
-                            /**
-                             * Warning this will loose precision because JS can
-                             * only represent Integers up to 53 bits
-                             */
-                            double column_value = sqlite3_column_double(statement, i);
-                            row.values.push_back(JSVariant(column_value));
-                            break;
-                        }
-                            
-                        case SQLITE_FLOAT:
-                        {
-                            double column_value = sqlite3_column_double(statement, i);
-                            row.values.push_back(JSVariant(column_value));
-                            break;
-                        }
-                            
-                        case SQLITE_TEXT:
-                        {
-                            const char *column_value = reinterpret_cast<const char *>(sqlite3_column_text(statement, i));
-                            int byteLen = sqlite3_column_bytes(statement, i);
-                            // Specify length too; in case string contains NULL in the middle (which SQLite supports!)
-                            row.values.push_back(JSVariant(std::string(column_value, byteLen)));
-                            break;
-                        }
-                            
-                        case SQLITE_BLOB:
-                        {
-                            int blob_size = sqlite3_column_bytes(statement, i);
-                            const void *blob = sqlite3_column_blob(statement, i);
-                            uint8_t *data = new uint8_t[blob_size];
-                            memcpy(data, blob, blob_size);
-                            row.values.push_back(JSVariant(ArrayBuffer {
-                                .data =  std::shared_ptr<uint8_t>{data},
-                                .size =  static_cast<size_t>(blob_size)
-                            }));
-                            break;
-                        }
-                            
-                        case SQLITE_NULL:
-                            // Intentionally left blank
-                            
-                        default:
-                            row.values.push_back(JSVariant(NULL));
-                            break;
+                        column_name = sqlite3_column_name(statement, i);
+                        const char *type = sqlite3_column_decltype(statement, i);
+                        auto metadata = DynamicHostObject();
+                        metadata.fields.push_back(std::make_pair("name", column_name));
+                        metadata.fields.push_back(std::make_pair("index", i));
+                        metadata.fields.push_back(std::make_pair("type", type));
+                        
+                        metadatas->push_back(metadata);
+                        i++;
                     }
-                    i++;
-                }
-                results->push_back(row);
-                break;
-            }
-                
-            case SQLITE_DONE:
-                i = 0;
-                count = sqlite3_column_count(statement);
-                
-                while (i < count)
-                {
-                    column_name = sqlite3_column_name(statement, i);
-                    const char *type = sqlite3_column_decltype(statement, i);
-                    auto metadata = DynamicHostObject();
-                    metadata.fields.push_back(std::make_pair("name", column_name));
-                    metadata.fields.push_back(std::make_pair("index", i));
-                    metadata.fields.push_back(std::make_pair("type", type));
                     
-                    metadatas->push_back(metadata);
-                    i++;
-                }
-                
-                isConsuming = false;
-                break;
-                
-            default:
-                isFailed = true;
-                isConsuming = false;
+                    isConsuming = false;
+                    break;
+                    
+                default:
+                    isFailed = true;
+                    isConsuming = false;
+            }
         }
-    }
+        
+        sqlite3_finalize(statement);
+    } while (strcmp(remainingStatement, "") != 0 && !isFailed);
     
-    sqlite3_finalize(statement);
     
     if (isFailed)
     {
         const char *message = sqlite3_errmsg(db);
         return {
             .type = SQLiteError,
-            .message = "[op-sqlite] SQL execution error: " + std::string(message),
-            .affectedRows = 0,
-            .insertId = 0
+            .message = "[op-sqlite] SQL execution error: " + std::string(message)
         };
     }
     
