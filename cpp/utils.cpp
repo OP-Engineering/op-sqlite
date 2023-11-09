@@ -4,7 +4,7 @@
 #include <fstream>
 #include "bridge.h"
 
-namespace osp {
+namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 

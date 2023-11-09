@@ -1,6 +1,6 @@
 #include "ThreadPool.h"
 
-namespace osp {
+namespace opsqlite {
 
 ThreadPool::ThreadPool() : done(false)
 {

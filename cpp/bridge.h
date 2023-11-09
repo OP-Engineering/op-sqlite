@@ -7,7 +7,7 @@
 #include "DumbHostObject.h"
 #include "types.h"
 
-namespace osp {
+namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 

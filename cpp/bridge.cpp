@@ -11,7 +11,7 @@
 #include "DumbHostObject.h"
 #include <variant>
 
-namespace osp {
+namespace opsqlite {
 
 std::unordered_map<std::string, sqlite3 *> dbMap = std::unordered_map<std::string, sqlite3 *>();
 

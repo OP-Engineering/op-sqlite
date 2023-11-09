@@ -11,7 +11,7 @@
 #include "DynamicHostObject.h"
 #include "DumbHostObject.h"
 
-namespace osp {
+namespace opsqlite {
 
     namespace jsi = facebook::jsi;
 

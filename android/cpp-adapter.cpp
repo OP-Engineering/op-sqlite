@@ -29,11 +29,11 @@ private:
     auto jsCallInvoker = jsCallInvokerHolder->cthis()->getCallInvoker();
     std::string docPathString = docPath->toStdString();
 
-    osp::install(*jsiRuntime, jsCallInvoker, docPathString.c_str());
+    opsqlite::install(*jsiRuntime, jsCallInvoker, docPathString.c_str());
   }
  
   static void clearStateNativeJsi(jni::alias_ref<jni::JObject> thiz) {
-    osp::clearState();
+    opsqlite::clearState();
   }
 };
 
