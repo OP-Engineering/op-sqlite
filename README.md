@@ -16,10 +16,6 @@ Created by [@ospfranco](https://twitter.com/ospfranco). Also created `react-nati
 
 **Please consider Sponsoring**, none of this work is for free. I pay for it with my time and knowledge. If you are a company in need of help with your React Native/React apps feel free to reach out. I also do a lot of C++ and nowadays Rust.
 
-## Known issues
-
-[ArrayBuffer support is commented out right now](https://github.com/OP-Engineering/op-sqlite/blob/main/cpp/bridge.cpp#L247). I will get to it in the next days or feel free to submit a PR.
-
 ## Coming up
 
 I will gladly review bug fixes, but in order for me to continue support and add new features, I ask you to sponsor me. Some of the things that can still be done to make this package faster and more complete:
@@ -35,9 +31,9 @@ You can find the [benchmarking code in the example app](https://github.com/OP-En
 
 | Library      | iPhone 15 Pro | Galaxy S22 |
 | ------------ | ------------- | ---------- |
-| quick-sqlite | 2719          | 8851       |
-| expo-sqlite  | 2293          | 10626      |
-| op-sqlite    | 507           | 1125       |
+| quick-sqlite | 2719ms        | 8851ms     |
+| expo-sqlite  | 2293ms        | 10626ms    |
+| op-sqlite    | 507ms         | 1125ms     |
 
 Memory consumption is also is also 1/4 compared to `react-native-quick-sqlite`. This query used to take 1.2gb of peak memory usage, now runs in 250mbs.
 
@@ -108,7 +104,8 @@ try {
 
   let { rows } = db.execute('SELECT somevalue FROM sometable');
 
-  rows.forEach((row) => {
+  // _array internally holds the values, this is meant to comply with the webSQL spec
+  rows._array.forEach((row) => {
     console.log(row);
   });
 
@@ -199,7 +196,7 @@ db.executeAsync(
   'myDatabase',
   'SELECT * FROM "User";',
   []).then(({rows}) => {
-    console.log('users', rows);
+    console.log('users', rows._array);
   })
 );
 ```
