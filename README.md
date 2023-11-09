@@ -281,7 +281,7 @@ For example, you could add `SQLITE_ENABLE_FTS5=1` to `GCC_PREPROCESSOR_DEFINITIO
 You can specify flags via `<PROJECT_ROOT>/android/gradle.properties` like so:
 
 ```
-quickSqliteFlags="-DSQLITE_ENABLE_FTS5=1"
+OPSQLiteFlags="-DSQLITE_ENABLE_FTS5=1"
 ```
 
 ## Additional configuration
