@@ -231,9 +231,9 @@ inline void bindStatement(sqlite3_stmt *statement, std::vector<jsVal> *values)
             std::string str = std::get<std::string>(value);
             sqlite3_bind_text(statement, sqIndex, str.c_str(), str.length(), SQLITE_TRANSIENT);
         }
-        else if(std::holds_alternative<JSBuffer>(value))
+        else if(std::holds_alternative<ArrayBuffer>(value))
         {
-            JSBuffer buffer = std::get<JSBuffer>(value);
+            ArrayBuffer buffer = std::get<ArrayBuffer>(value);
             sqlite3_bind_blob(statement, sqIndex, buffer.data.get(), buffer.size, SQLITE_STATIC);
         } else {
             sqlite3_bind_null(statement, sqIndex);
@@ -341,7 +341,7 @@ BridgeResult sqliteExecute(std::string const dbName,
                             const void *blob = sqlite3_column_blob(statement, i);
                             uint8_t *data = new uint8_t[blob_size];
                             memcpy(data, blob, blob_size);
-                            row.values.push_back(jsVal(JSBuffer {
+                            row.values.push_back(jsVal(ArrayBuffer {
                                 .data =  std::shared_ptr<uint8_t>{data},
                                 .size =  static_cast<size_t>(blob_size)
                             }));
