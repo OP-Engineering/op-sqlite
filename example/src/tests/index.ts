@@ -1,2 +1,2 @@
-export { runTests } from './MochaSetup';
-export { registerBaseTests } from './rawQueries.spec';
+export {runTests} from './MochaSetup';
+export {registerTests} from './all.spec';

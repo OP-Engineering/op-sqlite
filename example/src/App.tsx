@@ -9,9 +9,9 @@ import {
 } from 'react-native';
 import 'reflect-metadata';
 import {createLargeDB, queryLargeDB} from './Database';
-import {registerBaseTests, runTests} from './tests/index';
-// @ts-ignore
-import packageInfo from '../package.json';
+import {registerTests, runTests} from './tests/index';
+import pak from '../package.json';
+import clsx from 'clsx';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(false);
@@ -21,7 +21,7 @@ export default function App() {
 
   useEffect(() => {
     setResults([]);
-    runTests(registerBaseTests).then(setResults);
+    runTests(registerTests).then(setResults);
   }, []);
 
   const createLargeDb = async () => {
@@ -43,11 +43,15 @@ export default function App() {
     }
   };
 
+  const allTestsPassed = results.reduce((acc: boolean, r: any) => {
+    return acc && r.type !== 'incorrect';
+  }, true);
+
   return (
     <SafeAreaView className="flex-1 bg-neutral-900">
       <View className="p-4">
         <ScrollView>
-          <Text className=" text-white text-xl">{packageInfo.name}</Text>
+          <Text className=" text-white text-xl">{pak.name}</Text>
 
           <Text className="text-lg text-white mt-8">Benchmarks</Text>
           <Button title="Create 300k Record DB" onPress={createLargeDb} />
@@ -74,36 +78,41 @@ export default function App() {
             </Text>
           )}
 
-          <Text className="text-lg text-white mt-8">Tests</Text>
-          {results
-            .sort((a: any, b: any) => {
-              return a.type === 'incorrect' ? -1 : 1;
-            })
-            .map((r: any, i: number) => {
-              if (r.type === 'grouping') {
-                return null;
-              }
+          <View className="flex-row mt-8 mb-3">
+            <Text
+              className={clsx('text-lg flex-1', {
+                'text-green-500': allTestsPassed,
+                'text-red-500': !allTestsPassed,
+              })}>
+              Tests
+            </Text>
+            {allTestsPassed ? <Text>🟩</Text> : <Text>🟥</Text>}
+          </View>
+          {results.map((r: any, i: number) => {
+            if (r.type === 'grouping') {
+              return null;
+            }
 
-              if (r.type === 'incorrect') {
-                return (
-                  <View className="border-b border-neutral-600 py-2 flex-row">
-                    <Text key={i} className="text-white flex-1">
-                      {r.description}: {r.errorMsg}
-                    </Text>
-                    <Text>🟥</Text>
-                  </View>
-                );
-              }
-
+            if (r.type === 'incorrect') {
               return (
                 <View className="border-b border-neutral-600 py-2 flex-row">
                   <Text key={i} className="text-white flex-1">
-                    {r.description}
+                    {r.description}: {r.errorMsg}
                   </Text>
-                  <Text>🟩</Text>
+                  <Text>🔻</Text>
                 </View>
               );
-            })}
+            }
+
+            return (
+              <View className="border-b border-neutral-600 py-2 flex-row">
+                <Text key={i} className="text-white flex-1">
+                  {r.description}
+                </Text>
+                <Text>🟢</Text>
+              </View>
+            );
+          })}
         </ScrollView>
       </View>
     </SafeAreaView>

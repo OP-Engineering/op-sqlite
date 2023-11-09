@@ -11,7 +11,7 @@ let expect = chai.expect;
 const chance = new Chance();
 let db: OPSQLiteConnection;
 
-export function registerBaseTests() {
+export function registerTests() {
   beforeEach(() => {
     try {
       if (db) {
@@ -32,7 +32,35 @@ export function registerBaseTests() {
     }
   });
 
-  describe('Base tests', () => {
+  describe('tests', () => {
+    it('Create in memory DB', async () => {
+      let inMemoryDb = open({
+        name: 'inMemoryTest',
+        inMemory: true,
+      });
+
+      inMemoryDb.execute('DROP TABLE IF EXISTS User;');
+      inMemoryDb.execute(
+        'CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL) STRICT;',
+      );
+
+      inMemoryDb.close();
+    });
+
+    it('Should fail if tries to create inMemoryDb with non-bool arg', async () => {
+      try {
+        open({
+          name: 'inMemoryTest',
+          // @ts-ignore
+          inMemory: 'blah',
+        });
+        expect.fail('Should throw');
+      } catch (e) {
+        console.warn('blah');
+        expect(!!e).to.equal(true);
+      }
+    });
+
     it('Insert', async () => {
       const id = chance.integer();
       const name = chance.name();
