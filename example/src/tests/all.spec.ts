@@ -56,7 +56,6 @@ export function registerTests() {
         });
         expect.fail('Should throw');
       } catch (e) {
-        console.warn('blah');
         expect(!!e).to.equal(true);
       }
     });

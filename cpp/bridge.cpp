@@ -73,9 +73,9 @@ std::string get_db_path(std::string const dbName, std::string const docPath)
     return docPath + "/" + dbName;
 }
 
-BridgeResult sqliteOpenDb(std::string const dbName, std::string const docPath)
+BridgeResult sqliteOpenDb(std::string const dbName, std::string const docPath, bool memoryStorage)
 {
-    std::string dbPath = get_db_path(dbName, docPath);
+    std::string dbPath = memoryStorage ? ":memory:" : get_db_path(dbName, docPath);
     
     int sqlOpenFlags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
     
