@@ -11,6 +11,7 @@ const DB_NAME = 'largeDB';
 export async function createLargeDB() {
   let largeDb = open({
     name: DB_NAME,
+    // inMemory: true,
   });
 
   largeDb.execute('DROP TABLE IF EXISTS Test;');
@@ -18,11 +19,9 @@ export async function createLargeDB() {
     'CREATE TABLE Test ( id INT PRIMARY KEY, v1 TEXT, v2 TEXT, v3 TEXT, v4 TEXT, v5 TEXT, v6 INT, v7 INT, v8 INT, v9 INT, v10 INT, v11 REAL, v12 REAL, v13 REAL, v14 REAL) STRICT;',
   );
 
+  let insertions: [string, any[]][] = [];
   for (let i = 0; i < ROWS; i++) {
-    if (i % 100 === 0) {
-      console.log(`Inserted ${i}`);
-    }
-    await largeDb.executeAsync(
+    insertions.push([
       'INSERT INTO "Test" (id, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         i,
@@ -41,8 +40,10 @@ export async function createLargeDB() {
         chance.floating(),
         chance.floating(),
       ],
-    );
+    ]);
   }
+
+  await largeDb.executeBatchAsync(insertions);
 
   console.log(`inserted ${ROWS}`);
 

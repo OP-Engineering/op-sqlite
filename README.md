@@ -48,6 +48,8 @@ The library creates/opens databases by appending the passed name plus, the [libr
 If you have an existing database file you want to load you can navigate from these directories using dot notation. e.g.:
 
 ```ts
+import { open } from '@op-engineering/op-sqlite';
+
 const largeDb = open({
   name: 'largeDB',
   location: '../files/databases',
@@ -56,7 +58,20 @@ const largeDb = open({
 
 Note that on iOS the file system is sand-boxed, so you cannot access files/directories outside your app bundle directories.
 
-## API
+## In memory
+
+Using SQLite in memory mode is supported:
+
+```ts
+import { open } from '@op-engineering/op-sqlite';
+
+const largeDb = open({
+  name: 'inMemoryDb',
+  inMemory: true,
+});
+```
+
+# API
 
 ```typescript
 import {open} from '@op-engineering/op-sqlite'
@@ -89,7 +104,7 @@ The basic query is **synchronous**, it will block rendering on large operations,
 import { open } from '@op-engineering/op-sqlite';
 
 try {
-  const db = open('myDb.sqlite');
+  const db = open({ name: 'myDb.sqlite' });
 
   let { rows } = db.execute('SELECT somevalue FROM sometable');
 

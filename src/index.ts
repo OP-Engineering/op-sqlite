@@ -131,7 +131,7 @@ export interface PendingTransaction {
 }
 
 interface ISQLite {
-  open: (dbName: string, location?: string) => void;
+  open: (dbName: string, location?: string, inMemory?: boolean) => void;
   close: (dbName: string) => void;
   delete: (dbName: string, location?: string) => void;
   attach: (
@@ -181,7 +181,7 @@ const enhanceQueryResult = (result: QueryResult): void => {
 };
 
 const _open = OPSQLite.open;
-OPSQLite.open = (dbName: string, location?: string) => {
+OPSQLite.open = (dbName: string, location?: string, inMemory?: boolean) => {
   _open(dbName, location);
 
   locks[dbName] = {
@@ -347,8 +347,9 @@ export type OPSQLiteConnection = {
 export const open = (options: {
   name: string;
   location?: string;
+  inMemory?: boolean;
 }): OPSQLiteConnection => {
-  OPSQLite.open(options.name, options.location);
+  OPSQLite.open(options.name, options.location, options.inMemory);
 
   return {
     close: () => OPSQLite.close(options.name),
