@@ -96,7 +96,7 @@ db = {
 
 The basic query is **synchronous**, it will block rendering on large operations, further below you will find async versions.
 
-```typescript
+```ts
 import { open } from '@op-engineering/op-sqlite';
 
 try {
@@ -118,6 +118,30 @@ try {
 } catch (e) {
   console.error('Something went wrong executing SQL commands:', e.message);
 }
+```
+
+### Multiple statements in a single string
+
+You can execute multiple statements in a single operation. The API however is not really thought for this use case and the results (and their metadata) will be mangled, so you can discard it.
+
+```ts
+// The result of this query will all be in a single array, no point in trying to read it
+db.execute(
+  `CREATE TABLE T1 ( id INT PRIMARY KEY) STRICT;
+  CREATE TABLE T2 ( id INT PRIMARY KEY) STRICT;`
+);
+
+let t1name = db.execute(
+  "SELECT name FROM sqlite_master WHERE type='table' AND name='T1';"
+);
+
+expect(t1name.rows?._array[0].name).to.equal('T1');
+
+let t2name = db.execute(
+  "SELECT name FROM sqlite_master WHERE type='table' AND name='T2';"
+);
+
+expect(t2name.rows?._array[0].name).to.equal('T2');
 ```
 
 ### Transactions
