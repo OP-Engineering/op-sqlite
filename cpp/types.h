@@ -1,5 +1,5 @@
-#ifndef jsVal_h
-#define jsVal_h
+#ifndef types_h
+#define types_h
 
 #include <variant>
 
@@ -9,6 +9,6 @@ struct ArrayBuffer {
 };
 
 
-using jsVal = std::variant<nullptr_t, bool, int, double, long, long long, std::string, ArrayBuffer>;
+using JSVariant = std::variant<nullptr_t, bool, int, double, long, long long, std::string, ArrayBuffer>;
 
-#endif /* jsVal_h */
+#endif /* types_h */

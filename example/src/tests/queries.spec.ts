@@ -11,7 +11,7 @@ let expect = chai.expect;
 const chance = new Chance();
 let db: OPSQLiteConnection;
 
-export function registerTests() {
+export function queriesTests() {
   beforeEach(() => {
     try {
       if (db) {
@@ -32,7 +32,7 @@ export function registerTests() {
     }
   });
 
-  describe('tests', () => {
+  describe('Queries', () => {
     it('Create in memory DB', async () => {
       let inMemoryDb = open({
         name: 'inMemoryTest',

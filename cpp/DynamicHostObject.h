@@ -18,7 +18,7 @@ namespace osp {
 
         jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID);
 
-        std::vector<std::pair<std::string, jsVal>> fields;
+        std::vector<std::pair<std::string, JSVariant>> fields;
     };
 
 }
