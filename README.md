@@ -135,13 +135,13 @@ let t1name = db.execute(
   "SELECT name FROM sqlite_master WHERE type='table' AND name='T1';"
 );
 
-expect(t1name.rows?._array[0].name).to.equal('T1');
+console.log(t1name.rows?._array[0].name); // outputs "T1"
 
 let t2name = db.execute(
   "SELECT name FROM sqlite_master WHERE type='table' AND name='T2';"
 );
 
-expect(t2name.rows?._array[0].name).to.equal('T2');
+console.log(t2name.rows?._array[0].name); // outputs "T2"
 ```
 
 ### Transactions
