@@ -23,7 +23,7 @@ namespace osp {
 
         jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID);
 
-        std::vector<jsVal> values;
+        std::vector<JSVariant> values;
         
         std::shared_ptr<std::vector<DynamicHostObject>> metadata;
     };

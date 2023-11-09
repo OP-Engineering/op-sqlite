@@ -8,14 +8,14 @@ namespace osp {
 
 namespace jsi = facebook::jsi;
 
-jsVal toAny(jsi::Runtime &rt, jsi::Value &value) {
+JSVariant toAny(jsi::Runtime &rt, jsi::Value &value) {
     if (value.isNull() || value.isUndefined())
     {
-        return jsVal(nullptr);
+        return JSVariant(nullptr);
     }
     else if (value.isBool())
     {
-        return jsVal(value.getBool());
+        return JSVariant(value.getBool());
     }
     else if (value.isNumber())
     {
@@ -24,21 +24,21 @@ jsVal toAny(jsi::Runtime &rt, jsi::Value &value) {
         long long longVal = (long)doubleVal;
         if (intVal == doubleVal)
         {
-            return jsVal(intVal);
+            return JSVariant(intVal);
         }
         else if (longVal == doubleVal)
         {
-            return jsVal(longVal);
+            return JSVariant(longVal);
         }
         else
         {
-            return jsVal(doubleVal);
+            return JSVariant(doubleVal);
         }
     }
     else if (value.isString())
     {
         std::string strVal = value.asString(rt).utf8(rt);
-        return jsVal(strVal);
+        return JSVariant(strVal);
     }
     else if (value.isObject())
     {
@@ -46,7 +46,7 @@ jsVal toAny(jsi::Runtime &rt, jsi::Value &value) {
         if (object.isArrayBuffer(rt))
         {
             auto buffer = object.getArrayBuffer(rt);
-            return jsVal(ArrayBuffer {
+            return JSVariant(ArrayBuffer {
                 .data =  std::shared_ptr<uint8_t>{buffer.data(rt)},
                 .size =  buffer.size(rt)
             });
@@ -56,7 +56,7 @@ jsVal toAny(jsi::Runtime &rt, jsi::Value &value) {
     throw new std::invalid_argument("Unknown JSI to any value conversion");
 }
 
-jsi::Value toJSI(jsi::Runtime &rt, jsVal value) {
+jsi::Value toJSI(jsi::Runtime &rt, JSVariant value) {
     
     if (std::holds_alternative<bool>(value))
     {
@@ -96,9 +96,9 @@ jsi::Value toJSI(jsi::Runtime &rt, jsVal value) {
     return jsi::Value::null();
 }
 
-std::vector<jsVal> toAnyVec(jsi::Runtime &rt, jsi::Value const &params)
+std::vector<JSVariant> toAnyVec(jsi::Runtime &rt, jsi::Value const &params)
 {
-    std::vector<jsVal> res;
+    std::vector<JSVariant> res;
     
     if (params.isNull() || params.isUndefined())
     {

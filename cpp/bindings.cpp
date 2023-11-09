@@ -192,7 +192,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
     {
         const std::string dbName = args[0].asString(rt).utf8(rt);
         const std::string query = args[1].asString(rt).utf8(rt);
-        std::vector<jsVal> params;
+        std::vector<JSVariant> params;
         if(count == 3) {
             const jsi::Value &originalParams = args[2];
             params = toAnyVec(rt, originalParams);
@@ -226,7 +226,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
         const std::string query = args[1].asString(rt).utf8(rt);
         const jsi::Value &originalParams = args[2];
         
-        std::vector<jsVal> params = toAnyVec(rt, originalParams);
+        std::vector<JSVariant> params = toAnyVec(rt, originalParams);
         
         auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
         auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor", 2) {
@@ -234,7 +234,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
             auto reject = std::make_shared<jsi::Value>(rt, args[1]);
             
             auto task =
-            [&rt, dbName, query, params = std::make_shared<std::vector<jsVal>>(params), resolve, reject]()
+            [&rt, dbName, query, params = std::make_shared<std::vector<JSVariant>>(params), resolve, reject]()
             {
                 try
                 {

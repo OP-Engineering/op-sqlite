@@ -25,7 +25,7 @@ void toBatchArguments(jsi::Runtime &rt, jsi::Array const &batchParams, std::vect
             for (int x = 0; x < batchUpdateParams.length(rt); x++)
             {
                 const jsi::Value &p = batchUpdateParams.getValueAtIndex(rt, x);
-                auto params = std::make_shared<std::vector<jsVal>>(toAnyVec(rt, p));
+                auto params = std::make_shared<std::vector<JSVariant>>(toAnyVec(rt, p));
                 commands->push_back({
                     query,
                     params
@@ -34,7 +34,7 @@ void toBatchArguments(jsi::Runtime &rt, jsi::Array const &batchParams, std::vect
         }
         else
         {
-            auto params = std::make_shared<std::vector<jsVal>>(toAnyVec(rt, commandParams));
+            auto params = std::make_shared<std::vector<JSVariant>>(toAnyVec(rt, commandParams));
             commands->push_back({
                 query,
                 params

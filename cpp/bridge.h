@@ -23,7 +23,7 @@ BridgeResult sqliteDetachDb(std::string const mainDBName, std::string const alia
 
 BridgeResult sqliteExecute(std::string const dbName,
                            std::string const &query,
-                           std::vector<jsVal> *values,
+                           std::vector<JSVariant> *values,
                            std::vector<DumbHostObject> *results,
                            std::shared_ptr<std::vector<DynamicHostObject>> metadatas);
 

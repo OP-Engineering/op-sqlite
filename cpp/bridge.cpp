@@ -201,14 +201,14 @@ BridgeResult sqliteRemoveDb(std::string const dbName, std::string const docPath)
     };
 }
 
-inline void bindStatement(sqlite3_stmt *statement, std::vector<jsVal> *values)
+inline void bindStatement(sqlite3_stmt *statement, std::vector<JSVariant> *values)
 {
     size_t size = values->size();
     
     for (int ii = 0; ii < size; ii++)
     {
         int sqIndex = ii + 1;
-        jsVal value = values->at(ii);
+        JSVariant value = values->at(ii);
         
         if (std::holds_alternative<bool>(value))
         {
@@ -238,17 +238,12 @@ inline void bindStatement(sqlite3_stmt *statement, std::vector<jsVal> *values)
         } else {
             sqlite3_bind_null(statement, sqIndex);
         }
-        //        else if (value.type() == typeid(const char*))
-        //        {
-        //            sqlite3_bind_text(statement, sqIndex, str.c_str(), str.length(), SQLITE_TRANSIENT);
-        //            return jsi::String::createFromAscii(rt, std::any_cast<const char*>(value));
-        //        }
     }
 }
 
 BridgeResult sqliteExecute(std::string const dbName,
                            std::string const &query,
-                           std::vector<jsVal> *params,
+                           std::vector<JSVariant> *params,
                            std::vector<DumbHostObject> *results,
                            std::shared_ptr<std::vector<DynamicHostObject>> metadatas)
 {
@@ -315,14 +310,14 @@ BridgeResult sqliteExecute(std::string const dbName,
                              * only represent Integers up to 53 bits
                              */
                             double column_value = sqlite3_column_double(statement, i);
-                            row.values.push_back(jsVal(column_value));
+                            row.values.push_back(JSVariant(column_value));
                             break;
                         }
                             
                         case SQLITE_FLOAT:
                         {
                             double column_value = sqlite3_column_double(statement, i);
-                            row.values.push_back(jsVal(column_value));
+                            row.values.push_back(JSVariant(column_value));
                             break;
                         }
                             
@@ -331,7 +326,7 @@ BridgeResult sqliteExecute(std::string const dbName,
                             const char *column_value = reinterpret_cast<const char *>(sqlite3_column_text(statement, i));
                             int byteLen = sqlite3_column_bytes(statement, i);
                             // Specify length too; in case string contains NULL in the middle (which SQLite supports!)
-                            row.values.push_back(jsVal(std::string(column_value, byteLen)));
+                            row.values.push_back(JSVariant(std::string(column_value, byteLen)));
                             break;
                         }
                             
@@ -341,7 +336,7 @@ BridgeResult sqliteExecute(std::string const dbName,
                             const void *blob = sqlite3_column_blob(statement, i);
                             uint8_t *data = new uint8_t[blob_size];
                             memcpy(data, blob, blob_size);
-                            row.values.push_back(jsVal(ArrayBuffer {
+                            row.values.push_back(JSVariant(ArrayBuffer {
                                 .data =  std::shared_ptr<uint8_t>{data},
                                 .size =  static_cast<size_t>(blob_size)
                             }));
@@ -352,7 +347,7 @@ BridgeResult sqliteExecute(std::string const dbName,
                             // Intentionally left blank
                             
                         default:
-                            row.values.push_back(jsVal(NULL));
+                            row.values.push_back(JSVariant(NULL));
                             break;
                     }
                     i++;

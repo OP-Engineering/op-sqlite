@@ -9,9 +9,16 @@ import {
 } from 'react-native';
 import 'reflect-metadata';
 import {createLargeDB, queryLargeDB} from './Database';
-import {registerTests, runTests} from './tests/index';
+import {dbSetupTests, queriesTests, runTests} from './tests/index';
 import pak from '../package.json';
 import clsx from 'clsx';
+import {styled} from 'nativewind';
+
+const StyledScrollView = styled(ScrollView, {
+  props: {
+    contentContainerStyle: true,
+  },
+});
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(false);
@@ -21,7 +28,7 @@ export default function App() {
 
   useEffect(() => {
     setResults([]);
-    runTests(registerTests).then(setResults);
+    runTests(dbSetupTests, queriesTests).then(setResults);
   }, []);
 
   const createLargeDb = async () => {
@@ -49,72 +56,70 @@ export default function App() {
 
   return (
     <SafeAreaView className="flex-1 bg-neutral-900">
-      <View className="p-4">
-        <ScrollView>
-          <Text className=" text-white text-xl">{pak.name}</Text>
+      <StyledScrollView>
+        <Text className=" text-white text-2xl p-2">{pak.name}</Text>
 
-          <Text className="text-lg text-white mt-8">Benchmarks</Text>
-          <Button title="Create 300k Record DB" onPress={createLargeDb} />
-          <Button title="Query 300k Records" onPress={queryLargeDb} />
-          {isLoading && <ActivityIndicator color={'white'} size="large" />}
+        <View className="flex-row p-2 bg-neutral-600 items-center">
+          <Text className={'text-lg flex-1  text-white'}>BENCHMARKS</Text>
+        </View>
+        <Button title="Create 300k Record DB" onPress={createLargeDb} />
+        <Button title="Query 300k Records" onPress={queryLargeDb} />
+        {isLoading && <ActivityIndicator color={'white'} size="large" />}
 
-          {!!times.length && (
-            <Text className="text-lg text-green-500 self-center">
-              Load from db{' '}
-              {(times.reduce((acc, t) => (acc += t), 0) / times.length).toFixed(
-                0,
-              )}{' '}
-              ms average
-            </Text>
-          )}
-          {!!accessingTimes.length && (
-            <Text className="text-lg text-green-500 self-center">
-              Read property{' '}
-              {(
-                accessingTimes.reduce((acc, t) => (acc += t), 0) /
-                accessingTimes.length
-              ).toFixed(0)}{' '}
-              ms average
-            </Text>
-          )}
+        {!!times.length && (
+          <Text className="text-lg text-white self-center">
+            Load from db{' '}
+            {(times.reduce((acc, t) => (acc += t), 0) / times.length).toFixed(
+              0,
+            )}{' '}
+            ms average
+          </Text>
+        )}
+        {!!accessingTimes.length && (
+          <Text className="text-lg text-white self-center">
+            Read property{' '}
+            {(
+              accessingTimes.reduce((acc, t) => (acc += t), 0) /
+              accessingTimes.length
+            ).toFixed(0)}{' '}
+            ms average
+          </Text>
+        )}
 
-          <View className="flex-row mt-8 mb-3">
-            <Text
-              className={clsx('text-lg flex-1', {
-                'text-green-500': allTestsPassed,
-                'text-red-500': !allTestsPassed,
-              })}>
-              Tests
-            </Text>
-            {allTestsPassed ? <Text>🟩</Text> : <Text>🟥</Text>}
-          </View>
-          {results.map((r: any, i: number) => {
-            if (r.type === 'grouping') {
-              return null;
-            }
-
-            if (r.type === 'incorrect') {
-              return (
-                <View className="border-b border-neutral-600 py-2 flex-row">
-                  <Text key={i} className="text-white flex-1">
-                    {r.description}: {r.errorMsg}
-                  </Text>
-                  <Text>🔻</Text>
-                </View>
-              );
-            }
-
+        <View className="flex-row p-2 mt-4 bg-neutral-600 items-center">
+          <Text className={'text-lg flex-1  text-white'}>ALL TESTS</Text>
+          {allTestsPassed ? <Text>🟩</Text> : <Text>🟥</Text>}
+        </View>
+        {results.map((r: any, i: number) => {
+          if (r.type === 'grouping') {
             return (
-              <View className="border-b border-neutral-600 py-2 flex-row">
+              <Text className="bg-neutral-700 p-2 text-white">
+                {r.description}
+              </Text>
+            );
+          }
+
+          if (r.type === 'incorrect') {
+            return (
+              <View className="border-b border-neutral-600 p-2 flex-row">
                 <Text key={i} className="text-white flex-1">
-                  {r.description}
+                  {r.description}: {r.errorMsg}
                 </Text>
-                <Text>🟢</Text>
+                <Text>🔻</Text>
               </View>
             );
-          })}
-        </ScrollView>
-      </View>
+          }
+
+          return (
+            <View className="border-b border-neutral-600 p-2 flex-row">
+              <Text key={i} className="text-white flex-1">
+                {r.description}
+              </Text>
+              <Text>🟢</Text>
+            </View>
+          );
+        })}
+      </StyledScrollView>
     </SafeAreaView>
   );
 }

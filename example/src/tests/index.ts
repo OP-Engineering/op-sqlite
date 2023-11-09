@@ -1,2 +1,3 @@
 export {runTests} from './MochaSetup';
-export {registerTests} from './all.spec';
+export {queriesTests} from './queries.spec';
+export {dbSetupTests} from './dbsetup.spec';

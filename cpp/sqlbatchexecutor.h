@@ -11,7 +11,7 @@ namespace jsi = facebook::jsi;
 
 struct BatchArguments {
   std::string sql;
-  std::shared_ptr<std::vector<jsVal>> params;
+  std::shared_ptr<std::vector<JSVariant>> params;
 };
 
 /**
