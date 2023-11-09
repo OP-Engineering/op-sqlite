@@ -46,7 +46,7 @@ jsVal toAny(jsi::Runtime &rt, jsi::Value &value) {
         if (object.isArrayBuffer(rt))
         {
             auto buffer = object.getArrayBuffer(rt);
-            return jsVal(JSBuffer {
+            return jsVal(ArrayBuffer {
                 .data =  std::shared_ptr<uint8_t>{buffer.data(rt)},
                 .size =  buffer.size(rt)
             });
@@ -82,9 +82,9 @@ jsi::Value toJSI(jsi::Runtime &rt, jsVal value) {
 //    {
 //        return jsi::String::createFromAscii(rt, std::get<const char*>(value));
 //    }
-    else if (std::holds_alternative<JSBuffer>(value))
+    else if (std::holds_alternative<ArrayBuffer>(value))
     {
-        auto jsBuffer = std::get<JSBuffer>(value);
+        auto jsBuffer = std::get<ArrayBuffer>(value);
         jsi::Function array_buffer_ctor = rt.global().getPropertyAsFunction(rt, "ArrayBuffer");
         jsi::Object o = array_buffer_ctor.callAsConstructor(rt, (int)jsBuffer.size).getObject(rt);
         jsi::ArrayBuffer buf = o.getArrayBuffer(rt);
