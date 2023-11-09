@@ -10,21 +10,22 @@
   },
   "dependencies": {
     "@craftzdog/react-native-buffer": "^6.0.5",
+    "@op-engineering/op-sqlite": "./..",
     "chai": "^4.3.7",
     "chance": "^1.1.9",
+    "clsx": "^2.0.0",
     "events": "^3.3.0",
     "mocha": "^10.1.0",
     "nativewind": "^2.0.11",
     "react": "18.2.0",
     "react-native": "0.72.6",
-    "@op-engineering/op-sqlite": "./..",
+    "react-native-performance": "^5.1.0",
     "react-native-safe-area-context": "^4.5.0",
     "reflect-metadata": "^0.1.13",
     "stream-browserify": "^3.0.0",
     "tailwindcss": "^3.2.4",
     "typeorm": "^0.3.11",
-    "util": "^0.12.5",
-    "react-native-performance": "^5.1.0"
+    "util": "^0.12.5"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",
