@@ -225,6 +225,32 @@ db.executeAsync(
 );
 ```
 
+### Blobs
+
+Blobs are supported via `ArrayBuffer`, you need to be careful about the semantics though. You cannot instanciate an instance of `ArrayBuffer` directly, nor pass a typed array directly. Here is an example:
+
+```ts
+db = open({
+  name: 'blobs',
+});
+
+db.execute('DROP TABLE IF EXISTS BlobTable;');
+db.execute(
+  'CREATE TABLE BlobTable ( id INT PRIMARY KEY, name TEXT NOT NULL, content BLOB) STRICT;'
+);
+
+let buffer = new ArrayBuffer(24);
+let content = new Uint8Array(buffer, 4, 16);
+// @ts-ignore
+crypto.getRandomValues(content);
+
+db.execute(`INSERT OR REPLACE INTO BlobTable VALUES (?, ?, ?);`, [
+  1,
+  'myTestBlob',
+  buffer,
+]);
+```
+
 ### Attach or Detach other databases
 
 SQLite supports attaching or detaching other database files into your main database connection through an alias.
