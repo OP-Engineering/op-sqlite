@@ -8,54 +8,6 @@ namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 
-JSVariant toAny(jsi::Runtime &rt, jsi::Value &value) {
-    if (value.isNull() || value.isUndefined())
-    {
-        return JSVariant(nullptr);
-    }
-    else if (value.isBool())
-    {
-        return JSVariant(value.getBool());
-    }
-    else if (value.isNumber())
-    {
-        double doubleVal = value.asNumber();
-        int intVal = (int)doubleVal;
-        long long longVal = (long)doubleVal;
-        if (intVal == doubleVal)
-        {
-            return JSVariant(intVal);
-        }
-        else if (longVal == doubleVal)
-        {
-            return JSVariant(longVal);
-        }
-        else
-        {
-            return JSVariant(doubleVal);
-        }
-    }
-    else if (value.isString())
-    {
-        std::string strVal = value.asString(rt).utf8(rt);
-        return JSVariant(strVal);
-    }
-    else if (value.isObject())
-    {
-        auto object = value.asObject(rt);
-        if (object.isArrayBuffer(rt))
-        {
-            auto buffer = object.getArrayBuffer(rt);
-            return JSVariant(ArrayBuffer {
-                .data =  std::shared_ptr<uint8_t>{buffer.data(rt)},
-                .size =  buffer.size(rt)
-            });
-        }
-    }
-    
-    throw new std::invalid_argument("Unknown JSI to any value conversion");
-}
-
 jsi::Value toJSI(jsi::Runtime &rt, JSVariant value) {
     
     if (std::holds_alternative<bool>(value))
@@ -96,7 +48,7 @@ jsi::Value toJSI(jsi::Runtime &rt, JSVariant value) {
     return jsi::Value::null();
 }
 
-std::vector<JSVariant> toAnyVec(jsi::Runtime &rt, jsi::Value const &params)
+std::vector<JSVariant> toVariantVec(jsi::Runtime &rt, jsi::Value const &params)
 {
     std::vector<JSVariant> res;
     
@@ -110,7 +62,56 @@ std::vector<JSVariant> toAnyVec(jsi::Runtime &rt, jsi::Value const &params)
     for (int ii = 0; ii < values.length(rt); ii++)
     {
         jsi::Value value = values.getValueAtIndex(rt, ii);
-        res.push_back(toAny(rt, value));
+        
+        if (value.isNull() || value.isUndefined())
+        {
+            res.push_back(JSVariant(nullptr));
+        }
+        else if (value.isBool())
+        {
+            res.push_back(JSVariant(value.getBool()));
+        }
+        else if (value.isNumber())
+        {
+            double doubleVal = value.asNumber();
+            int intVal = (int)doubleVal;
+            long long longVal = (long)doubleVal;
+            if (intVal == doubleVal)
+            {
+                res.push_back(JSVariant(intVal));
+            }
+            else if (longVal == doubleVal)
+            {
+                res.push_back(JSVariant(longVal));
+            }
+            else
+            {
+                res.push_back(JSVariant(doubleVal));
+            }
+        }
+        else if (value.isString())
+        {
+            std::string strVal = value.asString(rt).utf8(rt);
+            res.push_back(JSVariant(strVal));
+        }
+        else if (value.isObject())
+        {
+            auto obj = value.asObject(rt);
+            auto isArray = obj.isArray(rt);
+            auto isFunction = obj.isFunction(rt);
+            auto isArrayBuffer = obj.isArrayBuffer(rt);
+            if (obj.isArrayBuffer(rt)) {
+                auto buffer = obj.getArrayBuffer(rt);
+                res.push_back(JSVariant(ArrayBuffer {
+                    .data =  std::shared_ptr<uint8_t>{buffer.data(rt)},
+                    .size =  buffer.size(rt)
+                }));
+            } else {
+                throw std::invalid_argument("Unknown JSI ArrayBuffer to variant value conversion, received object instead of ArrayBuffer");
+            }
+        } else {
+            throw std::invalid_argument("Unknown JSI to variant value conversion");
+        }
     }
     
     return res;

@@ -193,15 +193,15 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
         const std::string dbName = args[0].asString(rt).utf8(rt);
         const std::string query = args[1].asString(rt).utf8(rt);
         std::vector<JSVariant> params;
-        if(count == 3) {
-            const jsi::Value &originalParams = args[2];
-            params = toAnyVec(rt, originalParams);
-        }
-        
-        std::vector<DumbHostObject> results;
-        std::shared_ptr<std::vector<DynamicHostObject>> metadata = std::make_shared<std::vector<DynamicHostObject>>();
-        
         try {
+            if(count == 3) {
+                const jsi::Value &originalParams = args[2];
+                params = toVariantVec(rt, originalParams);
+            }
+            
+            std::vector<DumbHostObject> results;
+            std::shared_ptr<std::vector<DynamicHostObject>> metadata = std::make_shared<std::vector<DynamicHostObject>>();
+        
             auto status = sqliteExecute(dbName, query, &params, &results, metadata);
             
             if(status.type == SQLiteError) {
@@ -210,7 +210,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
             
             auto jsiResult = createResult(rt, status, &results, metadata);
             return jsiResult;
-        } catch(std::exception &e) {
+        } catch (const std::exception &e) {
             throw jsi::JSError(rt, e.what());
         }
     });
@@ -226,7 +226,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
         const std::string query = args[1].asString(rt).utf8(rt);
         const jsi::Value &originalParams = args[2];
         
-        std::vector<JSVariant> params = toAnyVec(rt, originalParams);
+        std::vector<JSVariant> params = toVariantVec(rt, originalParams);
         
         auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
         auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor", 2) {

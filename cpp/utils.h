@@ -37,11 +37,9 @@ namespace opsqlite {
         int commands;
     };
 
-    JSVariant toAny(jsi::Runtime &rt, jsi::Value &value);
-
     jsi::Value toJSI(jsi::Runtime &rt, JSVariant value);
 
-    std::vector<JSVariant> toAnyVec(jsi::Runtime &rt, jsi::Value const &args);
+    std::vector<JSVariant> toVariantVec(jsi::Runtime &rt, jsi::Value const &args);
 
     jsi::Value createResult(jsi::Runtime &rt,
                             BridgeResult status,
