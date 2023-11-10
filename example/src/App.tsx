@@ -1,3 +1,4 @@
+import 'react-native-get-random-values';
 import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
@@ -9,9 +10,8 @@ import {
 } from 'react-native';
 import 'reflect-metadata';
 import {createLargeDB, queryLargeDB} from './Database';
-import {dbSetupTests, queriesTests, runTests} from './tests/index';
+import {dbSetupTests, queriesTests, runTests, blobTests} from './tests/index';
 import pak from '../package.json';
-import clsx from 'clsx';
 import {styled} from 'nativewind';
 
 const StyledScrollView = styled(ScrollView, {
@@ -28,7 +28,7 @@ export default function App() {
 
   useEffect(() => {
     setResults([]);
-    runTests(dbSetupTests, queriesTests).then(setResults);
+    runTests(dbSetupTests, queriesTests, blobTests).then(setResults);
   }, []);
 
   const createLargeDb = async () => {
