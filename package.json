@@ -13,7 +13,7 @@
     "android",
     "ios",
     "cpp",
-    "@op-engineering/op-sqlite.podspec",
+    "op-sqlite.podspec",
     "!lib/typescript/example",
     "!android/build",
     "!android/.cxx",
