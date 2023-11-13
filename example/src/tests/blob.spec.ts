@@ -6,6 +6,16 @@ let expect = chai.expect;
 
 let db: OPSQLiteConnection;
 
+function areBuffersEqual(buf1: ArrayBuffer, buf2: ArrayBuffer) {
+  if (buf1.byteLength != buf2.byteLength) return false;
+  var dv1 = new Uint8Array(buf1);
+  var dv2 = new Uint8Array(buf2);
+  for (var i = 0; i != buf1.byteLength; i++) {
+    if (dv1[i] != dv2[i]) return false;
+  }
+  return true;
+}
+
 export function blobTests() {
   beforeEach(() => {
     try {
@@ -20,7 +30,7 @@ export function blobTests() {
 
       db.execute('DROP TABLE IF EXISTS BlobTable;');
       db.execute(
-        'CREATE TABLE BlobTable ( id INT PRIMARY KEY, name TEXT NOT NULL, content BLOB) STRICT;',
+        'CREATE TABLE BlobTable ( id INT PRIMARY KEY, content BLOB) STRICT;',
       );
     } catch (e) {
       console.warn('error on before each', e);
@@ -28,19 +38,43 @@ export function blobTests() {
   });
 
   describe('Blobs', () => {
-    it('Should be able to insert blobs', async () => {
-      let buffer = new ArrayBuffer(24);
-      let content = new Uint8Array(buffer, 4, 16);
-      // @ts-ignore
-      crypto.getRandomValues(content);
+    it('ArrayBuffer', async () => {
+      const uint8 = new Uint8Array(2);
+      uint8[0] = 42;
 
-      db.execute(`INSERT OR REPLACE INTO BlobTable VALUES (?, ?, ?);`, [
+      db.execute(`INSERT OR REPLACE INTO BlobTable VALUES (?, ?);`, [
         1,
-        'myTestBlob',
-        buffer,
+        uint8.buffer,
       ]);
 
-      expect(1).to.equal(1);
+      const result = db.execute('SELECT content FROM BlobTable');
+
+      const finalUint8 = new Uint8Array(result.rows!._array[0].content);
+      expect(finalUint8[0]).to.equal(42);
+    });
+
+    it('Uint8Array', async () => {
+      const uint8 = new Uint8Array(2);
+      uint8[0] = 42;
+
+      db.execute(`INSERT OR REPLACE INTO BlobTable VALUES (?, ?);`, [1, uint8]);
+
+      const result = db.execute('SELECT content FROM BlobTable');
+
+      const finalUint8 = new Uint8Array(result.rows!._array[0].content);
+      expect(finalUint8[0]).to.equal(42);
+    });
+
+    it('Uint16Array', async () => {
+      const uint8 = new Uint16Array(2);
+      uint8[0] = 42;
+
+      db.execute(`INSERT OR REPLACE INTO BlobTable VALUES (?, ?);`, [1, uint8]);
+
+      const result = db.execute('SELECT content FROM BlobTable');
+
+      const finalUint8 = new Uint8Array(result.rows!._array[0].content);
+      expect(finalUint8[0]).to.equal(42);
     });
   });
 }
