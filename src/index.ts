@@ -143,7 +143,7 @@ interface ISQLite {
   detach: (mainDbName: string, alias: string) => void;
   transaction: (
     dbName: string,
-    fn: (tx: Transaction) => Promise<void> | void
+    fn: (tx: Transaction) => Promise<void>
   ) => Promise<void>;
   execute: (dbName: string, query: string, params?: any[]) => QueryResult;
   executeAsync: (
@@ -167,18 +167,18 @@ const locks: Record<
 // Enhance some host functions
 
 // Add 'item' function to result object to allow the sqlite-storage typeorm driver to work
-const enhanceQueryResult = (result: QueryResult): void => {
+function enhanceQueryResult(result: QueryResult): void {
   // Add 'item' function to result object to allow the sqlite-storage typeorm driver to work
   if (result.rows == null) {
     result.rows = {
       _array: [],
       length: 0,
-      item: (idx: number) => result.rows._array[idx],
+      item: (idx: number) => result.rows?._array[idx],
     };
   } else {
-    result.rows.item = (idx: number) => result.rows._array[idx];
+    result.rows.item = (idx: number) => result.rows?._array[idx];
   }
-};
+}
 
 const _open = OPSQLite.open;
 OPSQLite.open = (dbName: string, location?: string, inMemory?: boolean) => {
@@ -202,7 +202,15 @@ OPSQLite.execute = (
   query: string,
   params?: any[] | undefined
 ): QueryResult => {
-  const result = _execute(dbName, query, params);
+  const sanitizedParams = params?.map((p) => {
+    if (ArrayBuffer.isView(p)) {
+      return p.buffer;
+    }
+
+    return p;
+  });
+
+  const result = _execute(dbName, query, sanitizedParams);
   enhanceQueryResult(result);
   return result;
 };
@@ -213,7 +221,15 @@ OPSQLite.executeAsync = async (
   query: string,
   params?: any[] | undefined
 ): Promise<QueryResult> => {
-  const res = await _executeAsync(dbName, query, params);
+  const sanitizedParams = params?.map((p) => {
+    if (ArrayBuffer.isView(p)) {
+      return p.buffer;
+    }
+
+    return p;
+  });
+
+  const res = await _executeAsync(dbName, query, sanitizedParams);
   enhanceQueryResult(res);
   return res;
 };
@@ -325,6 +341,11 @@ const startNextTransaction = (dbName: string) => {
   if (locks[dbName].queue.length) {
     locks[dbName].inProgress = true;
     const tx = locks[dbName].queue.shift();
+
+    if (!tx) {
+      throw new Error('Could not get a operation on datebase');
+    }
+
     setImmediate(() => {
       tx.start();
     });
@@ -336,7 +357,7 @@ export type OPSQLiteConnection = {
   delete: () => void;
   attach: (dbNameToAttach: string, alias: string, location?: string) => void;
   detach: (alias: string) => void;
-  transaction: (fn: (tx: Transaction) => Promise<void> | void) => Promise<void>;
+  transaction: (fn: (tx: Transaction) => Promise<void>) => Promise<void>;
   execute: (query: string, params?: any[]) => QueryResult;
   executeAsync: (query: string, params?: any[]) => Promise<QueryResult>;
   executeBatch: (commands: SQLBatchTuple[]) => BatchQueryResult;
@@ -357,7 +378,7 @@ export const open = (options: {
     attach: (dbNameToAttach: string, alias: string, location?: string) =>
       OPSQLite.attach(options.name, dbNameToAttach, alias, location),
     detach: (alias: string) => OPSQLite.detach(options.name, alias),
-    transaction: (fn: (tx: Transaction) => Promise<void> | void) =>
+    transaction: (fn: (tx: Transaction) => Promise<void>) =>
       OPSQLite.transaction(options.name, fn),
     execute: (query: string, params?: any[] | undefined): QueryResult =>
       OPSQLite.execute(options.name, query, params),

@@ -30,10 +30,6 @@ jsi::Value toJSI(jsi::Runtime &rt, JSVariant value) {
     {
         return jsi::String::createFromUtf8(rt, std::get<std::string>(value));
     }
-//    else if (std::holds_alternative<const char*>(value))
-//    {
-//        return jsi::String::createFromAscii(rt, std::get<const char*>(value));
-//    }
     else if (std::holds_alternative<ArrayBuffer>(value))
     {
         auto jsBuffer = std::get<ArrayBuffer>(value);
@@ -42,7 +38,7 @@ jsi::Value toJSI(jsi::Runtime &rt, JSVariant value) {
         jsi::ArrayBuffer buf = o.getArrayBuffer(rt);
         // It's a shame we have to copy here: see https://github.com/facebook/hermes/pull/419 and https://github.com/facebook/hermes/issues/564.
         memcpy(buf.data(rt), jsBuffer.data.get(), jsBuffer.size);
-        return buf;
+        return o;
     }
     
     return jsi::Value::null();
@@ -97,13 +93,14 @@ std::vector<JSVariant> toVariantVec(jsi::Runtime &rt, jsi::Value const &params)
         else if (value.isObject())
         {
             auto obj = value.asObject(rt);
-            auto isArray = obj.isArray(rt);
-            auto isFunction = obj.isFunction(rt);
-            auto isArrayBuffer = obj.isArrayBuffer(rt);
             if (obj.isArrayBuffer(rt)) {
                 auto buffer = obj.getArrayBuffer(rt);
+                
+                uint8_t *data = new uint8_t[buffer.size(rt)];
+                memcpy(data, buffer.data(rt), buffer.size(rt));
+                
                 res.push_back(JSVariant(ArrayBuffer {
-                    .data =  std::shared_ptr<uint8_t>{buffer.data(rt)},
+                    .data =  std::shared_ptr<uint8_t>{data},
                     .size =  buffer.size(rt)
                 }));
             } else {
@@ -150,16 +147,13 @@ jsi::Value createResult(jsi::Runtime &rt,
         res.setProperty(rt, "rows", std::move(rows));
     }
     
-    if(metadata != nullptr)
-    {
-        size_t column_count = metadata->size();
-        auto column_array = jsi::Array(rt, column_count);
-        for (int i = 0; i < column_count; i++) {
-            auto column = metadata->at(i);
-            column_array.setValueAtIndex(rt, i, jsi::Object::createFromHostObject(rt, std::make_shared<DynamicHostObject>(column)));
-        }
-        res.setProperty(rt, "metadata", std::move(column_array));
+    size_t column_count = metadata->size();
+    auto column_array = jsi::Array(rt, column_count);
+    for (int i = 0; i < column_count; i++) {
+        auto column = metadata->at(i);
+        column_array.setValueAtIndex(rt, i, jsi::Object::createFromHostObject(rt, std::make_shared<DynamicHostObject>(column)));
     }
+    res.setProperty(rt, "metadata", std::move(column_array));
     
     return std::move(res);
 }

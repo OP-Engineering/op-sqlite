@@ -239,16 +239,18 @@ db.execute(
   'CREATE TABLE BlobTable ( id INT PRIMARY KEY, name TEXT NOT NULL, content BLOB) STRICT;'
 );
 
-let buffer = new ArrayBuffer(24);
-let content = new Uint8Array(buffer, 4, 16);
-// @ts-ignore
-crypto.getRandomValues(content);
+let binaryData = new Uint8Array(2);
+binaryData[0] = 42;
 
 db.execute(`INSERT OR REPLACE INTO BlobTable VALUES (?, ?, ?);`, [
   1,
   'myTestBlob',
-  buffer,
+  binaryData,
 ]);
+
+const result = db.execute('SELECT content FROM BlobTable');
+
+const finalUint8 = new Uint8Array(result.rows!._array[0].content);
 ```
 
 ### Attach or Detach other databases

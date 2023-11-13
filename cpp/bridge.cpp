@@ -330,7 +330,7 @@ BridgeResult sqliteExecute(std::string const dbName,
                             {
                                 const char *column_value = reinterpret_cast<const char *>(sqlite3_column_text(statement, i));
                                 int byteLen = sqlite3_column_bytes(statement, i);
-                                // Specify length too; in case string contains NULL in the middle (which SQLite supports!)
+                                // Specify length too; in case string contains NULL in the middle
                                 row.values.push_back(JSVariant(std::string(column_value, byteLen)));
                                 break;
                             }
