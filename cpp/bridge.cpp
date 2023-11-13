@@ -340,6 +340,8 @@ BridgeResult sqliteExecute(std::string const dbName,
                                 int blob_size = sqlite3_column_bytes(statement, i);
                                 const void *blob = sqlite3_column_blob(statement, i);
                                 uint8_t *data = new uint8_t[blob_size];
+                                // You cannot share raw memory between native and JS
+                                // always copy the data
                                 memcpy(data, blob, blob_size);
                                 row.values.push_back(JSVariant(ArrayBuffer {
                                     .data =  std::shared_ptr<uint8_t>{data},

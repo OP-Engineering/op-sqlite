@@ -36,7 +36,9 @@ jsi::Value toJSI(jsi::Runtime &rt, JSVariant value) {
         jsi::Function array_buffer_ctor = rt.global().getPropertyAsFunction(rt, "ArrayBuffer");
         jsi::Object o = array_buffer_ctor.callAsConstructor(rt, (int)jsBuffer.size).getObject(rt);
         jsi::ArrayBuffer buf = o.getArrayBuffer(rt);
-        // It's a shame we have to copy here: see https://github.com/facebook/hermes/pull/419 and https://github.com/facebook/hermes/issues/564.
+        // You cannot share raw memory between native and JS
+        // always copy the data
+        // see https://github.com/facebook/hermes/pull/419 and https://github.com/facebook/hermes/issues/564.
         memcpy(buf.data(rt), jsBuffer.data.get(), jsBuffer.size);
         return o;
     }
@@ -97,6 +99,9 @@ std::vector<JSVariant> toVariantVec(jsi::Runtime &rt, jsi::Value const &params)
                 auto buffer = obj.getArrayBuffer(rt);
                 
                 uint8_t *data = new uint8_t[buffer.size(rt)];
+                // You cannot share raw memory between native and JS
+                // always copy the data
+                // see https://github.com/facebook/hermes/pull/419 and https://github.com/facebook/hermes/issues/564.
                 memcpy(data, buffer.data(rt), buffer.size(rt));
                 
                 res.push_back(JSVariant(ArrayBuffer {
