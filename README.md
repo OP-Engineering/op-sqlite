@@ -1,16 +1,16 @@
-![screenshot](https://raw.githubusercontent.com/OP-Engineering/op-sqlite/main/Header.png)
+![screenshot](https://raw.githubusercontent.com/OP-Engineering/op-sqlcipher/main/Header.png)
 
 <div align="center">
   <pre align="center">
-    yarn add @op-engineering/op-sqlite
+    yarn add @op-engineering/op-sqlcipher
     npx pod-install</pre>
   <br />
 </div>
 <br />
 
-OP SQLite embeds the latest version of SQLite and provides a low-level (JSI-backed) API to execute SQL queries.
+OP SQLCipher embeds the latest version of [SQLCipher](https://github.com/sqlcipher/sqlcipher) and provides a low-level (JSI-backed) API to execute SQL queries.
 
-**Current SQLite version: 3.44.0**
+**SQLCipher embedded SQLite version: 3.42.0**
 
 Created by [@ospfranco](https://twitter.com/ospfranco). Also created `react-native-quick-sqlite`, this is the next version. You can expect a new version once Static Hermes is out.
 
@@ -27,7 +27,7 @@ I will gladly review bug fixes, but in order for me to continue support and add 
 
 ## Benchmarks
 
-You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). Non JSI libraries are not even a contender anymore, you should expect anywhere between a 5x to a 8x improvement over sqlite-storage, sqlite2 and so on. Loading a 300k record database (in milliseconds).
+You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlcipher/blob/main/example/src/Database.ts#L44). Non JSI libraries are not even a contender anymore, you should expect anywhere between a 5x to a 8x improvement over sqlite-storage, sqlite2 and so on. Loading a 300k record database (in milliseconds).
 
 | Library      | iPhone 15 Pro | Galaxy S22 |
 | ------------ | ------------- | ---------- |
@@ -39,16 +39,17 @@ Memory consumption is also is also 1/4 compared to `react-native-quick-sqlite`. 
 
 # DB Paths
 
-The library creates/opens databases by appending the passed name plus, the [library directory on iOS](https://github.com/OP-Engineering/op-sqlite/blob/main/ios/OPSQLite.mm#L51) and the [database directory on Android](https://github.com/OP-Engineering/op-sqlite/blob/main/android/src/main/java/com/op/sqlite/OPSQLiteBridge.java#L18). If you are migrating from `react-native-quick-sqlite` you will have to move your library using one of the many react-native fs libraries.
+The library creates/opens databases by appending the passed name plus, the [library directory on iOS](https://github.com/OP-Engineering/op-sqlcipher/blob/main/ios/OPSQLite.mm#L51) and the [database directory on Android](https://github.com/OP-Engineering/op-sqlcipher/blob/main/android/src/main/java/com/op/sqlite/OPSQLiteBridge.java#L18). If you are migrating from `react-native-quick-sqlite` you will have to move your library using one of the many react-native fs libraries.
 
 If you have an existing database file you want to load you can navigate from these directories using dot notation. e.g.:
 
 ```ts
-import { open } from '@op-engineering/op-sqlite';
+import { open } from '@op-engineering/op-sqlcipher';
 
 const largeDb = open({
   name: 'largeDB',
   location: '../files/databases',
+  encryptionKey: 'YOUR ENCRYPTION KEY, KEEP IT SOMEWHERE SAFE', // for example turbo-secure-storage
 });
 ```
 
@@ -64,15 +65,19 @@ import { open } from '@op-engineering/op-sqlite';
 const largeDb = open({
   name: 'inMemoryDb',
   inMemory: true,
+  encryptionKey: 'YOUR ENCRYPTION KEY, KEEP IT SOMEWHERE SAFE', // for example turbo-secure-storage
 });
 ```
 
 # API
 
 ```typescript
-import {open} from '@op-engineering/op-sqlite'
+import {open} from '@op-engineering/op-sqlcipher'
 
-const db = open({name: 'myDb.sqlite'})
+const db = open({
+  name: 'myDb.sqlite',
+  encryptionKey: 'YOUR ENCRYPTION KEY, KEEP IT SOMEWHERE SAFE' // for example turbo-secure-storage
+})
 
 // The db object contains the following methods:
 db = {
@@ -97,7 +102,7 @@ db = {
 The basic query is **synchronous**, it will block rendering on large operations, further below you will find async versions.
 
 ```ts
-import { open } from '@op-engineering/op-sqlite';
+import { open } from '@op-engineering/op-sqlcipher';
 
 try {
   const db = open({ name: 'myDb.sqlite' });
