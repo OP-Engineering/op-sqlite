@@ -75,3 +75,6 @@ lib/
 # Gradle
 android/gradle/
 android/gradle*
+
+sqlite_build
+sqlcipher
