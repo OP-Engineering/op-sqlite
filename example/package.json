@@ -1,5 +1,5 @@
 {
-  "name": "opsqliteexample",
+  "name": "op_sqlite_cipher_example",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@craftzdog/react-native-buffer": "^6.0.5",
-    "@op-engineering/op-sqlite": "./..",
+    "@op-engineering/op-sqlcipher": "./..",
     "chai": "^4.3.7",
     "chance": "^1.1.9",
     "clsx": "^2.0.0",

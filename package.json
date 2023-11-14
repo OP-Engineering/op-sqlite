@@ -1,5 +1,5 @@
 {
-  "name": "@op-engineering/op-sqlite",
+  "name": "@op-engineering/op-sqlcipher",
   "version": "1.0.8",
   "description": "Next generation SQLite for React Native",
   "main": "lib/commonjs/index",
@@ -35,13 +35,13 @@
     "ios",
     "android"
   ],
-  "repository": "https://github.com/OP-Engineering/op-sqlite",
+  "repository": "https://github.com/OP-Engineering/op-sqlcipher",
   "author": "Oscar Franco <ospfranco@protonmail.com> (https://github.com/ospfranco)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/OP-Engineering/op-sqlite/issues"
+    "url": "https://github.com/OP-Engineering/op-sqlcipher/issues"
   },
-  "homepage": "https://github.com/OP-Engineering/op-sqlite#readme",
+  "homepage": "https://github.com/OP-Engineering/op-sqlcipher#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },

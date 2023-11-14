@@ -131,7 +131,12 @@ export interface PendingTransaction {
 }
 
 interface ISQLite {
-  open: (dbName: string, location?: string, inMemory?: boolean) => void;
+  open: (
+    dbName: string,
+    location: string,
+    inMemory: boolean,
+    encryptionKey: string
+  ) => void;
   close: (dbName: string) => void;
   delete: (dbName: string, location?: string) => void;
   attach: (
@@ -181,8 +186,13 @@ function enhanceQueryResult(result: QueryResult): void {
 }
 
 const _open = OPSQLite.open;
-OPSQLite.open = (dbName: string, location?: string, inMemory?: boolean) => {
-  _open(dbName, location);
+OPSQLite.open = (
+  dbName: string,
+  location: string = '',
+  inMemory: boolean = false,
+  encryptionKey: string = ''
+) => {
+  _open(dbName, location, inMemory, encryptionKey);
 
   locks[dbName] = {
     queue: [],
@@ -365,32 +375,37 @@ export type OPSQLiteConnection = {
   loadFile: (location: string) => Promise<FileLoadResult>;
 };
 
-export const open = (options: {
+export const open = ({
+  name,
+  location = '',
+  inMemory = false,
+  encryptionKey = '',
+}: {
   name: string;
   location?: string;
   inMemory?: boolean;
+  encryptionKey?: string;
 }): OPSQLiteConnection => {
-  OPSQLite.open(options.name, options.location, options.inMemory);
+  OPSQLite.open(name, location, inMemory, encryptionKey);
 
   return {
-    close: () => OPSQLite.close(options.name),
-    delete: () => OPSQLite.delete(options.name, options.location),
+    close: () => OPSQLite.close(name),
+    delete: () => OPSQLite.delete(name, location),
     attach: (dbNameToAttach: string, alias: string, location?: string) =>
-      OPSQLite.attach(options.name, dbNameToAttach, alias, location),
-    detach: (alias: string) => OPSQLite.detach(options.name, alias),
+      OPSQLite.attach(name, dbNameToAttach, alias, location),
+    detach: (alias: string) => OPSQLite.detach(name, alias),
     transaction: (fn: (tx: Transaction) => Promise<void>) =>
-      OPSQLite.transaction(options.name, fn),
+      OPSQLite.transaction(name, fn),
     execute: (query: string, params?: any[] | undefined): QueryResult =>
-      OPSQLite.execute(options.name, query, params),
+      OPSQLite.execute(name, query, params),
     executeAsync: (
       query: string,
       params?: any[] | undefined
-    ): Promise<QueryResult> =>
-      OPSQLite.executeAsync(options.name, query, params),
+    ): Promise<QueryResult> => OPSQLite.executeAsync(name, query, params),
     executeBatch: (commands: SQLBatchTuple[]) =>
-      OPSQLite.executeBatch(options.name, commands),
+      OPSQLite.executeBatch(name, commands),
     executeBatchAsync: (commands: SQLBatchTuple[]) =>
-      OPSQLite.executeBatchAsync(options.name, commands),
-    loadFile: (location: string) => OPSQLite.loadFile(options.name, location),
+      OPSQLite.executeBatchAsync(name, commands),
+    loadFile: (location: string) => OPSQLite.loadFile(name, location),
   };
 };

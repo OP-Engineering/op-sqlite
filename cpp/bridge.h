@@ -11,7 +11,7 @@ namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 
-BridgeResult sqliteOpenDb(std::string const dbName, std::string const docPath, bool memoryStorage);
+BridgeResult sqliteOpenDb(std::string const dbName, std::string const docPath, bool memoryStorage, std::string encryptionKey);
 
 BridgeResult sqliteCloseDb(std::string const dbName);
 

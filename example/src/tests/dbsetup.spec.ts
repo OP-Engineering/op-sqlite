@@ -1,4 +1,4 @@
-import {open} from '@op-engineering/op-sqlite';
+import {open} from '@op-engineering/op-sqlcipher';
 import chai from 'chai';
 import {describe, it} from './MochaRNAdapter';
 
@@ -10,6 +10,7 @@ export function dbSetupTests() {
       let inMemoryDb = open({
         name: 'inMemoryTest',
         inMemory: true,
+        encryptionKey: 'quack',
       });
 
       inMemoryDb.execute('DROP TABLE IF EXISTS User;');
@@ -26,6 +27,7 @@ export function dbSetupTests() {
           name: 'inMemoryTest',
           // @ts-ignore
           inMemory: 'blah',
+          encryptionKey: 'quack',
         });
         expect.fail('Should throw');
       } catch (e) {

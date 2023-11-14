@@ -1,6 +1,6 @@
 import performance from 'react-native-performance';
 import Chance from 'chance';
-import {open} from '@op-engineering/op-sqlite';
+import {open} from '@op-engineering/op-sqlcipher';
 // import { Buffer } from 'buffer';
 
 const chance = new Chance();
@@ -12,6 +12,7 @@ export async function createLargeDB() {
   let largeDb = open({
     name: DB_NAME,
     // inMemory: true,
+    encryptionKey: 'quack',
   });
 
   largeDb.execute('DROP TABLE IF EXISTS Test;');

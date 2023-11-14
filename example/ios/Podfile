@@ -32,7 +32,7 @@ target 'OPSQLiteExample' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
-  pod 'op-sqlite', :path => '../..'
+  pod 'op-sqlcipher', :path => '../..'
 
   post_install do |installer|
     react_native_post_install(

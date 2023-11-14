@@ -73,7 +73,7 @@ std::string get_db_path(std::string const dbName, std::string const docPath)
     return docPath + "/" + dbName;
 }
 
-BridgeResult sqliteOpenDb(std::string const dbName, std::string const docPath, bool memoryStorage)
+BridgeResult sqliteOpenDb(std::string const dbName, std::string const docPath, bool memoryStorage, std::string encryptionKey)
 {
     std::string dbPath = memoryStorage ? ":memory:" : get_db_path(dbName, docPath);
     
@@ -94,6 +94,9 @@ BridgeResult sqliteOpenDb(std::string const dbName, std::string const docPath, b
     {
         dbMap[dbName] = db;
     }
+
+    // Encrypts the database
+    sqliteExecuteLiteral(dbName, "PRAGMA key = '" + encryptionKey +"'");
     
     return BridgeResult{
         .type = SQLiteOk,

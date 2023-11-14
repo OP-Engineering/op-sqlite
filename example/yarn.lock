@@ -1997,8 +1997,8 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@op-engineering/op-sqlite@./..":
-  version "1.0.6"
+"@op-engineering/op-sqlcipher@./..":
+  version "1.0.8"
 
 "@react-native-community/cli-clean@11.3.7":
   version "11.3.7"

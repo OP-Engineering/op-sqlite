@@ -28,7 +28,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
     pool = std::make_shared<ThreadPool>();
     invoker = jsCallInvoker;
     
-    auto open = HOSTFN("open", 3) {
+    auto open = HOSTFN("open", 4) {
         if (count == 0)
         {
             throw jsi::JSError(rt, "[op-sqlite][open] database name is required");
@@ -41,6 +41,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
         
         std::string dbName = args[0].asString(rt).utf8(rt);
         std::string tempDocPath = std::string(basePath);
+        std::string encryptionKey = "";
         bool memoryStorage = false;
         
         if (count > 1 && !args[1].isUndefined() && !args[1].isNull())
@@ -60,8 +61,12 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
             
             memoryStorage = args[2].asBool();
         }
+
+        if(count == 4) {
+            encryptionKey = args[3].asString(rt).utf8(rt);
+        }
         
-        BridgeResult result = sqliteOpenDb(dbName, tempDocPath, memoryStorage);
+        BridgeResult result = sqliteOpenDb(dbName, tempDocPath, memoryStorage, encryptionKey);
         
         if (result.type == SQLiteError)
         {
