@@ -182,7 +182,7 @@ function enhanceQueryResult(result: QueryResult): void {
 
 const _open = OPSQLite.open;
 OPSQLite.open = (dbName: string, location?: string, inMemory?: boolean) => {
-  _open(dbName, location);
+  _open(dbName, location, inMemory);
 
   locks[dbName] = {
     queue: [],
