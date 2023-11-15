@@ -264,6 +264,8 @@ BridgeResult sqliteExecute(std::string const dbName,
     bool isConsuming = true;
     bool isFailed = false;
     
+    int result = SQLITE_OK;
+    
     do {
         const char *queryStr = remainingStatement == nullptr ? query.c_str() : remainingStatement;
         
@@ -274,7 +276,7 @@ BridgeResult sqliteExecute(std::string const dbName,
             const char *message = sqlite3_errmsg(db);
             return {
                 .type = SQLiteError,
-                .message = "[op-sqlite] SQL execution error: " + std::string(message),
+                .message = "[op-sqlite] SQL statement error: " + std::string(message),
             };
         }
         
@@ -282,7 +284,7 @@ BridgeResult sqliteExecute(std::string const dbName,
         
         isConsuming = true;
         
-        int result, i, count, column_type;
+        int i, count, column_type;
         std::string column_name, column_declared_type;
         
         while (isConsuming)
@@ -390,7 +392,7 @@ BridgeResult sqliteExecute(std::string const dbName,
         }
         
         sqlite3_finalize(statement);
-    } while (strcmp(remainingStatement, "") != 0 && !isFailed);
+    } while (remainingStatement != NULL && strcmp(remainingStatement, "") != 0 && !isFailed);
     
     
     if (isFailed)
@@ -398,7 +400,7 @@ BridgeResult sqliteExecute(std::string const dbName,
         const char *message = sqlite3_errmsg(db);
         return {
             .type = SQLiteError,
-            .message = "[op-sqlite] SQL execution error: " + std::string(message)
+            .message = "[op-sqlite] SQLite code: " + std::to_string(result) + " execution error: " + std::string(message)
         };
     }
     
@@ -434,7 +436,7 @@ BridgeResult sqliteExecuteLiteral(std::string const dbName, std::string const &q
         const char *message = sqlite3_errmsg(db);
         return {
             SQLiteError,
-            "[op-sqlite] SQL execution error: " + std::string(message),
+            "[op-sqlite] SQL statement error: " + std::string(message),
             0};
     }
     
