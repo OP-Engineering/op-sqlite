@@ -12,6 +12,8 @@ include_directories(
 
 add_definitions(
   ${SQLITE_FLAGS}
+  -DSQLITE_HAS_CODEC
+  -DSQLITE_TEMP_STORE=2
 )
 
 add_library(
@@ -48,6 +50,7 @@ set_target_properties(
 find_package(ReactAndroid REQUIRED CONFIG)
 find_package(fbjni REQUIRED CONFIG)
 find_library(LOG_LIB log)
+find_package(openssl REQUIRED CONFIG)
 
 target_link_libraries(
   ${PACKAGE_NAME}
@@ -56,5 +59,6 @@ target_link_libraries(
   ReactAndroid::jsi
   ReactAndroid::turbomodulejsijni
   ReactAndroid::react_nativemodule_core
+  openssl::crypto
   android
 )

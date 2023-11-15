@@ -447,7 +447,7 @@ export function queriesTests() {
       } catch (error) {
         expect(error).to.be.instanceOf(Error);
         expect((error as Error).message)
-          .to.include('SQL execution error')
+          .to.include('execution error')
           .and.to.include('cannot store TEXT value in INT column User.id');
 
         const res = db.execute('SELECT * FROM User');
