@@ -37,6 +37,10 @@ You can find the [benchmarking code in the example app](https://github.com/OP-En
 
 Memory consumption is also is also 1/4 compared to `react-native-quick-sqlite`. This query used to take 1.2gb of peak memory usage, now runs in 250mbs.
 
+# Encryption
+
+If you need to encrypt your entire database, there is [`op-sqlcipher`](https://github.com/OP-Engineering/op-sqlcipher), which is a fork of this library which uses [SQLCipher](https://github.com/sqlcipher/sqlcipher). It completely encrypts all the database with minimal overhead. Bear in mind, however, it is a fork maintained by a third-party.
+
 # DB Paths
 
 The library creates/opens databases by appending the passed name plus, the [library directory on iOS](https://github.com/OP-Engineering/op-sqlcipher/blob/main/ios/OPSQLite.mm#L51) and the [database directory on Android](https://github.com/OP-Engineering/op-sqlcipher/blob/main/android/src/main/java/com/op/sqlite/OPSQLiteBridge.java#L18). If you are migrating from `react-native-quick-sqlite` you will have to move your library using one of the many react-native fs libraries.

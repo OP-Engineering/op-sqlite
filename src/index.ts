@@ -186,6 +186,7 @@ function enhanceQueryResult(result: QueryResult): void {
 }
 
 const _open = OPSQLite.open;
+
 OPSQLite.open = (
   dbName: string,
   location: string = '',
