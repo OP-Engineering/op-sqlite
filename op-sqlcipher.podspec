@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
   s.source       = { :git => "https://github.com/op-engineering/op-sqlcipher.git", :tag => "#{s.version}" }
 
   s.pod_target_xcconfig = {
-    :GCC_PREPROCESSOR_DEFINITIONS => "HAVE_FULLFSYNC=1",
+    :GCC_PREPROCESSOR_DEFINITIONS => "HAVE_FULLFSYNC=1 SQLITE_HAS_CODEC SQLITE_TEMP_STORE=2",
     :WARNING_CFLAGS => "-Wno-shorten-64-to-32 -Wno-comma -Wno-unreachable-code -Wno-conditional-uninitialized -Wno-deprecated-declarations",
     :USE_HEADERMAP => "No"
   }
@@ -25,6 +25,7 @@ Pod::Spec.new do |s|
   s.dependency "React-callinvoker"
   s.dependency "React"
   s.dependency "React-Core"
+  s.dependency "OpenSSL-Universal"
 
   s.xcconfig = {
     'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
