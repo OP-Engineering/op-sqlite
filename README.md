@@ -64,7 +64,7 @@ Note that on iOS the file system is sand-boxed, so you cannot access files/direc
 Using SQLite in memory mode is supported:
 
 ```ts
-import { open } from '@op-engineering/op-sqlite';
+import { open } from '@op-engineering/op-sqlcipher';
 
 const largeDb = open({
   name: 'inMemoryDb',
