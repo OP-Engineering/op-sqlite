@@ -15,7 +15,7 @@ PODS:
     - hermes-engine/Pre-built (= 0.72.6)
   - hermes-engine/Pre-built (0.72.6)
   - libevent (2.1.12)
-  - op-sqlcipher (1.0.8):
+  - op-sqlcipher (1.0.10):
     - OpenSSL-Universal
     - React
     - React-callinvoker
@@ -596,7 +596,7 @@ SPEC CHECKSUMS:
   glog: 04b94705f318337d7ead9e6d17c019bd9b1f6b1b
   hermes-engine: 8057e75cfc1437b178ac86c8654b24e7fead7f60
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
-  op-sqlcipher: 91ea8b416133e1f5eaf148e5b4b221d82a9169f9
+  op-sqlcipher: 1cbeeab02b6117a5f347a7d524c7b4db704bfd83
   OpenSSL-Universal: 6e1ae0555546e604dbc632a2b9a24a9c46c41ef6
   RCT-Folly: 424b8c9a7a0b9ab2886ffe9c3b041ef628fd4fb1
   RCTRequired: 28469809442eb4eb5528462705f7d852948c8a74
