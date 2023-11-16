@@ -27,7 +27,6 @@ void clearState() {
 
 void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker, const char *docPath)
 {
-    std::cout << "setting invalidated to false" << std::endl;
     invalidated = false;
     basePath = std::string(docPath);
     invoker = jsCallInvoker;
