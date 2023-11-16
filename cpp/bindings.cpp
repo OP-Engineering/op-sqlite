@@ -17,11 +17,17 @@ namespace jsi = facebook::jsi;
 std::string basePath;
 std::shared_ptr<react::CallInvoker> invoker;
 ThreadPool pool;
+
+// React native will try to clean the module on JS context invalidation (CodePush/Hot Reload)
+// The clearState function is called and we use this flag to prevent any ongoing
+// operations from continuing work and can return early
 bool invalidated = false;
 
 void clearState() {
     invalidated = true;
+    // Will terminate all operations and database connections
     sqliteCloseAll();
+    // We then join all the threads before the context gets invalidated
     pool.restartPool();
 }
 
