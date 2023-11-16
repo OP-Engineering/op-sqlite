@@ -8,7 +8,7 @@ export function dbSetupTests() {
   describe('Setting up a DB', () => {
     it('Create in memory DB', async () => {
       let inMemoryDb = open({
-        name: 'inMemoryTest',
+        name: 'cipherInMemoryTest',
         inMemory: true,
         encryptionKey: 'quack',
       });

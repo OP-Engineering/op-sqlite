@@ -15,7 +15,7 @@ export function blobTests() {
       }
 
       db = open({
-        name: 'blobs',
+        name: 'cipherBlobs',
         encryptionKey: 'quack',
       });
 

@@ -16,16 +16,25 @@ namespace jsi = facebook::jsi;
 
 std::string basePath;
 std::shared_ptr<react::CallInvoker> invoker;
-std::shared_ptr<ThreadPool> pool;
+ThreadPool pool;
+
+// React native will try to clean the module on JS context invalidation (CodePush/Hot Reload)
+// The clearState function is called and we use this flag to prevent any ongoing
+// operations from continuing work and can return early
+bool invalidated = false;
 
 void clearState() {
+    invalidated = true;
+    // Will terminate all operations and database connections
     sqliteCloseAll();
+    // We then join all the threads before the context gets invalidated
+    pool.restartPool();
 }
 
 void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker, const char *docPath)
 {
+    invalidated = false;
     basePath = std::string(docPath);
-    pool = std::make_shared<ThreadPool>();
     invoker = jsCallInvoker;
     
     auto open = HOSTFN("open", 4) {
@@ -232,21 +241,25 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
         const jsi::Value &originalParams = args[2];
         
         std::vector<JSVariant> params = toVariantVec(rt, originalParams);
-        
+    
         auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
         auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor", 2) {
             auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
             auto reject = std::make_shared<jsi::Value>(rt, args[1]);
             
             auto task =
-            [&rt, dbName, query, params = std::make_shared<std::vector<JSVariant>>(params), resolve, reject]()
+            [&rt, dbName, query, params = std::move(params), resolve, reject]()
             {
                 try
                 {
                     std::vector<DumbHostObject> results;
                     std::shared_ptr<std::vector<DynamicHostObject>> metadata = std::make_shared<std::vector<DynamicHostObject>>();;
                     
-                    auto status = sqliteExecute(dbName, query, params.get(), &results, metadata);
+                    auto status = sqliteExecute(dbName, query, &params, &results, metadata);
+                    
+                    if(invalidated) {
+                        return;
+                    }
                 
                     invoker->invokeAsync([&rt,
                                            results = std::make_shared<std::vector<DumbHostObject>>(results),
@@ -275,7 +288,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
                 }
             };
             
-            pool->queueWork(task);
+            pool.queueWork(task);
             
             return {};
         }));
@@ -368,7 +381,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
                     });
                 }
             };
-            pool->queueWork(task);
+            pool.queueWork(task);
             
             return {};
         }));
@@ -419,7 +432,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
                     });
                 }
             };
-            pool->queueWork(task);
+            pool.queueWork(task);
             return {};
         }));
         

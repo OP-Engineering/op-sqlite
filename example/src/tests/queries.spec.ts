@@ -20,7 +20,7 @@ export function queriesTests() {
       }
 
       db = open({
-        name: 'test',
+        name: 'cipherTest',
         encryptionKey: 'quack',
       });
 

@@ -6,7 +6,7 @@ import {open} from '@op-engineering/op-sqlcipher';
 const chance = new Chance();
 
 const ROWS = 300000;
-const DB_NAME = 'largeDB';
+const DB_NAME = 'cipherLargeDB';
 const ENCRYPTION_KEY = 'quack';
 const DB_CONFIG = {
   name: DB_NAME,
@@ -61,7 +61,7 @@ export async function queryLargeDB() {
     access: [],
   };
 
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 1; i++) {
     // @ts-ignore
     global.gc();
 

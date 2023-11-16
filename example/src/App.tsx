@@ -1,4 +1,3 @@
-import 'react-native-get-random-values';
 import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
@@ -13,6 +12,7 @@ import {createLargeDB, queryLargeDB} from './Database';
 import {dbSetupTests, queriesTests, runTests, blobTests} from './tests/index';
 import pak from '../package.json';
 import {styled} from 'nativewind';
+import RNRestart from 'react-native-restart';
 
 const StyledScrollView = styled(ScrollView, {
   props: {
@@ -50,6 +50,13 @@ export default function App() {
     }
   };
 
+  const queryAndReload = async () => {
+    queryLargeDB();
+    setTimeout(() => {
+      RNRestart.restart();
+    }, 200);
+  };
+
   const allTestsPassed = results.reduce((acc: boolean, r: any) => {
     return acc && r.type !== 'incorrect';
   }, true);
@@ -62,6 +69,7 @@ export default function App() {
         <View className="flex-row p-2 bg-neutral-600 items-center">
           <Text className={'text-lg flex-1  text-white'}>BENCHMARKS</Text>
         </View>
+        <Button title="Reload app middle of query" onPress={queryAndReload} />
         <Button title="Create 300k Record DB" onPress={createLargeDb} />
         <Button title="Query 300k Records" onPress={queryLargeDb} />
         {isLoading && <ActivityIndicator color={'white'} size="large" />}
