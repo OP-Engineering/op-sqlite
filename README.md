@@ -8,22 +8,11 @@
 </div>
 <br />
 
-OP SQLite embeds the latest version of SQLite and provides a low-level (JSI-backed) API to execute SQL queries.
+OP SQLite embeds the latest version of SQLite and provides a low-level API to execute SQL queries.
 
 **Current SQLite version: 3.44.0**
 
-Created by [@ospfranco](https://twitter.com/ospfranco). Also created `react-native-quick-sqlite`, this is the next version. You can expect a new version once Static Hermes is out.
-
-**Please consider Sponsoring**, none of this work is for free. I pay for it with my time and knowledge. If you are a company in need of help with your React Native/React apps feel free to reach out. I also do a lot of C++ and nowadays Rust.
-
-## Coming up
-
-I will gladly review bug fixes, but in order for me to continue support and add new features, I ask you to sponsor me. Some of the things that can still be done to make this package faster and more complete:
-
-- Prepared statements
-- Inlining functions
-- Batching queries
-- Update hook
+Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider Sponsoring**, none of this work is for free. I pay for it with my time and knowledge. If you are a company in need of help with your React Native/React apps feel free to reach out. I also do a lot of C++ and nowadays Rust. 
 
 ## Benchmarks
 
