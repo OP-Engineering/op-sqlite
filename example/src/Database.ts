@@ -7,12 +7,13 @@ const chance = new Chance();
 
 const ROWS = 300000;
 const DB_NAME = 'largeDB';
+const DB_CONFIG = {
+  name: DB_NAME,
+  // inMemory: true,
+};
 
 export async function createLargeDB() {
-  let largeDb = open({
-    name: DB_NAME,
-    // inMemory: true,
-  });
+  let largeDb = open(DB_CONFIG);
 
   largeDb.execute('DROP TABLE IF EXISTS Test;');
   largeDb.execute(
@@ -51,16 +52,14 @@ export async function createLargeDB() {
 }
 
 export async function queryLargeDB() {
-  let largeDb = open({
-    name: DB_NAME,
-  });
+  let largeDb = open(DB_CONFIG);
 
   let times: {loadFromDb: number[]; access: number[]} = {
     loadFromDb: [],
     access: [],
   };
 
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 1; i++) {
     // @ts-ignore
     global.gc();
 

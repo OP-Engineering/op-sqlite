@@ -1998,7 +1998,7 @@
     fastq "^1.6.0"
 
 "@op-engineering/op-sqlite@./..":
-  version "1.0.6"
+  version "1.0.10"
 
 "@react-native-community/cli-clean@11.3.7":
   version "11.3.7"
@@ -5872,6 +5872,11 @@ react-native-quick-base64@^2.0.5:
   integrity sha512-waRcIlchdLCSzpWYqRNIN5NyE5PxKyedMQ/sTgA/fcEkBzwp3EOwjhsfVuJuBtc1bHL2Mg34pxDVBxyLU3Mu2Q==
   dependencies:
     base64-js "^1.5.1"
+
+react-native-restart@^0.0.27:
+  version "0.0.27"
+  resolved "https://registry.yarnpkg.com/react-native-restart/-/react-native-restart-0.0.27.tgz#43aa8210312c9dfa5ec7bd4b2f35238ad7972b19"
+  integrity sha512-8KScVICrXwcTSJ1rjWkqVTHyEKQIttm5AIMGSK1QG1+RS5owYlE4z/1DykOTdWfVl9l16FIk0w9Xzk9ZO6jxlA==
 
 react-native-safe-area-context@^4.5.0:
   version "4.5.0"
