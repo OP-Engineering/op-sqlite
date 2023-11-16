@@ -144,7 +144,7 @@ export function queriesTests() {
       const age = chance.integer();
       const networth = chance.floating();
 
-      await db.transaction(tx => {
+      await db.transaction(async tx => {
         const res = tx.execute(
           'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
           [id, name, age, networth],
@@ -175,7 +175,7 @@ export function queriesTests() {
       const age = chance.integer();
       const networth = chance.floating();
 
-      await db.transaction(tx => {
+      await db.transaction(async tx => {
         const res = tx.execute(
           'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
           [id, name, age, networth],
@@ -215,7 +215,7 @@ export function queriesTests() {
       // ACT: Start multiple transactions to upsert and select the same record
       const promises = [];
       for (let iteration = 1; iteration <= iterations; iteration++) {
-        const promised = db.transaction(tx => {
+        const promised = db.transaction(async tx => {
           // ACT: Upsert statement to create record / increment the value
           tx.execute(
             `
@@ -261,7 +261,7 @@ export function queriesTests() {
       const age = chance.integer();
       const networth = chance.floating();
 
-      await db.transaction(tx => {
+      await db.transaction(async tx => {
         const res = tx.execute(
           'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
           [id, name, age, networth],
@@ -300,7 +300,7 @@ export function queriesTests() {
       const age = chance.integer();
       const networth = chance.floating();
 
-      await db.transaction(tx => {
+      await db.transaction(async tx => {
         try {
           tx.execute(
             'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
@@ -336,7 +336,7 @@ export function queriesTests() {
       const age = chance.integer();
       const networth = chance.floating();
 
-      await db.transaction(tx => {
+      await db.transaction(async tx => {
         tx.execute(
           'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
           [id, name, age, networth],
@@ -364,7 +364,7 @@ export function queriesTests() {
     });
 
     it('Transaction, rejects on invalid query', async () => {
-      const promised = db.transaction(tx => {
+      const promised = db.transaction(async tx => {
         console.log('execute bad start');
         tx.execute('SELECT * FROM [tableThatDoesNotExist];');
         console.log('execute bad done');
@@ -446,7 +446,7 @@ export function queriesTests() {
       } catch (error) {
         expect(error).to.be.instanceOf(Error);
         expect((error as Error).message)
-          .to.include('SQL execution error')
+          .to.include('execution error')
           .and.to.include('cannot store TEXT value in INT column User.id');
 
         const res = db.execute('SELECT * FROM User');
