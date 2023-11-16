@@ -475,9 +475,10 @@ namespace opsqlite {
 
     void sqliteCloseAll() {
         for (auto const& x : dbMap) {
+            // Interrupt will make all pending operations to fail with SQLITE_INTERRUPT
+            // The ongoing work from threads will then fail ASAP
             sqlite3_interrupt(x.second);
-            // In certain cases, this will return SQLITE_OK, mark the database connection as an unusable "zombie",
-            // and deallocate the connection later.
+            // Each DB connection can then be safely interrupted
             sqlite3_close_v2(x.second);
         }
         dbMap.clear();
