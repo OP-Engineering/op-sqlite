@@ -12,13 +12,13 @@ async function sleep(ms: number): Promise<void> {
 
 const expect = chai.expect;
 const DB_CONFIG = {
-  name: 'updateHookDb',
+  name: 'hooksDb',
 };
 const chance = new Chance();
 
 let db: OPSQLiteConnection;
 
-export function updateHookTests() {
+export function registerHooksTests() {
   beforeEach(() => {
     try {
       if (db) {
@@ -37,8 +37,8 @@ export function updateHookTests() {
     }
   });
 
-  describe('Update hook', () => {
-    it('Should register an update hook', async () => {
+  describe('Hooks', () => {
+    it('update hook', async () => {
       let promiseResolve: any;
       let promise = new Promise(resolve => {
         promiseResolve = resolve;
@@ -63,6 +63,57 @@ export function updateHookTests() {
       const operation = await promise;
 
       expect(operation).to.equal('INSERT');
+    });
+
+    it('commit hook', async () => {
+      let promiseResolve: any;
+      let promise = new Promise(resolve => {
+        promiseResolve = resolve;
+      });
+
+      db.commitHook(() => {
+        promiseResolve?.();
+      });
+
+      const id = chance.integer();
+      const name = chance.name();
+      const age = chance.integer();
+      const networth = chance.floating();
+      await db.transaction(async tx => {
+        tx.execute(
+          'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+          [id, name, age, networth],
+        );
+      });
+
+      await promise;
+    });
+
+    it('rollback hook', async () => {
+      let promiseResolve: any;
+      let promise = new Promise(resolve => {
+        promiseResolve = resolve;
+      });
+
+      db.rollbackHook(() => {
+        promiseResolve?.();
+      });
+
+      const id = chance.integer();
+      const name = chance.name();
+      const age = chance.integer();
+      const networth = chance.floating();
+      console.warn('1');
+      try {
+        await db.transaction(async tx => {
+          throw new Error('Blah');
+        });
+      } catch (e) {
+        // intentionally left blank
+      }
+
+      console.warn('2');
+      await promise;
     });
   });
 }

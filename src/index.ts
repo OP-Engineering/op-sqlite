@@ -168,6 +168,8 @@ interface ISQLite {
       rowId: number;
     }) => void
   ) => void;
+  commitHook: (dbName: string, callback: () => void) => void;
+  rollbackHook: (dbName: string, callback: () => void) => void;
 }
 
 const locks: Record<
@@ -382,6 +384,8 @@ export type OPSQLiteConnection = {
       rowId: number;
     }) => void
   ) => void;
+  commitHook: (callback: () => void) => void;
+  rollbackHook: (callback: () => void) => void;
 };
 
 export const open = (options: {
@@ -412,5 +416,7 @@ export const open = (options: {
       OPSQLite.executeBatchAsync(options.name, commands),
     loadFile: (location: string) => OPSQLite.loadFile(options.name, location),
     updateHook: (callback) => OPSQLite.updateHook(options.name, callback),
+    commitHook: (callback) => OPSQLite.commitHook(options.name, callback),
+    rollbackHook: (callback) => OPSQLite.rollbackHook(options.name, callback),
   };
 };
