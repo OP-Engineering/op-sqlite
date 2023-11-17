@@ -216,7 +216,7 @@ db.executeAsync(
 
 ### Blobs
 
-Blobs are supported via `ArrayBuffer`, you need to be careful about the semantics though. You cannot instanciate an instance of `ArrayBuffer` directly, nor pass a typed array directly. Here is an example:
+Blobs are supported via `ArrayBuffer`, you need to be careful about the semantics though. You cannot instantiate an instance of `ArrayBuffer` directly, nor pass a typed array directly. Here is an example:
 
 ```ts
 db = open({
