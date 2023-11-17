@@ -12,17 +12,13 @@ OP SQLite embeds the latest version of SQLite and provides a low-level API to ex
 
 **Current SQLite version: 3.44.0**
 
-Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider Sponsoring**, none of this work is for free. I pay for it with my time and knowledge. If you are a company in need of help with your React Native/React apps feel free to reach out. I also do a lot of C++ and nowadays Rust. 
+Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider Sponsoring**, none of this work is for free. I pay for it with my time and knowledge. If you are a company in need of help with your React Native/React apps feel free to reach out. I also do a lot of C++ and nowadays Rust.
 
 ## Benchmarks
 
 You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). Non JSI libraries are not even a contender anymore, you should expect anywhere between a 5x to a 8x improvement over sqlite-storage, sqlite2 and so on. Loading a 300k record database (in milliseconds).
 
-| Library      | iPhone 15 Pro | Galaxy S22 |
-| ------------ | ------------- | ---------- |
-| quick-sqlite | 2719ms        | 8851ms     |
-| expo-sqlite  | 2293ms        | 10626ms    |
-| op-sqlite    | 507ms         | 1125ms     |
+![benchmark](benchmark4.png)
 
 Memory consumption is also is also 1/4 compared to `react-native-quick-sqlite`. This query used to take 1.2gb of peak memory usage, now runs in 250mbs.
 
