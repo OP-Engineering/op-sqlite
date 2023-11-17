@@ -19,6 +19,8 @@ std::string basePath;
 std::shared_ptr<react::CallInvoker> invoker;
 ThreadPool pool;
 std::unordered_map<std::string, std::shared_ptr<jsi::Value>> updateHooks = std::unordered_map<std::string, std::shared_ptr<jsi::Value>>();
+std::unordered_map<std::string, std::shared_ptr<jsi::Value>> commitHooks = std::unordered_map<std::string, std::shared_ptr<jsi::Value>>();
+std::unordered_map<std::string, std::shared_ptr<jsi::Value>> rollbackHooks = std::unordered_map<std::string, std::shared_ptr<jsi::Value>>();
 
 
 // React native will try to clean the module on JS context invalidation (CodePush/Hot Reload)
@@ -479,6 +481,55 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
         return {};
     });
     
+    auto commitHook = HOSTFN("commitHook", 2)
+    {
+        if (sizeof(args) < 2)
+        {
+            throw jsi::JSError(rt, "[op-sqlite][loadFileAsync] Incorrect parameters: dbName and callback needed");
+            return {};
+        }
+        
+        auto dbName = args[0].asString(rt).utf8(rt);
+        auto callback = std::make_shared<jsi::Value>(rt, args[1]);
+        commitHooks[dbName] = callback;
+        
+        auto hook = [&rt, callback](std::string dbName) {
+            invoker->invokeAsync([&rt, callback]
+                                 {
+                callback->asObject(rt).asFunction(rt).call(rt);
+            });
+        };
+        
+        registerCommitHook(dbName, std::move(hook));
+        
+        return {};
+    });
+    
+    auto rollbackHook = HOSTFN("rollbackHook", 2)
+    {
+        if (sizeof(args) < 2)
+        {
+            throw jsi::JSError(rt, "[op-sqlite][loadFileAsync] Incorrect parameters: dbName and callback needed");
+            return {};
+        }
+        
+        auto dbName = args[0].asString(rt).utf8(rt);
+        auto callback = std::make_shared<jsi::Value>(rt, args[1]);
+        rollbackHooks[dbName] = callback;
+        
+        auto hook = [&rt, callback](std::string dbName) {
+            
+            invoker->invokeAsync([&rt, callback] {
+                callback->asObject(rt).asFunction(rt).call(rt);
+                
+            });
+        };
+        
+        registerRollbackHook(dbName, std::move(hook));
+        
+        return {};
+    });
+    
     jsi::Object module = jsi::Object(rt);
     
     module.setProperty(rt, "open", std::move(open));
@@ -492,6 +543,8 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
     module.setProperty(rt, "executeBatchAsync", std::move(executeBatchAsync));
     module.setProperty(rt, "loadFile", std::move(loadFile));
     module.setProperty(rt, "updateHook", std::move(updateHook));
+    module.setProperty(rt, "commitHook", std::move(commitHook));
+    module.setProperty(rt, "rollbackHook", std::move(rollbackHook));
     
     rt.global().setProperty(rt, "__OPSQLiteProxy", std::move(module));
 }
