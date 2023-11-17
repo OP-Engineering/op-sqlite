@@ -16,7 +16,7 @@ Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider Sponso
 
 ## Benchmarks
 
-You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). Non JSI libraries are not even a contender anymore, you should expect anywhere between a 5x to a 8x improvement over sqlite-storage, sqlite2 and so on. Loading a 300k record database (in milliseconds).
+You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). You should expect anywhere between a 5x to a 8x improvement over non-JSI packages, and now a 5x to 8x improvement over quick-sqlite and expo-sqlite. Loading a 300k record database (in milliseconds).
 
 ![benchmark](benchmark4.png)
 
