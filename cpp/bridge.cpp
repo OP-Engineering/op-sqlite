@@ -254,6 +254,7 @@ namespace opsqlite {
         sqlite3 *db = dbMap[dbName];
         
         sqlite3_stmt *statement;
+        const char *errorMessage;
         const char *remainingStatement = nullptr;
         
         bool isConsuming = true;
@@ -381,6 +382,7 @@ namespace opsqlite {
                         break;
                         
                     default:
+                        errorMessage = sqlite3_errmsg(db);
                         isFailed = true;
                         isConsuming = false;
                 }
@@ -392,10 +394,10 @@ namespace opsqlite {
         
         if (isFailed)
         {
-            const char *message = sqlite3_errmsg(db);
+        
             return {
                 .type = SQLiteError,
-                .message = "[op-sqlite] SQLite code: " + std::to_string(result) + " execution error: " + std::string(message)
+                .message = "[op-sqlite] SQLite code: " + std::to_string(result) + " execution error: " + std::string(errorMessage)
             };
         }
         
