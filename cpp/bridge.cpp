@@ -14,6 +14,12 @@
 namespace opsqlite {
 
     std::unordered_map<std::string, sqlite3 *> dbMap = std::unordered_map<std::string, sqlite3 *>();
+    std::unordered_map<
+        std::string,
+        std::function<void (std::string dbName, std::string tableName, std::string operation, int rowId)>> callbackMap =
+            std::unordered_map<
+                std::string,
+                std::function<void (std::string dbName, std::string tableName, std::string operation, int rowId)>>();
 
     bool folder_exists(const std::string &foldername)
     {
@@ -90,10 +96,8 @@ namespace opsqlite {
                 .message = sqlite3_errmsg(db)
             };
         }
-        else
-        {
-            dbMap[dbName] = db;
-        }
+
+        dbMap[dbName] = db;
         
         return BridgeResult{
             .type = SQLiteOk,
@@ -483,5 +487,59 @@ namespace opsqlite {
         }
         dbMap.clear();
     }
+
+std::string operationToString(int operation_type) {
+    switch (operation_type) {
+        case SQLITE_INSERT:
+            return "INSERT";
+        
+        case SQLITE_DELETE:
+            return "DELETE";
+            
+        case SQLITE_UPDATE:
+            return "UPDATE";
+            
+        default:
+            throw std::invalid_argument("Uknown SQLite operation on hook");
+    }
+}
+
+void update_callback ( void *dbName, int operation_type,
+    char const *database, char const *table,
+    sqlite3_int64 rowid)
+    {
+    std::string &strDbName = *(static_cast<std::string*>(dbName));
+    auto callback = callbackMap[strDbName];
+    callback(strDbName, std::string(table), operationToString(operation_type), static_cast<int>(rowid));
+    }
     
+    BridgeResult registerUpdateHook(std::string const dbName, std::function<void (std::string dbName, std::string tableName, std::string operation, int rowId)> const callback) {
+        if (dbMap.count(dbName) == 0)
+        {
+            return {
+                SQLiteError,
+                "[op-sqlite] Database not opened: " + dbName
+            };
+        }
+        
+        sqlite3 *db = dbMap[dbName];
+        callbackMap[dbName] = callback;
+        const std::string *key = nullptr;
+        
+        // TODO find a more elegant way to retrieve a reference to the key
+        for (auto const& element : dbMap) {
+            if(element.first == dbName) {
+                key = &element.first;
+            }
+        }
+        
+        sqlite3_update_hook(
+          db,
+          &update_callback,
+          (void *)key);
+        
+        return {
+            SQLiteOk
+        };
+    }
 }

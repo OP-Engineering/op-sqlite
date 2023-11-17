@@ -14,6 +14,7 @@ import {dbSetupTests, queriesTests, runTests, blobTests} from './tests/index';
 import pak from '../package.json';
 import {styled} from 'nativewind';
 import RNRestart from 'react-native-restart';
+import {updateHookTests} from './tests/updateHook.spec';
 
 const StyledScrollView = styled(ScrollView, {
   props: {
@@ -29,7 +30,9 @@ export default function App() {
 
   useEffect(() => {
     setResults([]);
-    runTests(dbSetupTests, queriesTests, blobTests).then(setResults);
+    runTests(dbSetupTests, queriesTests, blobTests, updateHookTests).then(
+      setResults,
+    );
   }, []);
 
   const createLargeDb = async () => {

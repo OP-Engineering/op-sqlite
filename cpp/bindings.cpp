@@ -9,6 +9,7 @@
 #include "macros.h"
 #include <iostream>
 #include "DumbHostObject.h"
+#include <unordered_map>
 
 namespace opsqlite {
 
@@ -17,6 +18,8 @@ namespace jsi = facebook::jsi;
 std::string basePath;
 std::shared_ptr<react::CallInvoker> invoker;
 ThreadPool pool;
+std::unordered_map<std::string, std::shared_ptr<jsi::Value>> updateHooks = std::unordered_map<std::string, std::shared_ptr<jsi::Value>>();
+
 
 // React native will try to clean the module on JS context invalidation (CodePush/Hot Reload)
 // The clearState function is called and we use this flag to prevent any ongoing
@@ -434,7 +437,47 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
         return promise;
     });
     
-    
+    auto updateHook = HOSTFN("updateHook", 2)
+    {
+        if (sizeof(args) < 2)
+        {
+            throw jsi::JSError(rt, "[op-sqlite][loadFileAsync] Incorrect parameters: dbName and callback needed");
+            return {};
+        }
+        
+        auto dbName = args[0].asString(rt).utf8(rt);
+        auto callback = std::make_shared<jsi::Value>(rt, args[1]);
+        updateHooks[dbName] = callback;
+        
+        auto hook = [&rt, callback](std::string dbName, std::string tableName, std::string operation, int rowId) {
+            std::vector<JSVariant> params;
+            std::vector<DumbHostObject> results;
+            std::shared_ptr<std::vector<DynamicHostObject>> metadata = std::make_shared<std::vector<DynamicHostObject>>();;
+            
+            if(operation != "DELETE") {
+                std::string query = "SELECT * FROM " + tableName + " where rowid = " + std::to_string(rowId) + ";";
+                sqliteExecute(dbName, query, &params, &results, metadata);
+            }
+            
+            invoker->invokeAsync([&rt, results = std::make_shared<std::vector<DumbHostObject>>(results), callback, tableName = std::move(tableName), operation = std::move(operation), &rowId]
+                                 {
+                auto res = jsi::Object(rt);
+                res.setProperty(rt, "table", jsi::String::createFromUtf8(rt, tableName));
+                res.setProperty(rt, "operation", jsi::String::createFromUtf8(rt, operation));
+                res.setProperty(rt, "rowId", jsi::Value(rowId));
+                if(results->size() != 0) {
+                    res.setProperty(rt, "row", jsi::Object::createFromHostObject(rt, std::make_shared<DumbHostObject>(results->at(0))));
+                }
+                
+                callback->asObject(rt).asFunction(rt).call(rt, res);
+                
+            });
+        };
+        
+        registerUpdateHook(dbName, std::move(hook));
+        
+        return {};
+    });
     
     jsi::Object module = jsi::Object(rt);
     
@@ -448,6 +491,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
     module.setProperty(rt, "executeBatch", std::move(executeBatch));
     module.setProperty(rt, "executeBatchAsync", std::move(executeBatchAsync));
     module.setProperty(rt, "loadFile", std::move(loadFile));
+    module.setProperty(rt, "updateHook", std::move(updateHook));
     
     rt.global().setProperty(rt, "__OPSQLiteProxy", std::move(module));
 }
