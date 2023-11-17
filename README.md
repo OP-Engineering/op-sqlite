@@ -18,7 +18,7 @@ Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider Sponso
 
 You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). You should expect anywhere between a 5x to a 8x improvement over non-JSI packages, and now a 5x to 8x improvement over quick-sqlite and expo-sqlite. Loading a 300k record database (in milliseconds).
 
-![benchmark](benchmark4.png)
+![benchmark](benchmark.png)
 
 Memory consumption is also is also 1/4 compared to `react-native-quick-sqlite`. This query used to take 1.2gb of peak memory usage, now runs in 250mbs.
 
