@@ -7,7 +7,7 @@ import {
 import {beforeEach, describe, it} from './MochaRNAdapter';
 import chai from 'chai';
 
-let expect = chai.expect;
+const expect = chai.expect;
 const chance = new Chance();
 let db: OPSQLiteConnection;
 

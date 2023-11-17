@@ -31,6 +31,8 @@ BridgeResult sqliteExecuteLiteral(std::string const dbName, std::string const &q
 
 void sqliteCloseAll();
 
+BridgeResult registerUpdateHook(std::string const dbName, std::function<void (std::string dbName, std::string tableName, std::string operation, int rowId)> const callback);
+
 }
 
 #endif /* bridge_h */
