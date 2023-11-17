@@ -44,10 +44,10 @@ export function updateHookTests() {
         promiseResolve = resolve;
       });
       db.updateHook(({rowId, table, operation, row = {}}) => {
-        console.warn(
-          `Hook has been called, rowId: ${rowId}, ${table}, ${operation}`,
-        );
-        console.warn(JSON.stringify(row, null, 2));
+        // console.warn(
+        //   `Hook has been called, rowId: ${rowId}, ${table}, ${operation}`,
+        // );
+        // console.warn(JSON.stringify(row, null, 2));
         promiseResolve?.(operation);
       });
 
