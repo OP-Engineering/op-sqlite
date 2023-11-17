@@ -281,7 +281,7 @@ const { rowsAffected, commands } = db
   });
 ```
 
-## Update hook
+## Hooks
 
 You can subscribe to changes in your database by using an update hook:
 
@@ -301,6 +301,36 @@ db.execute('INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)', [
   age,
   networth,
 ]);
+```
+
+Same goes for commit and rollback hooks
+
+```ts
+// will fire whenever a transaction commits
+db.commitHook(() => {
+  console.log('Transaction commmitted!');
+});
+
+db.rollbackHook(() => {
+  console.log('Transaction rolled back!');
+});
+
+// will fire the commit hook
+db.transaction(async (tx) => {
+  tx.execute(
+    'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+    [id, name, age, networth]
+  );
+});
+
+// will fire the rollback hook
+try {
+  await db.transaction(async (tx) => {
+    throw new Error('Test Error');
+  });
+} catch (e) {
+  // intentionally left blank
+}
 ```
 
 ## Use built-in SQLite
