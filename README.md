@@ -281,6 +281,28 @@ const { rowsAffected, commands } = db
   });
 ```
 
+## Update hook
+
+You can subscribe to changes in your database by using an update hook:
+
+```ts
+// Bear in mind: rowId is not your table primary key but the internal rowId sqlite uses
+// to keep track of the table rows
+db.updateHook(({ rowId, table, operation, row = {} }) => {
+  console.warn(`Hook has been called, rowId: ${rowId}, ${table}, ${operation}`);
+  // Will contain the entire row that changed
+  // only on UPDATE and INSERT operations
+  console.warn(JSON.stringify(row, null, 2));
+});
+
+db.execute('INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)', [
+  id,
+  name,
+  age,
+  networth,
+]);
+```
+
 ## Use built-in SQLite
 
 On iOS you can use the embedded SQLite, when running `pod-install` add an environment flag:
