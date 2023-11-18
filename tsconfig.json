@@ -15,8 +15,6 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
-    "target": "esnext",
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true
+    "target": "esnext"
   }
 }
