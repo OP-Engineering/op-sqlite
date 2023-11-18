@@ -30,7 +30,6 @@ Pod::Spec.new do |s|
     'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
   }
 
-
   if ENV['OP_SQLITE_USE_PHONE_VERSION'] == '1' then
     s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h"
     s.library = "sqlite3"
