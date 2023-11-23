@@ -382,7 +382,7 @@ namespace opsqlite {
                             auto metadata = DynamicHostObject();
                             metadata.fields.push_back(std::make_pair("name", column_name));
                             metadata.fields.push_back(std::make_pair("index", i));
-                            metadata.fields.push_back(std::make_pair("type", type));
+                            metadata.fields.push_back(std::make_pair("type", type == NULL ? "UNKNOWN" : type));
                             
                             metadatas->push_back(metadata);
                             i++;
