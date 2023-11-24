@@ -80,7 +80,7 @@ export function registerHooksTests() {
         [id, name, age, networth],
       );
 
-      db.removeUpdateHook()
+      db.updateHook(null)
 
       db.execute(
         'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
@@ -133,7 +133,7 @@ export function registerHooksTests() {
         );
       });
 
-      db.removeCommitHook()
+      db.commitHook(null)
 
       await db.transaction(async tx => {
         tx.execute(
@@ -188,7 +188,7 @@ export function registerHooksTests() {
         // intentionally left blank
       }
 
-      db.removeRollbackHook()
+      db.rollbackHook(null)
 
       try {
         await db.transaction(async tx => {

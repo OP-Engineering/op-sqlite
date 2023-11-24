@@ -76,18 +76,15 @@ db = {
   executeBatchAsync: (commands: SQLBatchTuple[]) => Promise<BatchQueryResult>,
   loadFile: (location: string) => Promise<FileLoadResult>,
   updateHook: (
-    callback: (params: {
+    callback: ((params: {
       table: string;
       operation: UpdateHookOperation;
       row?: any;
       rowId: number;
-    }) => void
+    }) => void) | null
   ) => void,
-  commitHook: (callback: () => void) => void,
-  rollbackHook: (callback: () => void) => void,
-  removeUpdateHook: () => void,
-  removeCommitHook: () => void,
-  removeRollbackHook: () => void
+  commitHook: (callback: (() => void) | null) => void,
+  rollbackHook: (callback: (() => void) | null) => void
 }
 ```
 
@@ -343,14 +340,14 @@ try {
 }
 ```
 
-You can remove hooks event at any moment:
+You can pass `null`` to remove hooks at any moment:
 
 ```ts
-db.removeUpdateHook();
+db.updateHook(null);
 
-db.removeCommitHook();
+db.commitHook(null);
 
-db.removeRollbackHook();
+db.rollbackHook(null);
 ```
 
 ## Use built-in SQLite
