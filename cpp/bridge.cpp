@@ -367,27 +367,30 @@ namespace opsqlite {
                             }
                             i++;
                         }
-                        results->push_back(row);
+                        if (results != nullptr) {
+                            results->push_back(row);
+                        }
                         break;
                     }
                         
                     case SQLITE_DONE:
-                        i = 0;
-                        count = sqlite3_column_count(statement);
-                        
-                        while (i < count)
-                        {
-                            column_name = sqlite3_column_name(statement, i);
-                            const char *type = sqlite3_column_decltype(statement, i);
-                            auto metadata = DynamicHostObject();
-                            metadata.fields.push_back(std::make_pair("name", column_name));
-                            metadata.fields.push_back(std::make_pair("index", i));
-                            metadata.fields.push_back(std::make_pair("type", type == NULL ? "UNKNOWN" : type));
+                        if (metadatas != nullptr) {
+                            i = 0;
+                            count = sqlite3_column_count(statement);
                             
-                            metadatas->push_back(metadata);
-                            i++;
+                            while (i < count)
+                            {
+                                column_name = sqlite3_column_name(statement, i);
+                                const char *type = sqlite3_column_decltype(statement, i);
+                                auto metadata = DynamicHostObject();
+                                metadata.fields.push_back(std::make_pair("name", column_name));
+                                metadata.fields.push_back(std::make_pair("index", i));
+                                metadata.fields.push_back(std::make_pair("type", type == NULL ? "UNKNOWN" : type));
+                                
+                                metadatas->push_back(metadata);
+                                i++;
+                            }
                         }
-                        
                         isConsuming = false;
                         break;
                         
