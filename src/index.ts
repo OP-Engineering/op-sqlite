@@ -380,18 +380,15 @@ export type OPSQLiteConnection = {
   executeBatchAsync: (commands: SQLBatchTuple[]) => Promise<BatchQueryResult>;
   loadFile: (location: string) => Promise<FileLoadResult>;
   updateHook: (
-    callback: (params: {
+    callback: ((params: {
       table: string;
       operation: UpdateHookOperation;
       row?: any;
       rowId: number;
-    }) => void
+    }) => void) | null
   ) => void;
-  commitHook: (callback: () => void) => void;
-  rollbackHook: (callback: () => void) => void;
-  removeUpdateHook: () => void;
-  removeCommitHook: () => void;
-  removeRollbackHook: () => void;
+  commitHook: (callback: (() => void) | null) => void;
+  rollbackHook: (callback: (() => void) | null) => void;
 };
 
 export const open = (options: {
@@ -421,11 +418,26 @@ export const open = (options: {
     executeBatchAsync: (commands: SQLBatchTuple[]) =>
       OPSQLite.executeBatchAsync(options.name, commands),
     loadFile: (location: string) => OPSQLite.loadFile(options.name, location),
-    updateHook: (callback) => OPSQLite.updateHook(options.name, callback),
-    commitHook: (callback) => OPSQLite.commitHook(options.name, callback),
-    rollbackHook: (callback) => OPSQLite.rollbackHook(options.name, callback),
-    removeUpdateHook: () => OPSQLite.removeUpdateHook(options.name),
-    removeCommitHook: () => OPSQLite.removeCommitHook(options.name),
-    removeRollbackHook: () => OPSQLite.removeRollbackHook(options.name),
+    updateHook: (callback) => {
+      if (callback != null) {
+        OPSQLite.updateHook(options.name, callback)
+      } else {
+        OPSQLite.removeUpdateHook(options.name)
+      }
+    },
+    commitHook: (callback) => {
+      if (callback != null) {
+        OPSQLite.commitHook(options.name, callback)
+      } else {
+        OPSQLite.removeCommitHook(options.name)
+      }
+    },
+    rollbackHook: (callback) => {
+      if (callback != null) {
+        OPSQLite.rollbackHook(options.name, callback)
+      } else {
+        OPSQLite.removeRollbackHook(options.name)
+      }
+    }
   };
 };
