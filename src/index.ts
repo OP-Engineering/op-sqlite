@@ -170,6 +170,9 @@ interface ISQLite {
   ) => void;
   commitHook: (dbName: string, callback: () => void) => void;
   rollbackHook: (dbName: string, callback: () => void) => void;
+  removeUpdateHook: (dbName: string) => void;
+  removeCommitHook: (dbName: string) => void;
+  removeRollbackHook: (dbName: string) => void;
 }
 
 const locks: Record<
@@ -386,6 +389,9 @@ export type OPSQLiteConnection = {
   ) => void;
   commitHook: (callback: () => void) => void;
   rollbackHook: (callback: () => void) => void;
+  removeUpdateHook: () => void;
+  removeCommitHook: () => void;
+  removeRollbackHook: () => void;
 };
 
 export const open = (options: {
@@ -418,5 +424,8 @@ export const open = (options: {
     updateHook: (callback) => OPSQLite.updateHook(options.name, callback),
     commitHook: (callback) => OPSQLite.commitHook(options.name, callback),
     rollbackHook: (callback) => OPSQLite.rollbackHook(options.name, callback),
+    removeUpdateHook: () => OPSQLite.removeUpdateHook(options.name),
+    removeCommitHook: () => OPSQLite.removeCommitHook(options.name),
+    removeRollbackHook: () => OPSQLite.removeRollbackHook(options.name),
   };
 };
