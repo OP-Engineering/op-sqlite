@@ -33,11 +33,13 @@ void sqliteCloseAll();
 
 BridgeResult registerUpdateHook(std::string const dbName, 
                                 std::function<void (std::string dbName, std::string tableName, std::string operation, int rowId)> const callback);
+BridgeResult unregisterUpdateHook(std::string const dbName);
 BridgeResult registerCommitHook(std::string const dbName,
                                 std::function<void (std::string dbName)> const callback);
+BridgeResult unregisterCommitHook(std::string const dbName);
 BridgeResult registerRollbackHook(std::string const dbName,
                                   std::function<void (std::string dbName)> const callback);
-
+BridgeResult unregisterRollbackHook(std::string const dbName);
 }
 
 #endif /* bridge_h */

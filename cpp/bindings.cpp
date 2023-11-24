@@ -480,6 +480,21 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
         
         return {};
     });
+
+    auto removeUpdateHook = HOSTFN("removeUpdateHook", 1)
+    {
+        if (sizeof(args) < 2)
+        {
+            throw jsi::JSError(rt, "[op-sqlite][loadFileAsync] Incorrect parameters: dbName needed");
+            return {};
+        }
+        
+        auto dbName = args[0].asString(rt).utf8(rt);
+
+        unregisterUpdateHook(dbName);
+        
+        return {};
+    });
     
     auto commitHook = HOSTFN("commitHook", 2)
     {
@@ -504,7 +519,22 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
         
         return {};
     });
-    
+
+    auto removeCommitHook = HOSTFN("removeCommitHook", 2)
+    {
+        if (sizeof(args) < 2)
+        {
+            throw jsi::JSError(rt, "[op-sqlite][loadFileAsync] Incorrect parameters: dbName needed");
+            return {};
+        }
+        
+        auto dbName = args[0].asString(rt).utf8(rt);
+        
+        unregisterCommitHook(dbName);
+        
+        return {};
+    });
+
     auto rollbackHook = HOSTFN("rollbackHook", 2)
     {
         if (sizeof(args) < 2)
@@ -529,6 +559,21 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
         
         return {};
     });
+
+    auto removeRollbackHook = HOSTFN("removeRollbackHook", 2)
+    {
+        if (sizeof(args) < 2)
+        {
+            throw jsi::JSError(rt, "[op-sqlite][loadFileAsync] Incorrect parameters: dbName needed");
+            return {};
+        }
+        
+        auto dbName = args[0].asString(rt).utf8(rt);
+        
+        unregisterRollbackHook(dbName);
+        
+        return {};
+    });
     
     jsi::Object module = jsi::Object(rt);
     
@@ -543,8 +588,11 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
     module.setProperty(rt, "executeBatchAsync", std::move(executeBatchAsync));
     module.setProperty(rt, "loadFile", std::move(loadFile));
     module.setProperty(rt, "updateHook", std::move(updateHook));
+    module.setProperty(rt, "removeUpdateHook", std::move(removeUpdateHook));
     module.setProperty(rt, "commitHook", std::move(commitHook));
+    module.setProperty(rt, "removeCommitHook", std::move(removeCommitHook));
     module.setProperty(rt, "rollbackHook", std::move(rollbackHook));
+    module.setProperty(rt, "removeRollbackHook", std::move(removeRollbackHook));
     
     rt.global().setProperty(rt, "__OPSQLiteProxy", std::move(module));
 }
