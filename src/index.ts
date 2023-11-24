@@ -161,18 +161,15 @@ interface ISQLite {
   loadFile: (dbName: string, location: string) => Promise<FileLoadResult>;
   updateHook: (
     dbName: string,
-    callback: (params: {
+    callback?: ((params: {
       table: string;
       operation: UpdateHookOperation;
       row?: any;
       rowId: number;
-    }) => void
+    }) => void) | null
   ) => void;
-  commitHook: (dbName: string, callback: () => void) => void;
-  rollbackHook: (dbName: string, callback: () => void) => void;
-  removeUpdateHook: (dbName: string) => void;
-  removeCommitHook: (dbName: string) => void;
-  removeRollbackHook: (dbName: string) => void;
+  commitHook: (dbName: string, callback?: (() => void) | null) => void;
+  rollbackHook: (dbName: string, callback?: (() => void) | null) => void;
 }
 
 const locks: Record<
@@ -418,26 +415,8 @@ export const open = (options: {
     executeBatchAsync: (commands: SQLBatchTuple[]) =>
       OPSQLite.executeBatchAsync(options.name, commands),
     loadFile: (location: string) => OPSQLite.loadFile(options.name, location),
-    updateHook: (callback) => {
-      if (callback != null) {
-        OPSQLite.updateHook(options.name, callback)
-      } else {
-        OPSQLite.removeUpdateHook(options.name)
-      }
-    },
-    commitHook: (callback) => {
-      if (callback != null) {
-        OPSQLite.commitHook(options.name, callback)
-      } else {
-        OPSQLite.removeCommitHook(options.name)
-      }
-    },
-    rollbackHook: (callback) => {
-      if (callback != null) {
-        OPSQLite.rollbackHook(options.name, callback)
-      } else {
-        OPSQLite.removeRollbackHook(options.name)
-      }
-    }
+    updateHook: (callback) => OPSQLite.updateHook(options.name, callback),
+    commitHook: (callback) => OPSQLite.commitHook(options.name, callback),
+    rollbackHook: (callback) => OPSQLite.rollbackHook(options.name, callback),
   };
 };
