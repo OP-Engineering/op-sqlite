@@ -87,7 +87,7 @@ export function registerHooksTests() {
         [id + 1, name, age, networth],
       );
 
-      await sleep(100)
+      await sleep(0)
 
       expect(hookRes.length).to.equal(1)
     });
@@ -142,7 +142,7 @@ export function registerHooksTests() {
         );
       });
 
-      await sleep(100)
+      await sleep(0)
 
       expect(hookRes.length).to.equal(1)
     });
@@ -198,7 +198,7 @@ export function registerHooksTests() {
         // intentionally left blank
       }
 
-      await sleep(100)
+      await sleep(0)
 
       expect(hookRes.length).to.equal(1)
     });
