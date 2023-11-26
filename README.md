@@ -69,15 +69,22 @@ db = {
   delete: () => void,
   attach: (dbNameToAttach: string, alias: string, location?: string) => void,
   detach: (alias: string) => void,
-  transaction: (fn: (tx: Transaction) => void) => Promise<void>,
+  transaction: (fn: (tx: Transaction) => Promise<void>) => Promise<void>,
   execute: (query: string, params?: any[]) => QueryResult,
-  executeAsync: (
-    query: string,
-    params?: any[]
-  ) => Promise<QueryResult>,
-  executeBatch: (commands: SQLBatchParams[]) => BatchQueryResult,
-  executeBatchAsync: (commands: SQLBatchParams[]) => Promise<BatchQueryResult>,
-  loadFile: (location: string) => Promise<FileLoadResult>
+  executeAsync: (query: string, params?: any[]) => Promise<QueryResult>,
+  executeBatch: (commands: SQLBatchTuple[]) => BatchQueryResult,
+  executeBatchAsync: (commands: SQLBatchTuple[]) => Promise<BatchQueryResult>,
+  loadFile: (location: string) => Promise<FileLoadResult>,
+  updateHook: (
+    callback: ((params: {
+      table: string;
+      operation: UpdateHookOperation;
+      row?: any;
+      rowId: number;
+    }) => void) | null
+  ) => void,
+  commitHook: (callback: (() => void) | null) => void,
+  rollbackHook: (callback: (() => void) | null) => void
 }
 ```
 
@@ -331,6 +338,16 @@ try {
 } catch (e) {
   // intentionally left blank
 }
+```
+
+You can pass `null`` to remove hooks at any moment:
+
+```ts
+db.updateHook(null);
+
+db.commitHook(null);
+
+db.rollbackHook(null);
 ```
 
 ## Use built-in SQLite
