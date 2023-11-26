@@ -15,7 +15,7 @@ PODS:
     - hermes-engine/Pre-built (= 0.72.6)
   - hermes-engine/Pre-built (0.72.6)
   - libevent (2.1.12)
-  - op-sqlcipher (1.0.11):
+  - op-sqlcipher (1.0.14):
     - OpenSSL-Universal
     - React
     - React-callinvoker
@@ -596,7 +596,7 @@ SPEC CHECKSUMS:
   glog: 04b94705f318337d7ead9e6d17c019bd9b1f6b1b
   hermes-engine: 8057e75cfc1437b178ac86c8654b24e7fead7f60
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
-  op-sqlcipher: 55e46a4accc961468b020780b100502f66aa0593
+  op-sqlcipher: 91e1e5fcd71d9eee4068b9214aaa6e87b417f892
   OpenSSL-Universal: 6e1ae0555546e604dbc632a2b9a24a9c46c41ef6
   RCT-Folly: 424b8c9a7a0b9ab2886ffe9c3b041ef628fd4fb1
   RCTRequired: 28469809442eb4eb5528462705f7d852948c8a74
@@ -636,6 +636,6 @@ SPEC CHECKSUMS:
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
   Yoga: b76f1acfda8212aa16b7e26bcce3983230c82603
 
-PODFILE CHECKSUM: 84367882ba51b649f5bc077e790fffcfb895f41b
+PODFILE CHECKSUM: a43d067b2eb6ed693b363c1d713d717a23903260
 
 COCOAPODS: 1.13.0

@@ -7,7 +7,7 @@ import {
 import {beforeEach, describe, it} from './MochaRNAdapter';
 import chai from 'chai';
 
-let expect = chai.expect;
+const expect = chai.expect;
 const chance = new Chance();
 let db: OPSQLiteConnection;
 
@@ -98,6 +98,52 @@ export function queriesTests() {
           networth,
         },
       ]);
+    });
+
+    it('Query with sqlite functions', async () => {
+      const id = chance.integer();
+      const name = chance.name();
+      const age = chance.integer();
+      const networth = chance.floating();
+
+      // COUNT(*)
+      db.execute(
+        'INSERT INTO User (id, name, age, networth) VALUES(?, ?, ?, ?)',
+        [id, name, age, networth],
+      );
+
+      const countRes = db.execute('SELECT COUNT(*) as count FROM User');
+
+      expect(countRes.metadata?.[0].type).to.equal('UNKNOWN');
+      expect(countRes.rows?._array.length).to.equal(1);
+      expect(countRes.rows?.item(0).count).to.equal(1);
+
+      // SUM(age)
+      const id2 = chance.integer();
+      const name2 = chance.name();
+      const age2 = chance.integer();
+      const networth2 = chance.floating();
+
+      db.execute(
+        'INSERT INTO User (id, name, age, networth) VALUES(?, ?, ?, ?)',
+        [id2, name2, age2, networth2],
+      );
+
+      const sumRes = db.execute('SELECT SUM(age) as sum FROM User;');
+    
+      expect(sumRes.metadata?.[0].type).to.equal('UNKNOWN');
+      expect(sumRes.rows?.item(0).sum).to.equal(age + age2);
+
+      // MAX(networth), MIN(networth)
+      const maxRes = db.execute('SELECT MAX(networth) as `max` FROM User;');
+      const minRes = db.execute('SELECT MIN(networth) as `min` FROM User;');
+      expect(maxRes.metadata?.[0].type).to.equal('UNKNOWN');
+      expect(minRes.metadata?.[0].type).to.equal('UNKNOWN');
+      const maxNetworth = Math.max(networth, networth2);
+      const minNetworth = Math.min(networth, networth2);
+
+      expect(maxRes.rows?.item(0).max).to.equal(maxNetworth);
+      expect(minRes.rows?.item(0).min).to.equal(minNetworth);
     });
 
     it('Executes all the statements in a single string', async () => {

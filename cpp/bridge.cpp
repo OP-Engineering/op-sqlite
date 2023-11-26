@@ -14,6 +14,22 @@
 namespace opsqlite {
 
     std::unordered_map<std::string, sqlite3 *> dbMap = std::unordered_map<std::string, sqlite3 *>();
+    std::unordered_map<
+        std::string,
+        std::function<void (std::string dbName, std::string tableName, std::string operation, int rowId)>> updateCallbackMap =
+            std::unordered_map<
+                std::string,
+                std::function<void (std::string dbName, std::string tableName, std::string operation, int rowId)>>();
+    
+    std::unordered_map<
+        std::string,
+        std::function<void (std::string dbName)>> commitCallbackMap =
+            std::unordered_map<std::string, std::function<void (std::string dbName)>>();
+
+    std::unordered_map<
+        std::string,
+        std::function<void (std::string dbName)>> rollbackCallbackMap =
+            std::unordered_map<std::string, std::function<void (std::string dbName)>>();
 
     bool folder_exists(const std::string &foldername)
     {
@@ -121,10 +137,8 @@ namespace opsqlite {
                 .message = sqlite3_errmsg(db)
             };
         }
-        else
-        {
-            dbMap[dbName] = db;
-        }
+
+        dbMap[dbName] = db;
         
         return BridgeResult{
             .type = SQLiteOk,
@@ -281,6 +295,7 @@ namespace opsqlite {
         sqlite3 *db = dbMap[dbName];
         
         sqlite3_stmt *statement;
+        const char *errorMessage;
         const char *remainingStatement = nullptr;
         
         bool isConsuming = true;
@@ -383,31 +398,35 @@ namespace opsqlite {
                             }
                             i++;
                         }
-                        results->push_back(row);
+                        if (results != nullptr) {
+                            results->push_back(row);
+                        }
                         break;
                     }
                         
                     case SQLITE_DONE:
-                        i = 0;
-                        count = sqlite3_column_count(statement);
-                        
-                        while (i < count)
-                        {
-                            column_name = sqlite3_column_name(statement, i);
-                            const char *type = sqlite3_column_decltype(statement, i);
-                            auto metadata = DynamicHostObject();
-                            metadata.fields.push_back(std::make_pair("name", column_name));
-                            metadata.fields.push_back(std::make_pair("index", i));
-                            metadata.fields.push_back(std::make_pair("type", type));
+                        if (metadatas != nullptr) {
+                            i = 0;
+                            count = sqlite3_column_count(statement);
                             
-                            metadatas->push_back(metadata);
-                            i++;
+                            while (i < count)
+                            {
+                                column_name = sqlite3_column_name(statement, i);
+                                const char *type = sqlite3_column_decltype(statement, i);
+                                auto metadata = DynamicHostObject();
+                                metadata.fields.push_back(std::make_pair("name", column_name));
+                                metadata.fields.push_back(std::make_pair("index", i));
+                                metadata.fields.push_back(std::make_pair("type", type == NULL ? "UNKNOWN" : type));
+                                
+                                metadatas->push_back(metadata);
+                                i++;
+                            }
                         }
-                        
                         isConsuming = false;
                         break;
                         
                     default:
+                        errorMessage = sqlite3_errmsg(db);
                         isFailed = true;
                         isConsuming = false;
                 }
@@ -419,10 +438,10 @@ namespace opsqlite {
         
         if (isFailed)
         {
-            const char *message = sqlite3_errmsg(db);
+        
             return {
                 .type = SQLiteError,
-                .message = "[op-sqlite] SQLite code: " + std::to_string(result) + " execution error: " + std::string(message)
+                .message = "[op-sqlite] SQLite code: " + std::to_string(result) + " execution error: " + std::string(errorMessage)
             };
         }
         
@@ -514,5 +533,202 @@ namespace opsqlite {
         }
         dbMap.clear();
     }
+
+    std::string operationToString(int operation_type) {
+        switch (operation_type) {
+            case SQLITE_INSERT:
+                return "INSERT";
+            
+            case SQLITE_DELETE:
+                return "DELETE";
+                
+            case SQLITE_UPDATE:
+                return "UPDATE";
+                
+            default:
+                throw std::invalid_argument("Uknown SQLite operation on hook");
+        }
+    }
+
+    void update_callback(void *dbName,
+                         int operation_type,
+                         char const *database,
+                         char const *table,
+                         sqlite3_int64 rowid) {
+        std::string &strDbName = *(static_cast<std::string*>(dbName));
+        auto callback = updateCallbackMap[strDbName];
+        callback(strDbName, std::string(table), operationToString(operation_type), static_cast<int>(rowid));
+    }
     
+    BridgeResult registerUpdateHook(std::string const dbName,
+                                    std::function<void (std::string dbName, std::string tableName, std::string operation, int rowId)> const callback) {
+        if (dbMap.count(dbName) == 0)
+        {
+            return {
+                SQLiteError,
+                "[op-sqlite] Database not opened: " + dbName
+            };
+        }
+        
+        sqlite3 *db = dbMap[dbName];
+        updateCallbackMap[dbName] = callback;
+        const std::string *key = nullptr;
+        
+        // TODO find a more elegant way to retrieve a reference to the key
+        for (auto const& element : dbMap) {
+            if(element.first == dbName) {
+                key = &element.first;
+            }
+        }
+        
+        sqlite3_update_hook(
+          db,
+          &update_callback,
+          (void *)key);
+        
+        return {
+            SQLiteOk
+        };
+    }
+
+    BridgeResult unregisterUpdateHook(std::string const dbName) {
+        if (dbMap.count(dbName) == 0)
+        {
+            return {
+                SQLiteError,
+                "[op-sqlite] Database not opened: " + dbName
+            };
+        }
+        
+        sqlite3 *db = dbMap[dbName];
+        updateCallbackMap.erase(dbName);
+
+        sqlite3_update_hook(
+            db,
+            NULL,
+            NULL);
+
+        return {
+            SQLiteOk
+        };
+    }
+
+    int commit_callback(void *dbName) {
+        std::string &strDbName = *(static_cast<std::string*>(dbName));
+        auto callback = commitCallbackMap[strDbName];
+        callback(strDbName);
+        // You need to return 0 to allow commits to continue
+        return 0;
+    }
+
+    BridgeResult registerCommitHook(std::string const dbName,
+                                    std::function<void (std::string dbName)> const callback) {
+        if (dbMap.count(dbName) == 0)
+        {
+            return {
+                SQLiteError,
+                "[op-sqlite] Database not opened: " + dbName
+            };
+        }
+        
+        sqlite3 *db = dbMap[dbName];
+        commitCallbackMap[dbName] = callback;
+        const std::string *key = nullptr;
+        
+        // TODO find a more elegant way to retrieve a reference to the key
+        for (auto const& element : dbMap) {
+            if(element.first == dbName) {
+                key = &element.first;
+            }
+        }
+        
+        sqlite3_commit_hook(
+          db,
+          &commit_callback,
+          (void *)key);
+        
+        return {
+            SQLiteOk
+        };
+    }
+
+    BridgeResult unregisterCommitHook(std::string const dbName) {
+        if (dbMap.count(dbName) == 0)
+        {
+            return {
+                SQLiteError,
+                "[op-sqlite] Database not opened: " + dbName
+            };
+        }
+        
+        sqlite3 *db = dbMap[dbName];
+        commitCallbackMap.erase(dbName);
+        sqlite3_commit_hook(
+            db,
+            NULL,
+            NULL);
+
+        return {
+            SQLiteOk
+        };
+    }
+
+    void rollback_callback(void *dbName) {
+        std::string &strDbName = *(static_cast<std::string*>(dbName));
+        auto callback = rollbackCallbackMap[strDbName];
+        callback(strDbName);
+    }
+
+    BridgeResult registerRollbackHook(std::string const dbName,
+                                    std::function<void (std::string dbName)> const callback) {
+        if (dbMap.count(dbName) == 0)
+        {
+            return {
+                SQLiteError,
+                "[op-sqlite] Database not opened: " + dbName
+            };
+        }
+        
+        sqlite3 *db = dbMap[dbName];
+        rollbackCallbackMap[dbName] = callback;
+        const std::string *key = nullptr;
+        
+        // TODO find a more elegant way to retrieve a reference to the key
+        for (auto const& element : dbMap) {
+            if(element.first == dbName) {
+                key = &element.first;
+            }
+        }
+        
+        sqlite3_rollback_hook(
+          db,
+          &rollback_callback,
+          (void *)key);
+        
+        return {
+            SQLiteOk
+        };
+    }
+
+    BridgeResult unregisterRollbackHook(std::string const dbName) {
+        if (dbMap.count(dbName) == 0)
+        {
+            return {
+                SQLiteError,
+                "[op-sqlite] Database not opened: " + dbName
+            };
+        }
+        
+        sqlite3 *db = dbMap[dbName];
+        rollbackCallbackMap.erase(dbName);
+
+        sqlite3_rollback_hook(
+            db,
+            NULL,
+            NULL);
+
+        return {
+            SQLiteOk
+        };
+    }
 }

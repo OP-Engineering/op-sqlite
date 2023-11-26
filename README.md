@@ -12,28 +12,13 @@ OP SQLCipher embeds the latest version of [SQLCipher](https://github.com/sqlciph
 
 **SQLCipher embedded SQLite version: 3.42.0**
 
-Created by [@ospfranco](https://twitter.com/ospfranco). Also created `react-native-quick-sqlite`, this is the next version. You can expect a new version once Static Hermes is out.
-
-**Please consider Sponsoring**, none of this work is for free. I pay for it with my time and knowledge. If you are a company in need of help with your React Native/React apps feel free to reach out. I also do a lot of C++ and nowadays Rust.
-
-## Coming up
-
-I will gladly review bug fixes, but in order for me to continue support and add new features, I ask you to sponsor me. Some of the things that can still be done to make this package faster and more complete:
-
-- Prepared statements
-- Inlining functions
-- Batching queries
-- Update hook
+Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider Sponsoring**, none of this work is for free. I pay for it with my time and knowledge. If you are a company in need of help with your React Native/React apps feel free to reach out. I also do a lot of C++ and nowadays Rust.
 
 ## Benchmarks
 
-You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlcipher/blob/main/example/src/Database.ts#L44). Non JSI libraries are not even a contender anymore, you should expect anywhere between a 5x to a 8x improvement over sqlite-storage, sqlite2 and so on. Loading a 300k record database (in milliseconds).
+You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). You should expect anywhere between a 5x to a 8x improvement over non-JSI packages, and now a 5x to 8x improvement over quick-sqlite and expo-sqlite. Loading a 300k record database (in milliseconds).
 
-| Library      | iPhone 15 Pro | Galaxy S22 |
-| ------------ | ------------- | ---------- |
-| quick-sqlite | 2719ms        | 8851ms     |
-| expo-sqlite  | 2293ms        | 10626ms    |
-| op-sqlite    | 507ms         | 1125ms     |
+![benchmark](benchmark.png)
 
 Memory consumption is also is also 1/4 compared to `react-native-quick-sqlite`. This query used to take 1.2gb of peak memory usage, now runs in 250mbs.
 
@@ -59,9 +44,9 @@ const largeDb = open({
 
 Note that on iOS the file system is sand-boxed, so you cannot access files/directories outside your app bundle directories.
 
-## In memory
+## In-memory
 
-Using SQLite in memory mode is supported:
+Using SQLite in-memory mode is supported:
 
 ```ts
 import { open } from '@op-engineering/op-sqlcipher';
@@ -89,15 +74,22 @@ db = {
   delete: () => void,
   attach: (dbNameToAttach: string, alias: string, location?: string) => void,
   detach: (alias: string) => void,
-  transaction: (fn: (tx: Transaction) => void) => Promise<void>,
+  transaction: (fn: (tx: Transaction) => Promise<void>) => Promise<void>,
   execute: (query: string, params?: any[]) => QueryResult,
-  executeAsync: (
-    query: string,
-    params?: any[]
-  ) => Promise<QueryResult>,
-  executeBatch: (commands: SQLBatchParams[]) => BatchQueryResult,
-  executeBatchAsync: (commands: SQLBatchParams[]) => Promise<BatchQueryResult>,
-  loadFile: (location: string) => Promise<FileLoadResult>
+  executeAsync: (query: string, params?: any[]) => Promise<QueryResult>,
+  executeBatch: (commands: SQLBatchTuple[]) => BatchQueryResult,
+  executeBatchAsync: (commands: SQLBatchTuple[]) => Promise<BatchQueryResult>,
+  loadFile: (location: string) => Promise<FileLoadResult>,
+  updateHook: (
+    callback: ((params: {
+      table: string;
+      operation: UpdateHookOperation;
+      row?: any;
+      rowId: number;
+    }) => void) | null
+  ) => void,
+  commitHook: (callback: (() => void) | null) => void,
+  rollbackHook: (callback: (() => void) | null) => void
 }
 ```
 
@@ -299,6 +291,68 @@ const { rowsAffected, commands } = db
   .then((res) => {
     const { rowsAffected, commands } = res;
   });
+```
+
+## Hooks
+
+You can subscribe to changes in your database by using an update hook:
+
+```ts
+// Bear in mind: rowId is not your table primary key but the internal rowId sqlite uses
+// to keep track of the table rows
+db.updateHook(({ rowId, table, operation, row = {} }) => {
+  console.warn(`Hook has been called, rowId: ${rowId}, ${table}, ${operation}`);
+  // Will contain the entire row that changed
+  // only on UPDATE and INSERT operations
+  console.warn(JSON.stringify(row, null, 2));
+});
+
+db.execute('INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)', [
+  id,
+  name,
+  age,
+  networth,
+]);
+```
+
+Same goes for commit and rollback hooks
+
+```ts
+// will fire whenever a transaction commits
+db.commitHook(() => {
+  console.log('Transaction commmitted!');
+});
+
+db.rollbackHook(() => {
+  console.log('Transaction rolled back!');
+});
+
+// will fire the commit hook
+db.transaction(async (tx) => {
+  tx.execute(
+    'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+    [id, name, age, networth]
+  );
+});
+
+// will fire the rollback hook
+try {
+  await db.transaction(async (tx) => {
+    throw new Error('Test Error');
+  });
+} catch (e) {
+  // intentionally left blank
+}
+```
+
+You can pass `null`` to remove hooks at any moment:
+
+```ts
+db.updateHook(null);
+
+db.commitHook(null);
+
+db.rollbackHook(null);
 ```
 
 ## Use built-in SQLite

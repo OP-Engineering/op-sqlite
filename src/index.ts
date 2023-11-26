@@ -90,6 +90,8 @@ export type ColumnMetadata = {
  */
 export type SQLBatchTuple = [string] | [string, Array<any> | Array<Array<any>>];
 
+export type UpdateHookOperation = 'INSERT' | 'DELETE' | 'UPDATE';
+
 /**
  * status: 0 or undefined for correct execution, 1 for error
  * message: if status === 1, here you will find error description
@@ -162,6 +164,17 @@ interface ISQLite {
     commands: SQLBatchTuple[]
   ) => Promise<BatchQueryResult>;
   loadFile: (dbName: string, location: string) => Promise<FileLoadResult>;
+  updateHook: (
+    dbName: string,
+    callback?: ((params: {
+      table: string;
+      operation: UpdateHookOperation;
+      row?: any;
+      rowId: number;
+    }) => void) | null
+  ) => void;
+  commitHook: (dbName: string, callback?: (() => void) | null) => void;
+  rollbackHook: (dbName: string, callback?: (() => void) | null) => void;
 }
 
 const locks: Record<
@@ -374,6 +387,16 @@ export type OPSQLiteConnection = {
   executeBatch: (commands: SQLBatchTuple[]) => BatchQueryResult;
   executeBatchAsync: (commands: SQLBatchTuple[]) => Promise<BatchQueryResult>;
   loadFile: (location: string) => Promise<FileLoadResult>;
+  updateHook: (
+    callback: ((params: {
+      table: string;
+      operation: UpdateHookOperation;
+      row?: any;
+      rowId: number;
+    }) => void) | null
+  ) => void;
+  commitHook: (callback: (() => void) | null) => void;
+  rollbackHook: (callback: (() => void) | null) => void;
 };
 
 export const open = ({
@@ -408,5 +431,9 @@ export const open = ({
     executeBatchAsync: (commands: SQLBatchTuple[]) =>
       OPSQLite.executeBatchAsync(name, commands),
     loadFile: (location: string) => OPSQLite.loadFile(name, location),
+    updateHook: (callback) => OPSQLite.updateHook(name, callback),
+    commitHook: (callback) => OPSQLite.commitHook(name, callback),
+    rollbackHook: (callback) => OPSQLite.rollbackHook(name, callback),
+
   };
 };
