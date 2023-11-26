@@ -66,8 +66,8 @@ export function registerHooksTests() {
     });
 
     it('remove update hook', async () => {
-      const hookRes: string[] = []
-      db.updateHook(({ rowId, table, operation, row = {} }) => {
+      const hookRes: string[] = [];
+      db.updateHook(({rowId, table, operation, row = {}}) => {
         hookRes.push(operation);
       });
 
@@ -80,16 +80,16 @@ export function registerHooksTests() {
         [id, name, age, networth],
       );
 
-      db.updateHook(null)
+      db.updateHook(null);
 
       db.execute(
         'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
         [id + 1, name, age, networth],
       );
 
-      await sleep(0)
+      await sleep(0);
 
-      expect(hookRes.length).to.equal(1)
+      expect(hookRes.length).to.equal(1);
     });
 
     it('commit hook', async () => {
@@ -117,7 +117,7 @@ export function registerHooksTests() {
     });
 
     it('remove commit hook', async () => {
-      const hookRes: string[] = []
+      const hookRes: string[] = [];
       db.commitHook(() => {
         hookRes.push('commit');
       });
@@ -133,18 +133,18 @@ export function registerHooksTests() {
         );
       });
 
-      db.commitHook(null)
+      db.commitHook(null);
 
       await db.transaction(async tx => {
         tx.execute(
           'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
-          [id+1, name, age, networth],
+          [id + 1, name, age, networth],
         );
       });
 
-      await sleep(0)
+      await sleep(0);
 
-      expect(hookRes.length).to.equal(1)
+      expect(hookRes.length).to.equal(1);
     });
 
     it('rollback hook', async () => {
@@ -157,11 +157,6 @@ export function registerHooksTests() {
         promiseResolve?.();
       });
 
-      const id = chance.integer();
-      const name = chance.name();
-      const age = chance.integer();
-      const networth = chance.floating();
-      console.warn('1');
       try {
         await db.transaction(async tx => {
           throw new Error('Blah');
@@ -170,12 +165,11 @@ export function registerHooksTests() {
         // intentionally left blank
       }
 
-      console.warn('2');
       await promise;
     });
 
     it('remove rollback hook', async () => {
-      const hookRes: string[] = []
+      const hookRes: string[] = [];
       db.rollbackHook(() => {
         hookRes.push('rollback');
       });
@@ -188,7 +182,7 @@ export function registerHooksTests() {
         // intentionally left blank
       }
 
-      db.rollbackHook(null)
+      db.rollbackHook(null);
 
       try {
         await db.transaction(async tx => {
@@ -198,9 +192,9 @@ export function registerHooksTests() {
         // intentionally left blank
       }
 
-      await sleep(0)
+      await sleep(0);
 
-      expect(hookRes.length).to.equal(1)
+      expect(hookRes.length).to.equal(1);
     });
   });
 }
