@@ -43,9 +43,9 @@ const largeDb = open({
 
 Note that on iOS the file system is sand-boxed, so you cannot access files/directories outside your app bundle directories.
 
-## In memory
+## In-memory
 
-Using SQLite in memory mode is supported:
+Using SQLite in-memory mode is supported:
 
 ```ts
 import { open } from '@op-engineering/op-sqlite';
