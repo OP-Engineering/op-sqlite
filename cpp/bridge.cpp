@@ -367,27 +367,30 @@ namespace opsqlite {
                             }
                             i++;
                         }
-                        results->push_back(row);
+                        if (results != nullptr) {
+                            results->push_back(row);
+                        }
                         break;
                     }
                         
                     case SQLITE_DONE:
-                        i = 0;
-                        count = sqlite3_column_count(statement);
-                        
-                        while (i < count)
-                        {
-                            column_name = sqlite3_column_name(statement, i);
-                            const char *type = sqlite3_column_decltype(statement, i);
-                            auto metadata = DynamicHostObject();
-                            metadata.fields.push_back(std::make_pair("name", column_name));
-                            metadata.fields.push_back(std::make_pair("index", i));
-                            metadata.fields.push_back(std::make_pair("type", type == NULL ? "UNKNOWN" : type));
+                        if (metadatas != nullptr) {
+                            i = 0;
+                            count = sqlite3_column_count(statement);
                             
-                            metadatas->push_back(metadata);
-                            i++;
+                            while (i < count)
+                            {
+                                column_name = sqlite3_column_name(statement, i);
+                                const char *type = sqlite3_column_decltype(statement, i);
+                                auto metadata = DynamicHostObject();
+                                metadata.fields.push_back(std::make_pair("name", column_name));
+                                metadata.fields.push_back(std::make_pair("index", i));
+                                metadata.fields.push_back(std::make_pair("type", type == NULL ? "UNKNOWN" : type));
+                                
+                                metadatas->push_back(metadata);
+                                i++;
+                            }
                         }
-                        
                         isConsuming = false;
                         break;
                         
@@ -557,6 +560,28 @@ namespace opsqlite {
         };
     }
 
+    BridgeResult unregisterUpdateHook(std::string const dbName) {
+        if (dbMap.count(dbName) == 0)
+        {
+            return {
+                SQLiteError,
+                "[op-sqlite] Database not opened: " + dbName
+            };
+        }
+        
+        sqlite3 *db = dbMap[dbName];
+        updateCallbackMap.erase(dbName);
+
+        sqlite3_update_hook(
+            db,
+            NULL,
+            NULL);
+
+        return {
+            SQLiteOk
+        };
+    }
+
     int commit_callback(void *dbName) {
         std::string &strDbName = *(static_cast<std::string*>(dbName));
         auto callback = commitCallbackMap[strDbName];
@@ -596,6 +621,27 @@ namespace opsqlite {
         };
     }
 
+    BridgeResult unregisterCommitHook(std::string const dbName) {
+        if (dbMap.count(dbName) == 0)
+        {
+            return {
+                SQLiteError,
+                "[op-sqlite] Database not opened: " + dbName
+            };
+        }
+        
+        sqlite3 *db = dbMap[dbName];
+        commitCallbackMap.erase(dbName);
+        sqlite3_commit_hook(
+            db,
+            NULL,
+            NULL);
+
+        return {
+            SQLiteOk
+        };
+    }
+
     void rollback_callback(void *dbName) {
         std::string &strDbName = *(static_cast<std::string*>(dbName));
         auto callback = rollbackCallbackMap[strDbName];
@@ -628,6 +674,28 @@ namespace opsqlite {
           &rollback_callback,
           (void *)key);
         
+        return {
+            SQLiteOk
+        };
+    }
+
+    BridgeResult unregisterRollbackHook(std::string const dbName) {
+        if (dbMap.count(dbName) == 0)
+        {
+            return {
+                SQLiteError,
+                "[op-sqlite] Database not opened: " + dbName
+            };
+        }
+        
+        sqlite3 *db = dbMap[dbName];
+        rollbackCallbackMap.erase(dbName);
+
+        sqlite3_rollback_hook(
+            db,
+            NULL,
+            NULL);
+
         return {
             SQLiteOk
         };

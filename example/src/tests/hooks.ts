@@ -65,6 +65,33 @@ export function registerHooksTests() {
       expect(operation).to.equal('INSERT');
     });
 
+    it('remove update hook', async () => {
+      const hookRes: string[] = []
+      db.updateHook(({ rowId, table, operation, row = {} }) => {
+        hookRes.push(operation);
+      });
+
+      const id = chance.integer();
+      const name = chance.name();
+      const age = chance.integer();
+      const networth = chance.floating();
+      db.execute(
+        'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+        [id, name, age, networth],
+      );
+
+      db.updateHook(null)
+
+      db.execute(
+        'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+        [id + 1, name, age, networth],
+      );
+
+      await sleep(0)
+
+      expect(hookRes.length).to.equal(1)
+    });
+
     it('commit hook', async () => {
       let promiseResolve: any;
       let promise = new Promise(resolve => {
@@ -87,6 +114,37 @@ export function registerHooksTests() {
       });
 
       await promise;
+    });
+
+    it('remove commit hook', async () => {
+      const hookRes: string[] = []
+      db.commitHook(() => {
+        hookRes.push('commit');
+      });
+
+      const id = chance.integer();
+      const name = chance.name();
+      const age = chance.integer();
+      const networth = chance.floating();
+      await db.transaction(async tx => {
+        tx.execute(
+          'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+          [id, name, age, networth],
+        );
+      });
+
+      db.commitHook(null)
+
+      await db.transaction(async tx => {
+        tx.execute(
+          'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+          [id+1, name, age, networth],
+        );
+      });
+
+      await sleep(0)
+
+      expect(hookRes.length).to.equal(1)
     });
 
     it('rollback hook', async () => {
@@ -114,6 +172,35 @@ export function registerHooksTests() {
 
       console.warn('2');
       await promise;
+    });
+
+    it('remove rollback hook', async () => {
+      const hookRes: string[] = []
+      db.rollbackHook(() => {
+        hookRes.push('rollback');
+      });
+
+      try {
+        await db.transaction(async tx => {
+          throw new Error('Blah');
+        });
+      } catch (e) {
+        // intentionally left blank
+      }
+
+      db.rollbackHook(null)
+
+      try {
+        await db.transaction(async tx => {
+          throw new Error('Blah');
+        });
+      } catch (e) {
+        // intentionally left blank
+      }
+
+      await sleep(0)
+
+      expect(hookRes.length).to.equal(1)
     });
   });
 }

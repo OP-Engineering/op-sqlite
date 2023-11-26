@@ -161,15 +161,15 @@ interface ISQLite {
   loadFile: (dbName: string, location: string) => Promise<FileLoadResult>;
   updateHook: (
     dbName: string,
-    callback: (params: {
+    callback?: ((params: {
       table: string;
       operation: UpdateHookOperation;
       row?: any;
       rowId: number;
-    }) => void
+    }) => void) | null
   ) => void;
-  commitHook: (dbName: string, callback: () => void) => void;
-  rollbackHook: (dbName: string, callback: () => void) => void;
+  commitHook: (dbName: string, callback?: (() => void) | null) => void;
+  rollbackHook: (dbName: string, callback?: (() => void) | null) => void;
 }
 
 const locks: Record<
@@ -377,15 +377,15 @@ export type OPSQLiteConnection = {
   executeBatchAsync: (commands: SQLBatchTuple[]) => Promise<BatchQueryResult>;
   loadFile: (location: string) => Promise<FileLoadResult>;
   updateHook: (
-    callback: (params: {
+    callback: ((params: {
       table: string;
       operation: UpdateHookOperation;
       row?: any;
       rowId: number;
-    }) => void
+    }) => void) | null
   ) => void;
-  commitHook: (callback: () => void) => void;
-  rollbackHook: (callback: () => void) => void;
+  commitHook: (callback: (() => void) | null) => void;
+  rollbackHook: (callback: (() => void) | null) => void;
 };
 
 export const open = (options: {
