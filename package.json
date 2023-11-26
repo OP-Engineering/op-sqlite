@@ -1,6 +1,6 @@
 {
   "name": "@op-engineering/op-sqlcipher",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "Next generation SQLite for React Native",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
@@ -13,7 +13,7 @@
     "android",
     "ios",
     "cpp",
-    "op-sqlite.podspec",
+    "op-sqlcipher.podspec",
     "!lib/typescript/example",
     "!android/build",
     "!android/.cxx",
