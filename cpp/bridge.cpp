@@ -83,18 +83,18 @@ namespace opsqlite {
         return (stat(path.c_str(), &buffer) == 0);
     }
 
-    std::string get_db_path(std::string const dbName, std::string const docPath)
+    std::string get_db_path(std::string const dbName, std::string const lastPath)
     {
-        if(docPath = ":memory") {
-            return docPath;
+        if(lastPath == ":memory:") {
+            return lastPath;
         }
-        mkdir(docPath.c_str());
-        return docPath + "/" + dbName;
+        mkdir(lastPath.c_str());
+        return lastPath + "/" + dbName;
     }
 
     BridgeResult sqliteOpenDb(std::string const dbName, std::string const lastPath)
     {
-        std::string dbPath = get_db_path(dbName, docPath);
+        std::string dbPath = get_db_path(dbName, lastPath);
         
         int sqlOpenFlags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
         

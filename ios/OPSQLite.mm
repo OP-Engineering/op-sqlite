@@ -10,11 +10,14 @@
 RCT_EXPORT_MODULE(OPSQLite)
 
 - (NSDictionary *)constantsToExport {
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, true);
-    NSString *documentPath = [paths objectAtIndex:0];
-    return @{ 
-        @"IOS_DOCUMENT_PATH": @"New Event",
-        @"IOS_LIBRARY_PATH": documentPath
+    NSArray *libraryPaths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, true);
+    NSString *libraryPath = [libraryPaths objectAtIndex:0];
+    
+    NSArray *documentPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true);
+    NSString *documentPath = [documentPaths objectAtIndex:0];
+    return @{
+        @"IOS_DOCUMENT_PATH": documentPath,
+        @"IOS_LIBRARY_PATH": libraryPath
     };
 }
 
