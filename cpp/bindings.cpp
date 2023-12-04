@@ -63,14 +63,14 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
                 throw jsi::JSError(rt, "[op-sqlite][open] database location must be a string");
             }
 
-            std::string lastPath = args[1].asString(rt).utf8(rt)
+            std::string lastPath = args[1].asString(rt).utf8(rt);
 
-            if(lastPath == ":memory") {
-                path = ":memory";
-            } else if( dbPath.rfind("/", 0) == 0) {
-                path = dbPath;
+            if(lastPath == ":memory:") {
+                path = ":memory:";
+            } else if( lastPath.rfind("/", 0) == 0) {
+                path = lastPath;
             } else {
-                path = tempDocPath + "/" + lastPath
+                path = path + "/" + lastPath;
             }
         }
         
