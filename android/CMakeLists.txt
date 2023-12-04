@@ -47,11 +47,9 @@ set_target_properties(
 
 find_package(ReactAndroid REQUIRED CONFIG)
 find_package(fbjni REQUIRED CONFIG)
-find_library(LOG_LIB log)
 
 target_link_libraries(
   ${PACKAGE_NAME}
-  ${LOG_LIB}
   fbjni::fbjni
   ReactAndroid::jsi
   ReactAndroid::turbomodulejsijni
