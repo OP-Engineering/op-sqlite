@@ -39,8 +39,8 @@ You can use relative location to navigate in and out of the **default location**
 ```ts
 import { open } from '@op-engineering/op-sqlite';
 
-const largeDb = open({
-  name: 'largeDB',
+const db = open({
+  name: 'myDB',
   location: '../files/databases',
 });
 ```
@@ -53,17 +53,39 @@ You can also pass absolute paths to completely change the location of the databa
 
 ```ts
 import {
+  IOS_LIBRARY_PATH, // Default iOS
   IOS_DOCUMENT_PATH,
-  IOS_LIBRARY_PATH,
-  ANDROID_DATABASE_PATH,
+  ANDROID_DATABASE_PATH, // Default Android
   ANDROID_FILES_PATH,
   ANDROID_EXTERNAL_FILES_PATH,
   open,
 } from '@op-engineering/op-sqlite';
 
-const largeDb = open({
-  name: 'largeDB',
+const db = open({
+  name: 'myDb',
   location: Platform.OS === 'ios' ? IOS_LIBRARY_PATH : ANDROID_DATABASE_PATH,
+});
+```
+
+Here is an example if you want to access the SD card app's directory:
+
+```ts
+const db = open({
+  name: 'myDB',
+  location:
+    Platform.OS === 'ios' ? IOS_LIBRARY_PATH : ANDROID_EXTERNAL_FILES_PATH,
+});
+```
+
+You can even drill down:
+
+```ts
+const db = open({
+  name: 'myDB',
+  location:
+    Platform.OS === 'ios'
+      ? IOS_LIBRARY_PATH
+      : `${ANDROID_EXTERNAL_FILES_PATH}/dbs/`,
 });
 ```
 
