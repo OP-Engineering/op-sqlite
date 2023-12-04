@@ -20,7 +20,7 @@ You can find the [benchmarking code in the example app](https://github.com/OP-En
 
 ![benchmark](benchmark.png)
 
-Memory consumption is also is also 1/4 compared to `react-native-quick-sqlite`. This query used to take 1.2 GB of peak memory usage, and now runs in 250mbs.
+Memory consumption is also 1/4 compared to `react-native-quick-sqlite`. This query used to take 1.2 GB of peak memory usage, and now runs in 250mbs.
 
 # Encryption
 
