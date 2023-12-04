@@ -12,7 +12,7 @@ struct OPSQLiteBridge : jni::JavaClass<OPSQLiteBridge> {
 
   static void registerNatives() {
     javaClassStatic()->registerNatives(
-        {// initialization for JSI
+        {
          makeNativeMethod("installNativeJsi",
                           OPSQLiteBridge::installNativeJsi),
          makeNativeMethod("clearStateNativeJsi",
@@ -24,12 +24,12 @@ private:
   static void installNativeJsi(
       jni::alias_ref<jni::JObject> thiz, jlong jsiRuntimePtr,
       jni::alias_ref<react::CallInvokerHolder::javaobject> jsCallInvokerHolder,
-      jni::alias_ref<jni::JString> docPath) {
+      jni::alias_ref<jni::JString> dbPath) {
     auto jsiRuntime = reinterpret_cast<jsi::Runtime *>(jsiRuntimePtr);
     auto jsCallInvoker = jsCallInvokerHolder->cthis()->getCallInvoker();
-    std::string docPathString = docPath->toStdString();
+    std::string dbPathStr = dbPath->toStdString();
 
-    opsqlite::install(*jsiRuntime, jsCallInvoker, docPathString.c_str());
+    opsqlite::install(*jsiRuntime, jsCallInvoker, dbPathStr.c_str());
   }
  
   static void clearStateNativeJsi(jni::alias_ref<jni::JObject> thiz) {
