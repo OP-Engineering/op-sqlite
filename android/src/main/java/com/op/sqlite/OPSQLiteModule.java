@@ -1,14 +1,11 @@
 package com.op.sqlite;
 
 import androidx.annotation.NonNull;
-import android.util.Log;
-
-import com.facebook.jni.HybridData;
-import com.facebook.jni.annotations.DoNotStrip;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
-import com.facebook.react.turbomodule.core.CallInvokerHolderImpl;
+import java.util.HashMap;
+import java.util.Map;
 
 class OPSQLiteModule extends ReactContextBaseJavaModule {
   public static final String NAME = "OPSQLite";
@@ -23,6 +20,25 @@ class OPSQLiteModule extends ReactContextBaseJavaModule {
     return NAME;
   }
 
+  @Override
+  public Map<String, Object> getConstants() {
+    final Map<String, Object> constants = new HashMap<>();
+    ReactApplicationContext context = getReactApplicationContext();
+    final String dbPath = context
+                          .getDatabasePath("defaultDatabase")
+                          .getAbsolutePath()
+                          .replace("defaultDatabase", "");
+    constants.put("ANDROID_DATABASE_PATH", dbPath);
+
+    final String filesPath = context.getFilesDir().getAbsolutePath();
+    constants.put("ANDROID_FILES_PATH", filesPath);
+
+    final String externalFilesDir = context.getExternalFilesDir(null).getAbsolutePath();
+    constants.put("ANDROID_EXTERNAL_FILES_PATH", externalFilesDir);
+
+    return constants;
+  }
+
   @ReactMethod(isBlockingSynchronousMethod = true)
   public boolean install() {
     try {
@@ -30,17 +46,12 @@ class OPSQLiteModule extends ReactContextBaseJavaModule {
       OPSQLiteBridge.instance.install(getReactApplicationContext());
       return true;
     } catch (Exception exception) {
-      Log.e(NAME, "Failed to install JSI Bindings!", exception);
       return false;
     }
   }
 
   @Override
   public void onCatalystInstanceDestroy() {
-    try {
-      OPSQLiteBridge.instance.clearState();
-    } catch (Exception exception) {
-      Log.e(NAME, "Failed to clear state!", exception);
-    }
+    OPSQLiteBridge.instance.clearState();
   }
 }
