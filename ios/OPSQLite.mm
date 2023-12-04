@@ -9,6 +9,11 @@
 
 RCT_EXPORT_MODULE(OPSQLite)
 
++ (BOOL)requiresMainQueueSetup
+{
+  return YES;
+}
+
 - (NSDictionary *)constantsToExport {
     NSArray *libraryPaths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, true);
     NSString *libraryPath = [libraryPaths objectAtIndex:0];
@@ -58,8 +63,6 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     }
     
     opsqlite::install(runtime, callInvoker, [documentPath UTF8String]);
-    
-    NSLog(@"OP-SQLite initialized");
     return @true;
 }
 
