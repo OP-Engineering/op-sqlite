@@ -14,6 +14,7 @@ import pak from '../package.json';
 import {styled} from 'nativewind';
 import RNRestart from 'react-native-restart';
 import {registerHooksTests} from './tests/hooks';
+import {open} from '@op-engineering/op-sqlite';
 
 const StyledScrollView = styled(ScrollView, {
   props: {
@@ -38,6 +39,12 @@ export default function App() {
     setIsLoading(true);
     await createLargeDB();
     setIsLoading(false);
+  };
+
+  const openSampleDB = async () => {
+    const sampleDb = open({
+      name: 'sampleDB',
+    });
   };
 
   const queryLargeDb = async () => {
@@ -72,6 +79,7 @@ export default function App() {
         <View className="flex-row p-2 bg-neutral-600 items-center">
           <Text className={'text-lg flex-1  text-white'}>BENCHMARKS</Text>
         </View>
+        <Button title="Open Sample DB" onPress={openSampleDB} />
         <Button title="Reload app middle of query" onPress={queryAndReload} />
         <Button title="Create 300k Record DB" onPress={createLargeDb} />
         <Button title="Query 300k Records" onPress={queryLargeDb} />

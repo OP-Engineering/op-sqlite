@@ -38,6 +38,14 @@ if (global.__OPSQLiteProxy == null) {
 const proxy = global.__OPSQLiteProxy;
 export const OPSQLite = proxy as ISQLite;
 
+export const {
+  IOS_DOCUMENT_PATH,
+  IOS_LIBRARY_PATH,
+  ANDROID_DATABASE_PATH,
+  ANDROID_FILES_PATH,
+  ANDROID_EXTERNAL_FILES_PATH,
+} = NativeModules.OPSQLite;
+
 /**
  * Object returned by SQL Query executions {
  *  insertId: Represent the auto-generated row id if applicable
@@ -133,12 +141,7 @@ export interface PendingTransaction {
 }
 
 interface ISQLite {
-  open: (
-    dbName: string,
-    location: string,
-    inMemory: boolean,
-    encryptionKey: string
-  ) => void;
+  open: (dbName: string, location: string | undefined, encryptionKey: string) => void;
   close: (dbName: string) => void;
   delete: (dbName: string, location?: string) => void;
   attach: (
@@ -166,12 +169,14 @@ interface ISQLite {
   loadFile: (dbName: string, location: string) => Promise<FileLoadResult>;
   updateHook: (
     dbName: string,
-    callback?: ((params: {
-      table: string;
-      operation: UpdateHookOperation;
-      row?: any;
-      rowId: number;
-    }) => void) | null
+    callback?:
+      | ((params: {
+          table: string;
+          operation: UpdateHookOperation;
+          row?: any;
+          rowId: number;
+        }) => void)
+      | null
   ) => void;
   commitHook: (dbName: string, callback?: (() => void) | null) => void;
   rollbackHook: (dbName: string, callback?: (() => void) | null) => void;
@@ -199,14 +204,8 @@ function enhanceQueryResult(result: QueryResult): void {
 }
 
 const _open = OPSQLite.open;
-
-OPSQLite.open = (
-  dbName: string,
-  location: string = '',
-  inMemory: boolean = false,
-  encryptionKey: string = ''
-) => {
-  _open(dbName, location, inMemory, encryptionKey);
+OPSQLite.open = (dbName: string, location: string | undefined, encryptionKey: string) => {
+  _open(dbName, location, encryptionKey);
 
   locks[dbName] = {
     queue: [],
@@ -388,12 +387,14 @@ export type OPSQLiteConnection = {
   executeBatchAsync: (commands: SQLBatchTuple[]) => Promise<BatchQueryResult>;
   loadFile: (location: string) => Promise<FileLoadResult>;
   updateHook: (
-    callback: ((params: {
-      table: string;
-      operation: UpdateHookOperation;
-      row?: any;
-      rowId: number;
-    }) => void) | null
+    callback:
+      | ((params: {
+          table: string;
+          operation: UpdateHookOperation;
+          row?: any;
+          rowId: number;
+        }) => void)
+      | null
   ) => void;
   commitHook: (callback: (() => void) | null) => void;
   rollbackHook: (callback: (() => void) | null) => void;
@@ -401,16 +402,14 @@ export type OPSQLiteConnection = {
 
 export const open = ({
   name,
-  location = '',
-  inMemory = false,
+  location,
   encryptionKey = '',
 }: {
   name: string;
   location?: string;
-  inMemory?: boolean;
   encryptionKey?: string;
 }): OPSQLiteConnection => {
-  OPSQLite.open(name, location, inMemory, encryptionKey);
+  OPSQLite.open(name, location, encryptionKey);
 
   return {
     close: () => OPSQLite.close(name),

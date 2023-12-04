@@ -16,27 +16,31 @@ Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider Sponso
 
 ## Benchmarks
 
-You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). You should expect anywhere between a 5x to a 8x improvement over non-JSI packages, and now a 5x to 8x improvement over quick-sqlite and expo-sqlite. Loading a 300k record database (in milliseconds).
+You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). You should expect anywhere between a 5x to an 8x improvement over non-JSI packages, and now a 5x to 8x improvement over quick-sqlite and expo-sqlite. Loading a 300k record database (in milliseconds).
 
 ![benchmark](benchmark.png)
 
-Memory consumption is also is also 1/4 compared to `react-native-quick-sqlite`. This query used to take 1.2gb of peak memory usage, now runs in 250mbs.
+Memory consumption is also is also 1/4 compared to `react-native-quick-sqlite`. This query used to take 1.2 GB of peak memory usage, and now runs in 250mbs.
 
 # Encryption
 
-If you need to encrypt your entire database, there is [`op-sqlcipher`](https://github.com/OP-Engineering/op-sqlcipher), which is a fork of this library which uses [SQLCipher](https://github.com/sqlcipher/sqlcipher). It completely encrypts all the database with minimal overhead. Bear in mind, however, it is a fork maintained by a third-party.
+If you need to encrypt your entire database, there is [`op-sqlcipher`](https://github.com/OP-Engineering/op-sqlcipher), which is a fork of this library that uses [SQLCipher](https://github.com/sqlcipher/sqlcipher). It completely encrypts the database with minimal overhead.
 
-# DB Paths
+# Database Location
 
-The library creates/opens databases by appending the passed name plus, the [library directory on iOS](https://github.com/OP-Engineering/op-sqlcipher/blob/main/ios/OPSQLite.mm#L51) and the [database directory on Android](https://github.com/OP-Engineering/op-sqlcipher/blob/main/android/src/main/java/com/op/sqlite/OPSQLiteBridge.java#L18). If you are migrating from `react-native-quick-sqlite` you will have to move your library using one of the many react-native fs libraries.
+## Default location
 
-If you have an existing database file you want to load you can navigate from these directories using dot notation. e.g.:
+If you don't pass a `location` the library creates/opens databases by appending the passed name plus, the [library directory on iOS](https://github.com/OP-Engineering/op-sqlite/blob/main/ios/OPSQLite.mm#L51) and the [database directory on Android](https://github.com/OP-Engineering/op-sqlite/blob/main/android/src/main/java/com/op/sqlite/OPSQLiteBridge.java#L18).
+
+## Relative location
+
+You can use relative location to navigate in and out of the **default location**
 
 ```ts
 import { open } from '@op-engineering/op-sqlcipher';
 
-const largeDb = open({
-  name: 'largeDB',
+const db = open({
+  name: 'myDB',
   location: '../files/databases',
   encryptionKey: 'YOUR ENCRYPTION KEY, KEEP IT SOMEWHERE SAFE', // for example turbo-secure-storage
 });
@@ -44,9 +48,51 @@ const largeDb = open({
 
 Note that on iOS the file system is sand-boxed, so you cannot access files/directories outside your app bundle directories.
 
+## Passing absolute paths
+
+You can also pass absolute paths to completely change the location of the database, the library exports useful paths you can use:
+
+```ts
+import {
+  IOS_LIBRARY_PATH, // Default iOS
+  IOS_DOCUMENT_PATH,
+  ANDROID_DATABASE_PATH, // Default Android
+  ANDROID_FILES_PATH,
+  ANDROID_EXTERNAL_FILES_PATH,
+  open,
+} from '@op-engineering/op-sqlite';
+
+const db = open({
+  name: 'myDb',
+  location: Platform.OS === 'ios' ? IOS_LIBRARY_PATH : ANDROID_DATABASE_PATH,
+});
+```
+
+Here is an example if you want to access the SD card app's directory:
+
+```ts
+const db = open({
+  name: 'myDB',
+  location:
+    Platform.OS === 'ios' ? IOS_LIBRARY_PATH : ANDROID_EXTERNAL_FILES_PATH,
+});
+```
+
+You can even drill down:
+
+```ts
+const db = open({
+  name: 'myDB',
+  location:
+    Platform.OS === 'ios'
+      ? IOS_LIBRARY_PATH
+      : `${ANDROID_EXTERNAL_FILES_PATH}/dbs/`,
+});
+```
+
 ## In-memory
 
-Using SQLite in-memory mode is supported:
+Using SQLite in-memory mode is supported by passing a `':memory:'` as a location:
 
 ```ts
 import { open } from '@op-engineering/op-sqlcipher';
@@ -55,6 +101,7 @@ const largeDb = open({
   name: 'inMemoryDb',
   inMemory: true,
   encryptionKey: 'YOUR ENCRYPTION KEY, KEEP IT SOMEWHERE SAFE', // for example turbo-secure-storage
+  location: ':memory:',
 });
 ```
 

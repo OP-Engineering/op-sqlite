@@ -83,46 +83,18 @@ namespace opsqlite {
         return (stat(path.c_str(), &buffer) == 0);
     }
 
-    std::string get_db_path(std::string const dbName, std::string const docPath)
+    std::string get_db_path(std::string const dbName, std::string const lastPath)
     {
-        mkdir(docPath.c_str());
-        return docPath + "/" + dbName;
+        if(lastPath == ":memory:") {
+            return lastPath;
+        }
+        mkdir(lastPath.c_str());
+        return lastPath + "/" + dbName;
     }
 
-    BridgeResult sqliteOpenDb(std::string const dbName, std::string const docPath, bool memoryStorage, std::string encryptionKey)
+    BridgeResult sqliteOpenDb(std::string const dbName, std::string const lastPath, std::string encryptionKey)
     {
-        std::string dbPath = memoryStorage ? ":memory:" : get_db_path(dbName, docPath);
-                
-        int sqlOpenFlags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
-        
-        sqlite3 *db;
-        int exit = 0;
-        exit = sqlite3_open_v2(dbPath.c_str(), &db, sqlOpenFlags, nullptr);
-        
-        if (exit != SQLITE_OK)
-        {
-            return {
-                .type = SQLiteError,
-                .message = sqlite3_errmsg(db)
-            };
-        }
-        else
-        {
-            dbMap[dbName] = db;
-        }
-
-        // Encrypts the database
-        sqliteExecuteLiteral(dbName, "PRAGMA key = '" + encryptionKey +"'");
-        
-        return BridgeResult{
-            .type = SQLiteOk,
-            .affectedRows = 0
-        };
-    }
-
-    BridgeResult sqliteOpenDb(std::string const dbName, std::string const docPath, bool memoryStorage)
-    {
-        std::string dbPath = memoryStorage ? ":memory:" : get_db_path(dbName, docPath);
+        std::string dbPath = get_db_path(dbName, lastPath);
         
         int sqlOpenFlags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
         
@@ -139,6 +111,9 @@ namespace opsqlite {
         }
 
         dbMap[dbName] = db;
+
+        // Encrypts the database
+        sqliteExecuteLiteral(dbName, "PRAGMA key = '" + encryptionKey +"'");
         
         return BridgeResult{
             .type = SQLiteOk,
