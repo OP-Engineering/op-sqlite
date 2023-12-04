@@ -6,7 +6,7 @@ import {Platform} from 'react-native';
 let expect = chai.expect;
 
 export function dbSetupTests() {
-  describe('Setting up a DB', () => {
+  describe('DB setup tests', () => {
     it('Create in memory DB', async () => {
       let inMemoryDb = open({
         name: 'inMemoryTest',

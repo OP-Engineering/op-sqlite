@@ -14,7 +14,7 @@ import {dbSetupTests, queriesTests, runTests, blobTests} from './tests/index';
 import pak from '../package.json';
 import {styled} from 'nativewind';
 import RNRestart from 'react-native-restart';
-import {registerHooksTests} from './tests/hooks';
+import {registerHooksTests} from './tests/hooks.spec';
 import {open} from '@op-engineering/op-sqlite';
 
 const StyledScrollView = styled(ScrollView, {
@@ -75,10 +75,12 @@ export default function App() {
   return (
     <SafeAreaView className="flex-1 bg-neutral-900">
       <StyledScrollView>
-        <Text className=" text-white text-2xl p-2">{pak.name}</Text>
+        <Text className=" text-white text-2xl p-2">
+          {pak.name.split('_').join(' ')}
+        </Text>
 
-        <View className="flex-row p-2 bg-neutral-600 items-center">
-          <Text className={'text-lg flex-1  text-white'}>BENCHMARKS</Text>
+        <View className="flex-row p-2 bg-neutral-800 items-center">
+          <Text className={'font-bold flex-1 text-white'}>Tools</Text>
         </View>
         <Button title="Open Sample DB" onPress={openSampleDB} />
         <Button title="Reload app middle of query" onPress={queryAndReload} />
@@ -106,14 +108,14 @@ export default function App() {
           </Text>
         )}
 
-        <View className="flex-row p-2 mt-4 bg-neutral-600 items-center">
-          <Text className={'text-lg flex-1  text-white'}>ALL TESTS</Text>
+        <View className="flex-row p-2 mt-4 bg-neutral-800 items-center">
+          <Text className={'font-bold flex-1 text-white'}>Test Suite</Text>
           {allTestsPassed ? <Text>🟩</Text> : <Text>🟥</Text>}
         </View>
         {results.map((r: any, i: number) => {
           if (r.type === 'grouping') {
             return (
-              <Text className="bg-neutral-700 p-2 text-white">
+              <Text className="p-2 font-semibold text-white">
                 {r.description}
               </Text>
             );
@@ -121,21 +123,19 @@ export default function App() {
 
           if (r.type === 'incorrect') {
             return (
-              <View className="border-b border-neutral-600 p-2 flex-row">
-                <Text key={i} className="text-white flex-1">
+              <View className="border-b border-neutral-800 p-2 flex-row">
+                <Text key={i} className="text-red-500 flex-1">
                   {r.description}: {r.errorMsg}
                 </Text>
-                <Text>🔻</Text>
               </View>
             );
           }
 
           return (
-            <View className="border-b border-neutral-600 p-2 flex-row">
-              <Text key={i} className="text-white flex-1">
+            <View className="border-b border-neutral-800 p-2 flex-row">
+              <Text key={i} className="text-green-500 flex-1">
                 {r.description}
               </Text>
-              <Text>🟢</Text>
             </View>
           );
         })}
