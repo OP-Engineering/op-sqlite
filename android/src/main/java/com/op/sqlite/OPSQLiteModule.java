@@ -23,6 +23,23 @@ class OPSQLiteModule extends ReactContextBaseJavaModule {
     return NAME;
   }
 
+  @Override
+  public Map<String, Object> getConstants() {
+    final Map<String, Object> constants = new HashMap<>();
+    final String dbPath = context
+                          .getDatabasePath("defaultDatabase")
+                          .getAbsolutePath()
+                          .replace("defaultDatabase", "");
+
+    constants.put("ANDROID_DATABASE_PATH", dbPath);
+
+    final String externalPath = context
+                                .getExternalPath();
+
+    constant.put("ANDROID_EXTERNAL_FOLDER_PATH", externalPath);
+    return constants;
+  }
+
   @ReactMethod(isBlockingSynchronousMethod = true)
   public boolean install() {
     try {

@@ -9,9 +9,16 @@
 
 RCT_EXPORT_MODULE(OPSQLite)
 
+- (NSDictionary *)constantsToExport {
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, true);
+    NSString *documentPath = [paths objectAtIndex:0];
+    return @{ 
+        @"IOS_DOCUMENT_PATH": @"New Event",
+        @"IOS_LIBRARY_PATH": documentPath
+    };
+}
+
 RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
-    NSLog(@"Initializing OP-SQLite module...");
-    
     RCTBridge *bridge = [RCTBridge currentBridge];
     RCTCxxBridge *cxxBridge = (RCTCxxBridge *)bridge;
     if (cxxBridge == nil) {
@@ -37,10 +44,9 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         NSURL *storeUrl = [fileManager containerURLForSecurityApplicationGroupIdentifier:appGroupID];
         
         if (storeUrl == nil) {
-            NSLog(@"Invalid AppGroup ID provided (%@). Check the value of \"AppGroup\" in your Info.plist file", appGroupID);
+            NSLog(@"OP-SQLite: Invalid AppGroup ID provided (%@). Check the value of \"AppGroup\" in your Info.plist file", appGroupID);
             return @false;
         }
-        NSLog(@"Configured with AppGroup ID: %@", appGroupID);
         
         documentPath = [storeUrl path];
     } else {

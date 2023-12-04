@@ -54,8 +54,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
         }
         
         std::string dbName = args[0].asString(rt).utf8(rt);
-        std::string tempDocPath = std::string(basePath);
-        bool memoryStorage = false;
+        std::string path = std::string(basePath);
         
         if (count > 1 && !args[1].isUndefined() && !args[1].isNull())
         {
@@ -63,19 +62,19 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> jsCallInvoker
             {
                 throw jsi::JSError(rt, "[op-sqlite][open] database location must be a string");
             }
-            
-            tempDocPath = tempDocPath + "/" + args[1].asString(rt).utf8(rt);
-        }
-        
-        if(count == 3) {
-            if(!args[2].isBool()) {
-                throw jsi::JSError(rt, "[op-sqlite][open] memoryStorage must be a bool");
+
+            std::string lastPath = args[1].asString(rt).utf8(rt)
+
+            if(lastPath == ":memory") {
+                path = ":memory";
+            } else if( dbPath.rfind("/", 0) == 0) {
+                path = dbPath;
+            } else {
+                path = tempDocPath + "/" + lastPath
             }
-            
-            memoryStorage = args[2].asBool();
         }
         
-        BridgeResult result = sqliteOpenDb(dbName, tempDocPath, memoryStorage);
+        BridgeResult result = sqliteOpenDb(dbName, path);
         
         if (result.type == SQLiteError)
         {
