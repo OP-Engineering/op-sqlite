@@ -519,7 +519,8 @@ void install(jsi::Runtime &rt,
           [&rt, callback] { callback->asObject(rt).asFunction(rt).call(rt); });
     };
 
-    registerRollbackHook(dbName, std::move(hook));return {};
+    registerRollbackHook(dbName, std::move(hook));
+    return {};
   });
 
   jsi::Object module = jsi::Object(rt);
