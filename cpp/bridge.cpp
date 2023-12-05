@@ -428,7 +428,9 @@ sqliteExecute(std::string const dbName, std::string const &query,
       };
     }
 
-    bindStatement(statement, params);
+    if (params != nullptr && params->size() > 0) {
+      bindStatement(statement, params);
+    }
 
     isConsuming = true;
 
