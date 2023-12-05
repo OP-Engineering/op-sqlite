@@ -445,6 +445,10 @@ On iOS, the SQLite database can be placed in an app group, in order to make it a
 
 To use an app group, add the app group ID as the value for the `OPSQLite_AppGroup` key in your project's `Info.plist` file. You'll also need to configure the app group in your project settings. (Xcode -> Project Settings -> Signing & Capabilities -> Add Capability -> App Groups)
 
+## Contribute
+
+You need to have clang-format installed (`brew install clang-format`)
+
 ## License
 
 MIT License.
