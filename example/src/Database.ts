@@ -9,7 +9,6 @@ const ROWS = 300000;
 const DB_NAME = 'largeDB';
 const DB_CONFIG = {
   name: DB_NAME,
-  // inMemory: true,
 };
 
 export async function createLargeDB() {
