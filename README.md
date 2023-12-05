@@ -1,4 +1,4 @@
-![screenshot](https://raw.githubusercontent.com/OP-Engineering/op-sqlcipher/main/Header.png)
+![Header](Header.png)
 
 <div align="center">
   <pre align="center">
