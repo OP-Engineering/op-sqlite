@@ -531,7 +531,8 @@ void install(jsi::Runtime &rt,
 
     sqlite3_stmt *statement = sqlite_prepare_statement(dbName, query);
 
-    auto preparedStatementHostObject = PreparedStatementHostObject(statement);
+    auto preparedStatementHostObject =
+        PreparedStatementHostObject(dbName, statement);
 
     return jsi::Object::createFromHostObject(
         rt, std::make_shared<PreparedStatementHostObject>(

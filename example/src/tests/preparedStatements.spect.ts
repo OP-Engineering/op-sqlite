@@ -20,16 +20,23 @@ export function preparedStatementsTests() {
 
       db.execute('DROP TABLE IF EXISTS User;');
       db.execute('CREATE TABLE User ( id INT PRIMARY KEY, name TEXT) STRICT;');
+      db.execute('INSERT INTO "User" (id, name) VALUES(?,?)', [1, 'Oscar']);
+      db.execute('INSERT INTO "User" (id, name) VALUES(?,?)', [2, 'Pablo']);
+      db.execute('INSERT INTO "User" (id, name) VALUES(?,?)', [3, 'Carlos']);
     } catch (e) {
       console.warn('error on before each', e);
     }
   });
 
   describe('PreparedStatements', () => {
-    it('Creates a prepared statement', async () => {
+    it('Creates a prepared statement and executes a prepared statement', async () => {
       const statement = db.prepareStatement('SELECT * FROM User;');
+      let results = statement.execute();
 
-      expect(1).to.equal(2);
+      expect(results.rows!._array.length).to.equal(3);
+      results = statement.execute();
+
+      expect(results.rows!._array.length).to.equal(3);
     });
   });
 }

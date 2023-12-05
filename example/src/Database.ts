@@ -54,9 +54,16 @@ export async function createLargeDB() {
 export async function queryLargeDB() {
   let largeDb = open(DB_CONFIG);
 
-  let times: {loadFromDb: number[]; access: number[]} = {
+  let times: {
+    loadFromDb: number[];
+    access: number[];
+    prepare: number[];
+    preparedExecution: number[];
+  } = {
     loadFromDb: [],
     access: [],
+    prepare: [],
+    preparedExecution: [],
   };
 
   for (let i = 0; i < 1; i++) {
@@ -73,12 +80,21 @@ export async function queryLargeDB() {
     for (let i = 0; i < rows.length; i++) {
       const v1 = rows[i].v14;
     }
-
     const accessMeasurement = performance.measure(
       'accessingEnd',
       'accessingStart',
     );
     times.access.push(accessMeasurement.duration);
+
+    let start = performance.now();
+    const statement = largeDb.prepareStatement('SELECT * FROM Test');
+    let end = performance.now();
+    times.prepare.push(end - start);
+
+    start = performance.now();
+    let results2 = statement.execute();
+    end = performance.now();
+    times.preparedExecution.push(end - start);
   }
 
   return times;
