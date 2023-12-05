@@ -1,4 +1,4 @@
-#include "DynamicHostObject.h"
+#include "SmartHostObject.h"
 #include "utils.h"
 #include <iostream>
 
@@ -7,7 +7,7 @@ namespace opsqlite {
 namespace jsi = facebook::jsi;
 
 std::vector<jsi::PropNameID>
-DynamicHostObject::getPropertyNames(jsi::Runtime &rt) {
+SmartHostObject::getPropertyNames(jsi::Runtime &rt) {
   std::vector<jsi::PropNameID> keys;
 
   for (auto field : fields) {
@@ -17,8 +17,8 @@ DynamicHostObject::getPropertyNames(jsi::Runtime &rt) {
   return keys;
 }
 
-jsi::Value DynamicHostObject::get(jsi::Runtime &rt,
-                                  const jsi::PropNameID &propNameID) {
+jsi::Value SmartHostObject::get(jsi::Runtime &rt,
+                                const jsi::PropNameID &propNameID) {
   auto name = propNameID.utf8(rt);
 
   for (auto field : fields) {

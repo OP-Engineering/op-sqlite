@@ -204,8 +204,8 @@ void install(jsi::Runtime &rt,
       }
 
       std::vector<DumbHostObject> results;
-      std::shared_ptr<std::vector<DynamicHostObject>> metadata =
-          std::make_shared<std::vector<DynamicHostObject>>();
+      std::shared_ptr<std::vector<SmartHostObject>> metadata =
+          std::make_shared<std::vector<SmartHostObject>>();
 
       auto status = sqliteExecute(dbName, query, &params, &results, metadata);
 
@@ -241,8 +241,8 @@ void install(jsi::Runtime &rt,
                    reject]() {
         try {
           std::vector<DumbHostObject> results;
-          std::shared_ptr<std::vector<DynamicHostObject>> metadata =
-              std::make_shared<std::vector<DynamicHostObject>>();
+          std::shared_ptr<std::vector<SmartHostObject>> metadata =
+              std::make_shared<std::vector<SmartHostObject>>();
           ;
 
           auto status =
@@ -436,8 +436,8 @@ void install(jsi::Runtime &rt,
                                 std::string operation, int rowId) {
       std::vector<JSVariant> params;
       std::vector<DumbHostObject> results;
-      std::shared_ptr<std::vector<DynamicHostObject>> metadata =
-          std::make_shared<std::vector<DynamicHostObject>>();
+      std::shared_ptr<std::vector<SmartHostObject>> metadata =
+          std::make_shared<std::vector<SmartHostObject>>();
       ;
 
       if (operation != "DELETE") {
@@ -522,6 +522,8 @@ void install(jsi::Runtime &rt,
     registerRollbackHook(dbName, std::move(hook));
     return {};
   });
+
+  auto prepareStatement = HOSTFN("prepareStatement", 1) { return {}; });
 
   jsi::Object module = jsi::Object(rt);
 

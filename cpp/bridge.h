@@ -2,7 +2,7 @@
 #define bridge_h
 
 #include "DumbHostObject.h"
-#include "DynamicHostObject.h"
+#include "SmartHostObject.h"
 #include "types.h"
 #include "utils.h"
 #include <vector>
@@ -30,7 +30,7 @@ BridgeResult
 sqliteExecute(std::string const dbName, std::string const &query,
               const std::vector<JSVariant> *params,
               std::vector<DumbHostObject> *results,
-              std::shared_ptr<std::vector<DynamicHostObject>> metadatas);
+              std::shared_ptr<std::vector<SmartHostObject>> metadatas);
 
 BridgeResult sqliteExecuteLiteral(std::string const dbName,
                                   std::string const &query);

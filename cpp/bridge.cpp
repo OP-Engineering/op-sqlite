@@ -1,6 +1,6 @@
 #include "bridge.h"
 #include "DumbHostObject.h"
-#include "DynamicHostObject.h"
+#include "SmartHostObject.h"
 #include "logs.h"
 #include <ctime>
 #include <iostream>
@@ -230,7 +230,7 @@ BridgeResult
 sqliteExecute(std::string const dbName, std::string const &query,
               const std::vector<JSVariant> *params,
               std::vector<DumbHostObject> *results,
-              std::shared_ptr<std::vector<DynamicHostObject>> metadatas) {
+              std::shared_ptr<std::vector<SmartHostObject>> metadatas) {
 
   if (dbMap.find(dbName) == dbMap.end()) {
     return {.type = SQLiteError,
@@ -349,7 +349,7 @@ sqliteExecute(std::string const dbName, std::string const &query,
           while (i < count) {
             column_name = sqlite3_column_name(statement, i);
             const char *type = sqlite3_column_decltype(statement, i);
-            auto metadata = DynamicHostObject();
+            auto metadata = SmartHostObject();
             metadata.fields.push_back(std::make_pair("name", column_name));
             metadata.fields.push_back(std::make_pair("index", i));
             metadata.fields.push_back(
