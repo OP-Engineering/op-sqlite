@@ -33,7 +33,7 @@ export function queriesTests() {
     }
   });
 
-  describe('Queries', () => {
+  describe('Queries tests', () => {
     it('Insert', async () => {
       const id = chance.integer();
       const name = chance.name();
@@ -130,7 +130,7 @@ export function queriesTests() {
       );
 
       const sumRes = db.execute('SELECT SUM(age) as sum FROM User;');
-    
+
       expect(sumRes.metadata?.[0].type).to.equal('UNKNOWN');
       expect(sumRes.rows?.item(0).sum).to.equal(age + age2);
 
