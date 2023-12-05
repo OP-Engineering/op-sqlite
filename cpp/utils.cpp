@@ -1,5 +1,5 @@
 #include "utils.h"
-#include "DynamicHostObject.h"
+#include "SmartHostObject.h"
 #include "bridge.h"
 #include <fstream>
 #include <iostream>
@@ -99,7 +99,7 @@ std::vector<JSVariant> toVariantVec(jsi::Runtime &rt,
 jsi::Value
 createResult(jsi::Runtime &rt, BridgeResult status,
              std::vector<DumbHostObject> *results,
-             std::shared_ptr<std::vector<DynamicHostObject>> metadata) {
+             std::shared_ptr<std::vector<SmartHostObject>> metadata) {
   if (status.type == SQLiteError) {
     throw std::invalid_argument(status.message);
   }
@@ -134,7 +134,7 @@ createResult(jsi::Runtime &rt, BridgeResult status,
     column_array.setValueAtIndex(
         rt, i,
         jsi::Object::createFromHostObject(
-            rt, std::make_shared<DynamicHostObject>(column)));
+            rt, std::make_shared<SmartHostObject>(column)));
   }
   res.setProperty(rt, "metadata", std::move(column_array));
 

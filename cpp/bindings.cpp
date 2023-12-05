@@ -1,5 +1,6 @@
 #include "bindings.h"
 #include "DumbHostObject.h"
+#include "PreparedStatementHostObject.h"
 #include "ThreadPool.h"
 #include "bridge.h"
 #include "logs.h"
@@ -7,6 +8,7 @@
 #include "sqlbatchexecutor.h"
 #include "utils.h"
 #include <iostream>
+#include <sqlite3.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -36,6 +38,10 @@ void clearState() {
   sqliteCloseAll();
   // We then join all the threads before the context gets invalidated
   pool.restartPool();
+
+  updateHooks.clear();
+  commitHooks.clear();
+  rollbackHooks.clear();
 }
 
 void install(jsi::Runtime &rt,
@@ -204,8 +210,8 @@ void install(jsi::Runtime &rt,
       }
 
       std::vector<DumbHostObject> results;
-      std::shared_ptr<std::vector<DynamicHostObject>> metadata =
-          std::make_shared<std::vector<DynamicHostObject>>();
+      std::shared_ptr<std::vector<SmartHostObject>> metadata =
+          std::make_shared<std::vector<SmartHostObject>>();
 
       auto status = sqliteExecute(dbName, query, &params, &results, metadata);
 
@@ -241,8 +247,8 @@ void install(jsi::Runtime &rt,
                    reject]() {
         try {
           std::vector<DumbHostObject> results;
-          std::shared_ptr<std::vector<DynamicHostObject>> metadata =
-              std::make_shared<std::vector<DynamicHostObject>>();
+          std::shared_ptr<std::vector<SmartHostObject>> metadata =
+              std::make_shared<std::vector<SmartHostObject>>();
           ;
 
           auto status =
@@ -436,8 +442,8 @@ void install(jsi::Runtime &rt,
                                 std::string operation, int rowId) {
       std::vector<JSVariant> params;
       std::vector<DumbHostObject> results;
-      std::shared_ptr<std::vector<DynamicHostObject>> metadata =
-          std::make_shared<std::vector<DynamicHostObject>>();
+      std::shared_ptr<std::vector<SmartHostObject>> metadata =
+          std::make_shared<std::vector<SmartHostObject>>();
       ;
 
       if (operation != "DELETE") {
@@ -523,6 +529,18 @@ void install(jsi::Runtime &rt,
     return {};
   });
 
+  auto prepareStatement = HOSTFN("prepareStatement", 1) {
+    auto dbName = args[0].asString(rt).utf8(rt);
+    auto query = args[1].asString(rt).utf8(rt);
+
+    sqlite3_stmt *statement = sqlite_prepare_statement(dbName, query);
+
+    auto preparedStatementHostObject =
+        std::make_shared<PreparedStatementHostObject>(dbName, statement);
+
+    return jsi::Object::createFromHostObject(rt, preparedStatementHostObject);
+  });
+
   jsi::Object module = jsi::Object(rt);
 
   module.setProperty(rt, "open", std::move(open));
@@ -538,6 +556,7 @@ void install(jsi::Runtime &rt,
   module.setProperty(rt, "updateHook", std::move(updateHook));
   module.setProperty(rt, "commitHook", std::move(commitHook));
   module.setProperty(rt, "rollbackHook", std::move(rollbackHook));
+  module.setProperty(rt, "prepareStatement", std::move(prepareStatement));
 
   rt.global().setProperty(rt, "__OPSQLiteProxy", std::move(module));
 }
