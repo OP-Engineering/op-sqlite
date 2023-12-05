@@ -1,16 +1,16 @@
-![screenshot](https://raw.githubusercontent.com/OP-Engineering/op-sqlite/main/Header.png)
+![screenshot](https://raw.githubusercontent.com/OP-Engineering/op-sqlcipher/main/Header.png)
 
 <div align="center">
   <pre align="center">
-    yarn add @op-engineering/op-sqlite
+    yarn add @op-engineering/op-sqlcipher
     npx pod-install</pre>
   <br />
 </div>
 <br />
 
-OP SQLite embeds the latest version of SQLite and provides a low-level API to execute SQL queries.
+OP SQLCipher embeds the latest version of [SQLCipher](https://github.com/sqlcipher/sqlcipher) and provides a low-level (JSI-backed) API to execute SQL queries.
 
-**Current SQLite version: 3.44.0**
+**SQLCipher embedded SQLite version: 3.42.0**
 
 Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider Sponsoring**, none of this work is for free. I pay for it with my time and knowledge. If you are a company in need of help with your React Native/React apps feel free to reach out. I also do a lot of C++ and nowadays Rust.
 
@@ -20,7 +20,7 @@ You can find the [benchmarking code in the example app](https://github.com/OP-En
 
 ![benchmark](benchmark.png)
 
-Memory consumption is also 1/4 compared to `react-native-quick-sqlite`. This query used to take 1.2 GB of peak memory usage, and now runs in 250mbs.
+Memory consumption is also is also 1/4 compared to `react-native-quick-sqlite`. This query used to take 1.2 GB of peak memory usage, and now runs in 250mbs.
 
 # Encryption
 
@@ -37,11 +37,12 @@ If you don't pass a `location` the library creates/opens databases by appending 
 You can use relative location to navigate in and out of the **default location**
 
 ```ts
-import { open } from '@op-engineering/op-sqlite';
+import { open } from '@op-engineering/op-sqlcipher';
 
 const db = open({
   name: 'myDB',
   location: '../files/databases',
+  encryptionKey: 'YOUR ENCRYPTION KEY, KEEP IT SOMEWHERE SAFE', // for example turbo-secure-storage
 });
 ```
 
@@ -94,10 +95,11 @@ const db = open({
 Using SQLite in-memory mode is supported by passing a `':memory:'` as a location:
 
 ```ts
-import { open } from '@op-engineering/op-sqlite';
+import { open } from '@op-engineering/op-sqlcipher';
 
 const largeDb = open({
   name: 'inMemoryDb',
+  encryptionKey: 'YOUR ENCRYPTION KEY, KEEP IT SOMEWHERE SAFE', // for example turbo-secure-storage
   location: ':memory:',
 });
 ```
@@ -105,9 +107,12 @@ const largeDb = open({
 # API
 
 ```typescript
-import {open} from '@op-engineering/op-sqlite'
+import {open} from '@op-engineering/op-sqlcipher'
 
-const db = open({name: 'myDb.sqlite'})
+const db = open({
+  name: 'myDb.sqlite',
+  encryptionKey: 'YOUR ENCRYPTION KEY, KEEP IT SOMEWHERE SAFE' // for example turbo-secure-storage
+})
 
 // The db object contains the following methods:
 db = {
@@ -139,7 +144,7 @@ db = {
 The basic query is **synchronous**, it will block rendering on large operations, further below you will find async versions.
 
 ```ts
-import { open } from '@op-engineering/op-sqlite';
+import { open } from '@op-engineering/op-sqlcipher';
 
 try {
   const db = open({ name: 'myDb.sqlite' });
