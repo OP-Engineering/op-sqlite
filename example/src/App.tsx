@@ -14,7 +14,7 @@ import pak from '../package.json';
 import {styled} from 'nativewind';
 import RNRestart from 'react-native-restart';
 import {registerHooksTests} from './tests/hooks';
-import {open} from '@op-engineering/op-sqlite';
+import {open} from '@op-engineering/op-sqlcipher';
 
 const StyledScrollView = styled(ScrollView, {
   props: {
