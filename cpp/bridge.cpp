@@ -3,8 +3,6 @@
 #include "SmartHostObject.h"
 #include "logs.h"
 #include <ctime>
-#include <iostream>
-#include <sqlite3.h>
 #include <sstream>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -224,6 +222,29 @@ inline void bindStatement(sqlite3_stmt *statement,
       sqlite3_bind_null(statement, sqIndex);
     }
   }
+}
+
+sqlite3_stmt *sqlite_prepare_statement(std::string const dbName,
+                                       std::string const &query) {
+  if (dbMap.find(dbName) == dbMap.end()) {
+    throw std::runtime_error("Database not opened");
+  }
+
+  sqlite3 *db = dbMap[dbName];
+
+  sqlite3_stmt *statement;
+
+  const char *queryStr = query.c_str();
+
+  int statementStatus = sqlite3_prepare_v2(db, queryStr, -1, &statement, NULL);
+
+  if (statementStatus == SQLITE_ERROR) {
+    const char *message = sqlite3_errmsg(db);
+    throw std::runtime_error("[op-sqlite] SQL statement error: " +
+                             std::string(message));
+  }
+
+  return statement;
 }
 
 BridgeResult

@@ -5,6 +5,7 @@
 #include "SmartHostObject.h"
 #include "types.h"
 #include "utils.h"
+#include <sqlite3.h>
 #include <vector>
 
 namespace opsqlite {
@@ -50,6 +51,9 @@ BridgeResult
 registerRollbackHook(std::string const dbName,
                      std::function<void(std::string dbName)> const callback);
 BridgeResult unregisterRollbackHook(std::string const dbName);
+
+sqlite3_stmt *sqlite_prepare_statement(std::string const dbName,
+                                       std::string const &query);
 } // namespace opsqlite
 
 #endif /* bridge_h */

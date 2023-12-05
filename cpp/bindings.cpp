@@ -1,5 +1,6 @@
 #include "bindings.h"
 #include "DumbHostObject.h"
+#include "PreparedStatementHostObject.h"
 #include "ThreadPool.h"
 #include "bridge.h"
 #include "logs.h"
@@ -7,6 +8,7 @@
 #include "sqlbatchexecutor.h"
 #include "utils.h"
 #include <iostream>
+#include <sqlite3.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -523,7 +525,18 @@ void install(jsi::Runtime &rt,
     return {};
   });
 
-  auto prepareStatement = HOSTFN("prepareStatement", 1) { return {}; });
+  auto prepareStatement = HOSTFN("prepareStatement", 1) {
+    auto dbName = args[0].asString(rt).utf8(rt);
+    auto query = args[1].asString(rt).utf8(rt);
+
+    sqlite3_stmt *statement = sqlite_prepare_statement(dbName, query);
+
+    auto preparedStatementHostObject = PreparedStatementHostObject(statement);
+
+    return jsi::Object::createFromHostObject(
+        rt, std::make_shared<PreparedStatementHostObject>(
+                preparedStatementHostObject));
+  });
 
   jsi::Object module = jsi::Object(rt);
 
@@ -540,6 +553,7 @@ void install(jsi::Runtime &rt,
   module.setProperty(rt, "updateHook", std::move(updateHook));
   module.setProperty(rt, "commitHook", std::move(commitHook));
   module.setProperty(rt, "rollbackHook", std::move(rollbackHook));
+  module.setProperty(rt, "prepareStatement", std::move(prepareStatement));
 
   rt.global().setProperty(rt, "__OPSQLiteProxy", std::move(module));
 }
