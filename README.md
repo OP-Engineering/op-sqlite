@@ -119,6 +119,10 @@ const db = open({
 db.execute('PRAGMA mmap_size=268435456');
 ```
 
+If you use prepared statements plus memory mapping, you can get to inches of MMKV for the most performance critical queries:
+
+![mmkv comparison](mmkv.png)
+
 # API
 
 ```typescript
