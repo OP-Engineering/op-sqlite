@@ -1,11 +1,11 @@
 #ifndef bridge_h
 #define bridge_h
 
+#include "DumbHostObject.h"
+#include "DynamicHostObject.h"
+#include "types.h"
 #include "utils.h"
 #include <vector>
-#include "DynamicHostObject.h"
-#include "DumbHostObject.h"
-#include "types.h"
 
 namespace opsqlite {
 
@@ -15,31 +15,41 @@ BridgeResult sqliteOpenDb(std::string const dbName, std::string const dbPath);
 
 BridgeResult sqliteCloseDb(std::string const dbName);
 
-BridgeResult sqliteRemoveDb(std::string const dbName, std::string const docPath);
+BridgeResult sqliteRemoveDb(std::string const dbName,
+                            std::string const docPath);
 
-BridgeResult sqliteAttachDb(std::string const mainDBName, std::string const docPath, std::string const databaseToAttach, std::string const alias);
+BridgeResult sqliteAttachDb(std::string const mainDBName,
+                            std::string const docPath,
+                            std::string const databaseToAttach,
+                            std::string const alias);
 
-BridgeResult sqliteDetachDb(std::string const mainDBName, std::string const alias);
+BridgeResult sqliteDetachDb(std::string const mainDBName,
+                            std::string const alias);
 
-BridgeResult sqliteExecute(std::string const dbName,
-                           std::string const &query,
-                           const std::vector<JSVariant> *params,
-                           std::vector<DumbHostObject> *results,
-                           std::shared_ptr<std::vector<DynamicHostObject>> metadatas);
+BridgeResult
+sqliteExecute(std::string const dbName, std::string const &query,
+              const std::vector<JSVariant> *params,
+              std::vector<DumbHostObject> *results,
+              std::shared_ptr<std::vector<DynamicHostObject>> metadatas);
 
-BridgeResult sqliteExecuteLiteral(std::string const dbName, std::string const &query);
+BridgeResult sqliteExecuteLiteral(std::string const dbName,
+                                  std::string const &query);
 
 void sqliteCloseAll();
 
-BridgeResult registerUpdateHook(std::string const dbName, 
-                                std::function<void (std::string dbName, std::string tableName, std::string operation, int rowId)> const callback);
+BridgeResult registerUpdateHook(
+    std::string const dbName,
+    std::function<void(std::string dbName, std::string tableName,
+                       std::string operation, int rowId)> const callback);
 BridgeResult unregisterUpdateHook(std::string const dbName);
-BridgeResult registerCommitHook(std::string const dbName,
-                                std::function<void (std::string dbName)> const callback);
+BridgeResult
+registerCommitHook(std::string const dbName,
+                   std::function<void(std::string dbName)> const callback);
 BridgeResult unregisterCommitHook(std::string const dbName);
-BridgeResult registerRollbackHook(std::string const dbName,
-                                  std::function<void (std::string dbName)> const callback);
+BridgeResult
+registerRollbackHook(std::string const dbName,
+                     std::function<void(std::string dbName)> const callback);
 BridgeResult unregisterRollbackHook(std::string const dbName);
-}
+} // namespace opsqlite
 
 #endif /* bridge_h */
