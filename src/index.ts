@@ -140,7 +140,10 @@ export interface PendingTransaction {
   start: () => void;
 }
 
-export type PreparedStatementObj = {};
+export type PreparedStatementObj = {
+  bind: (params: any[]) => void;
+  execute: () => QueryResult;
+};
 
 interface ISQLite {
   open: (dbName: string, location?: string) => void;

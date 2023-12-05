@@ -30,6 +30,10 @@ export default function App() {
   const [results, setResults] = useState<any>([]);
   const [times, setTimes] = useState<number[]>([]);
   const [accessingTimes, setAccessingTimes] = useState<number[]>([]);
+  const [prepareTimes, setPrepareTimes] = useState<number[]>([]);
+  const [prepareExecutionTimes, setPrepareExecutionTimes] = useState<number[]>(
+    [],
+  );
 
   useEffect(() => {
     setResults([]);
@@ -60,6 +64,8 @@ export default function App() {
       const times = await queryLargeDB();
       setTimes(times.loadFromDb);
       setAccessingTimes(times.access);
+      setPrepareTimes(times.prepare);
+      setPrepareExecutionTimes(times.preparedExecution);
     } catch (e) {
       console.error(e);
     } finally {
@@ -96,11 +102,11 @@ export default function App() {
 
         {!!times.length && (
           <Text className="text-lg text-white self-center">
-            Load from db{' '}
+            Normal query{' '}
             {(times.reduce((acc, t) => (acc += t), 0) / times.length).toFixed(
               0,
             )}{' '}
-            ms average
+            ms
           </Text>
         )}
         {!!accessingTimes.length && (
@@ -110,7 +116,27 @@ export default function App() {
               accessingTimes.reduce((acc, t) => (acc += t), 0) /
               accessingTimes.length
             ).toFixed(0)}{' '}
-            ms average
+            ms
+          </Text>
+        )}
+        {!!prepareTimes.length && (
+          <Text className="text-lg text-white self-center">
+            Prepare statement{' '}
+            {(
+              prepareTimes.reduce((acc, t) => (acc += t), 0) /
+              prepareTimes.length
+            ).toFixed(0)}{' '}
+            ms
+          </Text>
+        )}
+        {!!prepareExecutionTimes.length && (
+          <Text className="text-lg text-white self-center">
+            Execute prepared query{' '}
+            {(
+              prepareExecutionTimes.reduce((acc, t) => (acc += t), 0) /
+              prepareExecutionTimes.length
+            ).toFixed(0)}{' '}
+            ms
           </Text>
         )}
 

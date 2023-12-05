@@ -54,6 +54,14 @@ BridgeResult unregisterRollbackHook(std::string const dbName);
 
 sqlite3_stmt *sqlite_prepare_statement(std::string const dbName,
                                        std::string const &query);
+
+void sqlite_bind_statement(sqlite3_stmt *statement,
+                           const std::vector<JSVariant> *params);
+
+BridgeResult sqlite_execute_prepared_statement(
+    std::string const dbName, sqlite3_stmt *statement,
+    std::vector<DumbHostObject> *results,
+    std::shared_ptr<std::vector<SmartHostObject>> metadatas);
 } // namespace opsqlite
 
 #endif /* bridge_h */

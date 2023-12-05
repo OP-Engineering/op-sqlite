@@ -224,6 +224,150 @@ inline void bindStatement(sqlite3_stmt *statement,
   }
 }
 
+void sqlite_bind_statement(sqlite3_stmt *statement,
+                           const std::vector<JSVariant> *params) {
+  bindStatement(statement, params);
+}
+
+BridgeResult sqlite_execute_prepared_statement(
+    std::string const dbName, sqlite3_stmt *statement,
+    std::vector<DumbHostObject> *results,
+    std::shared_ptr<std::vector<SmartHostObject>> metadatas) {
+  if (dbMap.find(dbName) == dbMap.end()) {
+    return {.type = SQLiteError,
+            .message = "[op-sqlite]: Database " + dbName + " is not open"};
+  }
+
+  sqlite3_reset(statement);
+
+  sqlite3 *db = dbMap[dbName];
+
+  const char *errorMessage;
+
+  bool isConsuming = true;
+  bool isFailed = false;
+
+  int result = SQLITE_OK;
+
+  isConsuming = true;
+
+  int i, count, column_type;
+  std::string column_name, column_declared_type;
+
+  while (isConsuming) {
+    result = sqlite3_step(statement);
+
+    switch (result) {
+    case SQLITE_ROW: {
+      if (results == NULL) {
+        break;
+      }
+
+      i = 0;
+      DumbHostObject row = DumbHostObject(metadatas);
+
+      count = sqlite3_column_count(statement);
+
+      while (i < count) {
+        column_type = sqlite3_column_type(statement, i);
+
+        switch (column_type) {
+        case SQLITE_INTEGER: {
+          /**
+           * Warning this will loose precision because JS can
+           * only represent Integers up to 53 bits
+           */
+          double column_value = sqlite3_column_double(statement, i);
+          row.values.push_back(JSVariant(column_value));
+          break;
+        }
+
+        case SQLITE_FLOAT: {
+          double column_value = sqlite3_column_double(statement, i);
+          row.values.push_back(JSVariant(column_value));
+          break;
+        }
+
+        case SQLITE_TEXT: {
+          const char *column_value =
+              reinterpret_cast<const char *>(sqlite3_column_text(statement, i));
+          int byteLen = sqlite3_column_bytes(statement, i);
+          // Specify length too; in case string contains NULL in the middle
+          row.values.push_back(JSVariant(std::string(column_value, byteLen)));
+          break;
+        }
+
+        case SQLITE_BLOB: {
+          int blob_size = sqlite3_column_bytes(statement, i);
+          const void *blob = sqlite3_column_blob(statement, i);
+          uint8_t *data = new uint8_t[blob_size];
+          // You cannot share raw memory between native and JS
+          // always copy the data
+          memcpy(data, blob, blob_size);
+          row.values.push_back(
+              JSVariant(ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+                                    .size = static_cast<size_t>(blob_size)}));
+          break;
+        }
+
+        case SQLITE_NULL:
+          // Intentionally left blank
+
+        default:
+          row.values.push_back(JSVariant(NULL));
+          break;
+        }
+        i++;
+      }
+      if (results != nullptr) {
+        results->push_back(row);
+      }
+      break;
+    }
+
+    case SQLITE_DONE:
+      if (metadatas != nullptr) {
+        i = 0;
+        count = sqlite3_column_count(statement);
+
+        while (i < count) {
+          column_name = sqlite3_column_name(statement, i);
+          const char *type = sqlite3_column_decltype(statement, i);
+          auto metadata = SmartHostObject();
+          metadata.fields.push_back(std::make_pair("name", column_name));
+          metadata.fields.push_back(std::make_pair("index", i));
+          metadata.fields.push_back(
+              std::make_pair("type", type == NULL ? "UNKNOWN" : type));
+
+          metadatas->push_back(metadata);
+          i++;
+        }
+      }
+      isConsuming = false;
+      break;
+
+    default:
+      errorMessage = sqlite3_errmsg(db);
+      isFailed = true;
+      isConsuming = false;
+    }
+  }
+
+  if (isFailed) {
+
+    return {.type = SQLiteError,
+            .message = "[op-sqlite] SQLite code: " + std::to_string(result) +
+                       " execution error: " + std::string(errorMessage)};
+  }
+
+  int changedRowCount = sqlite3_changes(db);
+  long long latestInsertRowId = sqlite3_last_insert_rowid(db);
+
+  return {.type = SQLiteOk,
+          .affectedRows = changedRowCount,
+          .insertId = static_cast<double>(latestInsertRowId)};
+}
+
 sqlite3_stmt *sqlite_prepare_statement(std::string const dbName,
                                        std::string const &query) {
   if (dbMap.find(dbName) == dbMap.end()) {
