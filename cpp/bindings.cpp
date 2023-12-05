@@ -500,8 +500,8 @@ void install(jsi::Runtime &rt,
 
   auto rollbackHook = HOSTFN("rollbackHook", 2) {
     if (sizeof(args) < 2) {
-      throw jsi::JSError(rt, "[op-sqlite][loadFileAsync] Incorrect "
-                             "parameters: dbName and callback needed");
+      throw jsi::JSError(rt, "[op-sqlite][loadFileAsync] Incorrect parameters: "
+                             "dbName and callback needed");
       return {};
     }
 
