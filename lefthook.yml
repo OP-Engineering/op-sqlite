@@ -1,7 +1,6 @@
-pre-push:
-  parallel: true
-
 pre-commit:
   commands:
     cpp-linter:
       run: clang-format -i cpp/*.cpp cpp/*.h
+    add-linted:
+      run: git add cpp
