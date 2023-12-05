@@ -1,5 +1,5 @@
-#ifndef DynamicHostObject_h
-#define DynamicHostObject_h
+#ifndef SmartHostObject_h
+#define SmartHostObject_h
 
 #include "types.h"
 #include <any>
@@ -10,9 +10,9 @@ namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 
-class JSI_EXPORT DynamicHostObject : public jsi::HostObject {
+class JSI_EXPORT SmartHostObject : public jsi::HostObject {
 public:
-  DynamicHostObject(){};
+  SmartHostObject(){};
 
   std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt);
 
@@ -23,4 +23,4 @@ public:
 
 } // namespace opsqlite
 
-#endif /* DynamicHostObject_h */
+#endif /* SmartHostObject_h */

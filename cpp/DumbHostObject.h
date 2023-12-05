@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#include "DynamicHostObject.h"
+#include "SmartHostObject.h"
 #include "types.h"
 #include <any>
 #include <jsi/jsi.h>
@@ -17,7 +17,7 @@ class JSI_EXPORT DumbHostObject : public jsi::HostObject {
 public:
   DumbHostObject(){};
 
-  DumbHostObject(std::shared_ptr<std::vector<DynamicHostObject>> metadata);
+  DumbHostObject(std::shared_ptr<std::vector<SmartHostObject>> metadata);
 
   std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt);
 
@@ -25,7 +25,7 @@ public:
 
   std::vector<JSVariant> values;
 
-  std::shared_ptr<std::vector<DynamicHostObject>> metadata;
+  std::shared_ptr<std::vector<SmartHostObject>> metadata;
 };
 
 } // namespace opsqlite
