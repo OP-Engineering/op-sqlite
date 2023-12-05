@@ -29,8 +29,10 @@ add_library(
   ../cpp/ThreadPool.cpp
   ../cpp/sqlbatchexecutor.h
   ../cpp/sqlbatchexecutor.cpp
-  ../cpp/DynamicHostObject.cpp
-  ../cpp/DynamicHostObject.h
+  ../cpp/SmartHostObject.cpp
+  ../cpp/SmartHostObject.h
+  ../cpp/PreparedStatementHostObject.h
+  ../cpp/PreparedStatementHostObject.cpp
   ../cpp/DumbHostObject.cpp
   ../cpp/DumbHostObject.h
   ../cpp/macros.h

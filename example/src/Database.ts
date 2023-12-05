@@ -77,6 +77,9 @@ export async function queryLargeDB() {
     const measurement = performance.measure('queryEnd', 'queryStart');
     times.loadFromDb.push(measurement.duration);
 
+    // @ts-ignore
+    global.gc();
+
     performance.mark('accessingStart');
     const rows = results.rows!._array;
     for (let i = 0; i < rows.length; i++) {
@@ -88,10 +91,16 @@ export async function queryLargeDB() {
     );
     times.access.push(accessMeasurement.duration);
 
+    // @ts-ignore
+    global.gc();
+
     let start = performance.now();
     const statement = largeDb.prepareStatement('SELECT * FROM Test');
     let end = performance.now();
     times.prepare.push(end - start);
+
+    // @ts-ignore
+    global.gc();
 
     start = performance.now();
     let results2 = statement.execute();
