@@ -9,7 +9,6 @@ const ROWS = 300000;
 const DB_NAME = 'largeDB';
 const DB_CONFIG = {
   name: DB_NAME,
-  // inMemory: true,
 };
 
 export async function createLargeDB() {
@@ -56,9 +55,16 @@ export async function queryLargeDB() {
 
   largeDb.execute('PRAGMA mmap_size=268435456');
 
-  let times: {loadFromDb: number[]; access: number[]} = {
+  let times: {
+    loadFromDb: number[];
+    access: number[];
+    prepare: number[];
+    preparedExecution: number[];
+  } = {
     loadFromDb: [],
     access: [],
+    prepare: [],
+    preparedExecution: [],
   };
 
   for (let i = 0; i < 10; i++) {
@@ -70,17 +76,35 @@ export async function queryLargeDB() {
     const measurement = performance.measure('queryEnd', 'queryStart');
     times.loadFromDb.push(measurement.duration);
 
+    // @ts-ignore
+    global.gc();
+
     performance.mark('accessingStart');
     const rows = results.rows!._array;
     for (let i = 0; i < rows.length; i++) {
       const v1 = rows[i].v14;
     }
-
     const accessMeasurement = performance.measure(
       'accessingEnd',
       'accessingStart',
     );
     times.access.push(accessMeasurement.duration);
+
+    // @ts-ignore
+    global.gc();
+
+    let start = performance.now();
+    const statement = largeDb.prepareStatement('SELECT * FROM Test');
+    let end = performance.now();
+    times.prepare.push(end - start);
+
+    // @ts-ignore
+    global.gc();
+
+    start = performance.now();
+    let results2 = statement.execute();
+    end = performance.now();
+    times.preparedExecution.push(end - start);
   }
 
   return times;

@@ -140,6 +140,11 @@ export interface PendingTransaction {
   start: () => void;
 }
 
+export type PreparedStatementObj = {
+  bind: (params: any[]) => void;
+  execute: () => QueryResult;
+};
+
 interface ISQLite {
   open: (dbName: string, location?: string) => void;
   close: (dbName: string) => void;
@@ -180,6 +185,7 @@ interface ISQLite {
   ) => void;
   commitHook: (dbName: string, callback?: (() => void) | null) => void;
   rollbackHook: (dbName: string, callback?: (() => void) | null) => void;
+  prepareStatement: (dbName: string, query: string) => PreparedStatementObj;
 }
 
 const locks: Record<
@@ -398,6 +404,7 @@ export type OPSQLiteConnection = {
   ) => void;
   commitHook: (callback: (() => void) | null) => void;
   rollbackHook: (callback: (() => void) | null) => void;
+  prepareStatement: (query: string) => PreparedStatementObj;
 };
 
 export const open = (options: {
@@ -429,5 +436,6 @@ export const open = (options: {
     updateHook: (callback) => OPSQLite.updateHook(options.name, callback),
     commitHook: (callback) => OPSQLite.commitHook(options.name, callback),
     rollbackHook: (callback) => OPSQLite.rollbackHook(options.name, callback),
+    prepareStatement: (query) => OPSQLite.prepareStatement(options.name, query),
   };
 };

@@ -1,4 +1,5 @@
 #include "DumbHostObject.h"
+#include "SmartHostObject.h"
 #include "utils.h"
 #include <iostream>
 
@@ -7,7 +8,7 @@ namespace opsqlite {
 namespace jsi = facebook::jsi;
 
 DumbHostObject::DumbHostObject(
-    std::shared_ptr<std::vector<DynamicHostObject>> metadata) {
+    std::shared_ptr<std::vector<SmartHostObject>> metadata) {
   this->metadata = metadata;
 };
 
