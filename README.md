@@ -60,7 +60,7 @@ import {
   ANDROID_FILES_PATH,
   ANDROID_EXTERNAL_FILES_PATH,
   open,
-} from '@op-engineering/op-sqlite';
+} from '@op-engineering/op-sqlcipher';
 
 const db = open({
   name: 'myDb',
@@ -422,7 +422,7 @@ Add a `post_install` block to your `<PROJECT_ROOT>/ios/Podfile` like so:
 ```ruby
 post_install do |installer|
   installer.pods_project.targets.each do |target|
-    if target.name == "op-sqlite" then
+    if target.name == "op-sqlcipher" then
       target.build_configurations.each do |config|
         config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'SQLITE_ENABLE_FTS5=1'
       end
