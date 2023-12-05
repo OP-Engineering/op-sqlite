@@ -35,6 +35,9 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
 
   if (name == "bind") {
     return HOSTFN("bind", 1) {
+      if (_statement == NULL) {
+        throw std::runtime_error("statement has been freed");
+      }
 
       std::vector<JSVariant> params;
 
@@ -53,6 +56,9 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
 
   if (name == "execute") {
     return HOSTFN("execute", 1) {
+      if (_statement == NULL) {
+        throw std::runtime_error("statement has been freed");
+      }
       std::vector<DumbHostObject> results;
       std::shared_ptr<std::vector<SmartHostObject>> metadata =
           std::make_shared<std::vector<SmartHostObject>>();
@@ -70,6 +76,13 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
   }
 
   return {};
+}
+
+PreparedStatementHostObject::~PreparedStatementHostObject() {
+  if (_statement != NULL) {
+    sqlite3_finalize(_statement);
+    _statement = NULL;
+  }
 }
 
 } // namespace opsqlite

@@ -38,6 +38,10 @@ void clearState() {
   sqliteCloseAll();
   // We then join all the threads before the context gets invalidated
   pool.restartPool();
+
+  updateHooks.clear();
+  commitHooks.clear();
+  rollbackHooks.clear();
 }
 
 void install(jsi::Runtime &rt,
@@ -532,11 +536,9 @@ void install(jsi::Runtime &rt,
     sqlite3_stmt *statement = sqlite_prepare_statement(dbName, query);
 
     auto preparedStatementHostObject =
-        PreparedStatementHostObject(dbName, statement);
+        std::make_shared<PreparedStatementHostObject>(dbName, statement);
 
-    return jsi::Object::createFromHostObject(
-        rt, std::make_shared<PreparedStatementHostObject>(
-                preparedStatementHostObject));
+    return jsi::Object::createFromHostObject(rt, preparedStatementHostObject);
   });
 
   jsi::Object module = jsi::Object(rt);
