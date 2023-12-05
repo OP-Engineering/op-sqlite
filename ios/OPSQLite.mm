@@ -7,7 +7,13 @@
 
 @implementation OPSQLite
 
+@synthesize bridge=_bridge;
+
 RCT_EXPORT_MODULE(OPSQLite)
+
+- (void)setBridge:(RCTBridge *)bridge {
+  _bridge = bridge;
+}
 
 + (BOOL)requiresMainQueueSetup
 {
@@ -27,8 +33,7 @@ RCT_EXPORT_MODULE(OPSQLite)
 }
 
 RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
-    RCTBridge *bridge = [RCTBridge currentBridge];
-    RCTCxxBridge *cxxBridge = (RCTCxxBridge *)bridge;
+    RCTCxxBridge *cxxBridge = (RCTCxxBridge *)_bridge;
     if (cxxBridge == nil) {
         return @false;
     }
@@ -40,7 +45,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         return @false;
     }
     auto &runtime = *jsiRuntime;
-    auto callInvoker = bridge.jsCallInvoker;
+    auto callInvoker = _bridge.jsCallInvoker;
     
     // Get appGroupID value from Info.plist using key "AppGroup"
     NSString *appGroupID = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"OPSQLite_AppGroup"];

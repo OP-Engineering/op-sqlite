@@ -16,6 +16,7 @@ import {styled} from 'nativewind';
 import RNRestart from 'react-native-restart';
 import {registerHooksTests} from './tests/hooks.spec';
 import {open} from '@op-engineering/op-sqlite';
+import clsx from 'clsx';
 
 const StyledScrollView = styled(ScrollView, {
   props: {
@@ -108,10 +109,13 @@ export default function App() {
           </Text>
         )}
 
-        <View className="flex-row p-2 mt-4 bg-neutral-800 items-center">
-          <Text className={'font-bold flex-1 text-white'}>Test Suite</Text>
-          {allTestsPassed ? <Text>🟩</Text> : <Text>🟥</Text>}
-        </View>
+        <Text
+          className={clsx('font-bold flex-1 text-white p-2 mt-4', {
+            'bg-green-500': allTestsPassed,
+            'bg-red-500': !allTestsPassed,
+          })}>
+          Test Suite
+        </Text>
         {results.map((r: any, i: number) => {
           if (r.type === 'grouping') {
             return (
