@@ -19,6 +19,7 @@ namespace jsi = facebook::jsi;
 class PreparedStatementHostObject : public jsi::HostObject {
 public:
   PreparedStatementHostObject(std::string dbName, sqlite3_stmt *statement);
+  virtual ~PreparedStatementHostObject();
 
   std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt);
 

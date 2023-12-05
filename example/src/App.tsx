@@ -16,7 +16,7 @@ import RNRestart from 'react-native-restart';
 import {registerHooksTests} from './tests/hooks.spec';
 import {open} from '@op-engineering/op-sqlite';
 import clsx from 'clsx';
-import {preparedStatementsTests} from './tests/preparedStatements.spect';
+import {preparedStatementsTests} from './tests/preparedStatements.spec';
 import performance from 'react-native-performance';
 import {MMKV} from 'react-native-mmkv';
 
@@ -140,7 +140,7 @@ export default function App() {
         <View className="flex-row p-2 bg-neutral-800 items-center">
           <Text className={'font-bold flex-1 text-white'}>Tools</Text>
         </View>
-        <Button title="Test against MMKV" onPress={testAgainstMMKV} />
+        <Button title="Against MMKV4" onPress={testAgainstMMKV} />
         <View className="p-4 gap-2 items-center">
           {!!sqliteMMSetTime && (
             <Text className="text-white">
