@@ -42,7 +42,7 @@ import { open } from '@op-engineering/op-sqlcipher';
 const db = open({
   name: 'myDB',
   location: '../files/databases',
-  encryptionKey: 'YOUR ENCRYPTION KEY, KEEP IT SOMEWHERE SAFE', // for example turbo-secure-storage
+  encryptionKey: 'YOUR ENCRYPTION KEY, KEEP IT SOMEWHERE SAFE', // for example op-s2
 });
 ```
 
@@ -99,8 +99,7 @@ import { open } from '@op-engineering/op-sqlcipher';
 
 const largeDb = open({
   name: 'inMemoryDb',
-  inMemory: true,
-  encryptionKey: 'YOUR ENCRYPTION KEY, KEEP IT SOMEWHERE SAFE', // for example turbo-secure-storage
+  encryptionKey: 'YOUR ENCRYPTION KEY, KEEP IT SOMEWHERE SAFE', // for example op-s2
   location: ':memory:',
 });
 ```
@@ -112,7 +111,7 @@ import {open} from '@op-engineering/op-sqlcipher'
 
 const db = open({
   name: 'myDb.sqlite',
-  encryptionKey: 'YOUR ENCRYPTION KEY, KEEP IT SOMEWHERE SAFE' // for example turbo-secure-storage
+  encryptionKey: 'YOUR ENCRYPTION KEY, KEEP IT SOMEWHERE SAFE' // for example op-s2
 })
 
 // The db object contains the following methods:
