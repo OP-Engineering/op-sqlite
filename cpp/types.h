@@ -1,6 +1,7 @@
 #ifndef types_h
 #define types_h
 
+#include <memory>
 #include <variant>
 
 struct ArrayBuffer {
