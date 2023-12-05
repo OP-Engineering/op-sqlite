@@ -3,4 +3,4 @@ pre-commit:
     cpp-linter:
       run: clang-format -i cpp/*.cpp cpp/*.h
     add-linted:
-      run: git add cpp
+      run: git add .
