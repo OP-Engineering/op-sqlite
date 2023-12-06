@@ -16,6 +16,11 @@ import RNRestart from 'react-native-restart';
 import {registerHooksTests} from './tests/hooks.spec';
 import {open} from '@op-engineering/op-sqlcipher';
 import clsx from 'clsx';
+import {preparedStatementsTests} from './tests/preparedStatements.spec';
+import performance from 'react-native-performance';
+import {MMKV} from 'react-native-mmkv';
+
+export const mmkv = new MMKV();
 
 const StyledScrollView = styled(ScrollView, {
   props: {
@@ -28,12 +33,24 @@ export default function App() {
   const [results, setResults] = useState<any>([]);
   const [times, setTimes] = useState<number[]>([]);
   const [accessingTimes, setAccessingTimes] = useState<number[]>([]);
+  const [prepareTimes, setPrepareTimes] = useState<number[]>([]);
+  const [prepareExecutionTimes, setPrepareExecutionTimes] = useState<number[]>(
+    [],
+  );
+  const [sqliteMMSetTime, setSqliteMMSetTime] = useState(0);
+  const [mmkvSetTime, setMMKVSetTime] = useState(0);
+  const [sqliteGetTime, setSqliteMMGetTime] = useState(0);
+  const [mmkvGetTime, setMMKVGetTime] = useState(0);
 
   useEffect(() => {
     setResults([]);
-    runTests(dbSetupTests, queriesTests, blobTests, registerHooksTests).then(
-      setResults,
-    );
+    runTests(
+      dbSetupTests,
+      queriesTests,
+      blobTests,
+      registerHooksTests,
+      preparedStatementsTests,
+    ).then(setResults);
   }, []);
 
   const createLargeDb = async () => {
@@ -54,11 +71,52 @@ export default function App() {
       const times = await queryLargeDB();
       setTimes(times.loadFromDb);
       setAccessingTimes(times.access);
+      setPrepareTimes(times.prepare);
+      setPrepareExecutionTimes(times.preparedExecution);
     } catch (e) {
       console.error(e);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const testAgainstMMKV = () => {
+    const db = open({
+      name: 'mmkvTestDb',
+    });
+
+    db.execute('PRAGMA mmap_size=268435456');
+    db.execute('PRAGMA journal_mode = OFF;');
+    db.execute('DROP TABLE IF EXISTS mmkvTest;');
+    db.execute('CREATE TABLE mmkvTest (text TEXT);');
+
+    let insertStatment = db.prepareStatement(
+      'INSERT INTO "mmkvTest" (text) VALUES (?)',
+    );
+    insertStatment.bind(['quack']);
+
+    let start = performance.now();
+    insertStatment.execute();
+    let end = performance.now();
+    setSqliteMMSetTime(end - start);
+
+    start = performance.now();
+    mmkv.set('mmkvDef', 'quack');
+    end = performance.now();
+    setMMKVSetTime(end - start);
+
+    let readStatement = db.prepareStatement('SELECT text from mmkvTest;');
+    start = performance.now();
+    readStatement.execute();
+    end = performance.now();
+    setSqliteMMGetTime(end - start);
+
+    start = performance.now();
+    mmkv.getString('mmkvDef');
+    end = performance.now();
+    setMMKVGetTime(end - start);
+
+    db.close();
   };
 
   const queryAndReload = async () => {
@@ -82,6 +140,29 @@ export default function App() {
         <View className="flex-row p-2 bg-neutral-800 items-center">
           <Text className={'font-bold flex-1 text-white'}>Tools</Text>
         </View>
+        <Button title="Against MMKV4" onPress={testAgainstMMKV} />
+        <View className="p-4 gap-2 items-center">
+          {!!sqliteMMSetTime && (
+            <Text className="text-white">
+              MM SQLite Write: {sqliteMMSetTime.toFixed(2)} ms
+            </Text>
+          )}
+          {!!mmkvSetTime && (
+            <Text className="text-white">
+              MMKV Write: {mmkvSetTime.toFixed(2)} ms
+            </Text>
+          )}
+          {!!sqliteGetTime && (
+            <Text className="text-white">
+              MM SQLite Get: {sqliteGetTime.toFixed(2)} ms
+            </Text>
+          )}
+          {!!mmkvGetTime && (
+            <Text className="text-white">
+              MMKV Get: {mmkvGetTime.toFixed(2)} ms
+            </Text>
+          )}
+        </View>
         <Button title="Open Sample DB" onPress={openSampleDB} />
         <Button title="Reload app middle of query" onPress={queryAndReload} />
         <Button title="Create 300k Record DB" onPress={createLargeDb} />
@@ -90,11 +171,11 @@ export default function App() {
 
         {!!times.length && (
           <Text className="text-lg text-white self-center">
-            Load from db{' '}
+            Normal query{' '}
             {(times.reduce((acc, t) => (acc += t), 0) / times.length).toFixed(
               0,
             )}{' '}
-            ms average
+            ms
           </Text>
         )}
         {!!accessingTimes.length && (
@@ -104,7 +185,27 @@ export default function App() {
               accessingTimes.reduce((acc, t) => (acc += t), 0) /
               accessingTimes.length
             ).toFixed(0)}{' '}
-            ms average
+            ms
+          </Text>
+        )}
+        {!!prepareTimes.length && (
+          <Text className="text-lg text-white self-center">
+            Prepare statement{' '}
+            {(
+              prepareTimes.reduce((acc, t) => (acc += t), 0) /
+              prepareTimes.length
+            ).toFixed(0)}{' '}
+            ms
+          </Text>
+        )}
+        {!!prepareExecutionTimes.length && (
+          <Text className="text-lg text-white self-center">
+            Execute prepared query{' '}
+            {(
+              prepareExecutionTimes.reduce((acc, t) => (acc += t), 0) /
+              prepareExecutionTimes.length
+            ).toFixed(0)}{' '}
+            ms
           </Text>
         )}
 

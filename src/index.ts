@@ -140,8 +140,17 @@ export interface PendingTransaction {
   start: () => void;
 }
 
+export type PreparedStatementObj = {
+  bind: (params: any[]) => void;
+  execute: () => QueryResult;
+};
+
 interface ISQLite {
-  open: (dbName: string, location: string | undefined, encryptionKey: string) => void;
+  open: (
+    dbName: string,
+    location: string | undefined,
+    encryptionKey: string
+  ) => void;
   close: (dbName: string) => void;
   delete: (dbName: string, location?: string) => void;
   attach: (
@@ -180,6 +189,7 @@ interface ISQLite {
   ) => void;
   commitHook: (dbName: string, callback?: (() => void) | null) => void;
   rollbackHook: (dbName: string, callback?: (() => void) | null) => void;
+  prepareStatement: (dbName: string, query: string) => PreparedStatementObj;
 }
 
 const locks: Record<
@@ -204,7 +214,11 @@ function enhanceQueryResult(result: QueryResult): void {
 }
 
 const _open = OPSQLite.open;
-OPSQLite.open = (dbName: string, location: string | undefined, encryptionKey: string) => {
+OPSQLite.open = (
+  dbName: string,
+  location: string | undefined,
+  encryptionKey: string
+) => {
   _open(dbName, location, encryptionKey);
 
   locks[dbName] = {
@@ -398,6 +412,7 @@ export type OPSQLiteConnection = {
   ) => void;
   commitHook: (callback: (() => void) | null) => void;
   rollbackHook: (callback: (() => void) | null) => void;
+  prepareStatement: (query: string) => PreparedStatementObj;
 };
 
 export const open = ({
@@ -433,6 +448,6 @@ export const open = ({
     updateHook: (callback) => OPSQLite.updateHook(name, callback),
     commitHook: (callback) => OPSQLite.commitHook(name, callback),
     rollbackHook: (callback) => OPSQLite.rollbackHook(name, callback),
-
+    prepareStatement: (query) => OPSQLite.prepareStatement(name, query),
   };
 };

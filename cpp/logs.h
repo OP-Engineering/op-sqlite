@@ -12,27 +12,27 @@
 // LOGS NO ANDROID
 #include <stdio.h>
 #define LOG_TAG "op-sqlite"
-#define LOGV(...)      \
-  printf("  ");        \
-  printf(__VA_ARGS__); \
+#define LOGV(...)                                                              \
+  printf("  ");                                                                \
+  printf(__VA_ARGS__);                                                         \
   printf("\t -  <%s> \n", LOG_TAG);
-#define LOGD(...)      \
-  printf("  ");        \
-  printf(__VA_ARGS__); \
+#define LOGD(...)                                                              \
+  printf("  ");                                                                \
+  printf(__VA_ARGS__);                                                         \
   printf("\t -  <%s> \n", LOG_TAG);
-#define LOGI(...)      \
-  printf("  ");        \
-  printf(__VA_ARGS__); \
+#define LOGI(...)                                                              \
+  printf("  ");                                                                \
+  printf(__VA_ARGS__);                                                         \
   printf("\t -  <%s> \n", LOG_TAG);
-#define LOGW(...)          \
-  printf("  * Warning: "); \
-  printf(__VA_ARGS__);     \
+#define LOGW(...)                                                              \
+  printf("  * Warning: ");                                                     \
+  printf(__VA_ARGS__);                                                         \
   printf("\t -  <%s> \n", LOG_TAG);
-#define LOGE(...)           \
-  printf("  *** Error:  "); \
-  printf(__VA_ARGS__);      \
+#define LOGE(...)                                                              \
+  printf("  *** Error:  ");                                                    \
+  printf(__VA_ARGS__);                                                         \
   printf("\t -  <%s> \n", LOG_TAG);
-#define LOGSIMPLE(...) \
-  printf(" ");         \
+#define LOGSIMPLE(...)                                                         \
+  printf(" ");                                                                 \
   printf(__VA_ARGS__);
 #endif // ANDROID

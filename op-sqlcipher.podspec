@@ -10,7 +10,6 @@ Pod::Spec.new do |s|
   s.homepage     = package["homepage"]
   s.license      = package["license"]
   s.authors      = package["author"]
-
   s.platforms    = { :ios => "12.0", :osx => "10.7" }
   s.source       = { :git => "https://github.com/op-engineering/op-sqlcipher.git", :tag => "#{s.version}" }
 

@@ -22,6 +22,8 @@ You can find the [benchmarking code in the example app](https://github.com/OP-En
 
 Memory consumption is also 1/4 compared to `react-native-quick-sqlite`. This query used to take 1.2 GB of peak memory usage, and now runs in 250mbs.
 
+You can also turn on [Memory Mapping](#speed) to make your queries even faster by skipping the kernel during I/O and potentially reduce RAM usage, this comes with some disadvantages though. If you want even more speed and you can re-use your queries you can use [Prepared Statements](#prepared-statements).
+
 # Encryption
 
 If you need to encrypt your entire database, there is [`op-sqlcipher`](https://github.com/OP-Engineering/op-sqlcipher), which is a fork of this library that uses [SQLCipher](https://github.com/sqlcipher/sqlcipher). It completely encrypts the database with minimal overhead.
@@ -104,6 +106,25 @@ const largeDb = open({
 });
 ```
 
+# Speed
+
+op-sqlite is already the fastest solution it can be, but it doesn't mean you cannot tweak SQLite to be faster (at the cost of some disadvantages). One possible tweak is turning on [Memory Mapping](https://www.sqlite.org/mmap.html). It allows to read/write to/from the disk without going through the kernel. However, if your queries throw an error your application might crash.
+
+To turn on Memory Mapping, execute the following pragma statement after opening a db:
+
+```ts
+const db = open({
+  name: 'mydb.sqlite',
+});
+
+// 0 turns of memory mapping, any other number enables it with the cache size
+db.execute('PRAGMA mmap_size=268435456');
+```
+
+If you use prepared statements plus memory mapping, you can get to inches of MMKV for the most performance critical queries, here is a simple example writing/reading a single value.
+
+![mmkv comparison](mmkv.png)
+
 # API
 
 ```typescript
@@ -139,7 +160,7 @@ db = {
 }
 ```
 
-### Simple queries
+## Simple queries
 
 The basic query is **synchronous**, it will block rendering on large operations, further below you will find async versions.
 
@@ -167,7 +188,7 @@ try {
 }
 ```
 
-### Multiple statements in a single string
+## Multiple statements in a single string
 
 You can execute multiple statements in a single operation. The API however is not really thought for this use case and the results (and their metadata) will be mangled, so you can discard it.
 
@@ -191,7 +212,7 @@ let t2name = db.execute(
 console.log(t2name.rows?._array[0].name); // outputs "T2"
 ```
 
-### Transactions
+## Transactions
 
 Throwing an error inside the callback will ROLLBACK the transaction.
 
@@ -220,7 +241,7 @@ await db.transaction('myDatabase', (tx) => {
 });
 ```
 
-### Batch operation
+## Batch operation
 
 Batch execution allows the transactional execution of a set of commands
 
@@ -237,7 +258,7 @@ const res = db.executeSqlBatch('myDatabase', commands);
 console.log(`Batch affected ${result.rowsAffected} rows`);
 ```
 
-### Dynamic Column Metadata
+## Dynamic Column Metadata
 
 In some scenarios, dynamic applications may need to get some metadata information about the returned result set.
 
@@ -258,7 +279,7 @@ metadata.forEach((column) => {
 });
 ```
 
-### Async operations
+## Async operations
 
 You might have too much SQL to process and it will cause your application to freeze. There are async versions for some of the operations. This will offload the SQLite processing to a different thread.
 
@@ -272,7 +293,7 @@ db.executeAsync(
 );
 ```
 
-### Blobs
+## Blobs
 
 Blobs are supported via `ArrayBuffer`, you need to be careful about the semantics though. You cannot instantiate an instance of `ArrayBuffer` directly, nor pass a typed array directly. Here is an example:
 
@@ -300,7 +321,22 @@ const result = db.execute('SELECT content FROM BlobTable');
 const finalUint8 = new Uint8Array(result.rows!._array[0].content);
 ```
 
-### Attach or Detach other databases
+## Prepared statements
+
+A lot of the work when executing queries is not iterating through the result set itself but, sometimes, planning the execution. If you have a query which is expensive but you can re-use (even if you have to change the arguments) you can use a `prepared statement`:
+
+```ts
+const statement = db.prepareStatement('SELECT * FROM User WHERE name = ?;');
+statement.bind(['Oscar']);
+let results1 = statement.execute();
+
+statement.bind(['Carlos']);
+let results2 = statement.execute();
+```
+
+You only pay the price of parsing the query once, and each subsequent execution should be faster.
+
+# Attach or Detach other databases
 
 SQLite supports attaching or detaching other database files into your main database connection through an alias.
 You can do any operation you like on this attached database like JOIN results across tables in different schemas, or update data or objects.
@@ -327,7 +363,7 @@ if (!detachResult.status) {
 }
 ```
 
-### Loading SQL Dump Files
+# Loading SQL Dump Files
 
 If you have a SQL dump file, you can load it directly, with low memory consumption:
 
@@ -339,7 +375,7 @@ const { rowsAffected, commands } = db
   });
 ```
 
-## Hooks
+# Hooks
 
 You can subscribe to changes in your database by using an update hook:
 
@@ -401,7 +437,7 @@ db.commitHook(null);
 db.rollbackHook(null);
 ```
 
-## Use built-in SQLite
+# Use built-in SQLite
 
 On iOS you can use the embedded SQLite, when running `pod-install` add an environment flag:
 
@@ -411,11 +447,11 @@ OP_SQLITE_USE_PHONE_VERSION=1 npx pod-install
 
 On Android, it is not possible to link the OS SQLite. It is also a bad idea due to vendor changes, old android bugs, etc. Unfortunately, this means this library will add some megabytes to your app size.
 
-## Enable compile-time options
+# Enable compile-time options
 
 By specifying pre-processor flags, you can enable optional features like FTS5, Geopoly, etc.
 
-### iOS
+## iOS
 
 Add a `post_install` block to your `<PROJECT_ROOT>/ios/Podfile` like so:
 
@@ -434,7 +470,7 @@ end
 Replace the `<SQLITE_FLAGS>` part with the flags you want to add.
 For example, you could add `SQLITE_ENABLE_FTS5=1` to `GCC_PREPROCESSOR_DEFINITIONS` to enable FTS5 in the iOS project.
 
-### Android
+## Android
 
 You can specify flags via `<PROJECT_ROOT>/android/gradle.properties` like so:
 
@@ -442,14 +478,18 @@ You can specify flags via `<PROJECT_ROOT>/android/gradle.properties` like so:
 OPSQLiteFlags="-DSQLITE_ENABLE_FTS5=1"
 ```
 
-## Additional configuration
+# Additional configuration
 
-### App groups (iOS only)
+## App groups (iOS only)
 
 On iOS, the SQLite database can be placed in an app group, in order to make it accessible from other apps in that app group. E.g. for sharing capabilities.
 
 To use an app group, add the app group ID as the value for the `OPSQLite_AppGroup` key in your project's `Info.plist` file. You'll also need to configure the app group in your project settings. (Xcode -> Project Settings -> Signing & Capabilities -> Add Capability -> App Groups)
 
-## License
+# Contribute
+
+You need to have clang-format installed (`brew install clang-format`)
+
+# License
 
 MIT License.

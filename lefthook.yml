@@ -1,0 +1,4 @@
+pre-commit:
+  commands:
+    cpp-linter:
+      run: clang-format -i cpp/*.cpp cpp/*.h && git add .
