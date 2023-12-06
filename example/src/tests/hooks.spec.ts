@@ -1,6 +1,6 @@
 import Chance from 'chance';
 
-import {OPSQLiteConnection, open} from '@op-engineering/op-sqlite';
+import {OPSQLiteConnection, open} from '@op-engineering/op-sqlcipher';
 import chai from 'chai';
 import {describe, it, beforeEach} from './MochaRNAdapter';
 

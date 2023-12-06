@@ -1,4 +1,4 @@
-import {OPSQLiteConnection, open} from '@op-engineering/op-sqlite';
+import {OPSQLiteConnection, open} from '@op-engineering/op-sqlcipher';
 import chai from 'chai';
 import {beforeEach, describe, it} from './MochaRNAdapter';
 
