@@ -90,10 +90,9 @@ android {
               "**/libc++_shared.so",
               "**/libfbjni.so"
       ]
-      pickFirst '**/x86/libcrypto.so'
-      pickFirst '**/x86_64/libcrypto.so'
-      pickFirst '**/armeabi-v7a/libcrypto.so'
-      pickFirst '**/arm64-v8a/libcrypto.so'
+      // Setting pickFirst on this level does nothing
+      // pickFirst should be added on the app/build.gradle
+      // pickFirst '**/libcrypto.so'
     }
     
   }

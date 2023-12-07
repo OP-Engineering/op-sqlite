@@ -24,9 +24,30 @@ Memory consumption is also 1/4 compared to `react-native-quick-sqlite`. This que
 
 You can also turn on [Memory Mapping](#speed) to make your queries even faster by skipping the kernel during I/O and potentially reduce RAM usage, this comes with some disadvantages though. If you want even more speed and you can re-use your queries you can use [Prepared Statements](#prepared-statements).
 
-# Encryption
+# Duplicated libcrypto.so
 
-If you need to encrypt your entire database, there is [`op-sqlcipher`](https://github.com/OP-Engineering/op-sqlcipher), which is a fork of this library that uses [SQLCipher](https://github.com/sqlcipher/sqlcipher). It completely encrypts the database with minimal overhead.
+If you have any library that also depends on OpenSSL, you might find an issue similar to this when building Android:
+
+```
+Execution failed for task ':app:mergeDebugNativeLibs'.
+> A failure occurred while executing com.android.build.gradle.internal.tasks.MergeNativeLibsTask$MergeNativeLibsTaskWorkAction
+   > 2 files found with path 'lib/arm64-v8a/libcrypto.so' from inputs:
+      - /Users/osp/Developer/mac_test/node_modules/react-native-quick-crypto/android/build/intermediates/library_jni/debug/jni/arm64-v8a/libcrypto.so
+      - /Users/osp/.gradle/caches/transforms-3/e13f88164840fe641a466d05cd8edac7/transformed/jetified-flipper-0.182.0/jni/arm64-v8a/libcrypto.so
+```
+
+It means you have a transitive dependency where two libraries depend on OpenSSL and are generating a `libcrypto.so`. You can get around this issue by adding the following in your `app/build.gradle`:
+
+```groovy
+packagingOptions {
+  // Should prevent clashes with other libraries that use OpenSSL
+  pickFirst '**/libcrypto.so'
+}
+```
+
+> Usually this is caused by flipper which also depends on OpenSSL
+
+This just tells Gradle to grab whatever OpenSSL version it finds first and link against that, but as you can imagine this is not correct if the packages depend on different OpenSSL versions (op-sqlcipher depends on `com.android.ndk.thirdparty:openssl:1.1.1q-beta-1`). You should make sure all the OpenSSL versions match and you have no conflicts or errors.
 
 # Database Location
 
