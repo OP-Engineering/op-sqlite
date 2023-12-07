@@ -8,11 +8,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 class OPSQLiteModule extends ReactContextBaseJavaModule {
+  static {
+    System.loadLibrary("op-sqlite");
+  }
+  
   public static final String NAME = "OPSQLite";
   
   public OPSQLiteModule(ReactApplicationContext context) {
     super(context);
-    System.loadLibrary("op-sqlite");
   }
 
   @NonNull
