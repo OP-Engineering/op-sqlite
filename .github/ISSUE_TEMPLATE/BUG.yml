@@ -25,3 +25,10 @@ body:
       description: What version of React Native version are you using
     validations:
       required: true
+  - type: textarea
+    id: version
+    attributes:
+      label: Device
+      description: On which device are you encountering the issue? emulator? OS version?
+    validations:
+      required: true
