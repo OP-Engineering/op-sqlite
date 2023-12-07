@@ -12,6 +12,7 @@ class OPSQLiteModule extends ReactContextBaseJavaModule {
   
   public OPSQLiteModule(ReactApplicationContext context) {
     super(context);
+    System.loadLibrary("op-sqlite");
   }
 
   @NonNull
@@ -42,7 +43,6 @@ class OPSQLiteModule extends ReactContextBaseJavaModule {
   @ReactMethod(isBlockingSynchronousMethod = true)
   public boolean install() {
     try {
-      System.loadLibrary("op-sqlite");
       OPSQLiteBridge.instance.install(getReactApplicationContext());
       return true;
     } catch (Exception exception) {
