@@ -18,3 +18,10 @@ body:
       description: What version of op-sqlite are you using? Have you tried the latest version?
     validations:
       required: true
+  - type: textarea
+    id: version
+    attributes:
+      label: React Native Version
+      description: What version of React Native version are you using
+    validations:
+      required: true
