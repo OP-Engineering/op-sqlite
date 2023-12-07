@@ -135,11 +135,11 @@ export default function App() {
       name: 'testDB',
     });
 
-    // testDB.execute('DROP TABLE IF EXISTS segments;');
+    testDB.execute('DROP TABLE IF EXISTS segments;');
 
-    // testDB.execute(
-    //   `CREATE TABLE segments ("distance" REAL NOT NULL, "endDate" INTEGER NOT NULL, "id" TEXT PRIMARY KEY, "index" INTEGER NOT NULL, "region" TEXT NOT NULL, "speed" REAL NOT NULL, "startDate" INTEGER NOT NULL, "tripId" TEXT NOT NULL, "startLat" REAL NOT NULL, "startLng" REAL NOT NULL, "endLat" REAL NOT NULL, "endLng" REAL NOT NULL) STRICT;`,
-    // );
+    testDB.execute(
+      `CREATE TABLE segments ("distance" REAL NOT NULL, "endDate" INTEGER NOT NULL, "id" TEXT PRIMARY KEY, "index" INTEGER NOT NULL, "region" TEXT NOT NULL, "speed" REAL NOT NULL, "startDate" INTEGER NOT NULL, "tripId" TEXT NOT NULL, "startLat" REAL NOT NULL, "startLng" REAL NOT NULL, "endLat" REAL NOT NULL, "endLng" REAL NOT NULL) STRICT;`,
+    );
 
     const result = testDB.execute(`SELECT EXISTS (
       SELECT 1
