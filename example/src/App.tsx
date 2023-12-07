@@ -130,6 +130,27 @@ export default function App() {
     return acc && r.type !== 'incorrect';
   }, true);
 
+  const test = () => {
+    const testDB = open({
+      name: 'testDB',
+    });
+
+    // testDB.execute('DROP TABLE IF EXISTS segments;');
+
+    // testDB.execute(
+    //   `CREATE TABLE segments ("distance" REAL NOT NULL, "endDate" INTEGER NOT NULL, "id" TEXT PRIMARY KEY, "index" INTEGER NOT NULL, "region" TEXT NOT NULL, "speed" REAL NOT NULL, "startDate" INTEGER NOT NULL, "tripId" TEXT NOT NULL, "startLat" REAL NOT NULL, "startLng" REAL NOT NULL, "endLat" REAL NOT NULL, "endLng" REAL NOT NULL) STRICT;`,
+    // );
+
+    const result = testDB.execute(`SELECT EXISTS (
+      SELECT 1
+      FROM sqlite_master
+      WHERE type='table' 
+      AND name='segments'
+   );`);
+
+    console.log(result.rows!._array);
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-neutral-900">
       <StyledScrollView>
@@ -140,8 +161,9 @@ export default function App() {
         <View className="flex-row p-2 bg-neutral-800 items-center">
           <Text className={'font-bold flex-1 text-white'}>Tools</Text>
         </View>
-        <Button title="Against MMKV4" onPress={testAgainstMMKV} />
-        <View className="p-4 gap-2 items-center">
+        <Button title="Test" onPress={test} />
+        <Button title="Against MMKV" onPress={testAgainstMMKV} />
+        <View className="gap-2 items-center">
           {!!sqliteMMSetTime && (
             <Text className="text-white">
               MM SQLite Write: {sqliteMMSetTime.toFixed(2)} ms
