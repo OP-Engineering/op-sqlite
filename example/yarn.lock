@@ -1696,7 +1696,7 @@
     fastq "^1.6.0"
 
 "@op-engineering/op-sqlite@./..":
-  version "2.0.1"
+  version "2.0.3"
 
 "@react-native-community/cli-clean@11.3.7":
   version "11.3.7"
@@ -2635,10 +2635,10 @@ chalk@^4.0.0, chalk@^4.1.0, chalk@^4.1.2:
     ansi-styles "^4.1.0"
     supports-color "^7.1.0"
 
-chance@^1.1.9:
-  version "1.1.9"
-  resolved "https://registry.npmjs.org/chance/-/chance-1.1.9.tgz"
-  integrity sha512-TfxnA/DcZXRTA4OekA2zL9GH8qscbbl6X0ZqU4tXhGveVY/mXWvEQLt5GwZcYXTEyEFflVtj+pG8nc8EwSm1RQ==
+chance@^1.1.11:
+  version "1.1.11"
+  resolved "https://registry.yarnpkg.com/chance/-/chance-1.1.11.tgz#78e10e1f9220a5bbc60a83e3f28a5d8558d84d1b"
+  integrity sha512-kqTg3WWywappJPqtgrdvbA380VoXO2eu9VCV895JgbyHsaErXdyHK9LOZ911OvAk6L0obK7kDk9CGs8+oBawVA==
 
 char-regex@^1.0.2:
   version "1.0.2"
@@ -5511,6 +5511,11 @@ react-is@^17.0.1:
   version "17.0.2"
   resolved "https://registry.npmjs.org/react-is/-/react-is-17.0.2.tgz"
   integrity sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==
+
+react-native-lmdb@^0.0.9:
+  version "0.0.9"
+  resolved "https://registry.yarnpkg.com/react-native-lmdb/-/react-native-lmdb-0.0.9.tgz#6752d1e59d782a38fb26b8184098c9c59726813b"
+  integrity sha512-4BNcE872a5LvpQa+TmM9jlOrJsnJYehTm1NRXHwpZNhOONQyfNRg9osXCBLJqJoD+5jYPnnGHqojXoNy/8yANA==
 
 react-native-mmkv@^2.11.0:
   version "2.11.0"
