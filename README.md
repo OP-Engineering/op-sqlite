@@ -115,7 +115,7 @@ const db = open({
   name: 'mydb.sqlite',
 });
 
-// 0 turns of memory mapping, any other number enables it with the cache size
+// 0 turns off memory mapping, any other number enables it with the cache size
 db.execute('PRAGMA mmap_size=268435456');
 ```
 
