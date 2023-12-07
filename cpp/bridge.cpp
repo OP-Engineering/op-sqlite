@@ -543,8 +543,11 @@ sqliteExecute(std::string const dbName, std::string const &query,
   if (isFailed) {
 
     return {.type = SQLiteError,
-            .message = "[op-sqlite] SQLite code: " + std::to_string(result) +
-                       " execution error: " + std::string(errorMessage)};
+            .message =
+                "[op-sqlite] SQLite error code: " + std::to_string(result) +
+                ", description: " + std::string(errorMessage) +
+                ".\nSee SQLite error codes reference: "
+                "https://www.sqlite.org/rescode.html"};
   }
 
   int changedRowCount = sqlite3_changes(db);
