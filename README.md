@@ -115,11 +115,11 @@ const db = open({
   name: 'mydb.sqlite',
 });
 
-// 0 turns of memory mapping, any other number enables it with the cache size
+// 0 turns off memory mapping, any other number enables it with the cache size
 db.execute('PRAGMA mmap_size=268435456');
 ```
 
-If you use prepared statements plus memory mapping, you can get to inches of MMKV for the most performance critical queries, here is a simple example writing/reading a single value.
+If you use prepared statements plus memory mapping, you can get to inches of react-native-mmkv for the most performance critical queries, here is a simple example writing/reading a single value.
 
 ![mmkv comparison](mmkv.png)
 

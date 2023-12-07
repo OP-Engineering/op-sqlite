@@ -19,6 +19,16 @@ import clsx from 'clsx';
 import {preparedStatementsTests} from './tests/preparedStatements.spec';
 import performance from 'react-native-performance';
 import {MMKV} from 'react-native-mmkv';
+import {Chance} from 'chance';
+import {open as lmdbOpen, init} from 'react-native-lmdb';
+
+// Define the largest size of the db (100mb in this case)
+const mapSize = 1024 * 1024 * 100;
+
+init('mydb.mdb', mapSize);
+lmdbOpen('mydb.mdb');
+
+const chance = new Chance();
 
 export const mmkv = new MMKV();
 
@@ -41,6 +51,8 @@ export default function App() {
   const [mmkvSetTime, setMMKVSetTime] = useState(0);
   const [sqliteGetTime, setSqliteMMGetTime] = useState(0);
   const [mmkvGetTime, setMMKVGetTime] = useState(0);
+  const [LMDBWriteTime, setLMDBWriteTime] = useState(0);
+  const [LMDBGetTime, setLMDBGetTime] = useState(0);
 
   useEffect(() => {
     setResults([]);
@@ -85,7 +97,9 @@ export default function App() {
       name: 'mmkvTestDb',
     });
 
-    db.execute('PRAGMA mmap_size=268435456');
+    const randomKey = chance.string();
+
+    db.execute('PRAGMA mmap_size=268435');
     db.execute('PRAGMA journal_mode = OFF;');
     db.execute('DROP TABLE IF EXISTS mmkvTest;');
     db.execute('CREATE TABLE mmkvTest (text TEXT);');
@@ -101,20 +115,34 @@ export default function App() {
     setSqliteMMSetTime(end - start);
 
     start = performance.now();
-    mmkv.set('mmkvDef', 'quack');
+    mmkv.set(randomKey, 'quack');
     end = performance.now();
     setMMKVSetTime(end - start);
 
-    let readStatement = db.prepareStatement('SELECT text from mmkvTest;');
+    let readStatement = db.prepareStatement(
+      'SELECT text from mmkvTest LIMIT 1;',
+    );
     start = performance.now();
     readStatement.execute();
     end = performance.now();
     setSqliteMMGetTime(end - start);
 
     start = performance.now();
-    mmkv.getString('mmkvDef');
+    mmkv.getString(randomKey);
     end = performance.now();
     setMMKVGetTime(end - start);
+
+    start = performance.now();
+    // @ts-ignore
+    global.put(0, randomKey, 'quack');
+    end = performance.now();
+    setLMDBWriteTime(end - start);
+
+    start = performance.now();
+    // @ts-ignore
+    global.get(0, randomKey);
+    end = performance.now();
+    setLMDBGetTime(end - start);
 
     db.close();
   };
@@ -144,22 +172,32 @@ export default function App() {
         <View className="p-4 gap-2 items-center">
           {!!sqliteMMSetTime && (
             <Text className="text-white">
-              MM SQLite Write: {sqliteMMSetTime.toFixed(2)} ms
-            </Text>
-          )}
-          {!!mmkvSetTime && (
-            <Text className="text-white">
-              MMKV Write: {mmkvSetTime.toFixed(2)} ms
+              MM SQLite Write: {sqliteMMSetTime.toFixed(4)} ms
             </Text>
           )}
           {!!sqliteGetTime && (
             <Text className="text-white">
-              MM SQLite Get: {sqliteGetTime.toFixed(2)} ms
+              MM SQLite Get: {sqliteGetTime.toFixed(4)} ms
+            </Text>
+          )}
+          {!!mmkvSetTime && (
+            <Text className="text-white">
+              MMKV Write: {mmkvSetTime.toFixed(4)} ms
             </Text>
           )}
           {!!mmkvGetTime && (
             <Text className="text-white">
-              MMKV Get: {mmkvGetTime.toFixed(2)} ms
+              MMKV Get: {mmkvGetTime.toFixed(4)} ms
+            </Text>
+          )}
+          {!!LMDBWriteTime && (
+            <Text className="text-white">
+              LMBD Write: {LMDBWriteTime.toFixed(4)} ms
+            </Text>
+          )}
+          {!!LMDBGetTime && (
+            <Text className="text-white">
+              LMBD Get: {LMDBGetTime.toFixed(4)} ms
             </Text>
           )}
         </View>
