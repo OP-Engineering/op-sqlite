@@ -3,9 +3,11 @@ package com.op.sqlite
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
+import com.facebook.react.module.annotations.ReactModule;
 
+@ReactModule(name = OPSQLiteModule.NAME)
 internal class OPSQLiteModule(context: ReactApplicationContext?) :
-    ReactContextBaseJavaModule(context) {
+    NativeOPSQLiteSpec(context) {
     override fun getName(): String {
         return NAME
     }
@@ -26,13 +28,17 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) :
     }
 
     @ReactMethod(isBlockingSynchronousMethod = true)
-    fun install(): Boolean {
+    override fun install(): Boolean {
         return try {
             OPSQLiteBridge.instance.install(reactApplicationContext)
             true
         } catch (exception: Exception) {
             false
         }
+    }
+
+    override fun clearState() {
+        OPSQLiteBridge.instance.clearState()
     }
 
     override fun onCatalystInstanceDestroy() {
