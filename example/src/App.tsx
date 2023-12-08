@@ -86,7 +86,7 @@ export default function App() {
     });
 
     db.execute('PRAGMA mmap_size=268435456');
-    db.execute('PRAGMA journal_mode = OFF;');
+    // db.execute('PRAGMA journal_mode = OFF;');
     db.execute('DROP TABLE IF EXISTS mmkvTest;');
     db.execute('CREATE TABLE mmkvTest (text TEXT);');
 
