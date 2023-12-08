@@ -149,8 +149,6 @@ export default function App() {
     );
     `;
     testDB.execute(sql);
-
-    // console.log(result.rows!._array);
   };
 
   return (
@@ -243,7 +241,7 @@ export default function App() {
         {results.map((r: any, i: number) => {
           if (r.type === 'grouping') {
             return (
-              <Text className="p-2 font-semibold text-white">
+              <Text className="p-2 font-semibold text-white" key={i}>
                 {r.description}
               </Text>
             );
@@ -251,8 +249,10 @@ export default function App() {
 
           if (r.type === 'incorrect') {
             return (
-              <View className="border-b border-neutral-800 p-2 flex-row">
-                <Text key={i} className="text-red-500 flex-1">
+              <View
+                className="border-b border-neutral-800 p-2 flex-row"
+                key={i}>
+                <Text className="text-red-500 flex-1">
                   {r.description}: {r.errorMsg}
                 </Text>
               </View>
@@ -260,10 +260,8 @@ export default function App() {
           }
 
           return (
-            <View className="border-b border-neutral-800 p-2 flex-row">
-              <Text key={i} className="text-green-500 flex-1">
-                {r.description}
-              </Text>
+            <View className="border-b border-neutral-800 p-2 flex-row" key={i}>
+              <Text className="text-green-500 flex-1">{r.description}</Text>
             </View>
           );
         })}
