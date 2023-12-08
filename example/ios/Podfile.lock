@@ -900,12 +900,6 @@ PODS:
     - React-Core
   - react-native-restart (0.0.27):
     - React-Core
-  - react-native-safe-area-context (4.5.0):
-    - RCT-Folly
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - ReactCommon/turbomodule/core
   - React-nativeconfig (0.73.0)
   - React-NativeModulesApple (0.73.0):
     - glog
@@ -1111,7 +1105,6 @@ DEPENDENCIES:
   - react-native-mmkv (from `../node_modules/react-native-mmkv`)
   - react-native-performance (from `../node_modules/react-native-performance`)
   - react-native-restart (from `../node_modules/react-native-restart`)
-  - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - React-nativeconfig (from `../node_modules/react-native/ReactCommon`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-perflogger (from `../node_modules/react-native/ReactCommon/reactperflogger`)
@@ -1206,8 +1199,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-performance"
   react-native-restart:
     :path: "../node_modules/react-native-restart"
-  react-native-safe-area-context:
-    :path: "../node_modules/react-native-safe-area-context"
   React-nativeconfig:
     :path: "../node_modules/react-native/ReactCommon"
   React-NativeModulesApple:
@@ -1287,7 +1278,6 @@ SPEC CHECKSUMS:
   react-native-mmkv: e97c0c79403fb94577e5d902ab1ebd42b0715b43
   react-native-performance: cef2b618d47b277fb5c3280b81a3aad1e72f2886
   react-native-restart: 7595693413fe3ca15893702f2c8306c62a708162
-  react-native-safe-area-context: 39c2d8be3328df5d437ac1700f4f3a4f75716acc
   React-nativeconfig: a063483672b8add47a4875b0281e202908ff6747
   React-NativeModulesApple: 169506a5fd708ab22811f76ee06a976595c367a1
   React-perflogger: b61e5db8e5167f5e70366e820766c492847c082e

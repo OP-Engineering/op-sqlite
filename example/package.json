@@ -25,11 +25,10 @@
     "react-native-restart": "^0.0.27",
     "reflect-metadata": "^0.1.13",
     "stream-browserify": "^3.0.0",
-    "tailwindcss": "^3.2.4",
-    "typeorm": "^0.3.11",
     "util": "^0.12.5"
   },
   "devDependencies": {
+    "tailwindcss": "3.3.2",
     "@babel/core": "^7.12.9",
     "@babel/plugin-proposal-decorators": "^7.20.5",
     "@babel/preset-env": "^7.14.0",
