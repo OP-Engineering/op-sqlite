@@ -9,7 +9,7 @@
 
 @synthesize bridge=_bridge;
 
-RCT_EXPORT_MODULE(OPSQLite)
+RCT_EXPORT_MODULE()
 
 - (void)setBridge:(RCTBridge *)bridge {
   _bridge = bridge;
@@ -70,6 +70,14 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     opsqlite::install(runtime, callInvoker, [documentPath UTF8String]);
     return @true;
 }
+
+#if RCT_NEW_ARCH_ENABLED
+- (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
+    (const facebook::react::ObjCTurboModule::InitParams &)params
+{
+  return std::make_shared<facebook::react::NativeOPSQLiteSpecJSI>(params);
+}
+#endif
 
 - (void)invalidate {
     opsqlite::clearState();
