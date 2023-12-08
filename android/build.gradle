@@ -9,8 +9,12 @@ buildscript {
     google()
   }
 
+  def kotlin_version = rootProject.ext.has("kotlinVersion") ? rootProject.ext.get("kotlinVersion") : project.properties["OPSQLite_kotlinVersion"]
+
   dependencies {
     classpath("com.android.tools.build:gradle:7.2.2")
+    // noinspection DifferentKotlinGradleVersion
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
   }
 }
 
@@ -29,6 +33,7 @@ def isNewArchitectureEnabled() {
 def SQLITE_FLAGS = rootProject.properties['OPSQLiteFlags']
 
 apply plugin: 'com.android.library'
+apply plugin: "kotlin-android"
 
 def safeExtGet(prop, fallback) {
   rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
@@ -39,11 +44,11 @@ def reactNativeArchitectures() {
   return value ? value.split(",") : ["armeabi-v7a", "x86", "x86_64", "arm64-v8a"]
 }
 
-def USE_HERMES = rootProject.ext.hermesEnabled
-
-repositories {
-  mavenCentral()
+def getExtOrDefault(name) {
+  return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties["OPSQLite" + name]
 }
+
+def USE_HERMES = rootProject.ext.hermesEnabled
 
 android {
   
@@ -106,9 +111,17 @@ android {
   }
 }
 
+repositories {
+  mavenCentral()
+  google()
+}
+
+def kotlin_version = getExtOrDefault("kotlinVersion")
+
 dependencies {
   //noinspection GradleDynamicVersion
   implementation 'com.facebook.react:react-android:+'
+  implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }
 
 // Resolves "LOCAL_SRC_FILES points to a missing file, Check that libfb.so exists or that its path is correct".

@@ -2,8 +2,6 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
-import com.android.build.OutputFile
-
 project.ext.react = [
     hermesEnabled: true,  // clean and rebuild if changing
 ]
