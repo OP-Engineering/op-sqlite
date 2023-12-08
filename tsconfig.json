@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
       "@op-engineering/op-sqlite": ["./src/index"]
     },
