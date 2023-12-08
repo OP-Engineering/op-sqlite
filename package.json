@@ -56,6 +56,14 @@
     "react": "*",
     "react-native": "*"
   },
+  "codegenConfig": {
+    "name": "OPSQLiteSpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "com.op.sqlite"
+    }
+  },
   "prettier": {
     "quoteProps": "consistent",
     "singleQuote": true,
