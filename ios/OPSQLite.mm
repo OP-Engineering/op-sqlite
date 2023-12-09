@@ -32,6 +32,10 @@ RCT_EXPORT_MODULE()
     };
 }
 
+- (NSDictionary *)getConstants {
+    return [self constantsToExport];
+}
+
 RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     RCTCxxBridge *cxxBridge = (RCTCxxBridge *)_bridge;
     if (cxxBridge == nil) {
@@ -70,6 +74,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     opsqlite::install(runtime, callInvoker, [documentPath UTF8String]);
     return @true;
 }
+
 
 #if RCT_NEW_ARCH_ENABLED
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
