@@ -49,7 +49,9 @@ export const {
   ANDROID_FILES_PATH,
   // @ts-expect-error
   ANDROID_EXTERNAL_FILES_PATH,
-} = NativeOPSQLite;
+} = !!NativeOPSQLite.getConstants
+  ? NativeOPSQLite.getConstants()
+  : NativeOPSQLite;
 
 /**
  * Object returned by SQL Query executions {

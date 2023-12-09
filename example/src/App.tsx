@@ -19,6 +19,7 @@ import clsx from 'clsx';
 import {preparedStatementsTests} from './tests/preparedStatements.spec';
 import performance from 'react-native-performance';
 import {MMKV} from 'react-native-mmkv';
+import {constantsTests} from './tests/constants.spec';
 
 export const mmkv = new MMKV();
 
@@ -50,6 +51,7 @@ export default function App() {
       blobTests,
       registerHooksTests,
       preparedStatementsTests,
+      constantsTests,
     ).then(setResults);
   }, []);
 

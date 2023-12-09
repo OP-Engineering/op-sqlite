@@ -18,7 +18,7 @@ PODS:
   - MMKV (1.3.2):
     - MMKVCore (~> 1.3.2)
   - MMKVCore (1.3.2)
-  - op-sqlite (2.0.6):
+  - op-sqlite (2.0.7-rc1):
     - React
     - React-callinvoker
     - React-Core
@@ -1253,7 +1253,7 @@ SPEC CHECKSUMS:
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
   MMKV: f21593c0af4b3f2a0ceb8f820f28bb639ea22bb7
   MMKVCore: 31b4cb83f8266467eef20a35b6d78e409a11060d
-  op-sqlite: 3449ee5af793f920fdb6f2607a9736b0552f55fb
+  op-sqlite: 647060c5852c870e7f9aa4b91e010878308a83b5
   RCT-Folly: 7169b2b1c44399c76a47b5deaaba715eeeb476c0
   RCTRequired: 5e3631b27c08716986980ef23eed8abdee1cdcaf
   RCTTypeSafety: 02a64828b0b428eb4f63de1397d44fb2d0747e85
