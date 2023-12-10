@@ -130,6 +130,16 @@ If you use [prepared statements](#prepared-statements) plus memory mapping and s
 
 ![mmkv comparison](mmkv.png)
 
+# Strictness
+
+It's important to notice SQLite unlike other databases by default does not strictly check for types, if you want true type safety when you declare your tables you need to use the `STRICT` keyword.
+
+```ts
+db.execute('CREATE TABLE Test ( id INT PRIMARY KEY, name TEXT) STRICT;');
+```
+
+If you don't set it, SQLite will happily write whatever you insert in your table.
+
 # API
 
 ```typescript
