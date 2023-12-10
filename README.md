@@ -119,7 +119,14 @@ const db = open({
 db.execute('PRAGMA mmap_size=268435456');
 ```
 
-If you use prepared statements plus memory mapping, you can get to inches of MMKV for the most performance critical queries, here is a simple example writing/reading a single value.
+You can also set journaling to memory (or even OFF if you are kinda crazy) to gain even more speed. Journaling is what allows SQLite to ROLLBACK statements and it is dangerous, so do it at your own risk
+
+```ts
+db.execute('PRAGMA mmap_size=268435456');
+db.execute('PRAGMA journal_mode = MEMORY;'); // you can also turn it to OFF
+```
+
+If you use prepared statements plus memory mapping and set journaling to memory, you can get to inches of MMKV for the most performance critical queries, here is a simple example writing/reading a single value.
 
 ![mmkv comparison](mmkv.png)
 
