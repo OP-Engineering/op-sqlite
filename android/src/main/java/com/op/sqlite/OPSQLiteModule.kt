@@ -12,7 +12,7 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) :
         return NAME
     }
 
-    override fun getConstants(): Map<String, Any>? {
+    override fun getTypedExportedConstants(): MutableMap<String, Any> {
         val constants: MutableMap<String, Any> = HashMap()
         val context = reactApplicationContext
         val dbPath = context
@@ -24,6 +24,8 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) :
         constants["ANDROID_FILES_PATH"] = filesPath
         val externalFilesDir = context.getExternalFilesDir(null)!!.absolutePath
         constants["ANDROID_EXTERNAL_FILES_PATH"] = externalFilesDir
+        constants["IOS_DOCUMENT_PATH"] = ""
+        constants["IOS_LIBRARY_PATH"] = ""
         return constants
     }
 
@@ -35,10 +37,6 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) :
         } catch (exception: Exception) {
             false
         }
-    }
-
-    override fun clearState() {
-        OPSQLiteBridge.instance.clearState()
     }
 
     override fun onCatalystInstanceDestroy() {
