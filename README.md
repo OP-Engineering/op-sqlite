@@ -126,7 +126,7 @@ db.execute('PRAGMA mmap_size=268435456');
 db.execute('PRAGMA journal_mode = MEMORY;'); // you can also turn it to OFF
 ```
 
-If you use prepared statements plus memory mapping and set journaling to memory, you can get to inches of MMKV for the most performance critical queries, here is a simple example writing/reading a single value.
+If you use [prepared statements](#prepared-statements) plus memory mapping and set journaling to memory, you can get to inches of MMKV for the most performance critical queries, here is a simple example writing/reading a single value.
 
 ![mmkv comparison](mmkv.png)
 
