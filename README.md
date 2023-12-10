@@ -138,7 +138,7 @@ It's important to notice SQLite unlike other databases by default does not stric
 db.execute('CREATE TABLE Test ( id INT PRIMARY KEY, name TEXT) STRICT;');
 ```
 
-If you don't set it, SQLite will happily write whatever you insert in your table.
+If you don't set it, SQLite will happily write whatever you insert in your table, independtly of the declared type.
 
 # API
 
