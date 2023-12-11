@@ -25,7 +25,7 @@ export function queriesTests() {
 
       db.execute('DROP TABLE IF EXISTS User;');
       db.execute(
-        'CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL) STRICT;',
+        'CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL, nickname TEXT) STRICT;',
       );
     } catch (e) {
       console.warn('error on before each', e);
@@ -71,6 +71,7 @@ export function queriesTests() {
           name,
           age,
           networth,
+          nickname: null,
         },
       ]);
     });
@@ -95,6 +96,7 @@ export function queriesTests() {
           name,
           age,
           networth,
+          nickname: null,
         },
       ]);
     });
@@ -211,6 +213,7 @@ export function queriesTests() {
           name,
           age,
           networth,
+          nickname: null,
         },
       ]);
     });
@@ -244,6 +247,7 @@ export function queriesTests() {
           name,
           age,
           networth,
+          nickname: null,
         },
       ]);
     });
@@ -336,6 +340,7 @@ export function queriesTests() {
           name,
           age,
           networth,
+          nickname: null,
         },
       ]);
     });
@@ -472,6 +477,7 @@ export function queriesTests() {
           name,
           age,
           networth,
+          nickname: null,
         },
       ]);
     });
@@ -521,6 +527,7 @@ export function queriesTests() {
           name,
           age,
           networth,
+          nickname: null,
         },
       ]);
     });
@@ -656,12 +663,13 @@ export function queriesTests() {
 
       const res = db.execute('SELECT * FROM User');
       expect(res.rows?._array).to.eql([
-        {id: id1, name: name1, age: age1, networth: networth1},
+        {id: id1, name: name1, age: age1, networth: networth1, nickname: null},
         {
           id: id2,
           name: name2,
           age: age2,
           networth: networth2,
+          nickname: null,
         },
       ]);
     });
@@ -692,12 +700,13 @@ export function queriesTests() {
 
       const res = db.execute('SELECT * FROM User');
       expect(res.rows?._array).to.eql([
-        {id: id1, name: name1, age: age1, networth: networth1},
+        {id: id1, name: name1, age: age1, networth: networth1, nickname: null},
         {
           id: id2,
           name: name2,
           age: age2,
           networth: networth2,
+          nickname: null,
         },
       ]);
     });
