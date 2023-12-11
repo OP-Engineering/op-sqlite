@@ -32,3 +32,10 @@ body:
       description: On which device are you encountering the issue? emulator? OS version?
     validations:
       required: true
+  - type: textarea
+      id: version
+      attributes:
+        label: Reproducible example
+        description: Please post a repo with a minimum reproducible example
+      validations:
+        required: true
