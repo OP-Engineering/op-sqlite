@@ -129,15 +129,38 @@ If you use [prepared statements](#prepared-statements) plus memory mapping and s
 
 ![mmkv comparison](mmkv.png)
 
-# Strictness
+# SQLite Gotchas
+
+## Strictness
 
 It's important to notice SQLite unlike other databases by default does not strictly check for types, if you want true type safety when you declare your tables you need to use the `STRICT` keyword.
 
 ```ts
-db.execute('CREATE TABLE Test ( id INT PRIMARY KEY, name TEXT) STRICT;');
+db.execute('CREATE TABLE Test (
+              id INT PRIMARY KEY,
+              name TEXT
+          ) STRICT;');
 ```
 
 If you don't set it, SQLite will happily write whatever you insert in your table, independtly of the declared type.
+
+## Foreign constraints
+
+When SQLite evaluates your query and you have forgein key constraints, it keeps track of the satisfied relations via a counter. Once your statement finishes executing and the counter is not 0, it throws a foreign key constraint failed error. Unfortunately, this simple design means it is impossible to catch which foreign constraint is failed and you will receive a generic error. Nothing op-sqlite can do about it, it's a design flaw in SQLite.
+
+In order to catch foreign key errors, you also need to execute the pragma when you open your connection:
+
+```
+PRAGMA foreign_keys = true
+```
+
+## Error codes
+
+Sometimes you might be using valid SQL syntax for other engines or you might be doing something else wrong. The errors returned by op-sqlite contain the raw error code returned by SQLite and you should check [the reference](https://www.sqlite.org/rescode.html) for more detailed information.
+
+## Quirks
+
+See the [full list of SQLite quirks](https://www.sqlite.org/quirks.html).
 
 # API
 
