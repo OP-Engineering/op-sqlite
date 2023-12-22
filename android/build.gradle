@@ -112,11 +112,7 @@ android {
 dependencies {
   //noinspection GradleDynamicVersion
   implementation 'com.facebook.react:react-android:+'
-  constraints {
-    implementation('com.android.ndk.thirdparty:openssl:1.1.1q-beta-1') {
-      because 'latest release of OpenSSL is always a good idea'
-    }
-  }
+  implementation('com.android.ndk.thirdparty:openssl:1.1.1q-beta-1')
 }
 
 // Resolves "LOCAL_SRC_FILES points to a missing file, Check that libfb.so exists or that its path is correct".
