@@ -26,7 +26,7 @@ You can also turn on [Memory Mapping](#speed) to make your queries even faster b
 
 # Duplicated libcrypto.so
 
-If you have any library that also depends on OpenSSL, you might find an issue similar to this when building Android:
+If you have any library that also depends on OpenSSL (i.e. by using `flipper` or `expo`), you might find an issue similar to this when building Android:
 
 ```
 Execution failed for task ':app:mergeDebugNativeLibs'.
