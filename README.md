@@ -138,13 +138,52 @@ const db = open({
   name: 'mydb.sqlite',
 });
 
-// 0 turns of memory mapping, any other number enables it with the cache size
+// 0 turns off memory mapping, any other number enables it with the cache size
 db.execute('PRAGMA mmap_size=268435456');
 ```
 
-If you use prepared statements plus memory mapping, you can get to inches of MMKV for the most performance critical queries, here is a simple example writing/reading a single value.
+You can also set journaling to memory (or even OFF if you are kinda crazy) to gain even more speed. Journaling is what allows SQLite to ROLLBACK statements and it is dangerous, so do it at your own risk
+
+```ts
+db.execute('PRAGMA journal_mode = MEMORY;'); // or OFF
+```
+
+If you use [prepared statements](#prepared-statements) plus memory mapping and set journaling to memory, you can get to inches of MMKV for the most performance critical queries, here is a simple example writing/reading a single value.
 
 ![mmkv comparison](mmkv.png)
+
+# SQLite Gotchas
+
+## Strictness
+
+It's important to notice SQLite unlike other databases by default does not strictly check for types, if you want true type safety when you declare your tables you need to use the `STRICT` keyword.
+
+```ts
+db.execute('CREATE TABLE Test (
+              id INT PRIMARY KEY,
+              name TEXT
+          ) STRICT;');
+```
+
+If you don't set it, SQLite will happily write whatever you insert in your table, independtly of the declared type.
+
+## Foreign constraints
+
+When SQLite evaluates your query and you have forgein key constraints, it keeps track of the satisfied relations via a counter. Once your statement finishes executing and the counter is not 0, it throws a foreign key constraint failed error. Unfortunately, this simple design means it is impossible to catch which foreign constraint is failed and you will receive a generic error. Nothing op-sqlite can do about it, it's a design flaw in SQLite.
+
+In order to catch foreign key errors, you also need to execute the pragma when you open your connection:
+
+```
+PRAGMA foreign_keys = true
+```
+
+## Error codes
+
+Sometimes you might be using valid SQL syntax for other engines or you might be doing something else wrong. The errors returned by op-sqlite contain the raw error code returned by SQLite and you should check [the reference](https://www.sqlite.org/rescode.html) for more detailed information.
+
+## Quirks
+
+See the [full list of SQLite quirks](https://www.sqlite.org/quirks.html).
 
 # API
 

@@ -53,12 +53,12 @@ void install(jsi::Runtime &rt,
 
   auto open = HOSTFN("open", 4) {
     if (count == 0) {
-      throw jsi::JSError(rt, "[op-sqlite][open] database name is required");
+      throw std::runtime_error("[op-sqlite][open] database name is required");
     }
 
     if (!args[0].isString()) {
-      throw jsi::JSError(rt,
-                         "[op-sqlite][open] database name must be a string");
+      throw std::runtime_error(
+          "[op-sqlite][open] database name must be a string");
     }
 
     std::string dbName = args[0].asString(rt).utf8(rt);
@@ -67,8 +67,8 @@ void install(jsi::Runtime &rt,
 
     if (count > 1 && !args[1].isUndefined() && !args[1].isNull()) {
       if (!args[1].isString()) {
-        throw jsi::JSError(
-            rt, "[op-sqlite][open] database location must be a string");
+        throw std::runtime_error(
+            "[op-sqlite][open] database location must be a string");
       }
 
       std::string lastPath = args[1].asString(rt).utf8(rt);
@@ -91,7 +91,7 @@ void install(jsi::Runtime &rt,
     BridgeResult result = sqliteOpenDb(dbName, path, encryptionKey);
 
     if (result.type == SQLiteError) {
-      throw jsi::JSError(rt, result.message.c_str());
+      throw std::runtime_error(result.message);
     }
 
     return {};
@@ -111,8 +111,8 @@ void install(jsi::Runtime &rt,
     std::string tempDocPath = std::string(basePath);
     if (count > 3 && !args[3].isUndefined() && !args[3].isNull()) {
       if (!args[3].isString()) {
-        throw jsi::JSError(
-            rt, "[op-sqlite][attach] database location must be a string");
+        throw std::runtime_error(
+            "[op-sqlite][attach] database location must be a string");
       }
 
       tempDocPath = tempDocPath + "/" + args[3].asString(rt).utf8(rt);
@@ -125,7 +125,7 @@ void install(jsi::Runtime &rt,
         sqliteAttachDb(dbName, tempDocPath, databaseToAttach, alias);
 
     if (result.type == SQLiteError) {
-      throw jsi::JSError(rt, result.message.c_str());
+      throw std::runtime_error(result.message);
     }
 
     return {};
@@ -133,12 +133,12 @@ void install(jsi::Runtime &rt,
 
   auto detach = HOSTFN("detach", 2) {
     if (count < 2) {
-      throw jsi::JSError(rt,
-                         "[op-sqlite][detach] Incorrect number of arguments");
+      throw std::runtime_error(
+          "[op-sqlite][detach] Incorrect number of arguments");
     }
     if (!args[0].isString() || !args[1].isString()) {
-      throw jsi::JSError(
-          rt, "dbName, databaseToAttach and alias must be a strings");
+      throw std::runtime_error(
+          "dbName, databaseToAttach and alias must be a strings");
       return {};
     }
 
@@ -155,12 +155,12 @@ void install(jsi::Runtime &rt,
 
   auto close = HOSTFN("close", 1) {
     if (count == 0) {
-      throw jsi::JSError(rt, "[op-sqlite][close] database name is required");
+      throw std::runtime_error("[op-sqlite][close] database name is required");
     }
 
     if (!args[0].isString()) {
-      throw jsi::JSError(rt,
-                         "[op-sqlite][close] database name must be a string");
+      throw std::runtime_error(
+          "[op-sqlite][close] database name must be a string");
     }
 
     std::string dbName = args[0].asString(rt).utf8(rt);
@@ -176,12 +176,12 @@ void install(jsi::Runtime &rt,
 
   auto remove = HOSTFN("delete", 2) {
     if (count == 0) {
-      throw jsi::JSError(rt, "[op-sqlite][open] database name is required");
+      throw std::runtime_error("[op-sqlite][open] database name is required");
     }
 
     if (!args[0].isString()) {
-      throw jsi::JSError(rt,
-                         "[op-sqlite][open] database name must be a string");
+      throw std::runtime_error(
+          "[op-sqlite][open] database name must be a string");
     }
 
     std::string dbName = args[0].asString(rt).utf8(rt);
@@ -190,8 +190,8 @@ void install(jsi::Runtime &rt,
 
     if (count > 1 && !args[1].isUndefined() && !args[1].isNull()) {
       if (!args[1].isString()) {
-        throw jsi::JSError(
-            rt, "[op-sqlite][open] database location must be a string");
+        throw std::runtime_error(
+            "[op-sqlite][open] database location must be a string");
       }
 
       tempDocPath = tempDocPath + "/" + args[1].asString(rt).utf8(rt);
@@ -200,7 +200,7 @@ void install(jsi::Runtime &rt,
     BridgeResult result = sqliteRemoveDb(dbName, tempDocPath);
 
     if (result.type == SQLiteError) {
-      throw jsi::JSError(rt, result.message.c_str());
+      throw std::runtime_error(result.message);
     }
 
     return {};
@@ -210,33 +210,30 @@ void install(jsi::Runtime &rt,
     const std::string dbName = args[0].asString(rt).utf8(rt);
     const std::string query = args[1].asString(rt).utf8(rt);
     std::vector<JSVariant> params;
-    try {
-      if (count == 3) {
-        const jsi::Value &originalParams = args[2];
-        params = toVariantVec(rt, originalParams);
-      }
 
-      std::vector<DumbHostObject> results;
-      std::shared_ptr<std::vector<SmartHostObject>> metadata =
-          std::make_shared<std::vector<SmartHostObject>>();
-
-      auto status = sqliteExecute(dbName, query, &params, &results, metadata);
-
-      if (status.type == SQLiteError) {
-        throw jsi::JSError(rt, status.message);
-      }
-
-      auto jsiResult = createResult(rt, status, &results, metadata);
-      return jsiResult;
-    } catch (const std::exception &e) {
-      throw jsi::JSError(rt, e.what());
+    if (count == 3) {
+      const jsi::Value &originalParams = args[2];
+      params = toVariantVec(rt, originalParams);
     }
+
+    std::vector<DumbHostObject> results;
+    std::shared_ptr<std::vector<SmartHostObject>> metadata =
+        std::make_shared<std::vector<SmartHostObject>>();
+
+    auto status = sqliteExecute(dbName, query, &params, &results, metadata);
+
+    if (status.type == SQLiteError) {
+      throw std::runtime_error(status.message);
+    }
+
+    auto jsiResult = createResult(rt, status, &results, metadata);
+    return jsiResult;
   });
 
   auto executeAsync = HOSTFN("executeAsync", 3) {
     if (count < 3) {
-      throw jsi::JSError(
-          rt, "[op-sqlite][executeAsync] Incorrect arguments for executeAsync");
+      throw std::runtime_error(
+          "[op-sqlite][executeAsync] Incorrect arguments for executeAsync");
     }
 
     const std::string dbName = args[0].asString(rt).utf8(rt);
@@ -246,7 +243,8 @@ void install(jsi::Runtime &rt,
     std::vector<JSVariant> params = toVariantVec(rt, originalParams);
 
     auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
-        auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor", 2) {
+
+    auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor", 2) {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
@@ -256,7 +254,6 @@ void install(jsi::Runtime &rt,
           std::vector<DumbHostObject> results;
           std::shared_ptr<std::vector<SmartHostObject>> metadata =
               std::make_shared<std::vector<SmartHostObject>>();
-          ;
 
           auto status =
               sqliteExecute(dbName, query, &params, &results, metadata);
@@ -296,9 +293,9 @@ void install(jsi::Runtime &rt,
       pool.queueWork(task);
 
       return {};
-        }));
+    }));
 
-        return promise;
+    return promise;
   });
 
   // Execute a batch of SQL queries in a transaction
@@ -306,14 +303,14 @@ void install(jsi::Runtime &rt,
   // ]]
   auto executeBatch = HOSTFN("executeBatch", 2) {
     if (sizeof(args) < 2) {
-      throw jsi::JSError(
-          rt, "[op-sqlite][executeBatch] - Incorrect parameter count");
+      throw std::runtime_error(
+          "[op-sqlite][executeBatch] - Incorrect parameter count");
     }
 
     const jsi::Value &params = args[1];
     if (params.isNull() || params.isUndefined()) {
-      throw jsi::JSError(rt, "[op-sqlite][executeBatch] - An array of SQL "
-                             "commands or parameters is needed");
+      throw std::runtime_error("[op-sqlite][executeBatch] - An array of SQL "
+                               "commands or parameters is needed");
     }
     const std::string dbName = args[0].asString(rt).utf8(rt);
     const jsi::Array &batchParams = params.asObject(rt).asArray(rt);
@@ -326,22 +323,23 @@ void install(jsi::Runtime &rt,
       res.setProperty(rt, "rowsAffected", jsi::Value(batchResult.affectedRows));
       return std::move(res);
     } else {
-      throw jsi::JSError(rt, batchResult.message);
+      throw std::runtime_error(batchResult.message);
     }
   });
 
   auto executeBatchAsync = HOSTFN("executeBatchAsync", 2) {
     if (sizeof(args) < 2) {
-      throw jsi::JSError(
-          rt, "[op-sqlite][executeAsyncBatch] Incorrect parameter count");
+      throw std::runtime_error(
+          "[op-sqlite][executeAsyncBatch] Incorrect parameter count");
       return {};
     }
 
     const jsi::Value &params = args[1];
 
     if (params.isNull() || params.isUndefined()) {
-      throw jsi::JSError(rt, "[op-sqlite][executeAsyncBatch] - An array of SQL "
-                             "commands or parameters is needed");
+      throw std::runtime_error(
+          "[op-sqlite][executeAsyncBatch] - An array of SQL "
+          "commands or parameters is needed");
       return {};
     }
 
@@ -370,6 +368,7 @@ void install(jsi::Runtime &rt,
                                   jsi::Value(batchResult.affectedRows));
                   resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
                 } else {
+                  // TODO replace with reject
                   throw jsi::JSError(rt, batchResult.message);
                 }
               });
@@ -388,8 +387,8 @@ void install(jsi::Runtime &rt,
 
   auto loadFile = HOSTFN("loadFile", 2) {
     if (sizeof(args) < 2) {
-      throw jsi::JSError(
-          rt, "[op-sqlite][loadFileAsync] Incorrect parameter count");
+      throw std::runtime_error(
+          "[op-sqlite][loadFileAsync] Incorrect parameter count");
       return {};
     }
 
@@ -431,8 +430,9 @@ void install(jsi::Runtime &rt,
 
   auto updateHook = HOSTFN("updateHook", 2) {
     if (sizeof(args) < 2) {
-      throw jsi::JSError(rt, "[op-sqlite][loadFileAsync] Incorrect parameters: "
-                             "dbName and callback needed");
+      throw std::runtime_error(
+          "[op-sqlite][loadFileAsync] Incorrect parameters: "
+          "dbName and callback needed");
       return {};
     }
 
@@ -489,8 +489,9 @@ void install(jsi::Runtime &rt,
 
   auto commitHook = HOSTFN("commitHook", 2) {
     if (sizeof(args) < 2) {
-      throw jsi::JSError(rt, "[op-sqlite][loadFileAsync] Incorrect parameters: "
-                             "dbName and callback needed");
+      throw std::runtime_error(
+          "[op-sqlite][loadFileAsync] Incorrect parameters: "
+          "dbName and callback needed");
       return {};
     }
 
@@ -514,8 +515,9 @@ void install(jsi::Runtime &rt,
 
   auto rollbackHook = HOSTFN("rollbackHook", 2) {
     if (sizeof(args) < 2) {
-      throw jsi::JSError(rt, "[op-sqlite][loadFileAsync] Incorrect parameters: "
-                             "dbName and callback needed");
+      throw std::runtime_error(
+          "[op-sqlite][loadFileAsync] Incorrect parameters: "
+          "dbName and callback needed");
       return {};
     }
 

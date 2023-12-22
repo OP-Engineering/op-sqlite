@@ -1,4 +1,4 @@
-import { NativeModules } from 'react-native';
+import NativeOPSQLite from './NativeOPSQLite';
 
 declare global {
   function nativeCallSyncHook(): unknown;
@@ -6,7 +6,7 @@ declare global {
 }
 
 if (global.__OPSQLiteProxy == null) {
-  const OPSQLiteModule = NativeModules.OPSQLite;
+  const OPSQLiteModule = NativeOPSQLite;
 
   if (OPSQLiteModule == null) {
     throw new Error('Base module not found. Maybe try rebuilding the app.');
@@ -39,12 +39,19 @@ const proxy = global.__OPSQLiteProxy;
 export const OPSQLite = proxy as ISQLite;
 
 export const {
+  // @ts-expect-error
   IOS_DOCUMENT_PATH,
+  // @ts-expect-error
   IOS_LIBRARY_PATH,
+  // @ts-expect-error
   ANDROID_DATABASE_PATH,
+  // @ts-expect-error
   ANDROID_FILES_PATH,
+  // @ts-expect-error
   ANDROID_EXTERNAL_FILES_PATH,
-} = NativeModules.OPSQLite;
+} = !!NativeOPSQLite.getConstants
+  ? NativeOPSQLite.getConstants()
+  : NativeOPSQLite;
 
 /**
  * Object returned by SQL Query executions {

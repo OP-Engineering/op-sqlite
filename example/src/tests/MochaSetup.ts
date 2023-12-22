@@ -1,13 +1,9 @@
 import 'mocha';
 import type * as MochaTypes from 'mocha';
-// import type { RowItemType } from '../navigators/children/TestingScreen/RowItemType';
-import { clearTests, rootSuite } from './MochaRNAdapter';
+import {clearTests, rootSuite} from './MochaRNAdapter';
 
 export async function runTests(...registrators: Array<() => void>) {
-  // testRegistrators: Array<() => void> = []
-  // console.log('setting up mocha');
-
-  const promise = new Promise((resolve) => {
+  const promise = new Promise(resolve => {
     const {
       EVENT_RUN_BEGIN,
       EVENT_RUN_END,
@@ -18,7 +14,7 @@ export async function runTests(...registrators: Array<() => void>) {
     } = Mocha.Runner.constants;
 
     clearTests();
-    const results = [];
+    const results: any[] = [];
     var runner = new Mocha.Runner(rootSuite) as MochaTypes.Runner;
 
     runner
@@ -39,7 +35,6 @@ export async function runTests(...registrators: Array<() => void>) {
           key: Math.random().toString(),
           type: 'correct',
         });
-        // console.log(`${indent()}pass: ${test.fullTitle()}`);
       })
       .on(EVENT_TEST_FAIL, (test: MochaTypes.Runnable, err: Error) => {
         results.push({
@@ -48,24 +43,15 @@ export async function runTests(...registrators: Array<() => void>) {
           type: 'incorrect',
           errorMsg: err.message,
         });
-        // console.log(
-        // `${indent()}fail: ${test.fullTitle()} - error: ${err.message}`
-        // );
       })
       .once(EVENT_RUN_END, () => {
         resolve(results);
       });
 
-    registrators.forEach((register) => {
+    registrators.forEach(register => {
       register();
     });
     runner.run();
   });
-
-  // return () => {
-  //   console.log('aborting');
-  //   runner.abort();
-  // };
-
   return promise;
 }

@@ -1,0 +1,41 @@
+name: Bug Report
+description: File a bug report
+title: '[Bug]: '
+labels: ['bug', 'triage']
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: what did you expect to happen?
+      placeholder: Tell us what you see!
+    validations:
+      required: true
+  - type: textarea
+    id: version
+    attributes:
+      label: Version
+      description: What version of op-sqlite are you using? Have you tried the latest version?
+    validations:
+      required: true
+  - type: textarea
+    id: version
+    attributes:
+      label: React Native Version
+      description: What version of React Native version are you using
+    validations:
+      required: true
+  - type: textarea
+    id: version
+    attributes:
+      label: Device
+      description: On which device are you encountering the issue? emulator? OS version?
+    validations:
+      required: true
+  - type: textarea
+      id: version
+      attributes:
+        label: Reproducible example
+        description: Please post a repo with a minimum reproducible example
+      validations:
+        required: true

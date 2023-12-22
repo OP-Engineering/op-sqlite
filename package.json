@@ -48,13 +48,21 @@
   "devDependencies": {
     "lefthook": "^1.5.5",
     "react": "18.2.0",
-    "react-native": "0.72.6",
-    "react-native-builder-bob": "^0.18.2",
-    "typescript": "^4.8.4"
+    "react-native": "0.73.1",
+    "react-native-builder-bob": "^0.23.2",
+    "typescript": "5.0.4"
   },
   "peerDependencies": {
     "react": "*",
     "react-native": "*"
+  },
+  "codegenConfig": {
+    "name": "OPSQLiteSpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "com.op.sqlite"
+    }
   },
   "prettier": {
     "quoteProps": "consistent",
@@ -63,6 +71,10 @@
     "trailingComma": "es5",
     "useTabs": false
   },
+  "workspaces": [
+    "example"
+  ],
+  "packageManager": "yarn@4.0.2",
   "react-native-builder-bob": {
     "source": "src",
     "output": "lib",

@@ -423,12 +423,21 @@ sqliteExecute(std::string const dbName, std::string const &query,
     int statementStatus =
         sqlite3_prepare_v2(db, queryStr, -1, &statement, &remainingStatement);
 
-    if (statementStatus == SQLITE_ERROR) {
+    if (statementStatus != SQLITE_OK) {
       const char *message = sqlite3_errmsg(db);
       return {
           .type = SQLiteError,
-          .message = "[op-sqlite] SQL statement error: " + std::string(message),
+          .message = "[op-sqlite] SQL statement error:" +
+                     std::to_string(statementStatus) +
+                     " description:" + std::string(message) +
+                     "see error codes: https://www.sqlite.org/rescode.html",
       };
+    }
+
+    // The statement did not fail to parse but there is nothing to do, just skip
+    // to the end
+    if (statement == NULL) {
+      continue;
     }
 
     if (params != nullptr && params->size() > 0) {
@@ -546,8 +555,11 @@ sqliteExecute(std::string const dbName, std::string const &query,
   if (isFailed) {
 
     return {.type = SQLiteError,
-            .message = "[op-sqlite] SQLite code: " + std::to_string(result) +
-                       " execution error: " + std::string(errorMessage)};
+            .message =
+                "[op-sqlite] SQLite error code: " + std::to_string(result) +
+                ", description: " + std::string(errorMessage) +
+                ".\nSee SQLite error codes reference: "
+                "https://www.sqlite.org/rescode.html"};
   }
 
   int changedRowCount = sqlite3_changes(db);
