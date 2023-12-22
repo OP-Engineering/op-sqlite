@@ -78,3 +78,11 @@ android/gradle*
 
 sqlite_build
 sqlcipher
+
+# Yarn
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions

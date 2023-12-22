@@ -4,7 +4,7 @@
   "description": "Next generation SQLite for React Native",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
-  "types": "lib/typescript/index.d.ts",
+  "types": "lib/typescript/src/index.d.ts",
   "react-native": "src/index",
   "source": "src/index",
   "files": [
@@ -13,20 +13,23 @@
     "android",
     "ios",
     "cpp",
-    "op-sqlcipher.podspec",
-    "!lib/typescript/example",
-    "!android/build",
-    "!android/.cxx",
+    "*.podspec",
     "!ios/build",
+    "!android/build",
+    "!android/gradle",
+    "!android/gradlew",
+    "!android/gradlew.bat",
+    "!android/local.properties",
     "!**/__tests__",
     "!**/__fixtures__",
-    "!**/__mocks__"
+    "!**/__mocks__",
+    "!**/.*"
   ],
   "scripts": {
+    "example": "yarn workspace op_sqlite_cipher_example",
     "typescript": "tsc --noEmit",
     "prepare": "bob build",
-    "example": "yarn --cwd example",
-    "pods": "cd example && npx pod-install --quiet",
+    "pods": "cd example/ios && bundle exec pod install",
     "bootstrap": "yarn example && yarn && yarn pods",
     "bump": "./bump-version.sh"
   },
@@ -56,6 +59,13 @@
     "react": "*",
     "react-native": "*"
   },
+  "workspaces": [
+    "example"
+  ],
+  "packageManager": "yarn@4.0.2",
+  "engines": {
+    "node": ">= 18.0.0"
+  },
   "codegenConfig": {
     "name": "OPSQLiteSpec",
     "type": "modules",
@@ -71,10 +81,6 @@
     "trailingComma": "es5",
     "useTabs": false
   },
-  "workspaces": [
-    "example"
-  ],
-  "packageManager": "yarn@4.0.2",
   "react-native-builder-bob": {
     "source": "src",
     "output": "lib",
