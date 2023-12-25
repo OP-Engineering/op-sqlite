@@ -26,7 +26,7 @@
     "typescript": "tsc --noEmit",
     "prepare": "bob build",
     "example": "yarn --cwd example",
-    "pods": "cd example && npx pod-install --quiet",
+    "pods": "cd example && yarn pods",
     "bootstrap": "yarn example && yarn && yarn pods",
     "bump": "./bump-version.sh"
   },
