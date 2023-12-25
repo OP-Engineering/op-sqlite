@@ -1,6 +1,8 @@
 import performance from 'react-native-performance';
 import Chance from 'chance';
 import {open} from '@op-engineering/op-sqlite';
+import {MMKV} from 'react-native-mmkv';
+const mmkv = new MMKV();
 // import { Buffer } from 'buffer';
 
 const chance = new Chance();
@@ -50,6 +52,12 @@ export async function createLargeDB() {
   largeDb.close();
 }
 
+export async function querySingleRecordOnLargeDB() {
+  let largeDb = open(DB_CONFIG);
+
+  await largeDb.executeAsync('SELECT * FROM "Test" LIMIT 1;');
+}
+
 export async function queryLargeDB() {
   let largeDb = open(DB_CONFIG);
 
@@ -71,10 +79,21 @@ export async function queryLargeDB() {
     // @ts-ignore
     global.gc();
 
-    performance.mark('queryStart');
-    const results = await largeDb.executeAsync('SELECT * FROM Test');
-    const measurement = performance.measure('queryEnd', 'queryStart');
-    times.loadFromDb.push(measurement.duration);
+    let start = performance.now();
+    const results = await largeDb.executeAsync('SELECT * FROM Test;');
+    let end = performance.now();
+    times.loadFromDb.push(end - start);
+
+    mmkv.set('largeDB', JSON.stringify(results));
+    // @ts-ignore
+    global.gc();
+
+    start = performance.now();
+    let rawStr = await mmkv.getString('largeDB');
+    JSON.parse(rawStr!);
+    end = performance.now();
+
+    console.log('MMKV time', (end - start).toFixed(2));
 
     // @ts-ignore
     global.gc();
@@ -93,9 +112,9 @@ export async function queryLargeDB() {
     // @ts-ignore
     global.gc();
 
-    let start = performance.now();
+    start = performance.now();
     const statement = largeDb.prepareStatement('SELECT * FROM Test');
-    let end = performance.now();
+    end = performance.now();
     times.prepare.push(end - start);
 
     // @ts-ignore

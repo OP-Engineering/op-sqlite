@@ -6,11 +6,11 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios --simulator='iPhone 15' --scheme='debug'",
     "start": "react-native start",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "pods": "cd ios && rm -rf Pods && rm -rf Podfile.lock && bundle exec pod install"
   },
   "dependencies": {
     "@craftzdog/react-native-buffer": "^6.0.5",
-    "@op-engineering/op-sqlite": "./..",
     "chai": "^4.3.7",
     "chance": "^1.1.9",
     "clsx": "^2.0.0",
@@ -19,6 +19,7 @@
     "nativewind": "^2.0.11",
     "react": "18.2.0",
     "react-native": "0.73.1",
+    "react-native-mmkv": "^2.11.0",
     "react-native-performance": "^5.1.0",
     "react-native-restart": "^0.0.27",
     "reflect-metadata": "^0.1.13",
@@ -26,7 +27,6 @@
     "util": "^0.12.5"
   },
   "devDependencies": {
-    "tailwindcss": "3.3.2",
     "@babel/core": "^7.12.9",
     "@babel/plugin-proposal-decorators": "^7.20.5",
     "@babel/preset-env": "^7.14.0",
@@ -52,6 +52,7 @@
     "postinstall-postinstall": "^2.1.0",
     "prettier": "2.8.8",
     "react-test-renderer": "18.2.0",
+    "tailwindcss": "3.3.2",
     "typescript": "5.0.4"
   },
   "engines": {
