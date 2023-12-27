@@ -497,16 +497,6 @@ db.commitHook(null);
 db.rollbackHook(null);
 ```
 
-# Use built-in SQLite
-
-On iOS you can use the embedded SQLite, when running `pod-install` add an environment flag:
-
-```
-OP_SQLITE_USE_PHONE_VERSION=1 npx pod-install
-```
-
-On Android, it is not possible to link the OS SQLite. It is also a bad idea due to vendor changes, old android bugs, etc. Unfortunately, this means this library will add some megabytes to your app size.
-
 # Enable compile-time options
 
 By specifying pre-processor flags, you can enable optional features like FTS5, Geopoly, etc.

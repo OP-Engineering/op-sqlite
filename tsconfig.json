@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "paths": {
-      "@op-engineering/op-sqlite": ["./src/index"]
+      "@op-engineering/op-sqlcipher": ["./src/index"]
     },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,

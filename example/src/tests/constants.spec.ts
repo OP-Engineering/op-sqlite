@@ -4,7 +4,7 @@ import {
   ANDROID_EXTERNAL_FILES_PATH,
   ANDROID_DATABASE_PATH,
   ANDROID_FILES_PATH,
-} from '@op-engineering/op-sqlite';
+} from '@op-engineering/op-sqlcipher';
 import chai from 'chai';
 import {describe, it} from './MochaRNAdapter';
 import {Platform} from 'react-native';
