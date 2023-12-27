@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "android": "react-native run-android",
+    "tsc": "tsc --noEmit",
     "ios": "react-native run-ios --simulator='iPhone 15' --scheme='debug'",
     "start": "react-native start",
     "postinstall": "patch-package",
