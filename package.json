@@ -1,6 +1,6 @@
 {
   "name": "@op-engineering/op-sqlite",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "Next generation SQLite for React Native",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
