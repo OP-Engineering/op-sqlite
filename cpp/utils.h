@@ -33,6 +33,8 @@ struct BatchResult {
 
 jsi::Value toJSI(jsi::Runtime &rt, JSVariant value);
 
+JSVariant toVariant(jsi::Runtime &rt, jsi::Value const &value);
+
 std::vector<JSVariant> toVariantVec(jsi::Runtime &rt, jsi::Value const &args);
 
 jsi::Value createResult(jsi::Runtime &rt, BridgeResult status,

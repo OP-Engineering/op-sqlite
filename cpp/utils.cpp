@@ -38,6 +38,49 @@ jsi::Value toJSI(jsi::Runtime &rt, JSVariant value) {
   return jsi::Value::null();
 }
 
+JSVariant toVariant(jsi::Runtime &rt, const jsi::Value &value) {
+  if (value.isNull() || value.isUndefined()) {
+    return JSVariant(nullptr);
+  } else if (value.isBool()) {
+    return JSVariant(value.getBool());
+  } else if (value.isNumber()) {
+    double doubleVal = value.asNumber();
+    int intVal = (int)doubleVal;
+    long long longVal = (long)doubleVal;
+    if (intVal == doubleVal) {
+      return JSVariant(intVal);
+    } else if (longVal == doubleVal) {
+      return JSVariant(longVal);
+    } else {
+      return JSVariant(doubleVal);
+    }
+  } else if (value.isString()) {
+    std::string strVal = value.asString(rt).utf8(rt);
+    return JSVariant(strVal);
+  } else if (value.isObject()) {
+    auto obj = value.asObject(rt);
+    if (obj.isArrayBuffer(rt)) {
+      auto buffer = obj.getArrayBuffer(rt);
+
+      uint8_t *data = new uint8_t[buffer.size(rt)];
+      // You cannot share raw memory between native and JS
+      // always copy the data
+      // see https://github.com/facebook/hermes/pull/419 and
+      // https://github.com/facebook/hermes/issues/564.
+      memcpy(data, buffer.data(rt), buffer.size(rt));
+
+      return JSVariant(ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+                                   .size = buffer.size(rt)});
+    } else {
+      throw std::invalid_argument(
+          "Unknown JSI ArrayBuffer to variant value conversion, received "
+          "object instead of ArrayBuffer");
+    }
+  } else {
+    throw std::invalid_argument("Unknown JSI to variant value conversion");
+  }
+}
+
 std::vector<JSVariant> toVariantVec(jsi::Runtime &rt,
                                     jsi::Value const &params) {
   std::vector<JSVariant> res;
