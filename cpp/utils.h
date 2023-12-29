@@ -43,6 +43,12 @@ jsi::Value createResult(jsi::Runtime &rt, BridgeResult status,
 
 BatchResult importSQLFile(std::string dbName, std::string fileLocation);
 
+int mkdir(const std::string &path);
+
+bool folder_exists(const std::string &foldername);
+
+bool file_exists(const std::string &path);
+
 } // namespace opsqlite
 
 #endif /* utils_h */
