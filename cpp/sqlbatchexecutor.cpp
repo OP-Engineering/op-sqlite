@@ -57,15 +57,15 @@ BatchResult sqliteExecuteBatch(std::string dbName,
 
   try {
     int affectedRows = 0;
-    sqliteExecuteLiteral(dbName, "BEGIN EXCLUSIVE TRANSACTION");
+    sqlite_execute_literal(dbName, "BEGIN EXCLUSIVE TRANSACTION");
     for (int i = 0; i < commandCount; i++) {
       auto command = commands->at(i);
       // We do not provide a datastructure to receive query data because we
       // don't need/want to handle this results in a batch execution
-      auto result = sqliteExecute(dbName, command.sql, command.params.get(),
-                                  nullptr, nullptr);
+      auto result = sqlite_execute(dbName, command.sql, command.params.get(),
+                                   nullptr, nullptr);
       if (result.type == SQLiteError) {
-        sqliteExecuteLiteral(dbName, "ROLLBACK");
+        sqlite_execute_literal(dbName, "ROLLBACK");
         return BatchResult{
             .type = SQLiteError,
             .message = result.message,
@@ -74,14 +74,14 @@ BatchResult sqliteExecuteBatch(std::string dbName,
         affectedRows += result.affectedRows;
       }
     }
-    sqliteExecuteLiteral(dbName, "COMMIT");
+    sqlite_execute_literal(dbName, "COMMIT");
     return BatchResult{
         .type = SQLiteOk,
         .affectedRows = affectedRows,
         .commands = static_cast<int>(commandCount),
     };
   } catch (std::exception &exc) {
-    sqliteExecuteLiteral(dbName, "ROLLBACK");
+    sqlite_execute_literal(dbName, "ROLLBACK");
     return BatchResult{
         .type = SQLiteError,
         .message = exc.what(),

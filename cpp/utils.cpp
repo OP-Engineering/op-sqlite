@@ -3,6 +3,9 @@
 #include "bridge.h"
 #include <fstream>
 #include <iostream>
+#include <sstream>
+#include <sys/stat.h>
+#include <unistd.h>
 
 namespace opsqlite {
 
@@ -191,12 +194,12 @@ BatchResult importSQLFile(std::string dbName, std::string fileLocation) {
     try {
       int affectedRows = 0;
       int commands = 0;
-      sqliteExecuteLiteral(dbName, "BEGIN EXCLUSIVE TRANSACTION");
+      sqlite_execute_literal(dbName, "BEGIN EXCLUSIVE TRANSACTION");
       while (std::getline(sqFile, line, '\n')) {
         if (!line.empty()) {
-          BridgeResult result = sqliteExecuteLiteral(dbName, line);
+          BridgeResult result = sqlite_execute_literal(dbName, line);
           if (result.type == SQLiteError) {
-            sqliteExecuteLiteral(dbName, "ROLLBACK");
+            sqlite_execute_literal(dbName, "ROLLBACK");
             sqFile.close();
             return {SQLiteError, result.message, 0, commands};
           } else {
@@ -206,11 +209,11 @@ BatchResult importSQLFile(std::string dbName, std::string fileLocation) {
         }
       }
       sqFile.close();
-      sqliteExecuteLiteral(dbName, "COMMIT");
+      sqlite_execute_literal(dbName, "COMMIT");
       return {SQLiteOk, "", affectedRows, commands};
     } catch (...) {
       sqFile.close();
-      sqliteExecuteLiteral(dbName, "ROLLBACK");
+      sqlite_execute_literal(dbName, "ROLLBACK");
       return {SQLiteError,
               "[op-sqlite][loadSQLFile] Unexpected error, transaction was "
               "rolledback",
@@ -219,6 +222,21 @@ BatchResult importSQLFile(std::string dbName, std::string fileLocation) {
   } else {
     return {SQLiteError, "[op-sqlite][loadSQLFile] Could not open file", 0, 0};
   }
+}
+
+bool folder_exists(const std::string &foldername) {
+  struct stat buffer;
+  return (stat(foldername.c_str(), &buffer) == 0);
+}
+
+bool file_exists(const std::string &path) {
+  struct stat buffer;
+  return (stat(path.c_str(), &buffer) == 0);
+}
+
+int mkdir(std::string const &path) {
+  std::filesystem::create_directories(path);
+  return 0;
 }
 
 } // namespace opsqlite
