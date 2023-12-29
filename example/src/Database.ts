@@ -85,15 +85,15 @@ export async function queryLargeDB() {
     times.loadFromDb.push(end - start);
 
     mmkv.set('largeDB', JSON.stringify(results));
-    // @ts-ignore
-    global.gc();
+    // // @ts-ignore
+    // global.gc();
 
-    start = performance.now();
-    let rawStr = await mmkv.getString('largeDB');
-    JSON.parse(rawStr!);
-    end = performance.now();
+    // start = performance.now();
+    // let rawStr = await mmkv.getString('largeDB');
+    // JSON.parse(rawStr!);
+    // end = performance.now();
 
-    console.log('MMKV time', (end - start).toFixed(2));
+    // console.log('MMKV time', (end - start).toFixed(2));
 
     // @ts-ignore
     global.gc();
