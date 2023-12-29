@@ -23,9 +23,14 @@ public:
 
   jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID);
 
+  void set(jsi::Runtime &rt, const jsi::PropNameID &name,
+           const jsi::Value &value);
+
   std::vector<JSVariant> values;
 
   std::shared_ptr<std::vector<SmartHostObject>> metadata;
+
+  std::vector<std::pair<std::string, JSVariant>> ownValues;
 };
 
 } // namespace opsqlite
