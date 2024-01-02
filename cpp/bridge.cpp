@@ -581,9 +581,6 @@ void sqlite_close_all() {
     sqlite3_close_v2(x.second);
   }
   dbMap.clear();
-  updateCallbackMap.clear();
-  rollbackCallbackMap.clear();
-  commitCallbackMap.clear();
 }
 
 std::string operation_to_string(int operation_type) {
