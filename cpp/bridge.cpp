@@ -55,7 +55,7 @@ BridgeResult sqlite_open(std::string const &dbName, std::string const &lastPath,
   dbMap[dbName] = db;
 
   // Encrypts the database
-  sqliteExecuteLiteral(dbName, "PRAGMA key = '" + encryptionKey + "'");
+  sqlite_execute_literal(dbName, "PRAGMA key = '" + encryptionKey + "'");
 
   return BridgeResult{.type = SQLiteOk, .affectedRows = 0};
 }
