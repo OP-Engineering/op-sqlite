@@ -12,7 +12,7 @@ Pod::Spec.new do |s|
   s.license      = package["license"]
   s.authors      = package["author"]
 
-  s.platforms    = { :ios => "12.0", :osx => "10.13" }
+  s.platforms    = { :ios => "13.0", :osx => "10.15" }
   s.source       = { :git => "https://github.com/op-engineering/op-sqlite.git", :tag => "#{s.version}" }
 
   s.pod_target_xcconfig = {
