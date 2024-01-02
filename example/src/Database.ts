@@ -84,7 +84,7 @@ export async function queryLargeDB() {
     let end = performance.now();
     times.loadFromDb.push(end - start);
 
-    mmkv.set('largeDB', JSON.stringify(results));
+    // mmkv.set('largeDB', JSON.stringify(results));
     // // @ts-ignore
     // global.gc();
 
@@ -96,34 +96,34 @@ export async function queryLargeDB() {
     // console.log('MMKV time', (end - start).toFixed(2));
 
     // @ts-ignore
-    global.gc();
+    // global.gc();
 
-    performance.mark('accessingStart');
-    const rows = results.rows!._array;
-    for (let i = 0; i < rows.length; i++) {
-      const v1 = rows[i].v14;
-    }
-    const accessMeasurement = performance.measure(
-      'accessingEnd',
-      'accessingStart',
-    );
-    times.access.push(accessMeasurement.duration);
+    // performance.mark('accessingStart');
+    // const rows = results.rows!._array;
+    // for (let i = 0; i < rows.length; i++) {
+    //   const v1 = rows[i].v14;
+    // }
+    // const accessMeasurement = performance.measure(
+    //   'accessingEnd',
+    //   'accessingStart',
+    // );
+    // times.access.push(accessMeasurement.duration);
 
-    // @ts-ignore
-    global.gc();
+    // // @ts-ignore
+    // global.gc();
 
-    start = performance.now();
-    const statement = largeDb.prepareStatement('SELECT * FROM Test');
-    end = performance.now();
-    times.prepare.push(end - start);
+    // start = performance.now();
+    // const statement = largeDb.prepareStatement('SELECT * FROM Test');
+    // end = performance.now();
+    // times.prepare.push(end - start);
 
-    // @ts-ignore
-    global.gc();
+    // // @ts-ignore
+    // global.gc();
 
-    start = performance.now();
-    let results2 = statement.execute();
-    end = performance.now();
-    times.preparedExecution.push(end - start);
+    // start = performance.now();
+    // let results2 = statement.execute();
+    // end = performance.now();
+    // times.preparedExecution.push(end - start);
   }
 
   return times;
