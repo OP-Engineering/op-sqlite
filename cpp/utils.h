@@ -33,6 +33,8 @@ struct BatchResult {
 
 jsi::Value toJSI(jsi::Runtime &rt, JSVariant value);
 
+JSVariant toVariant(jsi::Runtime &rt, jsi::Value const &value);
+
 std::vector<JSVariant> toVariantVec(jsi::Runtime &rt, jsi::Value const &args);
 
 jsi::Value createResult(jsi::Runtime &rt, BridgeResult status,
@@ -40,6 +42,12 @@ jsi::Value createResult(jsi::Runtime &rt, BridgeResult status,
                         std::shared_ptr<std::vector<SmartHostObject>> metadata);
 
 BatchResult importSQLFile(std::string dbName, std::string fileLocation);
+
+int mkdir(const std::string &path);
+
+bool folder_exists(const std::string &foldername);
+
+bool file_exists(const std::string &path);
 
 } // namespace opsqlite
 

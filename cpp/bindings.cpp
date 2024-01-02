@@ -35,10 +35,9 @@ bool invalidated = false;
 void clearState() {
   invalidated = true;
   // Will terminate all operations and database connections
-  sqliteCloseAll();
+  sqlite_close_all();
   // We then join all the threads before the context gets invalidated
   pool.restartPool();
-
   updateHooks.clear();
   commitHooks.clear();
   rollbackHooks.clear();
@@ -88,7 +87,7 @@ void install(jsi::Runtime &rt,
 
     encryptionKey = args[2].asString(rt).utf8(rt);
 
-    BridgeResult result = sqliteOpenDb(dbName, path, encryptionKey);
+    BridgeResult result = sqlite_open(dbName, path, encryptionKey);
 
     if (result.type == SQLiteError) {
       throw std::runtime_error(result.message);
@@ -122,7 +121,7 @@ void install(jsi::Runtime &rt,
     std::string databaseToAttach = args[1].asString(rt).utf8(rt);
     std::string alias = args[2].asString(rt).utf8(rt);
     BridgeResult result =
-        sqliteAttachDb(dbName, tempDocPath, databaseToAttach, alias);
+        sqlite_attach(dbName, tempDocPath, databaseToAttach, alias);
 
     if (result.type == SQLiteError) {
       throw std::runtime_error(result.message);
@@ -144,7 +143,7 @@ void install(jsi::Runtime &rt,
 
     std::string dbName = args[0].asString(rt).utf8(rt);
     std::string alias = args[1].asString(rt).utf8(rt);
-    BridgeResult result = sqliteDetachDb(dbName, alias);
+    BridgeResult result = sqlite_detach(dbName, alias);
 
     if (result.type == SQLiteError) {
       throw jsi::JSError(rt, result.message.c_str());
@@ -165,7 +164,7 @@ void install(jsi::Runtime &rt,
 
     std::string dbName = args[0].asString(rt).utf8(rt);
 
-    BridgeResult result = sqliteCloseDb(dbName);
+    BridgeResult result = sqlite_close(dbName);
 
     if (result.type == SQLiteError) {
       throw jsi::JSError(rt, result.message.c_str());
@@ -197,7 +196,7 @@ void install(jsi::Runtime &rt,
       tempDocPath = tempDocPath + "/" + args[1].asString(rt).utf8(rt);
     }
 
-    BridgeResult result = sqliteRemoveDb(dbName, tempDocPath);
+    BridgeResult result = sqlite_remove(dbName, tempDocPath);
 
     if (result.type == SQLiteError) {
       throw std::runtime_error(result.message);
@@ -220,7 +219,7 @@ void install(jsi::Runtime &rt,
     std::shared_ptr<std::vector<SmartHostObject>> metadata =
         std::make_shared<std::vector<SmartHostObject>>();
 
-    auto status = sqliteExecute(dbName, query, &params, &results, metadata);
+    auto status = sqlite_execute(dbName, query, &params, &results, metadata);
 
     if (status.type == SQLiteError) {
       throw std::runtime_error(status.message);
@@ -256,7 +255,7 @@ void install(jsi::Runtime &rt,
               std::make_shared<std::vector<SmartHostObject>>();
 
           auto status =
-              sqliteExecute(dbName, query, &params, &results, metadata);
+              sqlite_execute(dbName, query, &params, &results, metadata);
 
           if (invalidated) {
             return;
@@ -430,9 +429,8 @@ void install(jsi::Runtime &rt,
 
   auto updateHook = HOSTFN("updateHook", 2) {
     if (sizeof(args) < 2) {
-      throw std::runtime_error(
-          "[op-sqlite][loadFileAsync] Incorrect parameters: "
-          "dbName and callback needed");
+      throw std::runtime_error("[op-sqlite][updateHook] Incorrect parameters: "
+                               "dbName and callback needed");
       return {};
     }
 
@@ -440,7 +438,7 @@ void install(jsi::Runtime &rt,
     auto callback = std::make_shared<jsi::Value>(rt, args[1]);
 
     if (callback->isUndefined() || callback->isNull()) {
-      unregisterUpdateHook(dbName);
+      sqlite_deregister_update_hook(dbName);
       return {};
     }
 
@@ -457,7 +455,7 @@ void install(jsi::Runtime &rt,
       if (operation != "DELETE") {
         std::string query = "SELECT * FROM " + tableName +
                             " where rowid = " + std::to_string(rowId) + ";";
-        sqliteExecute(dbName, query, &params, &results, metadata);
+        sqlite_execute(dbName, query, &params, &results, metadata);
       }
 
       invoker->invokeAsync(
@@ -482,23 +480,22 @@ void install(jsi::Runtime &rt,
           });
     };
 
-    registerUpdateHook(dbName, std::move(hook));
+    sqlite_register_update_hook(dbName, std::move(hook));
 
     return {};
   });
 
   auto commitHook = HOSTFN("commitHook", 2) {
     if (sizeof(args) < 2) {
-      throw std::runtime_error(
-          "[op-sqlite][loadFileAsync] Incorrect parameters: "
-          "dbName and callback needed");
+      throw std::runtime_error("[op-sqlite][commitHook] Incorrect parameters: "
+                               "dbName and callback needed");
       return {};
     }
 
     auto dbName = args[0].asString(rt).utf8(rt);
     auto callback = std::make_shared<jsi::Value>(rt, args[1]);
     if (callback->isUndefined() || callback->isNull()) {
-      unregisterCommitHook(dbName);
+      sqlite_deregister_commit_hook(dbName);
       return {};
     }
     commitHooks[dbName] = callback;
@@ -508,7 +505,7 @@ void install(jsi::Runtime &rt,
           [&rt, callback] { callback->asObject(rt).asFunction(rt).call(rt); });
     };
 
-    registerCommitHook(dbName, std::move(hook));
+    sqlite_register_commit_hook(dbName, std::move(hook));
 
     return {};
   });
@@ -516,7 +513,7 @@ void install(jsi::Runtime &rt,
   auto rollbackHook = HOSTFN("rollbackHook", 2) {
     if (sizeof(args) < 2) {
       throw std::runtime_error(
-          "[op-sqlite][loadFileAsync] Incorrect parameters: "
+          "[op-sqlite][rollbackHook] Incorrect parameters: "
           "dbName and callback needed");
       return {};
     }
@@ -525,7 +522,7 @@ void install(jsi::Runtime &rt,
     auto callback = std::make_shared<jsi::Value>(rt, args[1]);
 
     if (callback->isUndefined() || callback->isNull()) {
-      unregisterRollbackHook(dbName);
+      sqlite_deregister_rollback_hook(dbName);
       return {};
     }
     rollbackHooks[dbName] = callback;
@@ -535,7 +532,7 @@ void install(jsi::Runtime &rt,
           [&rt, callback] { callback->asObject(rt).asFunction(rt).call(rt); });
     };
 
-    registerRollbackHook(dbName, std::move(hook));
+    sqlite_register_rollback_hook(dbName, std::move(hook));
     return {};
   });
 

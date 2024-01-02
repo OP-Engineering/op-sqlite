@@ -711,5 +711,63 @@ export function queriesTests() {
         },
       ]);
     });
+
+    it('DumbHostObject allows to write known props', async () => {
+      const id = chance.integer();
+      const name = chance.name();
+      const age = chance.integer();
+      const networth = chance.floating();
+      db.execute(
+        'INSERT INTO User (id, name, age, networth) VALUES(?, ?, ?, ?)',
+        [id, name, age, networth],
+      );
+
+      const res = db.execute('SELECT * FROM User');
+
+      expect(res.rowsAffected).to.equal(1);
+      expect(res.insertId).to.equal(1);
+      expect(res.rows!._array).to.eql([
+        {
+          id,
+          name,
+          age,
+          networth,
+          nickname: null,
+        },
+      ]);
+
+      res.rows!._array[0].name = 'quack_changed';
+
+      expect(res.rows!._array[0].name).to.eq('quack_changed');
+    });
+
+    it('DumbHostObject allows to write new props', async () => {
+      const id = chance.integer();
+      const name = chance.name();
+      const age = chance.integer();
+      const networth = chance.floating();
+      db.execute(
+        'INSERT INTO User (id, name, age, networth) VALUES(?, ?, ?, ?)',
+        [id, name, age, networth],
+      );
+
+      const res = db.execute('SELECT * FROM User');
+
+      expect(res.rowsAffected).to.equal(1);
+      expect(res.insertId).to.equal(1);
+      expect(res.rows!._array).to.eql([
+        {
+          id,
+          name,
+          age,
+          networth,
+          nickname: null,
+        },
+      ]);
+
+      res.rows!._array[0].myWeirdProp = 'quack_changed';
+
+      expect(res.rows!._array[0].myWeirdProp).to.eq('quack_changed');
+    });
   });
 }

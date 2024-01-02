@@ -8,7 +8,11 @@ import {
   View,
 } from 'react-native';
 import 'reflect-metadata';
-import {createLargeDB, queryLargeDB} from './Database';
+import {
+  createLargeDB,
+  queryLargeDB,
+  querySingleRecordOnLargeDB,
+} from './Database';
 import {dbSetupTests, queriesTests, runTests, blobTests} from './tests/index';
 import pak from '../package.json';
 import {styled} from 'nativewind';
@@ -18,6 +22,8 @@ import {open} from '@op-engineering/op-sqlcipher';
 import clsx from 'clsx';
 import {preparedStatementsTests} from './tests/preparedStatements.spec';
 import {constantsTests} from './tests/constants.spec';
+import performance from 'react-native-performance';
+import UpdateHookPage from './UpdateHook';
 
 const StyledScrollView = styled(ScrollView, {
   props: {
@@ -34,6 +40,7 @@ export default function App() {
   const [prepareExecutionTimes, setPrepareExecutionTimes] = useState<number[]>(
     [],
   );
+  const [singleRecordTime, setSingleRecordTime] = useState<number>(0);
 
   useEffect(() => {
     setResults([]);
@@ -46,6 +53,14 @@ export default function App() {
       constantsTests,
     ).then(setResults);
   }, []);
+
+  const querySingleRecord = async () => {
+    let start = performance.now();
+    await querySingleRecordOnLargeDB();
+    let end = performance.now();
+
+    setSingleRecordTime(end - start);
+  };
 
   const createLargeDb = async () => {
     setIsLoading(true);
@@ -121,7 +136,14 @@ export default function App() {
         <Button title="Reload app middle of query" onPress={queryAndReload} />
         <Button title="Create 300k Record DB" onPress={createLargeDb} />
         <Button title="Query 300k Records" onPress={queryLargeDb} />
+        <Button title="Query single record" onPress={querySingleRecord} />
         {isLoading && <ActivityIndicator color={'white'} size="large" />}
+
+        {!!singleRecordTime && (
+          <Text className="text-lg text-white self-center">
+            Query single record time: {singleRecordTime.toFixed(2)}ms
+          </Text>
+        )}
 
         {!!times.length && (
           <Text className="text-lg text-white self-center">
@@ -162,6 +184,8 @@ export default function App() {
             ms
           </Text>
         )}
+
+        <UpdateHookPage />
 
         <Text
           className={clsx('font-bold flex-1 text-white p-2 mt-4', {

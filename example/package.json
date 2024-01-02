@@ -8,7 +8,7 @@
     "ios": "react-native run-ios --simulator='iPhone 15' --scheme='debug'",
     "start": "react-native start",
     "postinstall": "patch-package",
-    "pods": "cd ios && rm -rf Pods && bundle exec pod install"
+    "pods": "cd ios && rm -rf Pods && rm -rf Podfile.lock && bundle exec pod install"
   },
   "dependencies": {
     "@craftzdog/react-native-buffer": "^6.0.5",
@@ -20,6 +20,7 @@
     "nativewind": "^2.0.11",
     "react": "18.2.0",
     "react-native": "0.73.1",
+    "react-native-mmkv": "^2.11.0",
     "react-native-performance": "^5.1.0",
     "react-native-restart": "^0.0.27",
     "reflect-metadata": "^0.1.13",

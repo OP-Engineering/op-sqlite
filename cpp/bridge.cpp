@@ -2,10 +2,8 @@
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
 #include "logs.h"
+#include "utils.h"
 #include <ctime>
-#include <sstream>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <unordered_map>
 #include <variant>
 
@@ -31,63 +29,16 @@ std::unordered_map<std::string, std::function<void(std::string dbName)>>
         std::unordered_map<std::string,
                            std::function<void(std::string dbName)>>();
 
-bool folder_exists(const std::string &foldername) {
-  struct stat buffer;
-  return (stat(foldername.c_str(), &buffer) == 0);
-}
-
-/**
- * Portable wrapper for mkdir. Internally used by mkdir()
- * @param[in] path the full path of the directory to create.
- * @return zero on success, otherwise -1.
- */
-int _mkdir(const char *path) {
-#if _POSIX_C_SOURCE
-  return mkdir(path);
-#else
-  return mkdir(path, 0755); // not sure if this works on mac
-#endif
-}
-
-/**
- * Recursive, portable wrapper for mkdir.
- * @param[in] path the full path of the directory to create.
- * @return zero on success, otherwise -1.
- */
-int mkdir(const char *path) {
-  std::string current_level = "/";
-  std::string level;
-  std::stringstream ss(path);
-  // First line is empty because it starts with /User
-  getline(ss, level, '/');
-  // split path using slash as a separator
-  while (getline(ss, level, '/')) {
-    current_level += level; // append folder to the current level
-    // create current level
-    if (!folder_exists(current_level) && _mkdir(current_level.c_str()) != 0)
-      return -1;
-
-    current_level += "/"; // don't forget to append a slash
-  }
-
-  return 0;
-}
-
-inline bool file_exists(const std::string &path) {
-  struct stat buffer;
-  return (stat(path.c_str(), &buffer) == 0);
-}
-
 std::string get_db_path(std::string const dbName, std::string const lastPath) {
   if (lastPath == ":memory:") {
     return lastPath;
   }
-  mkdir(lastPath.c_str());
+  mkdir(lastPath);
   return lastPath + "/" + dbName;
 }
 
-BridgeResult sqliteOpenDb(std::string const dbName, std::string const lastPath,
-                          std::string encryptionKey) {
+BridgeResult sqlite_open(std::string const &dbName, std::string const &lastPath,
+                         std::string const &encryptionKey) {
   std::string dbPath = get_db_path(dbName, lastPath);
 
   int sqlOpenFlags =
@@ -109,7 +60,7 @@ BridgeResult sqliteOpenDb(std::string const dbName, std::string const lastPath,
   return BridgeResult{.type = SQLiteOk, .affectedRows = 0};
 }
 
-BridgeResult sqliteCloseDb(std::string const dbName) {
+BridgeResult sqlite_close(std::string const &dbName) {
 
   if (dbMap.count(dbName) == 0) {
     return {
@@ -129,10 +80,10 @@ BridgeResult sqliteCloseDb(std::string const dbName) {
   };
 }
 
-BridgeResult sqliteAttachDb(std::string const mainDBName,
-                            std::string const docPath,
-                            std::string const databaseToAttach,
-                            std::string const alias) {
+BridgeResult sqlite_attach(std::string const &mainDBName,
+                           std::string const &docPath,
+                           std::string const &databaseToAttach,
+                           std::string const &alias) {
   /**
    * There is no need to check if mainDBName is opened because
    * sqliteExecuteLiteral will do that.
@@ -140,7 +91,7 @@ BridgeResult sqliteAttachDb(std::string const mainDBName,
   std::string dbPath = get_db_path(databaseToAttach, docPath);
   std::string statement = "ATTACH DATABASE '" + dbPath + "' AS " + alias;
 
-  BridgeResult result = sqliteExecuteLiteral(mainDBName, statement);
+  BridgeResult result = sqlite_execute_literal(mainDBName, statement);
 
   if (result.type == SQLiteError) {
     return {
@@ -154,14 +105,14 @@ BridgeResult sqliteAttachDb(std::string const mainDBName,
   };
 }
 
-BridgeResult sqliteDetachDb(std::string const mainDBName,
-                            std::string const alias) {
+BridgeResult sqlite_detach(std::string const &mainDBName,
+                           std::string const &alias) {
   /**
    * There is no need to check if mainDBName is opened because
    * sqliteExecuteLiteral will do that.
    * */
   std::string statement = "DETACH DATABASE " + alias;
-  BridgeResult result = sqliteExecuteLiteral(mainDBName, statement);
+  BridgeResult result = sqlite_execute_literal(mainDBName, statement);
   if (result.type == SQLiteError) {
     return BridgeResult{
         .type = SQLiteError,
@@ -174,10 +125,10 @@ BridgeResult sqliteDetachDb(std::string const mainDBName,
   };
 }
 
-BridgeResult sqliteRemoveDb(std::string const dbName,
-                            std::string const docPath) {
+BridgeResult sqlite_remove(std::string const &dbName,
+                           std::string const &docPath) {
   if (dbMap.count(dbName) == 1) {
-    BridgeResult closeResult = sqliteCloseDb(dbName);
+    BridgeResult closeResult = sqlite_close(dbName);
     if (closeResult.type == SQLiteError) {
       return closeResult;
     }
@@ -233,7 +184,7 @@ void sqlite_bind_statement(sqlite3_stmt *statement,
 }
 
 BridgeResult sqlite_execute_prepared_statement(
-    std::string const dbName, sqlite3_stmt *statement,
+    std::string const &dbName, sqlite3_stmt *statement,
     std::vector<DumbHostObject> *results,
     std::shared_ptr<std::vector<SmartHostObject>> metadatas) {
   if (dbMap.find(dbName) == dbMap.end()) {
@@ -371,7 +322,7 @@ BridgeResult sqlite_execute_prepared_statement(
           .insertId = static_cast<double>(latestInsertRowId)};
 }
 
-sqlite3_stmt *sqlite_prepare_statement(std::string const dbName,
+sqlite3_stmt *sqlite_prepare_statement(std::string const &dbName,
                                        std::string const &query) {
   if (dbMap.find(dbName) == dbMap.end()) {
     throw std::runtime_error("Database not opened");
@@ -395,10 +346,10 @@ sqlite3_stmt *sqlite_prepare_statement(std::string const dbName,
 }
 
 BridgeResult
-sqliteExecute(std::string const dbName, std::string const &query,
-              const std::vector<JSVariant> *params,
-              std::vector<DumbHostObject> *results,
-              std::shared_ptr<std::vector<SmartHostObject>> metadatas) {
+sqlite_execute(std::string const &dbName, std::string const &query,
+               const std::vector<JSVariant> *params,
+               std::vector<DumbHostObject> *results,
+               std::shared_ptr<std::vector<SmartHostObject>> metadatas) {
 
   if (dbMap.find(dbName) == dbMap.end()) {
     return {.type = SQLiteError,
@@ -430,7 +381,7 @@ sqliteExecute(std::string const dbName, std::string const &query,
           .message = "[op-sqlite] SQL statement error:" +
                      std::to_string(statementStatus) +
                      " description:" + std::string(message) +
-                     "see error codes: https://www.sqlite.org/rescode.html",
+                     ". See error codes: https://www.sqlite.org/rescode.html",
       };
     }
 
@@ -570,8 +521,8 @@ sqliteExecute(std::string const dbName, std::string const &query,
           .insertId = static_cast<double>(latestInsertRowId)};
 }
 
-BridgeResult sqliteExecuteLiteral(std::string const dbName,
-                                  std::string const &query) {
+BridgeResult sqlite_execute_literal(std::string const &dbName,
+                                    std::string const &query) {
   if (dbMap.count(dbName) == 0) {
     return {SQLiteError, "[op-sqlite] Database not opened: " + dbName};
   }
@@ -624,7 +575,7 @@ BridgeResult sqliteExecuteLiteral(std::string const dbName,
   return {SQLiteOk, "", changedRowCount};
 }
 
-void sqliteCloseAll() {
+void sqlite_close_all() {
   for (auto const &x : dbMap) {
     // Interrupt will make all pending operations to fail with SQLITE_INTERRUPT
     // The ongoing work from threads will then fail ASAP
@@ -633,9 +584,12 @@ void sqliteCloseAll() {
     sqlite3_close_v2(x.second);
   }
   dbMap.clear();
+  updateCallbackMap.clear();
+  rollbackCallbackMap.clear();
+  commitCallbackMap.clear();
 }
 
-std::string operationToString(int operation_type) {
+std::string operation_to_string(int operation_type) {
   switch (operation_type) {
   case SQLITE_INSERT:
     return "INSERT";
@@ -655,12 +609,12 @@ void update_callback(void *dbName, int operation_type, char const *database,
                      char const *table, sqlite3_int64 rowid) {
   std::string &strDbName = *(static_cast<std::string *>(dbName));
   auto callback = updateCallbackMap[strDbName];
-  callback(strDbName, std::string(table), operationToString(operation_type),
+  callback(strDbName, std::string(table), operation_to_string(operation_type),
            static_cast<int>(rowid));
 }
 
-BridgeResult registerUpdateHook(
-    std::string const dbName,
+BridgeResult sqlite_register_update_hook(
+    std::string const &dbName,
     std::function<void(std::string dbName, std::string tableName,
                        std::string operation, int rowId)> const callback) {
   if (dbMap.count(dbName) == 0) {
@@ -683,7 +637,7 @@ BridgeResult registerUpdateHook(
   return {SQLiteOk};
 }
 
-BridgeResult unregisterUpdateHook(std::string const dbName) {
+BridgeResult sqlite_deregister_update_hook(std::string const &dbName) {
   if (dbMap.count(dbName) == 0) {
     return {SQLiteError, "[op-sqlite] Database not opened: " + dbName};
   }
@@ -704,9 +658,9 @@ int commit_callback(void *dbName) {
   return 0;
 }
 
-BridgeResult
-registerCommitHook(std::string const dbName,
-                   std::function<void(std::string dbName)> const callback) {
+BridgeResult sqlite_register_commit_hook(
+    std::string const &dbName,
+    std::function<void(std::string dbName)> const callback) {
   if (dbMap.count(dbName) == 0) {
     return {SQLiteError, "[op-sqlite] Database not opened: " + dbName};
   }
@@ -727,7 +681,7 @@ registerCommitHook(std::string const dbName,
   return {SQLiteOk};
 }
 
-BridgeResult unregisterCommitHook(std::string const dbName) {
+BridgeResult sqlite_deregister_commit_hook(std::string const &dbName) {
   if (dbMap.count(dbName) == 0) {
     return {SQLiteError, "[op-sqlite] Database not opened: " + dbName};
   }
@@ -745,9 +699,9 @@ void rollback_callback(void *dbName) {
   callback(strDbName);
 }
 
-BridgeResult
-registerRollbackHook(std::string const dbName,
-                     std::function<void(std::string dbName)> const callback) {
+BridgeResult sqlite_register_rollback_hook(
+    std::string const &dbName,
+    std::function<void(std::string dbName)> const callback) {
   if (dbMap.count(dbName) == 0) {
     return {SQLiteError, "[op-sqlite] Database not opened: " + dbName};
   }
@@ -768,7 +722,7 @@ registerRollbackHook(std::string const dbName,
   return {SQLiteOk};
 }
 
-BridgeResult unregisterRollbackHook(std::string const dbName) {
+BridgeResult sqlite_deregister_rollback_hook(std::string const &dbName) {
   if (dbMap.count(dbName) == 0) {
     return {SQLiteError, "[op-sqlite] Database not opened: " + dbName};
   }

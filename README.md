@@ -16,7 +16,7 @@ Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider Sponso
 
 ## Benchmarks
 
-You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). You should expect anywhere between a 5x to an 8x improvement over non-JSI packages, and now a 5x to 8x improvement over quick-sqlite and expo-sqlite. Loading a 300k record database (in milliseconds).
+You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). This is run using the `OP_SQLITE_PERF` flag which in turns disables some old and unused features of sqlite to squeeze the last drop of performance.
 
 ![benchmark](benchmark.png)
 
@@ -127,7 +127,7 @@ const largeDb = open({
 });
 ```
 
-# Speed
+# Performance
 
 op-sqlite is already the fastest solution it can be, but it doesn't mean you cannot tweak SQLite to be faster (at the cost of some disadvantages). One possible tweak is turning on [Memory Mapping](https://www.sqlite.org/mmap.html). It allows to read/write to/from the disk without going through the kernel. However, if your queries throw an error your application might crash.
 
@@ -151,6 +151,14 @@ db.execute('PRAGMA journal_mode = MEMORY;'); // or OFF
 If you use [prepared statements](#prepared-statements) plus memory mapping and set journaling to memory, you can get to inches of MMKV for the most performance critical queries, here is a simple example writing/reading a single value.
 
 ![mmkv comparison](mmkv.png)
+
+# Perf flag
+
+You can turn on the performance flag to tweak all possible performance enhancing compilation flags, this greatly affects performance of sqlite itself
+
+```
+OP_SQLITE_PERF=1 npx pod-install
+```
 
 # SQLite Gotchas
 
