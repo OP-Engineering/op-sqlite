@@ -19,7 +19,7 @@ Pod::Spec.new do |s|
     :GCC_PREPROCESSOR_DEFINITIONS => "HAVE_FULLFSYNC=1",
     :WARNING_CFLAGS => "-Wno-shorten-64-to-32 -Wno-comma -Wno-unreachable-code -Wno-conditional-uninitialized -Wno-deprecated-declarations",
     :USE_HEADERMAP => "No",
-    :CLANG_CXX_LANGUAGE_STANDARD => "c++17"
+    :CLANG_CXX_LANGUAGE_STANDARD => "c++17",
   }
   
   s.header_mappings_dir = "cpp"
@@ -36,6 +36,10 @@ Pod::Spec.new do |s|
   if ENV['OP_SQLITE_USE_PHONE_VERSION'] == '1' then
     s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h"
     s.library = "sqlite3"
+  end
+
+  if ENV['OP_SQLITE_PERF'] == '1' then
+    :OTHER_CFLAGS => '$(inherited) -DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1 -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DEPRECATED=1 -DSQLITE_OMIT_PROGRESS_CALLBACK=1 -DSQLITE_OMIT_SHARED_CACHE=1 -DSQLITE_USE_ALLOCA=1'
   end
   
 end
