@@ -38,6 +38,7 @@ void clearState() {
   sqlite_close_all();
   // We then join all the threads before the context gets invalidated
   pool.restartPool();
+
   updateHooks.clear();
   commitHooks.clear();
   rollbackHooks.clear();
@@ -421,8 +422,9 @@ void install(jsi::Runtime &rt,
 
   auto updateHook = HOSTFN("updateHook", 2) {
     if (sizeof(args) < 2) {
-      throw std::runtime_error("[op-sqlite][updateHook] Incorrect parameters: "
-                               "dbName and callback needed");
+      throw std::runtime_error(
+          "[op-sqlite][loadFileAsync] Incorrect parameters: "
+          "dbName and callback needed");
       return {};
     }
 
@@ -479,8 +481,9 @@ void install(jsi::Runtime &rt,
 
   auto commitHook = HOSTFN("commitHook", 2) {
     if (sizeof(args) < 2) {
-      throw std::runtime_error("[op-sqlite][commitHook] Incorrect parameters: "
-                               "dbName and callback needed");
+      throw std::runtime_error(
+          "[op-sqlite][loadFileAsync] Incorrect parameters: "
+          "dbName and callback needed");
       return {};
     }
 
@@ -505,7 +508,7 @@ void install(jsi::Runtime &rt,
   auto rollbackHook = HOSTFN("rollbackHook", 2) {
     if (sizeof(args) < 2) {
       throw std::runtime_error(
-          "[op-sqlite][rollbackHook] Incorrect parameters: "
+          "[op-sqlite][loadFileAsync] Incorrect parameters: "
           "dbName and callback needed");
       return {};
     }

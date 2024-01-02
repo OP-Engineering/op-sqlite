@@ -23,7 +23,6 @@ import clsx from 'clsx';
 import {preparedStatementsTests} from './tests/preparedStatements.spec';
 import {constantsTests} from './tests/constants.spec';
 import performance from 'react-native-performance';
-import UpdateHookPage from './UpdateHook';
 
 const StyledScrollView = styled(ScrollView, {
   props: {
@@ -184,8 +183,6 @@ export default function App() {
             ms
           </Text>
         )}
-
-        <UpdateHookPage />
 
         <Text
           className={clsx('font-bold flex-1 text-white p-2 mt-4', {
