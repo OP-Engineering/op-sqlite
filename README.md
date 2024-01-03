@@ -16,7 +16,7 @@ Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider Sponso
 
 ## Benchmarks
 
-You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). This is run using the `OP_SQLITE_PERF` flag which in turns disables some old and unused features of sqlite to squeeze the last drop of performance.
+You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). This is run using the `OP_SQLITE_PERF` [performance flag](#perf-flag) which in turns disables some old and unused features of sqlite to squeeze the last drop of performance.
 
 ![benchmark](benchmark.png)
 
