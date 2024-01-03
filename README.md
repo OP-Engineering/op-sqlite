@@ -135,7 +135,7 @@ You can turn on the performance flag to tweak all possible performance enhancing
 
 ```sh
 # For iOS install pods with the following env variable, you can also just an export like on Android
-OP_SQLITE_PERF=1 npx pod-install
+# OP_SQLITE_PERF=1 npx pod-install
 
 # For Android you need to export the environment variable before running any command
 export OP_SQLITE_PERF=1
