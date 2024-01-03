@@ -143,6 +143,12 @@ export OP_SQLITE_PERF=1
 yarn android
 ```
 
+If correctly set you should see the following output in your console
+
+```sh
+OP-SQLITE performance mode enabled! 🚀
+```
+
 # SQLite Gotchas
 
 ## Strictness
