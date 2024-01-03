@@ -1,4 +1,1 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.op.sqlite">
-
-</manifest>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"/>

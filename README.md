@@ -16,7 +16,7 @@ Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider Sponso
 
 ## Benchmarks
 
-You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). This is run using the `OP_SQLITE_PERF` flag which in turns disables some old and unused features of sqlite to squeeze the last drop of performance.
+You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). This is run using the `OP_SQLITE_PERF` [performance flag](#perf-flag) which in turns disables some old and unused features of sqlite to squeeze the last drop of performance.
 
 ![benchmark](benchmark.png)
 
@@ -154,10 +154,22 @@ If you use [prepared statements](#prepared-statements) plus memory mapping and s
 
 # Perf flag
 
-You can turn on the performance flag to tweak all possible performance enhancing compilation flags, this greatly affects performance of sqlite itself
+You can turn on the performance flag to tweak all possible performance enhancing compilation flags, this greatly affects performance of sqlite itself:
 
+```sh
+# For iOS install pods with the following env variable, you can also just an export like on Android
+# OP_SQLITE_PERF=1 npx pod-install
+
+# For Android you need to export the environment variable before running any command
+export OP_SQLITE_PERF=1
+# then any android build command will use the performance mode
+yarn android
 ```
-OP_SQLITE_PERF=1 npx pod-install
+
+If correctly set you should see the following output in your console
+
+```sh
+OP-SQLITE performance mode enabled! 🚀
 ```
 
 # SQLite Gotchas
