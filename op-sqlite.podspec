@@ -34,6 +34,7 @@ Pod::Spec.new do |s|
   end
 
   if ENV['OP_SQLITE_USE_PHONE_VERSION'] == '1' then
+    puts "OP-SQLITE using iOS embedded SQLite! 📱\n"
     s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h"
     s.library = "sqlite3"
   end
