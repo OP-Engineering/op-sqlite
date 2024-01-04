@@ -4,18 +4,11 @@
 yarn add @op-engineering/op-sqlite && npx pod-install
 ```
 
-<div align="center">
-  <pre align="center">
-    yarn add @op-engineering/op-sqlite
-    npx pod-install</pre>
-  <br />
-</div>
-
-OP SQLite embeds the latest version of SQLite and provides a low-level API to execute SQL queries.
+OP-SQLite embeds the latest version of SQLite and provides a low-level API to execute SQL queries.
 
 **Current SQLite version: 3.44.0**
 
-Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider Sponsoring**.
+Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider sponsoring!**.
 
 ## Benchmarks
 
@@ -25,7 +18,7 @@ Memory consumption is minimised as much as possible since all the data is shared
 
 You can also turn on [Memory Mapping](#speed) to make your queries even faster by skipping the kernel during I/O and potentially reduce RAM usage, this comes with some disadvantages though. If you want even more speed and you can re-use your queries you can use [Prepared Statements](#prepared-statements).
 
-Here is a benchmark with all the optimizations reading a single string value against react-native-mmkv. This might be a viable alternative if you want to reduce your bundle size and still keep perfomance when reading small data.
+Here is another benchmark with all the optimizations reading a single string value against react-native-mmkv.
 
 ![benchmark](benchmark2.png)
 
