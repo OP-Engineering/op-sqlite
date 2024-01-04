@@ -61,7 +61,7 @@ import {
   IOS_DOCUMENT_PATH,
   ANDROID_DATABASE_PATH, // Default Android
   ANDROID_FILES_PATH,
-  ANDROID_EXTERNAL_FILES_PATH,
+  ANDROID_EXTERNAL_FILES_PATH, // Android SD Card
   open,
 } from '@op-engineering/op-sqlite';
 
