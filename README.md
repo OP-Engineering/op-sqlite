@@ -12,7 +12,7 @@ OP SQLite embeds the latest version of SQLite and provides a low-level API to ex
 
 **Current SQLite version: 3.44.0**
 
-Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider Sponsoring**, none of this work is for free. I pay for it with my time and knowledge. If you are a company in need of help with your React Native/React apps feel free to reach out. I also do a lot of C++ and nowadays Rust.
+Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider Sponsoring**.
 
 ## Benchmarks
 
@@ -22,7 +22,9 @@ You can find the [benchmarking code in the example app](https://github.com/OP-En
 
 Memory consumption is also 1/4 compared to `react-native-quick-sqlite`. This query used to take 1.2 GB of peak memory usage, and now runs in 250mbs.
 
-You can also turn on [Memory Mapping](#speed) to make your queries even faster by skipping the kernel during I/O and potentially reduce RAM usage, this comes with some disadvantages though. If you want even more speed and you can re-use your queries you can use [Prepared Statements](#prepared-statements). Here is a benchmark with all this optimizations reading a single string value against react-native-mmkv
+You can also turn on [Memory Mapping](#speed) to make your queries even faster by skipping the kernel during I/O and potentially reduce RAM usage, this comes with some disadvantages though. If you want even more speed and you can re-use your queries you can use [Prepared Statements](#prepared-statements).
+
+Here is a benchmark with all the optimizations reading a single string value against react-native-mmkv. This might be a viable alternative if you want to reduce your bundle size and still keep perfomance when reading small data.
 
 ![benchmark](benchmark2.png)
 
