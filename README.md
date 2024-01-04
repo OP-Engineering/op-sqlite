@@ -1,4 +1,4 @@
-![screenshot](https://raw.githubusercontent.com/OP-Engineering/op-sqlite/main/Header.png)
+![benchmark](benchmark.png)
 
 <div align="center">
   <pre align="center">
@@ -18,9 +18,7 @@ Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider Sponso
 
 You can find the [benchmarking code in the example app](https://github.com/OP-Engineering/op-sqlite/blob/main/example/src/Database.ts#L44). This is run using the `OP_SQLITE_PERF` [performance flag](#perf-flag) which in turns disables some old and unused features of sqlite to squeeze the last drop of performance.
 
-![benchmark](benchmark.png)
-
-Memory consumption is also 1/4 compared to `react-native-quick-sqlite`. This query used to take 1.2 GB of peak memory usage, and now runs in 250mbs.
+Memory consumption is minimised as much as possible since all the data is shared via HostObjects, meaning large queries can be run in few mbs.
 
 You can also turn on [Memory Mapping](#speed) to make your queries even faster by skipping the kernel during I/O and potentially reduce RAM usage, this comes with some disadvantages though. If you want even more speed and you can re-use your queries you can use [Prepared Statements](#prepared-statements).
 
