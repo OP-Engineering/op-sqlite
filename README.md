@@ -129,8 +129,6 @@ db.execute('PRAGMA journal_mode = MEMORY;'); // or OFF
 
 If you use [prepared statements](#prepared-statements) plus memory mapping and set journaling to memory, you can get to inches of MMKV for the most performance critical queries, here is a simple example writing/reading a single value.
 
-![mmkv comparison](mmkv.png)
-
 # Perf flag
 
 You can turn on the performance flag to tweak all possible performance enhancing compilation flags, this greatly affects performance of sqlite itself:
