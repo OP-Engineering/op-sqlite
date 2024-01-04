@@ -1,12 +1,15 @@
 ![benchmark](benchmark.png)
 
+```sh
+yarn add @op-engineering/op-sqlite && npx pod-install
+```
+
 <div align="center">
   <pre align="center">
     yarn add @op-engineering/op-sqlite
     npx pod-install</pre>
   <br />
 </div>
-<br />
 
 OP SQLite embeds the latest version of SQLite and provides a low-level API to execute SQL queries.
 
