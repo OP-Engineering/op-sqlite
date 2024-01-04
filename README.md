@@ -106,9 +106,11 @@ const largeDb = open({
 });
 ```
 
+In memory databases are faster since they don't need to hit the disk I/O to save the data and are useful for synchronization only workflows.
+
 # Performance
 
-op-sqlite is already the fastest solution it can be, but it doesn't mean you cannot tweak SQLite to be faster (at the cost of some disadvantages). One possible tweak is turning on [Memory Mapping](https://www.sqlite.org/mmap.html). It allows to read/write to/from the disk without going through the kernel. However, if your queries throw an error your application might crash.
+You can tweak SQLite to be faster (at the cost of some disadvantages). One possibility is [Memory Mapping](https://www.sqlite.org/mmap.html). It allows to read/write to/from the disk without going through the kernel. However, if your queries throw an error your application might crash.
 
 To turn on Memory Mapping, execute the following pragma statement after opening a db:
 
@@ -121,13 +123,13 @@ const db = open({
 db.execute('PRAGMA mmap_size=268435456');
 ```
 
-You can also set journaling to memory (or even OFF if you are kinda crazy) to gain even more speed. Journaling is what allows SQLite to ROLLBACK statements and it is dangerous, so do it at your own risk
+You can also set journaling to memory (or even OFF if you are kinda crazy) to gain even more speed. Journaling is what allows SQLite to ROLLBACK statements and modifying it dangerous, so do it at your own risk
 
 ```ts
 db.execute('PRAGMA journal_mode = MEMORY;'); // or OFF
 ```
 
-If you use [prepared statements](#prepared-statements) plus memory mapping and set journaling to memory, you can get to inches of MMKV for the most performance critical queries, here is a simple example writing/reading a single value.
+If you use [prepared statements](#prepared-statements) are useful to reduce the time of critical queries.
 
 # Perf flag
 
@@ -162,7 +164,7 @@ db.execute('CREATE TABLE Test (
           ) STRICT;');
 ```
 
-If you don't set it, SQLite will happily write whatever you insert in your table, independtly of the declared type.
+If you don't set it, SQLite will happily write whatever you insert in your table, independtly of the declared type (it will try to cast it though, e.g. "1" string might be turned to 1 int).
 
 ## Foreign constraints
 
