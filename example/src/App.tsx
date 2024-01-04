@@ -24,7 +24,8 @@ import {preparedStatementsTests} from './tests/preparedStatements.spec';
 import {constantsTests} from './tests/constants.spec';
 import performance from 'react-native-performance';
 import UpdateHookPage from './UpdateHook';
-
+import {MMKV} from 'react-native-mmkv';
+export const mmkv = new MMKV();
 const StyledScrollView = styled(ScrollView, {
   props: {
     contentContainerStyle: true,
@@ -41,7 +42,10 @@ export default function App() {
     [],
   );
   const [singleRecordTime, setSingleRecordTime] = useState<number>(0);
-
+  const [sqliteMMSetTime, setSqliteMMSetTime] = useState(0);
+  const [mmkvSetTime, setMMKVSetTime] = useState(0);
+  const [sqliteGetTime, setSqliteMMGetTime] = useState(0);
+  const [mmkvGetTime, setMMKVGetTime] = useState(0);
   useEffect(() => {
     setResults([]);
     runTests(
@@ -121,6 +125,45 @@ export default function App() {
     testDB.execute(sql);
   };
 
+  const testAgainstMMKV = () => {
+    const db = open({
+      name: 'mmkvTestDb',
+    });
+
+    db.execute('PRAGMA mmap_size=268435456');
+    // db.execute('PRAGMA journal_mode = OFF;');
+    db.execute('DROP TABLE IF EXISTS mmkvTest;');
+    db.execute('CREATE TABLE mmkvTest (text TEXT);');
+
+    let insertStatment = db.prepareStatement(
+      'INSERT INTO "mmkvTest" (text) VALUES (?)',
+    );
+    insertStatment.bind(['quack']);
+
+    let start = performance.now();
+    insertStatment.execute();
+    let end = performance.now();
+    setSqliteMMSetTime(end - start);
+
+    start = performance.now();
+    mmkv.set('mmkvDef', 'quack');
+    end = performance.now();
+    setMMKVSetTime(end - start);
+
+    let readStatement = db.prepareStatement('SELECT text from mmkvTest;');
+    start = performance.now();
+    readStatement.execute();
+    end = performance.now();
+    setSqliteMMGetTime(end - start);
+
+    start = performance.now();
+    mmkv.getString('mmkvDef');
+    end = performance.now();
+    setMMKVGetTime(end - start);
+
+    db.close();
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-neutral-900">
       <StyledScrollView>
@@ -137,6 +180,29 @@ export default function App() {
         <Button title="Create 300k Record DB" onPress={createLargeDb} />
         <Button title="Query 300k Records" onPress={queryLargeDb} />
         <Button title="Query single record" onPress={querySingleRecord} />
+        <Button title="Against MMKV" onPress={testAgainstMMKV} />
+        <View className="gap-2 items-center">
+          {!!sqliteMMSetTime && (
+            <Text className="text-white">
+              MM SQLite Write: {sqliteMMSetTime.toFixed(3)} ms
+            </Text>
+          )}
+          {!!mmkvSetTime && (
+            <Text className="text-white">
+              MMKV Write: {mmkvSetTime.toFixed(3)} ms
+            </Text>
+          )}
+          {!!sqliteGetTime && (
+            <Text className="text-white">
+              MM SQLite Get: {sqliteGetTime.toFixed(3)} ms
+            </Text>
+          )}
+          {!!mmkvGetTime && (
+            <Text className="text-white">
+              MMKV Get: {mmkvGetTime.toFixed(3)} ms
+            </Text>
+          )}
+        </View>
         {isLoading && <ActivityIndicator color={'white'} size="large" />}
 
         {!!singleRecordTime && (
