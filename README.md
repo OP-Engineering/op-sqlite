@@ -337,12 +337,11 @@ You might have too much SQL to process and it will cause your application to fre
 
 ```ts
 db.executeAsync(
-  'myDatabase',
   'SELECT * FROM "User";',
-  []).then(({rows}) => {
-    console.log('users', rows._array);
-  })
-);
+  []
+).then(({rows}) => {
+  console.log('users', rows._array);
+});
 ```
 
 ## Blobs
