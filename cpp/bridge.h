@@ -62,6 +62,10 @@ BridgeResult sqlite_execute_prepared_statement(
     std::string const &dbName, sqlite3_stmt *statement,
     std::vector<DumbHostObject> *results,
     std::shared_ptr<std::vector<SmartHostObject>> metadatas);
+
+BridgeResult sqlite_load_extension(std::string &db_name, std::string &path,
+                                   std::string &entry_point);
+
 } // namespace opsqlite
 
 #endif /* bridge_h */

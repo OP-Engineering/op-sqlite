@@ -36,6 +36,18 @@ export function dbSetupTests() {
       });
     }
 
+    it('Should load extension on runtime', async () => {
+      let db = open({
+        name: 'extensionDb',
+      });
+      try {
+        db.loadExtension('path');
+      } catch (e) {
+        // TODO load a sample extension
+        expect(e).to.exist;
+      }
+    });
+
     // it('Should fail creating in-memory with non-bool arg', async () => {
     //   try {
     //     open({

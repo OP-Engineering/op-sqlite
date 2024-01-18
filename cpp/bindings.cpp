@@ -540,6 +540,21 @@ void install(jsi::Runtime &rt,
     return jsi::Object::createFromHostObject(rt, preparedStatementHostObject);
   });
 
+  auto load_extension = HOSTFN("loadExtension", 2) {
+    auto db_name = args[0].asString(rt).utf8(rt);
+    auto path = args[1].asString(rt).utf8(rt);
+    std::string entryPoint = "";
+    if (count > 2 && args[2].isString()) {
+      entryPoint = args[2].asString(rt).utf8(rt);
+    }
+
+    auto result = sqlite_load_extension(db_name, path, entryPoint);
+    if (result.type == SQLiteError) {
+      throw std::runtime_error(result.message);
+    }
+    return {};
+  });
+
   jsi::Object module = jsi::Object(rt);
 
   module.setProperty(rt, "open", std::move(open));
@@ -556,6 +571,7 @@ void install(jsi::Runtime &rt,
   module.setProperty(rt, "commitHook", std::move(commitHook));
   module.setProperty(rt, "rollbackHook", std::move(rollbackHook));
   module.setProperty(rt, "prepareStatement", std::move(prepareStatement));
+  module.setProperty(rt, "loadExtension", std::move(load_extension));
 
   rt.global().setProperty(rt, "__OPSQLiteProxy", std::move(module));
 }
