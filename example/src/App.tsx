@@ -23,9 +23,10 @@ import clsx from 'clsx';
 import {preparedStatementsTests} from './tests/preparedStatements.spec';
 import {constantsTests} from './tests/constants.spec';
 import performance from 'react-native-performance';
-import UpdateHookPage from './UpdateHook';
+// import UpdateHookPage from './UpdateHook';
 import {MMKV} from 'react-native-mmkv';
 export const mmkv = new MMKV();
+
 const StyledScrollView = styled(ScrollView, {
   props: {
     contentContainerStyle: true,
@@ -251,7 +252,7 @@ export default function App() {
           </Text>
         )}
 
-        <UpdateHookPage />
+        {/* <UpdateHookPage /> */}
 
         <Text
           className={clsx('font-bold flex-1 text-white p-2 mt-4', {
