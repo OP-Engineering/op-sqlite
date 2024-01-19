@@ -617,7 +617,7 @@ void install(jsi::Runtime &rt,
   module.setProperty(rt, "commitHook", std::move(commitHook));
   module.setProperty(rt, "rollbackHook", std::move(rollbackHook));
   module.setProperty(rt, "prepareStatement", std::move(prepareStatement));
-  module.setProperty(rt, "executeRaw", std::move(execute_raw_async));
+  module.setProperty(rt, "executeRawAsync", std::move(execute_raw_async));
 
   rt.global().setProperty(rt, "__OPSQLiteProxy", std::move(module));
 }
