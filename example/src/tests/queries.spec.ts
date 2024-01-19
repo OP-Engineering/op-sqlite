@@ -779,7 +779,7 @@ export function queriesTests() {
         [id, name, age, networth],
       );
 
-      const res = await db.executeRaw(
+      const res = await db.executeRawAsync(
         'SELECT id, name, age, networth FROM User',
       );
       expect(res).to.eql([[id, name, age, networth]]);

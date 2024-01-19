@@ -389,7 +389,7 @@ You only pay the price of parsing the query once, and each subsequent execution 
 If you don't care about the keys you can use a simplified execution that will return an array of results.
 
 ```ts
-let result = await db.executeRaw('SELECT * FROM Users;');
+let result = await db.executeRawAsync('SELECT * FROM Users;');
 // result = [[123, 'Katie', ...]]
 ```
 
