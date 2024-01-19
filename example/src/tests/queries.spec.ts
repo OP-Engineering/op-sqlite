@@ -768,5 +768,21 @@ export function queriesTests() {
 
       expect(res.rows!._array[0].myWeirdProp).to.eq('quack_changed');
     });
+
+    it('Execute raw should return just an array of objects', async () => {
+      const id = chance.integer();
+      const name = chance.name();
+      const age = chance.integer();
+      const networth = chance.floating();
+      db.execute(
+        'INSERT INTO User (id, name, age, networth) VALUES(?, ?, ?, ?)',
+        [id, name, age, networth],
+      );
+
+      const res = await db.executeRaw(
+        'SELECT id, name, age, networth FROM User',
+      );
+      expect(res).to.eql([[id, name, age, networth]]);
+    });
   });
 }

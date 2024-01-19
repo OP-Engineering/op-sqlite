@@ -33,6 +33,11 @@ sqlite_execute(std::string const &dbName, std::string const &query,
                std::vector<DumbHostObject> *results,
                std::shared_ptr<std::vector<SmartHostObject>> metadatas);
 
+BridgeResult sqlite_execute_raw(std::string const &dbName,
+                                std::string const &query,
+                                const std::vector<JSVariant> *params,
+                                std::vector<std::vector<JSVariant>> *results);
+
 BridgeResult sqlite_execute_literal(std::string const &dbName,
                                     std::string const &query);
 
