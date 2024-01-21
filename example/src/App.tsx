@@ -26,6 +26,7 @@ import performance from 'react-native-performance';
 // import UpdateHookPage from './UpdateHook';
 import {MMKV} from 'react-native-mmkv';
 export const mmkv = new MMKV();
+
 const StyledScrollView = styled(ScrollView, {
   props: {
     contentContainerStyle: true,

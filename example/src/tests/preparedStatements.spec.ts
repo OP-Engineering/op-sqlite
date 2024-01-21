@@ -38,5 +38,17 @@ export function preparedStatementsTests() {
 
       expect(results.rows!._array.length).to.equal(3);
     });
+
+    it('allows re-binding a prepared statement', async () => {
+      const statement = db.prepareStatement('SELECT * FROM User WHERE id=?;');
+      statement.bind([1]);
+
+      let results = statement.execute();
+      expect(results.rows!._array[0].name === 'Oscar');
+
+      statement.bind([2]);
+      results = statement.execute();
+      expect(results.rows!._array[0].name === 'Pablo');
+    });
   });
 }

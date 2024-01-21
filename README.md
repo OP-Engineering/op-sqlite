@@ -535,6 +535,16 @@ You can specify flags via `<PROJECT_ROOT>/android/gradle.properties` like so:
 OPSQLiteFlags="-DSQLITE_ENABLE_FTS5=1"
 ```
 
+# Runtime loadable extensions
+
+You can load your own extensions on runtime.
+
+```ts
+db.loadExtension('/path/to/library.so', 'optional_entry_point_function_name');
+```
+
+You will need to compile your extension for both iOS and Android and all the respective architectures and make it available in a location the library can read (be careful about sandboxing).
+
 # Additional configuration
 
 ## App groups (iOS only)
