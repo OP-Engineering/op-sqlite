@@ -336,10 +336,7 @@ metadata.forEach((column) => {
 You might have too much SQL to process and it will cause your application to freeze. There are async versions for some of the operations. This will offload the SQLite processing to a different thread.
 
 ```ts
-db.executeAsync(
-  'SELECT * FROM "User";',
-  []
-).then(({rows}) => {
+db.executeAsync('SELECT * FROM "User";', []).then(({ rows }) => {
   console.log('users', rows._array);
 });
 ```
@@ -386,6 +383,15 @@ let results2 = statement.execute();
 ```
 
 You only pay the price of parsing the query once, and each subsequent execution should be faster.
+
+# Raw execution
+
+If you don't care about the keys you can use a simplified execution that will return an array of results.
+
+```ts
+let result = await db.executeRawAsync('SELECT * FROM Users;');
+// result = [[123, 'Katie', ...]]
+```
 
 # Attach or Detach other databases
 
