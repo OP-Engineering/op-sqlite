@@ -187,6 +187,22 @@ createResult(jsi::Runtime &rt, BridgeResult status,
   return std::move(res);
 }
 
+jsi::Value
+create_raw_result(jsi::Runtime &rt, BridgeResult status,
+                  const std::vector<std::vector<JSVariant>> *results) {
+  size_t row_count = results->size();
+  jsi::Array res = jsi::Array(rt, row_count);
+  for (int i = 0; i < row_count; i++) {
+    auto row = results->at(i);
+    auto array = jsi::Array(rt, row.size());
+    for (int j = 0; j < row.size(); j++) {
+      array.setValueAtIndex(rt, j, toJSI(rt, row[j]));
+    }
+    res.setValueAtIndex(rt, i, array);
+  }
+  return res;
+}
+
 BatchResult importSQLFile(std::string dbName, std::string fileLocation) {
   std::string line;
   std::ifstream sqFile(fileLocation);

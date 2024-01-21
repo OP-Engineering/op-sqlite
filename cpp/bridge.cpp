@@ -518,6 +518,164 @@ sqlite_execute(std::string const &dbName, std::string const &query,
           .insertId = static_cast<double>(latestInsertRowId)};
 }
 
+BridgeResult sqlite_execute_raw(std::string const &dbName,
+                                std::string const &query,
+                                const std::vector<JSVariant> *params,
+                                std::vector<std::vector<JSVariant>> *results) {
+
+  if (dbMap.find(dbName) == dbMap.end()) {
+    return {.type = SQLiteError,
+            .message = "[op-sqlite]: Database " + dbName + " is not open"};
+  }
+
+  sqlite3 *db = dbMap[dbName];
+
+  sqlite3_stmt *statement;
+  const char *errorMessage;
+  const char *remainingStatement = nullptr;
+
+  bool isConsuming = true;
+  bool isFailed = false;
+
+  int result = SQLITE_OK;
+
+  do {
+    const char *queryStr =
+        remainingStatement == nullptr ? query.c_str() : remainingStatement;
+
+    int statementStatus =
+        sqlite3_prepare_v2(db, queryStr, -1, &statement, &remainingStatement);
+
+    if (statementStatus != SQLITE_OK) {
+      const char *message = sqlite3_errmsg(db);
+      return {
+          .type = SQLiteError,
+          .message = "[op-sqlite] SQL statement error:" +
+                     std::to_string(statementStatus) +
+                     " description:" + std::string(message) +
+                     ". See error codes: https://www.sqlite.org/rescode.html",
+      };
+    }
+
+    // The statement did not fail to parse but there is nothing to do, just skip
+    // to the end
+    if (statement == NULL) {
+      continue;
+    }
+
+    if (params != nullptr && params->size() > 0) {
+      bindStatement(statement, params);
+    }
+
+    isConsuming = true;
+
+    int i, count, column_type;
+    std::string column_name, column_declared_type;
+
+    while (isConsuming) {
+      result = sqlite3_step(statement);
+
+      switch (result) {
+      case SQLITE_ROW: {
+        if (results == NULL) {
+          break;
+        }
+        std::vector<JSVariant> row;
+
+        i = 0;
+
+        count = sqlite3_column_count(statement);
+
+        while (i < count) {
+          column_type = sqlite3_column_type(statement, i);
+
+          switch (column_type) {
+          case SQLITE_INTEGER: {
+            /**
+             * Warning this will loose precision because JS can
+             * only represent Integers up to 53 bits
+             */
+            double column_value = sqlite3_column_double(statement, i);
+            row.push_back(JSVariant(column_value));
+            break;
+          }
+
+          case SQLITE_FLOAT: {
+            double column_value = sqlite3_column_double(statement, i);
+            row.push_back(JSVariant(column_value));
+            break;
+          }
+
+          case SQLITE_TEXT: {
+            const char *column_value = reinterpret_cast<const char *>(
+                sqlite3_column_text(statement, i));
+            int byteLen = sqlite3_column_bytes(statement, i);
+            // Specify length too; in case string contains NULL in the middle
+            row.push_back(JSVariant(std::string(column_value, byteLen)));
+            break;
+          }
+
+          case SQLITE_BLOB: {
+            int blob_size = sqlite3_column_bytes(statement, i);
+            const void *blob = sqlite3_column_blob(statement, i);
+            uint8_t *data = new uint8_t[blob_size];
+            // You cannot share raw memory between native and JS
+            // always copy the data
+            memcpy(data, blob, blob_size);
+            row.push_back(
+                JSVariant(ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+                                      .size = static_cast<size_t>(blob_size)}));
+            break;
+          }
+
+          case SQLITE_NULL:
+            // Intentionally left blank
+
+          default:
+            row.push_back(JSVariant(NULL));
+            break;
+          }
+          i++;
+        }
+
+        results->push_back(row);
+
+        break;
+      }
+
+      case SQLITE_DONE:
+        isConsuming = false;
+        break;
+
+      default:
+        errorMessage = sqlite3_errmsg(db);
+        isFailed = true;
+        isConsuming = false;
+      }
+    }
+
+    sqlite3_finalize(statement);
+  } while (remainingStatement != NULL && strcmp(remainingStatement, "") != 0 &&
+           !isFailed);
+
+  if (isFailed) {
+
+    return {.type = SQLiteError,
+            .message =
+                "[op-sqlite] SQLite error code: " + std::to_string(result) +
+                ", description: " + std::string(errorMessage) +
+                ".\nSee SQLite error codes reference: "
+                "https://www.sqlite.org/rescode.html"};
+  }
+
+  int changedRowCount = sqlite3_changes(db);
+  long long latestInsertRowId = sqlite3_last_insert_rowid(db);
+
+  return {.type = SQLiteOk,
+          .affectedRows = changedRowCount,
+          .insertId = static_cast<double>(latestInsertRowId)};
+}
+
 BridgeResult sqlite_execute_literal(std::string const &dbName,
                                     std::string const &query) {
   if (dbMap.count(dbName) == 0) {

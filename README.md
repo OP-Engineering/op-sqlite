@@ -384,6 +384,15 @@ let results2 = statement.execute();
 
 You only pay the price of parsing the query once, and each subsequent execution should be faster.
 
+# Raw execution
+
+If you don't care about the keys you can use a simplified execution that will return an array of results.
+
+```ts
+let result = await db.executeRawAsync('SELECT * FROM Users;');
+// result = [[123, 'Katie', ...]]
+```
+
 # Attach or Detach other databases
 
 SQLite supports attaching or detaching other database files into your main database connection through an alias.
