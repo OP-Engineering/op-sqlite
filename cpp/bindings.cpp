@@ -222,6 +222,67 @@ void install(jsi::Runtime &rt,
     return jsiResult;
   });
 
+  auto execute_raw_async = HOSTFN("executeRawAsync", 3) {
+    if (count < 3) {
+      throw std::runtime_error(
+          "[op-sqlite][executeAsync] Incorrect arguments for executeAsync");
+    }
+
+    const std::string dbName = args[0].asString(rt).utf8(rt);
+    const std::string query = args[1].asString(rt).utf8(rt);
+    const jsi::Value &originalParams = args[2];
+
+    std::vector<JSVariant> params = toVariantVec(rt, originalParams);
+
+    auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
+
+        auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor", 2) {
+      auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
+      auto reject = std::make_shared<jsi::Value>(rt, args[1]);
+
+      auto task = [&rt, dbName, query, params = std::move(params), resolve,
+                   reject]() {
+        try {
+          std::vector<std::vector<JSVariant>> results;
+
+          auto status = sqlite_execute_raw(dbName, query, &params, &results);
+
+          if (invalidated) {
+            return;
+          }
+
+          invoker->invokeAsync([&rt, results = std::move(results),
+                                status = std::move(status), resolve, reject] {
+            if (status.type == SQLiteOk) {
+              auto jsiResult = create_raw_result(rt, status, &results);
+              resolve->asObject(rt).asFunction(rt).call(rt,
+                                                        std::move(jsiResult));
+            } else {
+              auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+              auto error = errorCtr.callAsConstructor(
+                  rt, jsi::String::createFromUtf8(rt, status.message));
+              reject->asObject(rt).asFunction(rt).call(rt, error);
+            }
+          });
+
+        } catch (std::exception &exc) {
+          invoker->invokeAsync([&rt, exc = std::move(exc), reject] {
+            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto error = errorCtr.callAsConstructor(
+                rt, jsi::String::createFromAscii(rt, exc.what()));
+            reject->asObject(rt).asFunction(rt).call(rt, error);
+          });
+        }
+      };
+
+      pool.queueWork(task);
+
+      return {};
+        }));
+
+        return promise;
+  });
+
   auto executeAsync = HOSTFN("executeAsync", 3) {
     if (count < 3) {
       throw std::runtime_error(
@@ -572,6 +633,7 @@ void install(jsi::Runtime &rt,
   module.setProperty(rt, "rollbackHook", std::move(rollbackHook));
   module.setProperty(rt, "prepareStatement", std::move(prepareStatement));
   module.setProperty(rt, "loadExtension", std::move(load_extension));
+  module.setProperty(rt, "executeRawAsync", std::move(execute_raw_async));
 
   rt.global().setProperty(rt, "__OPSQLiteProxy", std::move(module));
 }

@@ -41,6 +41,10 @@ jsi::Value createResult(jsi::Runtime &rt, BridgeResult status,
                         std::vector<DumbHostObject> *results,
                         std::shared_ptr<std::vector<SmartHostObject>> metadata);
 
+jsi::Value
+create_raw_result(jsi::Runtime &rt, BridgeResult status,
+                  const std::vector<std::vector<JSVariant>> *results);
+
 BatchResult importSQLFile(std::string dbName, std::string fileLocation);
 
 int mkdir(const std::string &path);

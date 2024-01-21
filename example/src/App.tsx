@@ -47,6 +47,7 @@ export default function App() {
   const [mmkvSetTime, setMMKVSetTime] = useState(0);
   const [sqliteGetTime, setSqliteMMGetTime] = useState(0);
   const [mmkvGetTime, setMMKVGetTime] = useState(0);
+  const [rawExecutionTimes, setRawExecutionTimes] = useState<number[]>([]);
   useEffect(() => {
     setResults([]);
     runTests(
@@ -87,6 +88,7 @@ export default function App() {
       setAccessingTimes(times.access);
       setPrepareTimes(times.prepare);
       setPrepareExecutionTimes(times.preparedExecution);
+      setRawExecutionTimes(times.rawExecution);
     } catch (e) {
       console.error(e);
     } finally {
@@ -180,9 +182,9 @@ export default function App() {
         <Button title="Reload app middle of query" onPress={queryAndReload} />
         <Button title="Create 300k Record DB" onPress={createLargeDb} />
         <Button title="Query 300k Records" onPress={queryLargeDb} />
-        <Button title="Query single record" onPress={querySingleRecord} />
-        <Button title="Against MMKV" onPress={testAgainstMMKV} />
-        <View className="gap-2 items-center">
+        {/* <Button title="Query single record" onPress={querySingleRecord} />
+        <Button title="Against MMKV" onPress={testAgainstMMKV} /> */}
+        <View className="gap-2 items-center mt-4">
           {!!sqliteMMSetTime && (
             <Text className="text-white">
               MM SQLite Write: {sqliteMMSetTime.toFixed(3)} ms
@@ -203,6 +205,7 @@ export default function App() {
               MMKV Get: {mmkvGetTime.toFixed(3)} ms
             </Text>
           )}
+          
         </View>
         {isLoading && <ActivityIndicator color={'white'} size="large" />}
 
@@ -251,6 +254,15 @@ export default function App() {
             ms
           </Text>
         )}
+        {!!rawExecutionTimes.length &&
+          <Text className="text-lg text-white self-center">
+            Raw execution:  {(
+              rawExecutionTimes.reduce((acc, t) => (acc += t), 0) /
+              rawExecutionTimes.length
+            ).toFixed(0)}{' '}
+            ms
+          </Text>
+          }
 
         {/* <UpdateHookPage /> */}
 
