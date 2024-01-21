@@ -889,4 +889,32 @@ BridgeResult sqlite_deregister_rollback_hook(std::string const &dbName) {
 
   return {SQLiteOk};
 }
+
+BridgeResult sqlite_load_extension(std::string &db_name, std::string &path,
+                                   std::string &entry_point) {
+  if (dbMap.count(db_name) == 0) {
+    return {SQLiteError, "[op-sqlite] Database not open"};
+  }
+
+  sqlite3 *db = dbMap[db_name];
+  int loading_extensions_enabled = sqlite3_enable_load_extension(db, 1);
+  if (loading_extensions_enabled != SQLITE_OK) {
+    return {SQLiteError, "[op-sqlite] could not enable extension loading"};
+  }
+  const char *path_cstr = path.c_str();
+  const char *entry_point_cstr;
+  if (!entry_point.empty()) {
+    entry_point_cstr = entry_point.c_str();
+  }
+
+  char *error_message;
+
+  int extension_loaded =
+      sqlite3_load_extension(db, path_cstr, entry_point_cstr, &error_message);
+  if (extension_loaded != SQLITE_OK) {
+    return {SQLiteError, std::string(error_message)};
+  }
+  return {SQLiteOk};
+}
+
 } // namespace opsqlite
