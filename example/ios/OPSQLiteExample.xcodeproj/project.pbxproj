@@ -11,7 +11,7 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
-		9347D2E34F0BDB6B92BB3375 /* libPods-OPSQLiteExample.a in Frameworks */ = {isa = PBXBuildFile; fileRef = EC879F637089BF11954D8CCE /* libPods-OPSQLiteExample.a */; };
+		94C39BEB9F411FE0F1BA0A5A /* Pods_OPSQLiteExample.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B724BA47774DBB3A3BCB9420 /* Pods_OPSQLiteExample.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,7 +27,7 @@
 		5B7EB9410499542E8C5724F5 /* Pods-OPSQLiteExample-OPSQLiteExampleTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OPSQLiteExample-OPSQLiteExampleTests.debug.xcconfig"; path = "Target Support Files/Pods-OPSQLiteExample-OPSQLiteExampleTests/Pods-OPSQLiteExample-OPSQLiteExampleTests.debug.xcconfig"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = OPSQLiteExample/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		89C6BE57DB24E9ADA2F236DE /* Pods-OPSQLiteExample-OPSQLiteExampleTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OPSQLiteExample-OPSQLiteExampleTests.release.xcconfig"; path = "Target Support Files/Pods-OPSQLiteExample-OPSQLiteExampleTests/Pods-OPSQLiteExample-OPSQLiteExampleTests.release.xcconfig"; sourceTree = "<group>"; };
-		EC879F637089BF11954D8CCE /* libPods-OPSQLiteExample.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-OPSQLiteExample.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B724BA47774DBB3A3BCB9420 /* Pods_OPSQLiteExample.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_OPSQLiteExample.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -36,7 +36,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9347D2E34F0BDB6B92BB3375 /* libPods-OPSQLiteExample.a in Frameworks */,
+				94C39BEB9F411FE0F1BA0A5A /* Pods_OPSQLiteExample.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -61,7 +61,7 @@
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				19F6CBCC0A4E27FBF8BF4A61 /* libPods-OPSQLiteExample-OPSQLiteExampleTests.a */,
-				EC879F637089BF11954D8CCE /* libPods-OPSQLiteExample.a */,
+				B724BA47774DBB3A3BCB9420 /* Pods_OPSQLiteExample.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
