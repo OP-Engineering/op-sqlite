@@ -283,7 +283,7 @@ void install(jsi::Runtime &rt,
         return promise;
   });
 
-  auto executeAsync = HOSTFN("executeAsync", 3) {
+  auto execute_async = HOSTFN("executeAsync", 3) {
     if (count < 3) {
       throw std::runtime_error(
           "[op-sqlite][executeAsync] Incorrect arguments for executeAsync");
@@ -351,9 +351,7 @@ void install(jsi::Runtime &rt,
     return promise;
   });
 
-  // Execute a batch of SQL queries in a transaction
-  // Parameters can be: [[sql: string, arguments: any[] | arguments: any[][] ]]
-  auto executeBatch = HOSTFN("executeBatch", 2) {
+  auto execute_batch = HOSTFN("executeBatch", 2) {
     if (sizeof(args) < 2) {
       throw std::runtime_error(
           "[op-sqlite][executeBatch] - Incorrect parameter count");
@@ -379,7 +377,7 @@ void install(jsi::Runtime &rt,
     }
   });
 
-  auto executeBatchAsync = HOSTFN("executeBatchAsync", 2) {
+  auto execute_batch_async = HOSTFN("executeBatchAsync", 2) {
     if (sizeof(args) < 2) {
       throw std::runtime_error(
           "[op-sqlite][executeAsyncBatch] Incorrect parameter count");
@@ -437,7 +435,7 @@ void install(jsi::Runtime &rt,
         return promise;
   });
 
-  auto loadFile = HOSTFN("loadFile", 2) {
+  auto load_file = HOSTFN("loadFile", 2) {
     if (sizeof(args) < 2) {
       throw std::runtime_error(
           "[op-sqlite][loadFileAsync] Incorrect parameter count");
@@ -480,7 +478,7 @@ void install(jsi::Runtime &rt,
         return promise;
   });
 
-  auto updateHook = HOSTFN("updateHook", 2) {
+  auto update_hook = HOSTFN("updateHook", 2) {
     if (sizeof(args) < 2) {
       throw std::runtime_error("[op-sqlite][updateHook] Incorrect parameters: "
                                "dbName and callback needed");
@@ -538,7 +536,7 @@ void install(jsi::Runtime &rt,
     return {};
   });
 
-  auto commitHook = HOSTFN("commitHook", 2) {
+  auto commit_hook = HOSTFN("commitHook", 2) {
     if (sizeof(args) < 2) {
       throw std::runtime_error("[op-sqlite][commitHook] Incorrect parameters: "
                                "dbName and callback needed");
@@ -563,7 +561,7 @@ void install(jsi::Runtime &rt,
     return {};
   });
 
-  auto rollbackHook = HOSTFN("rollbackHook", 2) {
+  auto rollback_hook = HOSTFN("rollbackHook", 2) {
     if (sizeof(args) < 2) {
       throw std::runtime_error(
           "[op-sqlite][rollbackHook] Incorrect parameters: "
@@ -589,7 +587,7 @@ void install(jsi::Runtime &rt,
     return {};
   });
 
-  auto prepareStatement = HOSTFN("prepareStatement", 1) {
+  auto prepare_statement = HOSTFN("prepareStatement", 1) {
     auto dbName = args[0].asString(rt).utf8(rt);
     auto query = args[1].asString(rt).utf8(rt);
 
@@ -624,14 +622,14 @@ void install(jsi::Runtime &rt,
   module.setProperty(rt, "detach", std::move(detach));
   module.setProperty(rt, "delete", std::move(remove));
   module.setProperty(rt, "execute", std::move(execute));
-  module.setProperty(rt, "executeAsync", std::move(executeAsync));
-  module.setProperty(rt, "executeBatch", std::move(executeBatch));
-  module.setProperty(rt, "executeBatchAsync", std::move(executeBatchAsync));
-  module.setProperty(rt, "loadFile", std::move(loadFile));
-  module.setProperty(rt, "updateHook", std::move(updateHook));
-  module.setProperty(rt, "commitHook", std::move(commitHook));
-  module.setProperty(rt, "rollbackHook", std::move(rollbackHook));
-  module.setProperty(rt, "prepareStatement", std::move(prepareStatement));
+  module.setProperty(rt, "executeAsync", std::move(execute_async));
+  module.setProperty(rt, "executeBatch", std::move(execute_batch));
+  module.setProperty(rt, "executeBatchAsync", std::move(execute_batch_async));
+  module.setProperty(rt, "loadFile", std::move(load_file));
+  module.setProperty(rt, "updateHook", std::move(update_hook));
+  module.setProperty(rt, "commitHook", std::move(commit_hook));
+  module.setProperty(rt, "rollbackHook", std::move(rollback_hook));
+  module.setProperty(rt, "prepareStatement", std::move(prepare_statement));
   module.setProperty(rt, "loadExtension", std::move(load_extension));
   module.setProperty(rt, "executeRawAsync", std::move(execute_raw_async));
 
