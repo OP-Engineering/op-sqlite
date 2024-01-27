@@ -892,6 +892,10 @@ BridgeResult sqlite_deregister_rollback_hook(std::string const &dbName) {
 
 BridgeResult sqlite_load_extension(std::string &db_name, std::string &path,
                                    std::string &entry_point) {
+#ifdef OP_SQLITE_USE_PHONE_VERSION
+  throw std::runtime_error(
+      "Embedded version of SQLite does not support loading extensions");
+#else
   if (dbMap.count(db_name) == 0) {
     return {SQLiteError, "[op-sqlite] Database not open"};
   }
@@ -915,6 +919,7 @@ BridgeResult sqlite_load_extension(std::string &db_name, std::string &path,
     return {SQLiteError, std::string(error_message)};
   }
   return {SQLiteOk};
+#endif
 }
 
 } // namespace opsqlite
