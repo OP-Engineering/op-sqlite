@@ -12,6 +12,13 @@ namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 
+/// Convenience types to avoid super long types
+typedef std::function<void(std::string dbName, std::string tableName,
+                           std::string operation, int rowId)>
+    UpdateCallback;
+typedef std::function<void(std::string dbName)> CommitCallback;
+typedef std::function<void(std::string dbName)> RollbackCallback;
+
 BridgeResult sqlite_open(std::string const &dbName, std::string const &dbPath);
 
 BridgeResult sqlite_close(std::string const &dbName);
@@ -43,18 +50,14 @@ BridgeResult sqlite_execute_literal(std::string const &dbName,
 
 void sqlite_close_all();
 
-BridgeResult sqlite_register_update_hook(
-    std::string const &dbName,
-    std::function<void(std::string dbName, std::string tableName,
-                       std::string operation, int rowId)> const callback);
+BridgeResult sqlite_register_update_hook(std::string const &dbName,
+                                         UpdateCallback const callback);
 BridgeResult sqlite_deregister_update_hook(std::string const &dbName);
-BridgeResult sqlite_register_commit_hook(
-    std::string const &dbName,
-    std::function<void(std::string dbName)> const callback);
+BridgeResult sqlite_register_commit_hook(std::string const &dbName,
+                                         CommitCallback const callback);
 BridgeResult sqlite_deregister_commit_hook(std::string const &dbName);
-BridgeResult sqlite_register_rollback_hook(
-    std::string const &dbName,
-    std::function<void(std::string dbName)> const callback);
+BridgeResult sqlite_register_rollback_hook(std::string const &dbName,
+                                           RollbackCallback const callback);
 BridgeResult sqlite_deregister_rollback_hook(std::string const &dbName);
 
 sqlite3_stmt *sqlite_prepare_statement(std::string const &dbName,
