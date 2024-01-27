@@ -291,6 +291,7 @@
 				DEVELOPMENT_TEAM = 24CMR7378R;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = OPSQLiteExample/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "OP SQLite";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -317,6 +318,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 24CMR7378R;
 				INFOPLIST_FILE = OPSQLiteExample/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "OP SQLite";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -406,16 +408,12 @@
 				);
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_CFLAGS = "$(inherited)  ";
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(OTHER_CFLAGS)",
 					"-DFOLLY_NO_CONFIG",
 					"-DFOLLY_MOBILE=1",
 					"-DFOLLY_USE_LIBCPP=1",
-					" ",
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -496,16 +494,12 @@
 					"\"$(inherited)\"",
 				);
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_CFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_CFLAGS = "$(inherited)  ";
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(OTHER_CFLAGS)",
 					"-DFOLLY_NO_CONFIG",
 					"-DFOLLY_MOBILE=1",
 					"-DFOLLY_USE_LIBCPP=1",
-					" ",
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",

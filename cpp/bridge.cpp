@@ -3,32 +3,31 @@
 #include "SmartHostObject.h"
 #include "logs.h"
 #include "utils.h"
-#include <ctime>
 #include <unordered_map>
 #include <variant>
 
 namespace opsqlite {
 
+/// Convenience types to avoid super long types
+typedef std::function<void(std::string dbName, std::string tableName,
+                           std::string operation, int rowId)>
+    UpdateCallback;
+typedef std::function<void(std::string dbName)> CommitCallback;
+typedef std::function<void(std::string dbName)> RollbackCallback;
+
+/// Maps to hold the different objects
 std::unordered_map<std::string, sqlite3 *> dbMap =
     std::unordered_map<std::string, sqlite3 *>();
-std::unordered_map<std::string,
-                   std::function<void(std::string dbName, std::string tableName,
-                                      std::string operation, int rowId)>>
-    updateCallbackMap = std::unordered_map<
-        std::string,
-        std::function<void(std::string dbName, std::string tableName,
-                           std::string operation, int rowId)>>();
+std::unordered_map<std::string, UpdateCallback> updateCallbackMap =
+    std::unordered_map<std::string, UpdateCallback>();
 
-std::unordered_map<std::string, std::function<void(std::string dbName)>>
-    commitCallbackMap =
-        std::unordered_map<std::string,
-                           std::function<void(std::string dbName)>>();
+std::unordered_map<std::string, CommitCallback> commitCallbackMap =
+    std::unordered_map<std::string, CommitCallback>();
 
-std::unordered_map<std::string, std::function<void(std::string dbName)>>
-    rollbackCallbackMap =
-        std::unordered_map<std::string,
-                           std::function<void(std::string dbName)>>();
+std::unordered_map<std::string, RollbackCallback> rollbackCallbackMap =
+    std::unordered_map<std::string, RollbackCallback>();
 
+/// Start of api
 std::string get_db_path(std::string const dbName, std::string const lastPath) {
   if (lastPath == ":memory:") {
     return lastPath;
@@ -57,14 +56,15 @@ BridgeResult sqlite_open(std::string const &dbName,
   return BridgeResult{.type = SQLiteOk, .affectedRows = 0};
 }
 
+inline void check_db_open(std::string const &db_name) {
+  if (dbMap.count(db_name) == 0) {
+    throw std::runtime_error("[OP-SQLite] DB is not open");
+  }
+}
+
 BridgeResult sqlite_close(std::string const &dbName) {
 
-  if (dbMap.count(dbName) == 0) {
-    return {
-        .type = SQLiteError,
-        .message = dbName + " is not open",
-    };
-  }
+  check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
 
@@ -145,8 +145,8 @@ BridgeResult sqlite_remove(std::string const &dbName,
   };
 }
 
-inline void bindStatement(sqlite3_stmt *statement,
-                          const std::vector<JSVariant> *values) {
+void sqlite_bind_statement(sqlite3_stmt *statement,
+                           const std::vector<JSVariant> *values) {
   size_t size = values->size();
 
   for (int ii = 0; ii < size; ii++) {
@@ -175,19 +175,12 @@ inline void bindStatement(sqlite3_stmt *statement,
   }
 }
 
-void sqlite_bind_statement(sqlite3_stmt *statement,
-                           const std::vector<JSVariant> *params) {
-  bindStatement(statement, params);
-}
-
 BridgeResult sqlite_execute_prepared_statement(
     std::string const &dbName, sqlite3_stmt *statement,
     std::vector<DumbHostObject> *results,
     std::shared_ptr<std::vector<SmartHostObject>> metadatas) {
-  if (dbMap.find(dbName) == dbMap.end()) {
-    return {.type = SQLiteError,
-            .message = "[op-sqlite]: Database " + dbName + " is not open"};
-  }
+
+  check_db_open(dbName);
 
   sqlite3_reset(statement);
 
@@ -321,9 +314,7 @@ BridgeResult sqlite_execute_prepared_statement(
 
 sqlite3_stmt *sqlite_prepare_statement(std::string const &dbName,
                                        std::string const &query) {
-  if (dbMap.find(dbName) == dbMap.end()) {
-    throw std::runtime_error("Database not opened");
-  }
+  check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
 
@@ -348,10 +339,7 @@ sqlite_execute(std::string const &dbName, std::string const &query,
                std::vector<DumbHostObject> *results,
                std::shared_ptr<std::vector<SmartHostObject>> metadatas) {
 
-  if (dbMap.find(dbName) == dbMap.end()) {
-    return {.type = SQLiteError,
-            .message = "[op-sqlite]: Database " + dbName + " is not open"};
-  }
+  check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
 
@@ -389,7 +377,7 @@ sqlite_execute(std::string const &dbName, std::string const &query,
     }
 
     if (params != nullptr && params->size() > 0) {
-      bindStatement(statement, params);
+      sqlite_bind_statement(statement, params);
     }
 
     isConsuming = true;
@@ -523,10 +511,7 @@ BridgeResult sqlite_execute_raw(std::string const &dbName,
                                 const std::vector<JSVariant> *params,
                                 std::vector<std::vector<JSVariant>> *results) {
 
-  if (dbMap.find(dbName) == dbMap.end()) {
-    return {.type = SQLiteError,
-            .message = "[op-sqlite]: Database " + dbName + " is not open"};
-  }
+  check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
 
@@ -564,7 +549,7 @@ BridgeResult sqlite_execute_raw(std::string const &dbName,
     }
 
     if (params != nullptr && params->size() > 0) {
-      bindStatement(statement, params);
+      sqlite_bind_statement(statement, params);
     }
 
     isConsuming = true;
@@ -619,8 +604,6 @@ BridgeResult sqlite_execute_raw(std::string const &dbName,
             int blob_size = sqlite3_column_bytes(statement, i);
             const void *blob = sqlite3_column_blob(statement, i);
             uint8_t *data = new uint8_t[blob_size];
-            // You cannot share raw memory between native and JS
-            // always copy the data
             memcpy(data, blob, blob_size);
             row.push_back(
                 JSVariant(ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
@@ -678,9 +661,7 @@ BridgeResult sqlite_execute_raw(std::string const &dbName,
 
 BridgeResult sqlite_execute_literal(std::string const &dbName,
                                     std::string const &query) {
-  if (dbMap.count(dbName) == 0) {
-    return {SQLiteError, "[op-sqlite] Database not opened: " + dbName};
-  }
+  check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
   sqlite3_stmt *statement;
@@ -772,9 +753,8 @@ BridgeResult sqlite_register_update_hook(
     std::string const &dbName,
     std::function<void(std::string dbName, std::string tableName,
                        std::string operation, int rowId)> const callback) {
-  if (dbMap.count(dbName) == 0) {
-    return {SQLiteError, "[op-sqlite] Database not opened: " + dbName};
-  }
+
+  check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
   updateCallbackMap[dbName] = callback;
@@ -793,9 +773,7 @@ BridgeResult sqlite_register_update_hook(
 }
 
 BridgeResult sqlite_deregister_update_hook(std::string const &dbName) {
-  if (dbMap.count(dbName) == 0) {
-    return {SQLiteError, "[op-sqlite] Database not opened: " + dbName};
-  }
+  check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
   updateCallbackMap.erase(dbName);
@@ -816,9 +794,7 @@ int commit_callback(void *dbName) {
 BridgeResult sqlite_register_commit_hook(
     std::string const &dbName,
     std::function<void(std::string dbName)> const callback) {
-  if (dbMap.count(dbName) == 0) {
-    return {SQLiteError, "[op-sqlite] Database not opened: " + dbName};
-  }
+  check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
   commitCallbackMap[dbName] = callback;
@@ -837,9 +813,7 @@ BridgeResult sqlite_register_commit_hook(
 }
 
 BridgeResult sqlite_deregister_commit_hook(std::string const &dbName) {
-  if (dbMap.count(dbName) == 0) {
-    return {SQLiteError, "[op-sqlite] Database not opened: " + dbName};
-  }
+  check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
   commitCallbackMap.erase(dbName);
@@ -857,9 +831,7 @@ void rollback_callback(void *dbName) {
 BridgeResult sqlite_register_rollback_hook(
     std::string const &dbName,
     std::function<void(std::string dbName)> const callback) {
-  if (dbMap.count(dbName) == 0) {
-    return {SQLiteError, "[op-sqlite] Database not opened: " + dbName};
-  }
+  check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
   rollbackCallbackMap[dbName] = callback;
@@ -878,9 +850,7 @@ BridgeResult sqlite_register_rollback_hook(
 }
 
 BridgeResult sqlite_deregister_rollback_hook(std::string const &dbName) {
-  if (dbMap.count(dbName) == 0) {
-    return {SQLiteError, "[op-sqlite] Database not opened: " + dbName};
-  }
+  check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
   rollbackCallbackMap.erase(dbName);
@@ -896,9 +866,7 @@ BridgeResult sqlite_load_extension(std::string &db_name, std::string &path,
   throw std::runtime_error(
       "Embedded version of SQLite does not support loading extensions");
 #else
-  if (dbMap.count(db_name) == 0) {
-    return {SQLiteError, "[op-sqlite] Database not open"};
-  }
+  check_db_open(db_name);
 
   sqlite3 *db = dbMap[db_name];
   int loading_extensions_enabled = sqlite3_enable_load_extension(db, 1);
