@@ -35,7 +35,7 @@ bool invalidated = false;
 void clearState() {
   invalidated = true;
   // Will terminate all operations and database connections
-  sqlite_close_all();
+  opsqlite_close_all();
   // We then join all the threads before the context gets invalidated
   pool.restartPool();
   updateHooks.clear();
@@ -80,7 +80,7 @@ void install(jsi::Runtime &rt,
       }
     }
 
-    BridgeResult result = sqlite_open(dbName, path);
+    BridgeResult result = opsqlite_open(dbName, path);
 
     if (result.type == SQLiteError) {
       throw std::runtime_error(result.message);
@@ -114,7 +114,7 @@ void install(jsi::Runtime &rt,
     std::string databaseToAttach = args[1].asString(rt).utf8(rt);
     std::string alias = args[2].asString(rt).utf8(rt);
     BridgeResult result =
-        sqlite_attach(dbName, tempDocPath, databaseToAttach, alias);
+        opsqlite_attach(dbName, tempDocPath, databaseToAttach, alias);
 
     if (result.type == SQLiteError) {
       throw std::runtime_error(result.message);
@@ -136,7 +136,7 @@ void install(jsi::Runtime &rt,
 
     std::string dbName = args[0].asString(rt).utf8(rt);
     std::string alias = args[1].asString(rt).utf8(rt);
-    BridgeResult result = sqlite_detach(dbName, alias);
+    BridgeResult result = opsqlite_detach(dbName, alias);
 
     if (result.type == SQLiteError) {
       throw jsi::JSError(rt, result.message.c_str());
@@ -157,7 +157,7 @@ void install(jsi::Runtime &rt,
 
     std::string dbName = args[0].asString(rt).utf8(rt);
 
-    BridgeResult result = sqlite_close(dbName);
+    BridgeResult result = opsqlite_close(dbName);
 
     if (result.type == SQLiteError) {
       throw jsi::JSError(rt, result.message.c_str());
@@ -189,7 +189,7 @@ void install(jsi::Runtime &rt,
       tempDocPath = tempDocPath + "/" + args[1].asString(rt).utf8(rt);
     }
 
-    BridgeResult result = sqlite_remove(dbName, tempDocPath);
+    BridgeResult result = opsqlite_remove(dbName, tempDocPath);
 
     if (result.type == SQLiteError) {
       throw std::runtime_error(result.message);
@@ -212,7 +212,7 @@ void install(jsi::Runtime &rt,
     std::shared_ptr<std::vector<SmartHostObject>> metadata =
         std::make_shared<std::vector<SmartHostObject>>();
 
-    auto status = sqlite_execute(dbName, query, &params, &results, metadata);
+    auto status = opsqlite_execute(dbName, query, &params, &results, metadata);
 
     if (status.type == SQLiteError) {
       throw std::runtime_error(status.message);
@@ -245,7 +245,7 @@ void install(jsi::Runtime &rt,
         try {
           std::vector<std::vector<JSVariant>> results;
 
-          auto status = sqlite_execute_raw(dbName, query, &params, &results);
+          auto status = opsqlite_execute_raw(dbName, query, &params, &results);
 
           if (invalidated) {
             return;
@@ -309,7 +309,7 @@ void install(jsi::Runtime &rt,
               std::make_shared<std::vector<SmartHostObject>>();
 
           auto status =
-              sqlite_execute(dbName, query, &params, &results, metadata);
+              opsqlite_execute(dbName, query, &params, &results, metadata);
 
           if (invalidated) {
             return;
@@ -489,7 +489,7 @@ void install(jsi::Runtime &rt,
     auto callback = std::make_shared<jsi::Value>(rt, args[1]);
 
     if (callback->isUndefined() || callback->isNull()) {
-      sqlite_deregister_update_hook(dbName);
+      opsqlite_deregister_update_hook(dbName);
       return {};
     }
 
@@ -501,12 +501,11 @@ void install(jsi::Runtime &rt,
       std::vector<DumbHostObject> results;
       std::shared_ptr<std::vector<SmartHostObject>> metadata =
           std::make_shared<std::vector<SmartHostObject>>();
-      ;
 
       if (operation != "DELETE") {
         std::string query = "SELECT * FROM " + tableName +
                             " where rowid = " + std::to_string(rowId) + ";";
-        sqlite_execute(dbName, query, &params, &results, metadata);
+        opsqlite_execute(dbName, query, &params, &results, metadata);
       }
 
       invoker->invokeAsync(
@@ -531,7 +530,7 @@ void install(jsi::Runtime &rt,
           });
     };
 
-    sqlite_register_update_hook(dbName, std::move(hook));
+    opsqlite_register_update_hook(dbName, std::move(hook));
 
     return {};
   });
@@ -546,7 +545,7 @@ void install(jsi::Runtime &rt,
     auto dbName = args[0].asString(rt).utf8(rt);
     auto callback = std::make_shared<jsi::Value>(rt, args[1]);
     if (callback->isUndefined() || callback->isNull()) {
-      sqlite_deregister_commit_hook(dbName);
+      opsqlite_deregister_commit_hook(dbName);
       return {};
     }
     commitHooks[dbName] = callback;
@@ -556,7 +555,7 @@ void install(jsi::Runtime &rt,
           [&rt, callback] { callback->asObject(rt).asFunction(rt).call(rt); });
     };
 
-    sqlite_register_commit_hook(dbName, std::move(hook));
+    opsqlite_register_commit_hook(dbName, std::move(hook));
 
     return {};
   });
@@ -573,7 +572,7 @@ void install(jsi::Runtime &rt,
     auto callback = std::make_shared<jsi::Value>(rt, args[1]);
 
     if (callback->isUndefined() || callback->isNull()) {
-      sqlite_deregister_rollback_hook(dbName);
+      opsqlite_deregister_rollback_hook(dbName);
       return {};
     }
     rollbackHooks[dbName] = callback;
@@ -583,7 +582,7 @@ void install(jsi::Runtime &rt,
           [&rt, callback] { callback->asObject(rt).asFunction(rt).call(rt); });
     };
 
-    sqlite_register_rollback_hook(dbName, std::move(hook));
+    opsqlite_register_rollback_hook(dbName, std::move(hook));
     return {};
   });
 
@@ -591,7 +590,7 @@ void install(jsi::Runtime &rt,
     auto dbName = args[0].asString(rt).utf8(rt);
     auto query = args[1].asString(rt).utf8(rt);
 
-    sqlite3_stmt *statement = sqlite_prepare_statement(dbName, query);
+    sqlite3_stmt *statement = opsqlite_prepare_statement(dbName, query);
 
     auto preparedStatementHostObject =
         std::make_shared<PreparedStatementHostObject>(dbName, statement);
@@ -607,7 +606,7 @@ void install(jsi::Runtime &rt,
       entryPoint = args[2].asString(rt).utf8(rt);
     }
 
-    auto result = sqlite_load_extension(db_name, path, entryPoint);
+    auto result = opsqlite_load_extension(db_name, path, entryPoint);
     if (result.type == SQLiteError) {
       throw std::runtime_error(result.message);
     }
