@@ -20,27 +20,39 @@ std::unordered_map<std::string, CommitCallback> commitCallbackMap =
 std::unordered_map<std::string, RollbackCallback> rollbackCallbackMap =
     std::unordered_map<std::string, RollbackCallback>();
 
-/// Start of api
-std::string get_db_path(std::string const dbName, std::string const lastPath) {
-  if (lastPath == ":memory:") {
-    return lastPath;
+inline void check_db_open(std::string const &db_name) {
+  if (dbMap.count(db_name) == 0) {
+    throw std::runtime_error("[OP-SQLite] DB is not open");
   }
-  mkdir(lastPath);
-  return lastPath + "/" + dbName;
 }
 
-BridgeResult sqlite_open(std::string const &dbName,
-                         std::string const &lastPath) {
+/// Start of api
+
+/// Returns the completely formed db path, but it also creates any sub-folders
+/// along the way
+std::string get_db_path(std::string const &db_name,
+                        std::string const &location) {
+
+  if (location == ":memory:") {
+    return location;
+  }
+
+  mkdir(location);
+  return location + "/" + db_name;
+}
+
+BridgeResult opsqlite_open(std::string const &dbName,
+                           std::string const &lastPath) {
   std::string dbPath = get_db_path(dbName, lastPath);
 
   int sqlOpenFlags =
       SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
 
   sqlite3 *db;
-  int exit = 0;
-  exit = sqlite3_open_v2(dbPath.c_str(), &db, sqlOpenFlags, nullptr);
 
-  if (exit != SQLITE_OK) {
+  int status = sqlite3_open_v2(dbPath.c_str(), &db, sqlOpenFlags, nullptr);
+
+  if (status != SQLITE_OK) {
     return {.type = SQLiteError, .message = sqlite3_errmsg(db)};
   }
 
@@ -49,13 +61,7 @@ BridgeResult sqlite_open(std::string const &dbName,
   return BridgeResult{.type = SQLiteOk, .affectedRows = 0};
 }
 
-inline void check_db_open(std::string const &db_name) {
-  if (dbMap.count(db_name) == 0) {
-    throw std::runtime_error("[OP-SQLite] DB is not open");
-  }
-}
-
-BridgeResult sqlite_close(std::string const &dbName) {
+BridgeResult opsqlite_close(std::string const &dbName) {
 
   check_db_open(dbName);
 
@@ -70,10 +76,10 @@ BridgeResult sqlite_close(std::string const &dbName) {
   };
 }
 
-BridgeResult sqlite_attach(std::string const &mainDBName,
-                           std::string const &docPath,
-                           std::string const &databaseToAttach,
-                           std::string const &alias) {
+BridgeResult opsqlite_attach(std::string const &mainDBName,
+                             std::string const &docPath,
+                             std::string const &databaseToAttach,
+                             std::string const &alias) {
   /**
    * There is no need to check if mainDBName is opened because
    * sqliteExecuteLiteral will do that.
@@ -81,7 +87,7 @@ BridgeResult sqlite_attach(std::string const &mainDBName,
   std::string dbPath = get_db_path(databaseToAttach, docPath);
   std::string statement = "ATTACH DATABASE '" + dbPath + "' AS " + alias;
 
-  BridgeResult result = sqlite_execute_literal(mainDBName, statement);
+  BridgeResult result = opsqlite_execute_literal(mainDBName, statement);
 
   if (result.type == SQLiteError) {
     return {
@@ -95,14 +101,14 @@ BridgeResult sqlite_attach(std::string const &mainDBName,
   };
 }
 
-BridgeResult sqlite_detach(std::string const &mainDBName,
-                           std::string const &alias) {
+BridgeResult opsqlite_detach(std::string const &mainDBName,
+                             std::string const &alias) {
   /**
    * There is no need to check if mainDBName is opened because
    * sqliteExecuteLiteral will do that.
    * */
   std::string statement = "DETACH DATABASE " + alias;
-  BridgeResult result = sqlite_execute_literal(mainDBName, statement);
+  BridgeResult result = opsqlite_execute_literal(mainDBName, statement);
   if (result.type == SQLiteError) {
     return BridgeResult{
         .type = SQLiteError,
@@ -115,10 +121,10 @@ BridgeResult sqlite_detach(std::string const &mainDBName,
   };
 }
 
-BridgeResult sqlite_remove(std::string const &dbName,
-                           std::string const &docPath) {
+BridgeResult opsqlite_remove(std::string const &dbName,
+                             std::string const &docPath) {
   if (dbMap.count(dbName) == 1) {
-    BridgeResult closeResult = sqlite_close(dbName);
+    BridgeResult closeResult = opsqlite_close(dbName);
     if (closeResult.type == SQLiteError) {
       return closeResult;
     }
@@ -138,8 +144,8 @@ BridgeResult sqlite_remove(std::string const &dbName,
   };
 }
 
-void sqlite_bind_statement(sqlite3_stmt *statement,
-                           const std::vector<JSVariant> *values) {
+inline void opsqlite_bind_statement(sqlite3_stmt *statement,
+                                    const std::vector<JSVariant> *values) {
   size_t size = values->size();
 
   for (int ii = 0; ii < size; ii++) {
@@ -168,7 +174,7 @@ void sqlite_bind_statement(sqlite3_stmt *statement,
   }
 }
 
-BridgeResult sqlite_execute_prepared_statement(
+BridgeResult opsqlite_execute_prepared_statement(
     std::string const &dbName, sqlite3_stmt *statement,
     std::vector<DumbHostObject> *results,
     std::shared_ptr<std::vector<SmartHostObject>> metadatas) {
@@ -305,8 +311,8 @@ BridgeResult sqlite_execute_prepared_statement(
           .insertId = static_cast<double>(latestInsertRowId)};
 }
 
-sqlite3_stmt *sqlite_prepare_statement(std::string const &dbName,
-                                       std::string const &query) {
+sqlite3_stmt *opsqlite_prepare_statement(std::string const &dbName,
+                                         std::string const &query) {
   check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
@@ -326,11 +332,12 @@ sqlite3_stmt *sqlite_prepare_statement(std::string const &dbName,
   return statement;
 }
 
+/// Base execution function, returns HostObjects to the JS environment
 BridgeResult
-sqlite_execute(std::string const &dbName, std::string const &query,
-               const std::vector<JSVariant> *params,
-               std::vector<DumbHostObject> *results,
-               std::shared_ptr<std::vector<SmartHostObject>> metadatas) {
+opsqlite_execute(std::string const &dbName, std::string const &query,
+                 const std::vector<JSVariant> *params,
+                 std::vector<DumbHostObject> *results,
+                 std::shared_ptr<std::vector<SmartHostObject>> metadatas) {
 
   check_db_open(dbName);
 
@@ -370,7 +377,7 @@ sqlite_execute(std::string const &dbName, std::string const &query,
     }
 
     if (params != nullptr && params->size() > 0) {
-      sqlite_bind_statement(statement, params);
+      opsqlite_bind_statement(statement, params);
     }
 
     isConsuming = true;
@@ -499,10 +506,12 @@ sqlite_execute(std::string const &dbName, std::string const &query,
           .insertId = static_cast<double>(latestInsertRowId)};
 }
 
-BridgeResult sqlite_execute_raw(std::string const &dbName,
-                                std::string const &query,
-                                const std::vector<JSVariant> *params,
-                                std::vector<std::vector<JSVariant>> *results) {
+/// Executes returning data in raw arrays, a small performance optimization for
+/// certain use cases
+BridgeResult
+opsqlite_execute_raw(std::string const &dbName, std::string const &query,
+                     const std::vector<JSVariant> *params,
+                     std::vector<std::vector<JSVariant>> *results) {
 
   check_db_open(dbName);
 
@@ -542,7 +551,7 @@ BridgeResult sqlite_execute_raw(std::string const &dbName,
     }
 
     if (params != nullptr && params->size() > 0) {
-      sqlite_bind_statement(statement, params);
+      opsqlite_bind_statement(statement, params);
     }
 
     isConsuming = true;
@@ -652,8 +661,10 @@ BridgeResult sqlite_execute_raw(std::string const &dbName,
           .insertId = static_cast<double>(latestInsertRowId)};
 }
 
-BridgeResult sqlite_execute_literal(std::string const &dbName,
-                                    std::string const &query) {
+/// Executes without returning any results, Useful for performance critical
+/// operations
+BridgeResult opsqlite_execute_literal(std::string const &dbName,
+                                      std::string const &query) {
   check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
@@ -704,7 +715,7 @@ BridgeResult sqlite_execute_literal(std::string const &dbName,
   return {SQLiteOk, "", changedRowCount};
 }
 
-void sqlite_close_all() {
+void opsqlite_close_all() {
   for (auto const &x : dbMap) {
     // Interrupt will make all pending operations to fail with SQLITE_INTERRUPT
     // The ongoing work from threads will then fail ASAP
@@ -742,8 +753,8 @@ void update_callback(void *dbName, int operation_type, char const *database,
            static_cast<int>(rowid));
 }
 
-BridgeResult sqlite_register_update_hook(std::string const &dbName,
-                                         UpdateCallback const callback) {
+BridgeResult opsqlite_register_update_hook(std::string const &dbName,
+                                           UpdateCallback const callback) {
   check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
@@ -762,7 +773,7 @@ BridgeResult sqlite_register_update_hook(std::string const &dbName,
   return {SQLiteOk};
 }
 
-BridgeResult sqlite_deregister_update_hook(std::string const &dbName) {
+BridgeResult opsqlite_deregister_update_hook(std::string const &dbName) {
   check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
@@ -781,8 +792,8 @@ int commit_callback(void *dbName) {
   return 0;
 }
 
-BridgeResult sqlite_register_commit_hook(std::string const &dbName,
-                                         CommitCallback const callback) {
+BridgeResult opsqlite_register_commit_hook(std::string const &dbName,
+                                           CommitCallback const callback) {
   check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
@@ -801,7 +812,7 @@ BridgeResult sqlite_register_commit_hook(std::string const &dbName,
   return {SQLiteOk};
 }
 
-BridgeResult sqlite_deregister_commit_hook(std::string const &dbName) {
+BridgeResult opsqlite_deregister_commit_hook(std::string const &dbName) {
   check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
@@ -817,8 +828,8 @@ void rollback_callback(void *dbName) {
   callback(strDbName);
 }
 
-BridgeResult sqlite_register_rollback_hook(std::string const &dbName,
-                                           RollbackCallback const callback) {
+BridgeResult opsqlite_register_rollback_hook(std::string const &dbName,
+                                             RollbackCallback const callback) {
   check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
@@ -837,7 +848,7 @@ BridgeResult sqlite_register_rollback_hook(std::string const &dbName,
   return {SQLiteOk};
 }
 
-BridgeResult sqlite_deregister_rollback_hook(std::string const &dbName) {
+BridgeResult opsqlite_deregister_rollback_hook(std::string const &dbName) {
   check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
@@ -848,8 +859,8 @@ BridgeResult sqlite_deregister_rollback_hook(std::string const &dbName) {
   return {SQLiteOk};
 }
 
-BridgeResult sqlite_load_extension(std::string &db_name, std::string &path,
-                                   std::string &entry_point) {
+BridgeResult opsqlite_load_extension(std::string &db_name, std::string &path,
+                                     std::string &entry_point) {
 #ifdef OP_SQLITE_USE_PHONE_VERSION
   throw std::runtime_error(
       "Embedded version of SQLite does not support loading extensions");
