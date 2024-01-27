@@ -38,7 +38,7 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
       const jsi::Value &js_params = args[0];
       std::vector<JSVariant> params = toVariantVec(rt, js_params);
 
-      sqlite_bind_statement(_statement, &params);
+      opsqlite_bind_statement(_statement, &params);
 
       return {};
     });
@@ -53,8 +53,8 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
       std::shared_ptr<std::vector<SmartHostObject>> metadata =
           std::make_shared<std::vector<SmartHostObject>>();
 
-      auto status = sqlite_execute_prepared_statement(_dbName, _statement,
-                                                      &results, metadata);
+      auto status = opsqlite_execute_prepared_statement(_dbName, _statement,
+                                                        &results, metadata);
 
       if (status.type == SQLiteError) {
         throw std::runtime_error(status.message);

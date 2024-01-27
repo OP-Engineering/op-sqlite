@@ -74,12 +74,6 @@ export default function App() {
     setIsLoading(false);
   };
 
-  const openSampleDB = async () => {
-    const sampleDb = open({
-      name: 'sampleDB',
-    });
-  };
-
   const queryLargeDb = async () => {
     try {
       setIsLoading(true);
@@ -106,27 +100,6 @@ export default function App() {
   const allTestsPassed = results.reduce((acc: boolean, r: any) => {
     return acc && r.type !== 'incorrect';
   }, true);
-
-  const test = () => {
-    const testDB = open({
-      name: 'testDB',
-    });
-
-    // testDB.execute('DROP TABLE IF EXISTS segments;');
-
-    // testDB.execute(
-    //   `CREATE TABLE segments ("distance" REAL NOT NULL, "endDate" INTEGER NOT NULL, "id" TEXT PRIMARY KEY, "index" INTEGER NOT NULL, "region" TEXT NOT NULL, "speed" REAL NOT NULL, "startDate" INTEGER NOT NULL, "tripId" TEXT NOT NULL, "startLat" REAL NOT NULL, "startLng" REAL NOT NULL, "endLat" REAL NOT NULL, "endLng" REAL NOT NULL) STRICT;`,
-    // );
-
-    const sql = `SELECT EXISTS (
-      SELECT 1
-      FROM sqlite_master
-      WHERE type='table' 
-      AND name='your_table_name'
-    );
-    `;
-    testDB.execute(sql);
-  };
 
   const testAgainstMMKV = () => {
     const db = open({
@@ -170,15 +143,10 @@ export default function App() {
   return (
     <SafeAreaView className="flex-1 bg-neutral-900">
       <StyledScrollView>
-        <Text className=" text-white text-2xl p-2">
-          {pak.name.split('_').join(' ')}
-        </Text>
 
         <View className="flex-row p-2 bg-neutral-800 items-center">
           <Text className={'font-bold flex-1 text-white'}>Tools</Text>
         </View>
-        <Button title="Test" onPress={test} />
-        <Button title="Open Sample DB" onPress={openSampleDB} />
         <Button title="Reload app middle of query" onPress={queryAndReload} />
         <Button title="Create 300k Record DB" onPress={createLargeDb} />
         <Button title="Query 300k Records" onPress={queryLargeDb} />
