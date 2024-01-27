@@ -502,7 +502,7 @@ On iOS you can use the embedded SQLite, when running `pod-install` add an enviro
 OP_SQLITE_USE_PHONE_VERSION=1 npx pod-install
 ```
 
-On Android, it is not possible to link the OS SQLite. It is also a bad idea due to vendor changes, old android bugs, etc. Unfortunately, this means this library will add some megabytes to your app size.
+On Android, it is not possible to link the OS SQLite. It is also a bad idea due to vendor changes, old android bugs, etc. Unfortunately, this means this library will add some megabytes to your app size. Take note that the embedded version of SQLite does not support loading runtime extensions due to security concerns from apple.
 
 # Enable compile-time options
 
@@ -552,6 +552,24 @@ You will need to compile your extension for both iOS and Android and all the res
 On iOS, the SQLite database can be placed in an app group, in order to make it accessible from other apps in that app group. E.g. for sharing capabilities.
 
 To use an app group, add the app group ID as the value for the `OPSQLite_AppGroup` key in your project's `Info.plist` file. You'll also need to configure the app group in your project settings. (Xcode -> Project Settings -> Signing & Capabilities -> Add Capability -> App Groups)
+
+## use_frameworks
+
+If you are using `use_frameworks` (because one of your dependencies requires e.g. firebase), you might get a linking error since the OS version will try to be linked instead of the version compiled directly from sources. In order to get around this you can add the following into your Podfile:
+
+```ruby
+  pre_install do |installer|
+    installer.pod_targets.each do |pod|
+      if pod.name.eql?('op-sqlite')
+        def pod.build_type
+          Pod::BuildType.static_library
+        end
+      end
+    end
+  end
+```
+
+It will change the type of library only for op-sqlite only to static. This should be fine as SQLite is compiled from sources, so no missing symbols should be there.
 
 # Contribute
 
