@@ -8,13 +8,6 @@
 
 namespace opsqlite {
 
-/// Convenience types to avoid super long types
-typedef std::function<void(std::string dbName, std::string tableName,
-                           std::string operation, int rowId)>
-    UpdateCallback;
-typedef std::function<void(std::string dbName)> CommitCallback;
-typedef std::function<void(std::string dbName)> RollbackCallback;
-
 /// Maps to hold the different objects
 std::unordered_map<std::string, sqlite3 *> dbMap =
     std::unordered_map<std::string, sqlite3 *>();
@@ -749,11 +742,8 @@ void update_callback(void *dbName, int operation_type, char const *database,
            static_cast<int>(rowid));
 }
 
-BridgeResult sqlite_register_update_hook(
-    std::string const &dbName,
-    std::function<void(std::string dbName, std::string tableName,
-                       std::string operation, int rowId)> const callback) {
-
+BridgeResult sqlite_register_update_hook(std::string const &dbName,
+                                         UpdateCallback const callback) {
   check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
@@ -791,9 +781,8 @@ int commit_callback(void *dbName) {
   return 0;
 }
 
-BridgeResult sqlite_register_commit_hook(
-    std::string const &dbName,
-    std::function<void(std::string dbName)> const callback) {
+BridgeResult sqlite_register_commit_hook(std::string const &dbName,
+                                         CommitCallback const callback) {
   check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
@@ -828,9 +817,8 @@ void rollback_callback(void *dbName) {
   callback(strDbName);
 }
 
-BridgeResult sqlite_register_rollback_hook(
-    std::string const &dbName,
-    std::function<void(std::string dbName)> const callback) {
+BridgeResult sqlite_register_rollback_hook(std::string const &dbName,
+                                           RollbackCallback const callback) {
   check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
