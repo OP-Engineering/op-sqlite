@@ -257,7 +257,7 @@ BridgeResult opsqlite_execute_prepared_statement(
           // Intentionally left blank
 
         default:
-          row.values.push_back(JSVariant(NULL));
+          row.values.push_back(JSVariant(nullptr));
           break;
         }
         i++;
