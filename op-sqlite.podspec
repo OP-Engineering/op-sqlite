@@ -49,7 +49,7 @@ Pod::Spec.new do |s|
   end
 
   if ENV['OP_SQLITE_PERF'] == '2' then
-    puts "OP-SQLITE performance mode enabled! 🚀\n"
+    puts "OP-SQLITE (thread safe) performance mode enabled! 🚀\n"
     xcconfig[:OTHER_CFLAGS] = optimizedCflags + ' -DSQLITE_THREADSAFE=1 '
   end
 
