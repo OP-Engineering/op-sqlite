@@ -418,8 +418,9 @@ void install(jsi::Runtime &rt,
                                   jsi::Value(batchResult.affectedRows));
                   resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
                 } else {
-                  // TODO replace with reject
-                  throw jsi::JSError(rt, batchResult.message);
+                  auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+                  auto error = errorCtr.callAsConstructor(rt, jsi::String::createFromUtf8(rt, batchResult.message));
+                  reject->asObject(rt).asFunction(rt).call(rt, error);
                 }
               });
         } catch (std::exception &exc) {
@@ -438,7 +439,7 @@ void install(jsi::Runtime &rt,
   auto load_file = HOSTFN("loadFile", 2) {
     if (sizeof(args) < 2) {
       throw std::runtime_error(
-          "[op-sqlite][loadFileAsync] Incorrect parameter count");
+          "[op-sqlite][loadFile] Incorrect parameter count");
       return {};
     }
 
@@ -463,7 +464,9 @@ void install(jsi::Runtime &rt,
                   res.setProperty(rt, "commands", jsi::Value(result.commands));
                   resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
                 } else {
-                  throw jsi::JSError(rt, result.message);
+                  auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+                  auto error = errorCtr.callAsConstructor(rt, jsi::String::createFromUtf8(rt, result.message));
+                  reject->asObject(rt).asFunction(rt).call(rt, error);
                 }
               });
         } catch (std::exception &exc) {
