@@ -6,7 +6,7 @@ yarn add @op-engineering/op-sqlite && npx pod-install
 
 OP-SQLite embeds the latest version of SQLite and provides a low-level API to execute SQL queries.
 
-**Current SQLite version: 3.44.0**
+**Current SQLite version: 3.45.1**
 
 Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider sponsoring!**.
 
