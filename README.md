@@ -129,7 +129,7 @@ If you use [prepared statements](#prepared-statements) are useful to reduce the 
 
 # Perf flags
 
-You can turn on the performance flag to tweak all possible performance enhancing compilation flags, this greatly affects performance of sqlite itself:
+You can turn on the performance flag to tweak all possible performance enhancing compilation flags, this greatly affects performance of sqlite itself. Be aware this disables thread safety, you should only uses transactions (which operate based on a mutex in JS side) to avoid any issues.
 
 ```sh
 # For iOS install pods with the following env variable, you can also just an export like on Android
@@ -147,10 +147,7 @@ If correctly set you should see the following output in your console
 OP-SQLITE performance mode enabled! 🚀
 ```
 
-## Thread safety
-Please, note that OP_SQLITE_PERF=1 will disable Thread Safe support of SQLite, and you will be unable to use async methods from this library, otherwise it will crash.
-If you still want to have the benefits of the enhanced compilation flags and keep thread safety, you can use OP_SQLITE_PERF=2. This will have some performance loss (because of SQLite mutexes) but you can continue to use async background methods.
-
+If you want to keep SQLite thread safety based on mutexes, you can use OP_SQLITE_PERF=2. This flag will enable the general compilation flags, except DSQLITE_THREADSAFE=0.
 If correctly set you should see the following output in your console
 
 ```sh
