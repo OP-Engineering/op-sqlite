@@ -416,7 +416,7 @@ References: [Attach](https://www.sqlite.org/lang_attach.html) - [Detach](https:/
 ```ts
 db.attach('mainDatabase', 'statistics', 'stats', '../databases');
 
-const res = db.executeSql(
+const res = db.execute(
   'mainDatabase',
   'SELECT * FROM some_table_from_mainschema a INNER JOIN stats.some_table b on a.id_column = b.id_column'
 );
