@@ -410,19 +410,20 @@ void install(jsi::Runtime &rt,
                    resolve, reject]() {
         try {
           auto batchResult = sqliteExecuteBatch(dbName, commands.get());
-          invoker->invokeAsync(
-              [&rt, batchResult = std::move(batchResult), resolve, reject] {
-                if (batchResult.type == SQLiteOk) {
-                  auto res = jsi::Object(rt);
-                  res.setProperty(rt, "rowsAffected",
-                                  jsi::Value(batchResult.affectedRows));
-                  resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
-                } else {
-                  auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-                  auto error = errorCtr.callAsConstructor(rt, jsi::String::createFromUtf8(rt, batchResult.message));
-                  reject->asObject(rt).asFunction(rt).call(rt, error);
-                }
-              });
+          invoker->invokeAsync([&rt, batchResult = std::move(batchResult),
+                                resolve, reject] {
+            if (batchResult.type == SQLiteOk) {
+              auto res = jsi::Object(rt);
+              res.setProperty(rt, "rowsAffected",
+                              jsi::Value(batchResult.affectedRows));
+              resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
+            } else {
+              auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+              auto error = errorCtr.callAsConstructor(
+                  rt, jsi::String::createFromUtf8(rt, batchResult.message));
+              reject->asObject(rt).asFunction(rt).call(rt, error);
+            }
+          });
         } catch (std::exception &exc) {
           invoker->invokeAsync(
               [&rt, reject, &exc] { throw jsi::JSError(rt, exc.what()); });
@@ -455,20 +456,21 @@ void install(jsi::Runtime &rt,
         try {
           const auto importResult = importSQLFile(dbName, sqlFileName);
 
-          invoker->invokeAsync(
-              [&rt, result = std::move(importResult), resolve, reject] {
-                if (result.type == SQLiteOk) {
-                  auto res = jsi::Object(rt);
-                  res.setProperty(rt, "rowsAffected",
-                                  jsi::Value(result.affectedRows));
-                  res.setProperty(rt, "commands", jsi::Value(result.commands));
-                  resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
-                } else {
-                  auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-                  auto error = errorCtr.callAsConstructor(rt, jsi::String::createFromUtf8(rt, result.message));
-                  reject->asObject(rt).asFunction(rt).call(rt, error);
-                }
-              });
+          invoker->invokeAsync([&rt, result = std::move(importResult), resolve,
+                                reject] {
+            if (result.type == SQLiteOk) {
+              auto res = jsi::Object(rt);
+              res.setProperty(rt, "rowsAffected",
+                              jsi::Value(result.affectedRows));
+              res.setProperty(rt, "commands", jsi::Value(result.commands));
+              resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
+            } else {
+              auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+              auto error = errorCtr.callAsConstructor(
+                  rt, jsi::String::createFromUtf8(rt, result.message));
+              reject->asObject(rt).asFunction(rt).call(rt, error);
+            }
+          });
         } catch (std::exception &exc) {
           invoker->invokeAsync(
               [&rt, err = exc.what(), reject] { throw jsi::JSError(rt, err); });
