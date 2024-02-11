@@ -127,9 +127,9 @@ db.execute('PRAGMA journal_mode = MEMORY;'); // or OFF
 
 If you use [prepared statements](#prepared-statements) are useful to reduce the time of critical queries.
 
-# Perf flag
+# Perf flags
 
-You can turn on the performance flag to tweak all possible performance enhancing compilation flags, this greatly affects performance of sqlite itself:
+You can turn on the performance flag to tweak all possible performance enhancing compilation flags, this greatly affects performance of sqlite itself. Be aware this disables thread safety, you should only uses transactions (which operate based on a mutex in JS side) to avoid any issues.
 
 ```sh
 # For iOS install pods with the following env variable, you can also just an export like on Android
@@ -147,6 +147,14 @@ If correctly set you should see the following output in your console
 OP-SQLITE performance mode enabled! 🚀
 ```
 
+If you want to keep SQLite thread safety based on mutexes, you can use OP_SQLITE_PERF=2. This flag will enable the general compilation flags, except DSQLITE_THREADSAFE=0.
+If correctly set you should see the following output in your console
+
+```sh
+OP-SQLITE (thread safe) performance mode enabled! 🚀
+```
+
+Here you can read more about [SQLite Thread Safe](https://www.sqlite.org/threadsafe.html)
 # SQLite Gotchas
 
 ## Strictness
