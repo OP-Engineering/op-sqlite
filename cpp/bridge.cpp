@@ -76,6 +76,16 @@ BridgeResult opsqlite_close(std::string const &dbName) {
   };
 }
 
+/**
+ * Used to get a validated connection from reference map
+ * Internal method, to bese use in bridge calls that run batch commands and can benefit
+ * of single-time connection checking
+*/
+sqlite3 *opsqlite_get_connection(std::string const &dbName) {
+  check_db_open(dbName);
+  return dbMap[dbName];
+}
+
 BridgeResult opsqlite_attach(std::string const &mainDBName,
                              std::string const &docPath,
                              std::string const &databaseToAttach,
@@ -179,11 +189,18 @@ BridgeResult opsqlite_execute_prepared_statement(
     std::vector<DumbHostObject> *results,
     std::shared_ptr<std::vector<SmartHostObject>> metadatas) {
 
-  check_db_open(dbName);
+    check_db_open(dbName);
+    sqlite3 *db = dbMap[dbName];
+
+    return opsqlite_execute_prepared_statement(db, statement, results, metadatas);
+}
+
+BridgeResult opsqlite_execute_prepared_statement(
+    sqlite3 *db, sqlite3_stmt *statement,
+    std::vector<DumbHostObject> *results,
+    std::shared_ptr<std::vector<SmartHostObject>> metadatas) {
 
   sqlite3_reset(statement);
-
-  sqlite3 *db = dbMap[dbName];
 
   const char *errorMessage;
 
@@ -202,7 +219,7 @@ BridgeResult opsqlite_execute_prepared_statement(
 
     switch (result) {
     case SQLITE_ROW: {
-      if (results == NULL) {
+      if (results == NULL || results == nullptr) {
         break;
       }
 
@@ -316,6 +333,13 @@ sqlite3_stmt *opsqlite_prepare_statement(std::string const &dbName,
   check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
+
+  return opsqlite_prepare_statement(db, query);
+}
+
+sqlite3_stmt *opsqlite_prepare_statement(sqlite3 *db,
+                                         std::string const &query) {
+
 
   sqlite3_stmt *statement;
 
@@ -661,13 +685,20 @@ opsqlite_execute_raw(std::string const &dbName, std::string const &query,
           .insertId = static_cast<double>(latestInsertRowId)};
 }
 
-/// Executes without returning any results, Useful for performance critical
-/// operations
 BridgeResult opsqlite_execute_literal(std::string const &dbName,
                                       std::string const &query) {
-  check_db_open(dbName);
 
+  check_db_open(dbName);
   sqlite3 *db = dbMap[dbName];
+
+  return opsqlite_execute_literal(db, query);
+}
+
+/// Executes without returning any results, Useful for performance critical
+/// operations
+BridgeResult opsqlite_execute_literal(sqlite3 *db,
+                                      std::string const &query) {
+  
   sqlite3_stmt *statement;
 
   int statementStatus =

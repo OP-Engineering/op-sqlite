@@ -27,19 +27,26 @@ void toBatchArguments(jsi::Runtime &rt, jsi::Array const &batchParams,
             .asArray(rt)
             .getValueAtIndex(rt, 0)
             .isObject()) {
-      // This arguments is an array of arrays, like a batch update of a single
-      // sql command.
+
+      /* This arguments is an array of arrays, like a batch update of a single
+      * sql command. This structure can be optmized to reuse prepared statements.
+      * That is the idea of this method signature. EG:
+      * sql | [[]] - Same SQL, Many different binded values.
+      */
       const jsi::Array &batchUpdateParams =
           commandParams.asObject(rt).asArray(rt);
-      for (int x = 0; x < batchUpdateParams.length(rt); x++) {
+      std::vector<std::vector<JSVariant>> stmtParams;
+      size_t batchUpdateParamsSize = batchUpdateParams.length(rt);
+      for (int x = 0; x < batchUpdateParamsSize; x++) {
         const jsi::Value &p = batchUpdateParams.getValueAtIndex(rt, x);
-        auto params =
-            std::make_shared<std::vector<JSVariant>>(toVariantVec(rt, p));
-        commands->push_back({query, params});
+        auto params = toVariantVec(rt, p);
+        stmtParams.push_back(params);
       }
+      auto params =
+            std::make_shared<BatchParams>(BatchParams(stmtParams));
+      commands->push_back({query, params});
     } else {
-      auto params = std::make_shared<std::vector<JSVariant>>(
-          toVariantVec(rt, commandParams));
+      auto params = std::make_shared<BatchParams>(BatchParams(toVariantVec(rt, commandParams)));
       commands->push_back({query, params});
     }
   }
@@ -55,33 +62,66 @@ BatchResult sqliteExecuteBatch(std::string dbName,
     };
   }
 
+  auto db = opsqlite_get_connection(dbName);
+
   try {
     int affectedRows = 0;
-    opsqlite_execute_literal(dbName, "BEGIN EXCLUSIVE TRANSACTION");
+
+    opsqlite_execute_literal(db, "BEGIN EXCLUSIVE TRANSACTION");
+
     for (int i = 0; i < commandCount; i++) {
       auto command = commands->at(i);
-      // We do not provide a datastructure to receive query data because we
-      // don't need/want to handle this results in a batch execution
-      auto result = opsqlite_execute(dbName, command.sql, command.params.get(),
-                                     nullptr, nullptr);
-      if (result.type == SQLiteError) {
-        opsqlite_execute_literal(dbName, "ROLLBACK");
-        return BatchResult{
-            .type = SQLiteError,
-            .message = result.message,
-        };
+
+      auto params = command.params.get();
+      // Checking if 
+      if ( std::holds_alternative<std::vector<std::vector<JSVariant>>>(*params) ) {
+        auto multiStatementParams = std::get<std::vector<std::vector<JSVariant>>>(*params);
+        auto size = multiStatementParams.size();
+        auto stmt = opsqlite_prepare_statement(db, command.sql);
+        for (int x = 0; x < size; x++) {
+          auto jsValues = multiStatementParams.at(x);
+          opsqlite_bind_statement(stmt, &jsValues);
+          auto result = opsqlite_execute_prepared_statement(db, stmt, nullptr, nullptr);
+          if (result.type == SQLiteError) {
+            sqlite3_finalize(stmt);
+            opsqlite_execute_literal(db, "ROLLBACK");
+            return BatchResult{
+                .type = SQLiteError,
+                .message = result.message,
+            };
+          } else {
+            affectedRows += result.affectedRows;
+          }
+        }
+        sqlite3_finalize(stmt);
       } else {
-        affectedRows += result.affectedRows;
+        auto jsValues = std::get<std::vector<JSVariant>>(*params);
+        // We do not provide a datastructure to receive query data because we
+        // don't need/want to handle this results in a batch execution
+        auto stmt = opsqlite_prepare_statement(db, command.sql);
+        opsqlite_bind_statement(stmt, &jsValues);
+        auto result = opsqlite_execute_prepared_statement(db, stmt, nullptr, nullptr);
+        if (result.type == SQLiteError) {
+          sqlite3_finalize(stmt);
+          opsqlite_execute_literal(db, "ROLLBACK");
+          return BatchResult{
+              .type = SQLiteError,
+              .message = result.message,
+          };
+        } else {
+          affectedRows += result.affectedRows;
+        }
+        sqlite3_finalize(stmt);
       }
     }
-    opsqlite_execute_literal(dbName, "COMMIT");
+    opsqlite_execute_literal(db, "COMMIT");
     return BatchResult{
         .type = SQLiteOk,
         .affectedRows = affectedRows,
         .commands = static_cast<int>(commandCount),
     };
   } catch (std::exception &exc) {
-    opsqlite_execute_literal(dbName, "ROLLBACK");
+    opsqlite_execute_literal(db, "ROLLBACK");
     return BatchResult{
         .type = SQLiteError,
         .message = exc.what(),
