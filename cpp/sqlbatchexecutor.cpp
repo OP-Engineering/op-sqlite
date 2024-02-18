@@ -8,7 +8,8 @@ namespace opsqlite {
 
 void toBatchArguments(jsi::Runtime &rt, jsi::Array const &batchParams,
                       std::vector<BatchArguments> *commands) {
-  for (int i = 0; i < batchParams.length(rt); i++) {
+  size_t batchLength = batchParams.length(rt);
+  for (int i = 0; i < batchLength; i++) {
     const jsi::Array &command =
         batchParams.getValueAtIndex(rt, i).asObject(rt).asArray(rt);
     if (command.length(rt) == 0) {
@@ -22,11 +23,9 @@ void toBatchArguments(jsi::Runtime &rt, jsi::Array const &batchParams,
                                           : jsi::Value::undefined();
     if (!commandParams.isUndefined() &&
         commandParams.asObject(rt).isArray(rt) &&
-        commandParams.asObject(rt).asArray(rt).length(rt) > 0 &&
-        commandParams.asObject(rt)
-            .asArray(rt)
-            .getValueAtIndex(rt, 0)
-            .isObject()) {
+        commandParams.asObject(rt).asArray(rt).length(rt) > 0 && 
+        commandParams.asObject(rt).asArray(rt).getValueAtIndex(rt, 0).isObject())
+    {
 
       /* This arguments is an array of arrays, like a batch update of a single
       * sql command. This structure can be optmized to reuse prepared statements.
@@ -80,6 +79,10 @@ BatchResult sqliteExecuteBatch(std::string dbName,
         auto stmt = opsqlite_prepare_statement(db, command.sql);
         for (int x = 0; x < size; x++) {
           auto jsValues = multiStatementParams.at(x);
+          // Here we manually control the statement reset
+          if (x > 0) {
+            sqlite3_reset(stmt);
+          }
           opsqlite_bind_statement(stmt, &jsValues);
           auto result = opsqlite_execute_prepared_statement(db, stmt, nullptr, nullptr);
           if (result.type == SQLiteError) {

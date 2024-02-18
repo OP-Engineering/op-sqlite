@@ -192,6 +192,8 @@ BridgeResult opsqlite_execute_prepared_statement(
     check_db_open(dbName);
     sqlite3 *db = dbMap[dbName];
 
+    sqlite3_reset(statement);
+
     return opsqlite_execute_prepared_statement(db, statement, results, metadatas);
 }
 
@@ -199,8 +201,6 @@ BridgeResult opsqlite_execute_prepared_statement(
     sqlite3 *db, sqlite3_stmt *statement,
     std::vector<DumbHostObject> *results,
     std::shared_ptr<std::vector<SmartHostObject>> metadatas) {
-
-  sqlite3_reset(statement);
 
   const char *errorMessage;
 
