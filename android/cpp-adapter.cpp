@@ -7,17 +7,13 @@
 #include <typeinfo>
 
 struct OPSQLiteBridge : jni::JavaClass<OPSQLiteBridge> {
-  static constexpr auto kJavaDescriptor =
-      "Lcom/op/sqlite/OPSQLiteBridge;";
+  static constexpr auto kJavaDescriptor = "Lcom/op/sqlite/OPSQLiteBridge;";
 
   static void registerNatives() {
     javaClassStatic()->registerNatives(
-        {
-         makeNativeMethod("installNativeJsi",
-                          OPSQLiteBridge::installNativeJsi),
+        {makeNativeMethod("installNativeJsi", OPSQLiteBridge::installNativeJsi),
          makeNativeMethod("clearStateNativeJsi",
-                          OPSQLiteBridge::clearStateNativeJsi)
-        });
+                          OPSQLiteBridge::clearStateNativeJsi)});
   }
 
 private:
@@ -31,7 +27,7 @@ private:
 
     opsqlite::install(*jsiRuntime, jsCallInvoker, dbPathStr.c_str());
   }
- 
+
   static void clearStateNativeJsi(jni::alias_ref<jni::JObject> thiz) {
     opsqlite::clearState();
   }
