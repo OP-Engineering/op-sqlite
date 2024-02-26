@@ -24,8 +24,6 @@ import {preparedStatementsTests} from './tests/preparedStatements.spec';
 import {constantsTests} from './tests/constants.spec';
 import performance from 'react-native-performance';
 // import UpdateHookPage from './UpdateHook';
-import {MMKV} from 'react-native-mmkv';
-export const mmkv = new MMKV();
 
 const StyledScrollView = styled(ScrollView, {
   props: {
@@ -44,9 +42,7 @@ export default function App() {
   );
   const [singleRecordTime, setSingleRecordTime] = useState<number>(0);
   const [sqliteMMSetTime, setSqliteMMSetTime] = useState(0);
-  const [mmkvSetTime, setMMKVSetTime] = useState(0);
   const [sqliteGetTime, setSqliteMMGetTime] = useState(0);
-  const [mmkvGetTime, setMMKVGetTime] = useState(0);
   const [rawExecutionTimes, setRawExecutionTimes] = useState<number[]>([]);
   useEffect(() => {
     setResults([]);
@@ -121,21 +117,11 @@ export default function App() {
     let end = performance.now();
     setSqliteMMSetTime(end - start);
 
-    start = performance.now();
-    mmkv.set('mmkvDef', 'quack');
-    end = performance.now();
-    setMMKVSetTime(end - start);
-
     let readStatement = db.prepareStatement('SELECT text from mmkvTest;');
     start = performance.now();
     readStatement.execute();
     end = performance.now();
     setSqliteMMGetTime(end - start);
-
-    start = performance.now();
-    mmkv.getString('mmkvDef');
-    end = performance.now();
-    setMMKVGetTime(end - start);
 
     db.close();
   };
@@ -143,7 +129,6 @@ export default function App() {
   return (
     <SafeAreaView className="flex-1 bg-neutral-900">
       <StyledScrollView>
-
         <View className="flex-row p-2 bg-neutral-800 items-center">
           <Text className={'font-bold flex-1 text-white'}>Tools</Text>
         </View>
@@ -158,22 +143,11 @@ export default function App() {
               MM SQLite Write: {sqliteMMSetTime.toFixed(3)} ms
             </Text>
           )}
-          {!!mmkvSetTime && (
-            <Text className="text-white">
-              MMKV Write: {mmkvSetTime.toFixed(3)} ms
-            </Text>
-          )}
           {!!sqliteGetTime && (
             <Text className="text-white">
               MM SQLite Get: {sqliteGetTime.toFixed(3)} ms
             </Text>
           )}
-          {!!mmkvGetTime && (
-            <Text className="text-white">
-              MMKV Get: {mmkvGetTime.toFixed(3)} ms
-            </Text>
-          )}
-          
         </View>
         {isLoading && <ActivityIndicator color={'white'} size="large" />}
 
@@ -222,15 +196,16 @@ export default function App() {
             ms
           </Text>
         )}
-        {!!rawExecutionTimes.length &&
+        {!!rawExecutionTimes.length && (
           <Text className="text-lg text-white self-center">
-            Raw execution:  {(
+            Raw execution:{' '}
+            {(
               rawExecutionTimes.reduce((acc, t) => (acc += t), 0) /
               rawExecutionTimes.length
             ).toFixed(0)}{' '}
             ms
           </Text>
-          }
+        )}
 
         {/* <UpdateHookPage /> */}
 
