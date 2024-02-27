@@ -1,9 +1,6 @@
-import performance from 'react-native-performance';
+// import performance from 'react-native-performance';
 import Chance from 'chance';
 import {open} from '@op-engineering/op-sqlite';
-import {MMKV} from 'react-native-mmkv';
-const mmkv = new MMKV();
-import {Buffer} from 'buffer';
 
 const chance = new Chance();
 
@@ -81,10 +78,10 @@ export async function queryLargeDB() {
     // @ts-ignore
     global.gc();
 
-    let start = performance.now();
+    // let start = performance.now();
     await largeDb.executeAsync('SELECT * FROM Test;');
-    let end = performance.now();
-    times.loadFromDb.push(end - start);
+    // let end = performance.now();
+    // times.loadFromDb.push(end - start);
 
     // mmkv.set('largeDB', JSON.stringify(results));
     // @ts-ignore
@@ -95,10 +92,10 @@ export async function queryLargeDB() {
     // JSON.parse(rawStr!);
     // end = performance.now();
 
-    start = performance.now();
+    // start = performance.now();
     await largeDb.executeRawAsync('SELECT * FROM Test;');
-    end = performance.now();
-    times.rawExecution.push(end - start);
+    // end = performance.now();
+    // times.rawExecution.push(end - start);
 
     // console.log('MMKV time', (end - start).toFixed(2));
 

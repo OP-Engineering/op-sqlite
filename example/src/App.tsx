@@ -14,7 +14,7 @@ import {
   querySingleRecordOnLargeDB,
 } from './Database';
 import {dbSetupTests, queriesTests, runTests, blobTests} from './tests/index';
-import pak from '../package.json';
+
 import {styled} from 'nativewind';
 import RNRestart from 'react-native-restart';
 import {registerHooksTests} from './tests/hooks.spec';
@@ -22,7 +22,7 @@ import {open} from '@op-engineering/op-sqlite';
 import clsx from 'clsx';
 import {preparedStatementsTests} from './tests/preparedStatements.spec';
 import {constantsTests} from './tests/constants.spec';
-import performance from 'react-native-performance';
+// import performance from 'react-native-performance';
 // import UpdateHookPage from './UpdateHook';
 
 const StyledScrollView = styled(ScrollView, {
@@ -57,11 +57,11 @@ export default function App() {
   }, []);
 
   const querySingleRecord = async () => {
-    let start = performance.now();
+    // let start = performance.now();
     await querySingleRecordOnLargeDB();
-    let end = performance.now();
+    // let end = performance.now();
 
-    setSingleRecordTime(end - start);
+    // setSingleRecordTime(end - start);
   };
 
   const createLargeDb = async () => {
@@ -112,16 +112,16 @@ export default function App() {
     );
     insertStatment.bind(['quack']);
 
-    let start = performance.now();
+    // let start = performance.now();
     insertStatment.execute();
-    let end = performance.now();
-    setSqliteMMSetTime(end - start);
+    // let end = performance.now();
+    // setSqliteMMSetTime(end - start);
 
     let readStatement = db.prepareStatement('SELECT text from mmkvTest;');
-    start = performance.now();
+    // start = performance.now();
     readStatement.execute();
-    end = performance.now();
-    setSqliteMMGetTime(end - start);
+    // end = performance.now();
+    // setSqliteMMGetTime(end - start);
 
     db.close();
   };
