@@ -13,6 +13,7 @@ class OPSQLiteBridge {
     )
 
     private external fun clearStateNativeJsi()
+
     fun install(context: ReactContext) {
         val jsContextPointer = context.javaScriptContextHolder!!.get()
         val jsCallInvokerHolder =
