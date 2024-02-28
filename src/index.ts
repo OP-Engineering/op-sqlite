@@ -13,17 +13,17 @@ if (global.__OPSQLiteProxy == null) {
   }
 
   // Check if we are running on-device (JSI)
-  if (global.nativeCallSyncHook == null || OPSQLiteModule.install == null) {
+  if (OPSQLiteModule.install == null) {
     throw new Error(
       'Failed to install op-sqlite: React Native is not running on-device. OPSQLite can only be used when synchronous method invocations (JSI) are possible. If you are using a remote debugger (e.g. Chrome), switch to an on-device debugger (e.g. Flipper) instead.'
     );
   }
 
   // Call the synchronous blocking install() function
-  const result = OPSQLiteModule.install();
-  if (result !== true) {
+  const installed = OPSQLiteModule.install();
+  if (!installed) {
     throw new Error(
-      `Failed to install op-sqlite: The native OPSQLite Module could not be installed! Looks like something went wrong when installing JSI bindings: ${result}`
+      `Failed to install op-sqlite: The native OPSQLite Module could not be installed! Looks like something went wrong when installing JSI bindings: ${installed}`
     );
   }
 

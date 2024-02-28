@@ -2,7 +2,9 @@ package com.op.sqlite
 
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.turbomodule.core.CallInvokerHolderImpl
+import com.facebook.react.common.annotations.FrameworkAPI
 
+@OptIn(FrameworkAPI::class)
 class OPSQLiteBridge {
     private external fun installNativeJsi(
         jsContextNativePointer: Long,
