@@ -1,5 +1,6 @@
 package com.op.sqlite
 
+import android.util.Log
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.module.annotations.ReactModule;
@@ -34,11 +35,13 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) :
             OPSQLiteBridge.instance.install(reactApplicationContext)
             true
         } catch (exception: Exception) {
+            Log.e(NAME, "Install exception: $exception")
             false
         }
     }
 
-    override fun onCatalystInstanceDestroy() {
+    override fun invalidate() {
+        super.invalidate()
         OPSQLiteBridge.instance.clearState()
     }
 
