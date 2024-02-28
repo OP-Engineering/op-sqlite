@@ -2302,6 +2302,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-community/cli-platform-android@patch:@react-native-community/cli-platform-android@npm%3A13.6.0#~/.yarn/patches/@react-native-community-cli-platform-android-npm-13.6.0-036e406a84.patch":
+  version: 13.6.0
+  resolution: "@react-native-community/cli-platform-android@patch:@react-native-community/cli-platform-android@npm%3A13.6.0#~/.yarn/patches/@react-native-community-cli-platform-android-npm-13.6.0-036e406a84.patch::version=13.6.0&hash=6c0df5"
+  dependencies:
+    "@react-native-community/cli-tools": "npm:13.6.0"
+    chalk: "npm:^4.1.2"
+    execa: "npm:^5.0.0"
+    fast-glob: "npm:^3.3.2"
+    fast-xml-parser: "npm:^4.2.4"
+    logkitty: "npm:^0.7.1"
+  checksum: 10c0/60a380c74d79f1acfd54a64f91488171d43b6518cbe658c6967e2c61d6bc209e7d895bcdf690c2252ef4d08c8fcff42a78a5554c2f342839188bbdd5ebb6294b
+  languageName: node
+  linkType: hard
+
 "@react-native-community/cli-platform-apple@npm:13.6.0":
   version: 13.6.0
   resolution: "@react-native-community/cli-platform-apple@npm:13.6.0"
