@@ -42,7 +42,7 @@ jobs:
   #       run: yarn prepare
 
   build-android:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     env:
       TURBO_CACHE_DIR: .turbo/android
     steps:
@@ -98,7 +98,7 @@ jobs:
           yarn turbo run build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}"
 
   build-ios:
-    runs-on: macos-14
+    runs-on: self-hosted
     env:
       TURBO_CACHE_DIR: .turbo/ios
     steps:
