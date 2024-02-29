@@ -65,6 +65,9 @@
       "javaPackageName": "com.op.sqlite"
     }
   },
+  "workspaces": [
+    "example"
+  ],
   "prettier": {
     "quoteProps": "consistent",
     "singleQuote": true,
