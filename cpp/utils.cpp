@@ -207,15 +207,16 @@ BatchResult importSQLFile(std::string dbName, std::string fileLocation) {
   std::string line;
   std::ifstream sqFile(fileLocation);
   if (sqFile.is_open()) {
+    auto db = opsqlite_get_connection(dbName);
     try {
       int affectedRows = 0;
       int commands = 0;
-      opsqlite_execute_literal(dbName, "BEGIN EXCLUSIVE TRANSACTION");
+      opsqlite_execute_literal(db, "BEGIN EXCLUSIVE TRANSACTION");
       while (std::getline(sqFile, line, '\n')) {
         if (!line.empty()) {
-          BridgeResult result = opsqlite_execute_literal(dbName, line);
+          BridgeResult result = opsqlite_execute_literal(db, line);
           if (result.type == SQLiteError) {
-            opsqlite_execute_literal(dbName, "ROLLBACK");
+            opsqlite_execute_literal(db, "ROLLBACK");
             sqFile.close();
             return {SQLiteError, result.message, 0, commands};
           } else {
@@ -225,11 +226,11 @@ BatchResult importSQLFile(std::string dbName, std::string fileLocation) {
         }
       }
       sqFile.close();
-      opsqlite_execute_literal(dbName, "COMMIT");
+      opsqlite_execute_literal(db, "COMMIT");
       return {SQLiteOk, "", affectedRows, commands};
     } catch (...) {
       sqFile.close();
-      opsqlite_execute_literal(dbName, "ROLLBACK");
+      opsqlite_execute_literal(db, "ROLLBACK");
       return {SQLiteError,
               "[op-sqlite][loadSQLFile] Unexpected error, transaction was "
               "rolledback",

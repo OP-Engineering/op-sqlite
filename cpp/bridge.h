@@ -21,6 +21,7 @@ typedef std::function<void(std::string dbName)> RollbackCallback;
 
 BridgeResult opsqlite_open(std::string const &dbName,
                            std::string const &dbPath);
+sqlite3 *opsqlite_get_connection(std::string const &dbName);
 
 BridgeResult opsqlite_close(std::string const &dbName);
 
@@ -46,6 +47,9 @@ BridgeResult opsqlite_execute_raw(std::string const &dbName,
                                   const std::vector<JSVariant> *params,
                                   std::vector<std::vector<JSVariant>> *results);
 
+BridgeResult opsqlite_execute_literal(sqlite3 *db,
+                                      std::string const &query);
+
 BridgeResult opsqlite_execute_literal(std::string const &dbName,
                                       std::string const &query);
 
@@ -63,12 +67,20 @@ BridgeResult opsqlite_deregister_rollback_hook(std::string const &dbName);
 
 sqlite3_stmt *opsqlite_prepare_statement(std::string const &dbName,
                                          std::string const &query);
+sqlite3_stmt *opsqlite_prepare_statement(sqlite3 *connection,
+                                         std::string const &query);
+
 
 void opsqlite_bind_statement(sqlite3_stmt *statement,
                              const std::vector<JSVariant> *params);
 
 BridgeResult opsqlite_execute_prepared_statement(
     std::string const &dbName, sqlite3_stmt *statement,
+    std::vector<DumbHostObject> *results,
+    std::shared_ptr<std::vector<SmartHostObject>> metadatas);
+
+BridgeResult opsqlite_execute_prepared_statement(
+    sqlite3 *connection, sqlite3_stmt *statement,
     std::vector<DumbHostObject> *results,
     std::shared_ptr<std::vector<SmartHostObject>> metadatas);
 
