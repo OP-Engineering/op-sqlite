@@ -50,6 +50,7 @@
     "react": "18.2.0",
     "react-native": "0.73.1",
     "react-native-builder-bob": "^0.23.2",
+    "turbo": "^1.12.4",
     "typescript": "5.0.4"
   },
   "peerDependencies": {
@@ -85,7 +86,5 @@
       ]
     ]
   },
-  "dependencies": {
-    "turbo": "^1.12.4"
-  }
+  "packageManager": "yarn@4.1.0"
 }
