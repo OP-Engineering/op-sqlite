@@ -50,6 +50,7 @@
     "react": "18.2.0",
     "react-native": "^0.74.0-rc.0",
     "react-native-builder-bob": "^0.23.2",
+    "turbo": "^1.12.4",
     "typescript": "5.0.4"
   },
   "peerDependencies": {
@@ -64,6 +65,9 @@
       "javaPackageName": "com.op.sqlite"
     }
   },
+  "workspaces": [
+    "example"
+  ],
   "prettier": {
     "quoteProps": "consistent",
     "singleQuote": true,
