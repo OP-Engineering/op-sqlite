@@ -1,5 +1,7 @@
 #import "OPSQLite.h"
-#import <React/RCTBridge+Private.h>
+#if RCT_NEW_ARCH_ENABLED
+//#import <React/RCTBridge+Private.h>
+#endif
 #import <React/RCTUtils.h>
 #import <ReactCommon/RCTTurboModule.h>
 #import <jsi/jsi.h>
@@ -36,6 +38,7 @@ RCT_EXPORT_MODULE()
     return [self constantsToExport];
 }
 
+
 RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     RCTCxxBridge *cxxBridge = (RCTCxxBridge *)_bridge;
     if (cxxBridge == nil) {
@@ -48,6 +51,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     if (jsiRuntime == nil) {
         return @false;
     }
+    
     auto &runtime = *jsiRuntime;
     auto callInvoker = _bridge.jsCallInvoker;
     
@@ -80,6 +84,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
     (const facebook::react::ObjCTurboModule::InitParams &)params
 {
+    params.instance.
   return std::make_shared<facebook::react::NativeOPSQLiteSpecJSI>(params);
 }
 #endif
