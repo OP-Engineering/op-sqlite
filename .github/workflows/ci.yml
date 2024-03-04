@@ -108,6 +108,11 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
+      - name: install bundler dependencies
+        run: |
+          cd example
+          bundle install
+
       - name: Cache turborepo for iOS
         uses: actions/cache@v3
         with:
@@ -139,7 +144,7 @@ jobs:
         if: env.turbo_cache_hit != 1 && steps.cocoapods-cache.outputs.cache-hit != 'true'
         run: |
           cd example/ios
-          pod install
+          bundle exec pod install
         env:
           NO_FLIPPER: 1
 
