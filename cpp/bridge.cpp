@@ -181,8 +181,6 @@ BridgeResult opsqlite_execute_prepared_statement(
 
   check_db_open(dbName);
 
-  sqlite3_reset(statement);
-
   sqlite3 *db = dbMap[dbName];
 
   const char *errorMessage;
@@ -295,6 +293,8 @@ BridgeResult opsqlite_execute_prepared_statement(
       isConsuming = false;
     }
   }
+
+  sqlite3_reset(statement);
 
   if (isFailed) {
 
