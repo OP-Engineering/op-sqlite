@@ -1,5 +1,5 @@
 name: CI
-on: push
+on: pull_request
 
 jobs:
   # lint:
@@ -108,6 +108,11 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
+      - name: install bundler dependencies
+        run: |
+          cd example
+          bundle install
+
       - name: Cache turborepo for iOS
         uses: actions/cache@v3
         with:
@@ -124,22 +129,22 @@ jobs:
             echo "turbo_cache_hit=1" >> $GITHUB_ENV
           fi
 
-      - name: Cache cocoapods
-        if: env.turbo_cache_hit != 1
-        id: cocoapods-cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            **/ios/Pods
-          key: ${{ runner.os }}-cocoapods-${{ hashFiles('example/ios/Podfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cocoapods-
+      # - name: Cache cocoapods
+      #   if: env.turbo_cache_hit != 1
+      #   id: cocoapods-cache
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: |
+      #       **/ios/Pods
+      #     key: ${{ runner.os }}-cocoapods-${{ hashFiles('example/ios/Podfile.lock') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-cocoapods-
 
       - name: Install cocoapods
-        if: env.turbo_cache_hit != 1 && steps.cocoapods-cache.outputs.cache-hit != 'true'
+        # if: env.turbo_cache_hit != 1 && steps.cocoapods-cache.outputs.cache-hit != 'true'
         run: |
           cd example/ios
-          pod install
+          bundle exec pod install
         env:
           NO_FLIPPER: 1
 
