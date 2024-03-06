@@ -14,7 +14,6 @@ import {
   querySingleRecordOnLargeDB,
 } from './Database';
 import {dbSetupTests, queriesTests, runTests, blobTests} from './tests/index';
-import pak from '../package.json';
 import {styled} from 'nativewind';
 import RNRestart from 'react-native-restart';
 import {registerHooksTests} from './tests/hooks.spec';
@@ -143,7 +142,6 @@ export default function App() {
   return (
     <SafeAreaView className="flex-1 bg-neutral-900">
       <StyledScrollView>
-
         <View className="flex-row p-2 bg-neutral-800 items-center">
           <Text className={'font-bold flex-1 text-white'}>Tools</Text>
         </View>
@@ -173,7 +171,6 @@ export default function App() {
               MMKV Get: {mmkvGetTime.toFixed(3)} ms
             </Text>
           )}
-          
         </View>
         {isLoading && <ActivityIndicator color={'white'} size="large" />}
 
@@ -222,15 +219,16 @@ export default function App() {
             ms
           </Text>
         )}
-        {!!rawExecutionTimes.length &&
+        {!!rawExecutionTimes.length && (
           <Text className="text-lg text-white self-center">
-            Raw execution:  {(
+            Raw execution:{' '}
+            {(
               rawExecutionTimes.reduce((acc, t) => (acc += t), 0) /
               rawExecutionTimes.length
             ).toFixed(0)}{' '}
             ms
           </Text>
-          }
+        )}
 
         {/* <UpdateHookPage /> */}
 
