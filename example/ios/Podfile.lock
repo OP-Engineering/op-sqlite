@@ -18,7 +18,7 @@ PODS:
   - MMKV (1.3.2):
     - MMKVCore (~> 1.3.2)
   - MMKVCore (1.3.2)
-  - op-sqlite (2.0.18):
+  - op-sqlite (2.0.20):
     - React
     - React-callinvoker
     - React-Core
@@ -1253,7 +1253,7 @@ SPEC CHECKSUMS:
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
   MMKV: f21593c0af4b3f2a0ceb8f820f28bb639ea22bb7
   MMKVCore: 31b4cb83f8266467eef20a35b6d78e409a11060d
-  op-sqlite: 77541a0e1c2f8b6e45cddf0d9ef8ea2dab4058e9
+  op-sqlite: ff96cfc00c55408bdfa9569d0c30961f9109d25e
   RCT-Folly: 7169b2b1c44399c76a47b5deaaba715eeeb476c0
   RCTRequired: 6dda55e483f75d2b43781d8ad5bd7df276a50981
   RCTTypeSafety: df0f2632f4e89938b9b9f6152b5e6c66fc6e969e
@@ -1301,6 +1301,6 @@ SPEC CHECKSUMS:
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
   Yoga: 4f53dc50008d626fa679c7a1cb4bed898f8c0bde
 
-PODFILE CHECKSUM: 9704a8b58c99712ca00b79a0d7e17429ad6dc2bb
+PODFILE CHECKSUM: 0ab74fecad6ac2e35f8eab32fe5772c19d2015b2
 
-COCOAPODS: 1.14.0
+COCOAPODS: 1.14.3
