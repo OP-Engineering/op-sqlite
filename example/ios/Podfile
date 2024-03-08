@@ -20,8 +20,6 @@ target 'OPSQLiteExample' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
-  pod 'op-sqlite', :path => '../..'
-
   pre_install do |installer|
     installer.pod_targets.each do |pod|
       if pod.name.eql?('op-sqlite')
