@@ -20,17 +20,15 @@ target 'OPSQLiteExample' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
-  pod 'op-sqlite', :path => '../..'
-
-  pre_install do |installer|
-    installer.pod_targets.each do |pod|
-      if pod.name.eql?('op-sqlite')
-        def pod.build_type
-          Pod::BuildType.static_library
-        end
-      end
-    end
-  end
+  # pre_install do |installer|
+  #   installer.pod_targets.each do |pod|
+  #     if pod.name.eql?('op-sqlite')
+  #       def pod.build_type
+  #         Pod::BuildType.static_library
+  #       end
+  #     end
+  #   end
+  # end
 
   post_install do |installer|
     # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
