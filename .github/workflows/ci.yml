@@ -2,20 +2,17 @@ name: CI
 on: pull_request
 
 jobs:
-  # lint:
-  #   runs-on: self-hosted
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  #     - name: Setup
-  #       uses: ./.github/actions/setup
+      - name: Setup
+        uses: ./.github/actions/setup
 
-  #     - name: Lint files
-  #       run: yarn lint
-
-  #     - name: Typecheck files
-  #       run: yarn typecheck
+      - name: Typecheck files
+        run: yarn typecheck
 
   # test:
   #   runs-on: ubuntu-latest
@@ -47,7 +44,7 @@ jobs:
       TURBO_CACHE_DIR: .turbo/android
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup
         uses: ./.github/actions/setup
