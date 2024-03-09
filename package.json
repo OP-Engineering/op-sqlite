@@ -23,7 +23,7 @@
     "!**/__mocks__"
   ],
   "scripts": {
-    "typescript": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "prepare": "bob build",
     "example": "yarn --cwd example",
     "pods": "cd example && yarn pods",
