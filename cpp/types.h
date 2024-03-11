@@ -2,6 +2,7 @@
 #define types_h
 
 #include <memory>
+#include <string>
 #include <variant>
 
 enum ResultType { SQLiteOk, SQLiteError };
