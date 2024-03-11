@@ -1,10 +1,3 @@
-//
-//  PreparedStatementHostObject.cpp
-//  op-sqlite
-//
-//  Created by Oscar Franco on 5/12/23.
-//
-
 #include "PreparedStatementHostObject.h"
 #include "bridge.h"
 #include "macros.h"
@@ -31,7 +24,7 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
 
   if (name == "bind") {
     return HOSTFN("bind", 1) {
-      if (_statement == NULL) {
+      if (_statement == nullptr) {
         throw std::runtime_error("statement has been freed");
       }
 
@@ -46,7 +39,7 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
 
   if (name == "execute") {
     return HOSTFN("execute", 1) {
-      if (_statement == NULL) {
+      if (_statement == nullptr) {
         throw std::runtime_error("statement has been freed");
       }
       std::vector<DumbHostObject> results;
@@ -69,9 +62,9 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
 }
 
 PreparedStatementHostObject::~PreparedStatementHostObject() {
-  if (_statement != NULL) {
+  if (_statement != nullptr) {
     sqlite3_finalize(_statement);
-    _statement = NULL;
+    _statement = nullptr;
   }
 }
 
