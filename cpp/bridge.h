@@ -46,9 +46,6 @@ BridgeResult opsqlite_execute_raw(std::string const &dbName,
                                   const std::vector<JSVariant> *params,
                                   std::vector<std::vector<JSVariant>> *results);
 
-BridgeResult opsqlite_execute_literal(std::string const &dbName,
-                                      std::string const &query);
-
 void opsqlite_close_all();
 
 BridgeResult opsqlite_register_update_hook(std::string const &dbName,
