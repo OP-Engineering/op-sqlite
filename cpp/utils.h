@@ -15,22 +15,6 @@ namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 
-enum ResultType { SQLiteOk, SQLiteError };
-
-struct BridgeResult {
-  ResultType type;
-  std::string message;
-  int affectedRows;
-  double insertId;
-};
-
-struct BatchResult {
-  ResultType type;
-  std::string message;
-  int affectedRows;
-  int commands;
-};
-
 jsi::Value toJSI(jsi::Runtime &rt, JSVariant value);
 
 JSVariant toVariant(jsi::Runtime &rt, jsi::Value const &value);

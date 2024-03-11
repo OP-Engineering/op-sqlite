@@ -80,10 +80,6 @@ BridgeResult opsqlite_attach(std::string const &mainDBName,
                              std::string const &docPath,
                              std::string const &databaseToAttach,
                              std::string const &alias) {
-  /**
-   * There is no need to check if mainDBName is opened because
-   * sqliteExecuteLiteral will do that.
-   * */
   std::string dbPath = get_db_path(databaseToAttach, docPath);
   std::string statement = "ATTACH DATABASE '" + dbPath + "' AS " + alias;
 
@@ -104,10 +100,6 @@ BridgeResult opsqlite_attach(std::string const &mainDBName,
 
 BridgeResult opsqlite_detach(std::string const &mainDBName,
                              std::string const &alias) {
-  /**
-   * There is no need to check if mainDBName is opened because
-   * sqliteExecuteLiteral will do that.
-   * */
   std::string statement = "DETACH DATABASE " + alias;
   BridgeResult result =
       opsqlite_execute(mainDBName, statement, nullptr, nullptr, nullptr);
@@ -619,7 +611,8 @@ opsqlite_execute_raw(std::string const &dbName, std::string const &query,
           }
 
           case SQLITE_NULL:
-            // Intentionally left blank
+            row.push_back(JSVariant(nullptr));
+            break;
 
           default:
             row.push_back(JSVariant(nullptr));
