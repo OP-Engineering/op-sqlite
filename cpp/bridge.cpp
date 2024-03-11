@@ -87,7 +87,8 @@ BridgeResult opsqlite_attach(std::string const &mainDBName,
   std::string dbPath = get_db_path(databaseToAttach, docPath);
   std::string statement = "ATTACH DATABASE '" + dbPath + "' AS " + alias;
 
-  BridgeResult result = opsqlite_execute_literal(mainDBName, statement);
+  BridgeResult result =
+      opsqlite_execute(mainDBName, statement, nullptr, nullptr, nullptr);
 
   if (result.type == SQLiteError) {
     return {
@@ -108,7 +109,8 @@ BridgeResult opsqlite_detach(std::string const &mainDBName,
    * sqliteExecuteLiteral will do that.
    * */
   std::string statement = "DETACH DATABASE " + alias;
-  BridgeResult result = opsqlite_execute_literal(mainDBName, statement);
+  BridgeResult result =
+      opsqlite_execute(mainDBName, statement, nullptr, nullptr, nullptr);
   if (result.type == SQLiteError) {
     return BridgeResult{
         .type = SQLiteError,
@@ -526,7 +528,7 @@ opsqlite_execute_raw(std::string const &dbName, std::string const &query,
   bool isConsuming = true;
   bool isFailed = false;
 
-  int result = SQLITE_OK;
+  int step = SQLITE_OK;
 
   do {
     const char *queryStr =
@@ -562,13 +564,14 @@ opsqlite_execute_raw(std::string const &dbName, std::string const &query,
     std::string column_name, column_declared_type;
 
     while (isConsuming) {
-      result = sqlite3_step(statement);
+      step = sqlite3_step(statement);
 
-      switch (result) {
+      switch (step) {
       case SQLITE_ROW: {
-        if (results == NULL) {
+        if (results == nullptr) {
           break;
         }
+
         std::vector<JSVariant> row;
 
         i = 0;
@@ -649,7 +652,7 @@ opsqlite_execute_raw(std::string const &dbName, std::string const &query,
 
     return {.type = SQLiteError,
             .message =
-                "[op-sqlite] SQLite error code: " + std::to_string(result) +
+                "[op-sqlite] SQLite error code: " + std::to_string(step) +
                 ", description: " + std::string(errorMessage) +
                 ".\nSee SQLite error codes reference: "
                 "https://www.sqlite.org/rescode.html"};
@@ -661,60 +664,6 @@ opsqlite_execute_raw(std::string const &dbName, std::string const &query,
   return {.type = SQLiteOk,
           .affectedRows = changedRowCount,
           .insertId = static_cast<double>(latestInsertRowId)};
-}
-
-/// Executes without returning any results, Useful for performance critical
-/// operations
-BridgeResult opsqlite_execute_literal(std::string const &dbName,
-                                      std::string const &query) {
-  check_db_open(dbName);
-
-  sqlite3 *db = dbMap[dbName];
-  sqlite3_stmt *statement;
-
-  int statementStatus =
-      sqlite3_prepare_v2(db, query.c_str(), -1, &statement, NULL);
-
-  if (statementStatus != SQLITE_OK) {
-    const char *message = sqlite3_errmsg(db);
-    return {SQLiteError,
-            "[op-sqlite] SQL statement error: " + std::string(message), 0};
-  }
-
-  bool isConsuming = true;
-  bool isFailed = false;
-
-  int result;
-  std::string column_name;
-
-  while (isConsuming) {
-    result = sqlite3_step(statement);
-
-    switch (result) {
-    case SQLITE_ROW:
-      isConsuming = true;
-      break;
-
-    case SQLITE_DONE:
-      isConsuming = false;
-      break;
-
-    default:
-      isFailed = true;
-      isConsuming = false;
-    }
-  }
-
-  sqlite3_finalize(statement);
-
-  if (isFailed) {
-    const char *message = sqlite3_errmsg(db);
-    return {SQLiteError,
-            "[op-sqlite] SQL execution error: " + std::string(message), 0};
-  }
-
-  int changedRowCount = sqlite3_changes(db);
-  return {SQLiteOk, "", changedRowCount};
 }
 
 void opsqlite_close_all() {
