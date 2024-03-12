@@ -15,8 +15,24 @@ Pod::Spec.new do |s|
   s.platforms    = { :ios => "13.0", :osx => "10.15" }
   s.source       = { :git => "https://github.com/op-engineering/op-sqlite.git", :tag => "#{s.version}" }
   
-  s.header_mappings_dir = "cpp"
-  s.source_files = "ios/**/*.{h,hpp,m,mm}", "cpp/**/*.{h,hpp,cpp,c}"
+  # s.header_mappings_dir = "cpp"
+  s.source_files = "ios/**/*.{h,m,mm}", "cpp/**/*.{h,cpp,c}"
+
+  xcconfig = {
+    :GCC_PREPROCESSOR_DEFINITIONS => "HAVE_FULLFSYNC=1",
+    :WARNING_CFLAGS => "-Wno-shorten-64-to-32 -Wno-comma -Wno-unreachable-code -Wno-conditional-uninitialized -Wno-deprecated-declarations",
+    :USE_HEADERMAP => "No",
+    :CLANG_CXX_LANGUAGE_STANDARD => "c++17",
+  }
+  
+  if ENV['OP_SQLITE_USE_SQLCIPHER'] == '1' then
+    puts "OP-SQLITE using SQLCipher! 🔒\n"
+    s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h"
+    xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_SQLCIPHER=1"
+  else
+    puts "OP-SQLITE using SQLite! 📦\n"
+    s.exclude_files = "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h"
+  end
   
   s.dependency "React-callinvoker"
   s.dependency "React"
@@ -30,15 +46,11 @@ Pod::Spec.new do |s|
 
   optimizedCflags = other_cflags + '$(inherited) -DSQLITE_DQS=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1 -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DEPRECATED=1 -DSQLITE_OMIT_PROGRESS_CALLBACK=1 -DSQLITE_OMIT_SHARED_CACHE=1 -DSQLITE_USE_ALLOCA=1'
 
-  xcconfig = {
-    :GCC_PREPROCESSOR_DEFINITIONS => "HAVE_FULLFSYNC=1",
-    :WARNING_CFLAGS => "-Wno-shorten-64-to-32 -Wno-comma -Wno-unreachable-code -Wno-conditional-uninitialized -Wno-deprecated-declarations",
-    :USE_HEADERMAP => "No",
-    :CLANG_CXX_LANGUAGE_STANDARD => "c++17",
-  }
+  
 
   if ENV['OP_SQLITE_USE_PHONE_VERSION'] == '1' then
     puts "OP-SQLITE using iOS embedded SQLite! 📱\n"
+    xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_PHONE_VERSION=1"
     s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h"
     s.library = "sqlite3"
   end

@@ -21,6 +21,7 @@ export function queriesTests() {
 
       db = open({
         name: 'test',
+        encryptionKey: 'test',
       });
 
       db.execute('DROP TABLE IF EXISTS User;');
