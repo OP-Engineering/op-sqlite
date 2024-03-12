@@ -47,7 +47,7 @@ BridgeResult opsqlite_open(std::string const &dbName,
                            std::string const &encryptionKey) {
 #else
 BridgeResult opsqlite_open(std::string const &dbName,
-                           std::string const &lastPath) {
+                           std::string const &last_path) {
 #endif
   std::string dbPath = get_db_path(dbName, last_path);
 
