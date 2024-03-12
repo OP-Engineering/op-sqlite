@@ -20,7 +20,8 @@ export function queriesTests() {
       }
 
       db = open({
-        name: 'test',
+        name: 'queries.sqlite',
+        encryptionKey: 'test',
       });
 
       db.execute('DROP TABLE IF EXISTS User;');

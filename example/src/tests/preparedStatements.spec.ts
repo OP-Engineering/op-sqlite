@@ -16,6 +16,7 @@ export function preparedStatementsTests() {
 
       db = open({
         name: 'statements',
+        encryptionKey: 'test',
       });
 
       db.execute('DROP TABLE IF EXISTS User;');
