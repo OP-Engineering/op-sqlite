@@ -6,9 +6,10 @@ set (CMAKE_VERBOSE_MAKEFILE ON)
 set (CMAKE_CXX_STANDARD 17)
 set (BUILD_DIR ${CMAKE_SOURCE_DIR}/build)
 
-include_directories(
-  ../cpp
-)
+ include_directories(
+   ../cpp
+   ../cpp/sqlcipher
+ )
 
 add_definitions(
   ${SQLITE_FLAGS}
@@ -21,8 +22,6 @@ add_library(
   ../cpp/bridge.h
   ../cpp/bindings.cpp
   ../cpp/bindings.h
-  ../cpp/sqlite3.h
-  ../cpp/sqlite3.c
   ../cpp/utils.h
   ../cpp/utils.cpp
   ../cpp/ThreadPool.h
@@ -39,6 +38,14 @@ add_library(
   ../cpp/types.h
   cpp-adapter.cpp
 )
+
+if (OP_SQLITE_USE_SQLCIPHER)
+  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlcipher/sqlite3.h ../cpp/sqlcipher/sqlite3.c)
+  
+  add_definitions(-DOP_SQLITE_USE_SQLCIPHER)
+else()
+  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlite3.h ../cpp/sqlite3.c)
+endif()
 
 set_target_properties(
   ${PACKAGE_NAME} PROPERTIES
