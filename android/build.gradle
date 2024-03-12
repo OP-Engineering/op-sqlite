@@ -78,17 +78,23 @@ android {
         cmake {
             if(System.getenv("OP_SQLITE_PERF") == '1') {
               println "OP-SQLITE performance mode enabled! 🚀"
-              cFlags "-DSQLITE_DQS=0", "-DSQLITE_THREADSAFE=0", "-DSQLITE_DEFAULT_MEMSTATUS=0", "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1", "-DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1", "-DSQLITE_MAX_EXPR_DEPTH=0", "-DSQLITE_OMIT_DEPRECATED=1", "-DSQLITE_OMIT_PROGRESS_CALLBACK=1", "-DSQLITE_OMIT_SHARED_CACHE=1", "-DSQLITE_USE_ALLOCA=1"
+              cFlags  += ["-DSQLITE_DQS=0", "-DSQLITE_THREADSAFE=0", "-DSQLITE_DEFAULT_MEMSTATUS=0", "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1", "-DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1", "-DSQLITE_MAX_EXPR_DEPTH=0", "-DSQLITE_OMIT_DEPRECATED=1", "-DSQLITE_OMIT_PROGRESS_CALLBACK=1", "-DSQLITE_OMIT_SHARED_CACHE=1", "-DSQLITE_USE_ALLOCA=1"]
             }
             if(System.getenv("OP_SQLITE_PERF") == '2') {
               println "OP-SQLITE (thread safe) performance mode enabled! 🚀"
-              cFlags "-DSQLITE_DQS=0", "-DSQLITE_THREADSAFE=1", "-DSQLITE_DEFAULT_MEMSTATUS=0", "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1", "-DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1", "-DSQLITE_MAX_EXPR_DEPTH=0", "-DSQLITE_OMIT_DEPRECATED=1", "-DSQLITE_OMIT_PROGRESS_CALLBACK=1", "-DSQLITE_OMIT_SHARED_CACHE=1", "-DSQLITE_USE_ALLOCA=1"
+              cFlags += ["-DSQLITE_DQS=0", "-DSQLITE_THREADSAFE=1", "-DSQLITE_DEFAULT_MEMSTATUS=0", "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1", "-DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1", "-DSQLITE_MAX_EXPR_DEPTH=0", "-DSQLITE_OMIT_DEPRECATED=1", "-DSQLITE_OMIT_PROGRESS_CALLBACK=1", "-DSQLITE_OMIT_SHARED_CACHE=1", "-DSQLITE_USE_ALLOCA=1"]
             }
+
+            if(System.getenv("OP_SQLITE_USE_SQLCIPHER") == '1') {
+              println "OP-SQLITE using SQLCipher! 🔒"
+              cFlags += "-DOP_SQLITE_USE_SQLCIPHER=1"
+            }
+
             cppFlags "-O2", "-fexceptions", "-frtti", "-std=c++1y", "-DONANDROID"
             abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
-            arguments '-DANDROID_STL=c++_shared',
-              "-DSQLITE_FLAGS='${SQLITE_FLAGS ? SQLITE_FLAGS : ''}'",
-              "-DUSE_HERMES=${USE_HERMES}"
+            arguments "-DOP_SQLITE_USE_SQLCIPHER='${System.getenv("OP_SQLITE_USE_SQLCIPHER")}'",
+              "-DANDROID_STL=c++_shared",
+              "-DSQLITE_FLAGS='${SQLITE_FLAGS ? SQLITE_FLAGS : ''}'"
             abiFilters (*reactNativeArchitectures())
         }
     }

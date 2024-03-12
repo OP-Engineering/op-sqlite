@@ -76,13 +76,12 @@ void install(jsi::Runtime &rt,
           "[OP SQLite] using SQLCipher encryption key is required");
     }
 //      TODO(osp) find a way to display the yellow box from c++
-// #else
-//    if (!encryptionKey.empty()) {
-
-//        RCTLogWarn(@"Your message")
-//      throw std::runtime_error("[OP SQLite] SQLCipher is not enabled, "
-//                               "encryption key is not allowed");
-//    }
+#else
+    if (!encryptionKey.empty()) {
+      //  RCTLogWarn(@"Your message")
+      throw std::runtime_error("[OP SQLite] SQLCipher is not enabled, "
+                               "encryption key is not allowed");
+    }
 #endif
 
     if (!location.empty()) {
