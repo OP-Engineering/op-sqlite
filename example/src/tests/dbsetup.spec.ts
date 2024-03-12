@@ -9,7 +9,7 @@ export function dbSetupTests() {
   describe('DB setup tests', () => {
     it('Create in memory DB', async () => {
       let inMemoryDb = open({
-        name: 'inMemoryTest',
+        name: 'inMemoryTest.sqlite',
         location: ':memory:',
         encryptionKey: 'test',
       });
@@ -25,7 +25,7 @@ export function dbSetupTests() {
     if (Platform.OS === 'android') {
       it('Create db in external directory Android', () => {
         let androidDb = open({
-          name: 'AndroidSDCardDB',
+          name: 'AndroidSDCardDB.sqlite',
           location: ANDROID_EXTERNAL_FILES_PATH,
           encryptionKey: 'test',
         });
