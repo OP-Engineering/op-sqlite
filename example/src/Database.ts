@@ -1,9 +1,6 @@
 import performance from 'react-native-performance';
 import Chance from 'chance';
 import {open} from '@op-engineering/op-sqlite';
-import {MMKV} from 'react-native-mmkv';
-const mmkv = new MMKV();
-import {Buffer} from 'buffer';
 
 const chance = new Chance();
 
