@@ -153,7 +153,11 @@ export type PreparedStatementObj = {
 };
 
 interface ISQLite {
-  open: (dbName: string, location?: string) => void;
+  open: (options: {
+    name: string;
+    location?: string;
+    encryptionKey?: string;
+  }) => void;
   close: (dbName: string) => void;
   delete: (dbName: string, location?: string) => void;
   attach: (
@@ -223,10 +227,14 @@ function enhanceQueryResult(result: QueryResult): void {
 }
 
 const _open = OPSQLite.open;
-OPSQLite.open = (dbName: string, location?: string) => {
-  _open(dbName, location);
+OPSQLite.open = (options: {
+  name: string;
+  location?: string;
+  encryptionKey?: string;
+}) => {
+  _open(options);
 
-  locks[dbName] = {
+  locks[options.name] = {
     queue: [],
     inProgress: false,
   };
@@ -425,8 +433,9 @@ export type OPSQLiteConnection = {
 export const open = (options: {
   name: string;
   location?: string;
+  encryptionKey?: string;
 }): OPSQLiteConnection => {
-  OPSQLite.open(options.name, options.location);
+  OPSQLite.open(options);
 
   return {
     close: () => OPSQLite.close(options.name),

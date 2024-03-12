@@ -9873,7 +9873,6 @@ __metadata:
     prettier: "npm:2.8.8"
     react: "npm:18.2.0"
     react-native: "npm:0.73.1"
-    react-native-mmkv: "npm:^2.11.0"
     react-native-performance: "npm:^5.1.0"
     react-native-restart: "npm:^0.0.27"
     react-test-renderer: "npm:18.2.0"
@@ -10550,16 +10549,6 @@ __metadata:
   bin:
     bob: bin/bob
   checksum: 10c0/b5e8943ce011e43dbd75c04a96a27464ad7820aaed0b35a50cabbefeb5292de0cdea8b505364bddda045a5cf0e9d72c1bf7ac0cea9c0c6e33b574b8d64c65817
-  languageName: node
-  linkType: hard
-
-"react-native-mmkv@npm:^2.11.0":
-  version: 2.12.1
-  resolution: "react-native-mmkv@npm:2.12.1"
-  peerDependencies:
-    react: "*"
-    react-native: ">=0.71.0"
-  checksum: 10c0/a7ecf2e8fc48269a7609c6ea4ff5ded74fe40646d3021c58cc325a3f5420978c37ceeb0184672cc6a196d1d003ad43d1ae7270e05b9f11c7b41074f1da2270f2
   languageName: node
   linkType: hard
 
