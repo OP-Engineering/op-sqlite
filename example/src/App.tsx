@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Button,
+  Clipboard,
   SafeAreaView,
   ScrollView,
   Text,
@@ -39,8 +40,6 @@ export default function App() {
     [],
   );
   const [singleRecordTime, setSingleRecordTime] = useState<number>(0);
-  const [sqliteMMSetTime, setSqliteMMSetTime] = useState(0);
-  const [sqliteGetTime, setSqliteMMGetTime] = useState(0);
   const [rawExecutionTimes, setRawExecutionTimes] = useState<number[]>([]);
   useEffect(() => {
     setResults([]);
@@ -84,45 +83,18 @@ export default function App() {
     }
   };
 
-  const queryAndReload = async () => {
-    queryLargeDB();
-    setTimeout(() => {
-      RNRestart.restart();
-    }, 200);
+  const copyDbPathToClipboad = async () => {
+    const db = await open({name: 'dbPath.sqlite'});
+    db.execute('CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT)');
+    const path = db.getDbPath();
+    await db.close();
+    console.warn(path);
+    Clipboard.setString(path);
   };
 
   const allTestsPassed = results.reduce((acc: boolean, r: any) => {
     return acc && r.type !== 'incorrect';
   }, true);
-
-  const testAgainstMMKV = () => {
-    const db = open({
-      name: 'mmkvTestDb',
-    });
-
-    db.execute('PRAGMA mmap_size=268435456');
-    // db.execute('PRAGMA journal_mode = OFF;');
-    db.execute('DROP TABLE IF EXISTS mmkvTest;');
-    db.execute('CREATE TABLE mmkvTest (text TEXT);');
-
-    let insertStatment = db.prepareStatement(
-      'INSERT INTO "mmkvTest" (text) VALUES (?)',
-    );
-    insertStatment.bind(['quack']);
-
-    let start = performance.now();
-    insertStatment.execute();
-    let end = performance.now();
-    setSqliteMMSetTime(end - start);
-
-    let readStatement = db.prepareStatement('SELECT text from mmkvTest;');
-    start = performance.now();
-    readStatement.execute();
-    end = performance.now();
-    setSqliteMMGetTime(end - start);
-
-    db.close();
-  };
 
   return (
     <SafeAreaView className="flex-1 bg-neutral-900">
@@ -130,24 +102,12 @@ export default function App() {
         <View className="flex-row p-2 bg-neutral-800 items-center">
           <Text className={'font-bold flex-1 text-white'}>Tools</Text>
         </View>
-        <Button title="Reload app middle of query" onPress={queryAndReload} />
+        <Button
+          title="Copy DB Path to clipboard"
+          onPress={copyDbPathToClipboad}
+        />
         <Button title="Create 300k Record DB" onPress={createLargeDb} />
         <Button title="Query 300k Records" onPress={queryLargeDb} />
-        {/* <Button title="Query single record" onPress={querySingleRecord} />
-        <Button title="Against MMKV" onPress={testAgainstMMKV} /> */}
-        <View className="gap-2 items-center mt-4">
-          {!!sqliteMMSetTime && (
-            <Text className="text-white">
-              MM SQLite Write: {sqliteMMSetTime.toFixed(3)} ms
-            </Text>
-          )}
-
-          {!!sqliteGetTime && (
-            <Text className="text-white">
-              MM SQLite Get: {sqliteGetTime.toFixed(3)} ms
-            </Text>
-          )}
-        </View>
         {isLoading && <ActivityIndicator color={'white'} size="large" />}
 
         {!!singleRecordTime && (
