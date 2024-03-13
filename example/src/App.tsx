@@ -16,7 +16,6 @@ import {
 } from './Database';
 import {dbSetupTests, queriesTests, runTests, blobTests} from './tests/index';
 import {styled} from 'nativewind';
-import RNRestart from 'react-native-restart';
 import {registerHooksTests} from './tests/hooks.spec';
 import {open} from '@op-engineering/op-sqlite';
 import clsx from 'clsx';
