@@ -618,6 +618,30 @@ void install(jsi::Runtime &rt,
     return {};
   });
 
+  auto get_db_path = HOSTFN("getDbPath", 2) {
+    std::string db_name = args[0].asString(rt).utf8(rt);
+    std::string path = std::string(basePath);
+    if (count > 1 && !args[1].isUndefined() && !args[1].isNull()) {
+      if (!args[1].isString()) {
+        throw std::runtime_error(
+            "[op-sqlite][open] database location must be a string");
+      }
+
+      std::string lastPath = args[1].asString(rt).utf8(rt);
+
+      if (lastPath == ":memory:") {
+        path = ":memory:";
+      } else if (lastPath.rfind("/", 0) == 0) {
+        path = lastPath;
+      } else {
+        path = path + "/" + lastPath;
+      }
+    }
+
+    auto result = opsqlite_get_db_path(db_name, path);
+    return jsi::String::createFromUtf8(rt, result);
+  });
+
   jsi::Object module = jsi::Object(rt);
 
   module.setProperty(rt, "open", std::move(open));
@@ -636,6 +660,7 @@ void install(jsi::Runtime &rt,
   module.setProperty(rt, "prepareStatement", std::move(prepare_statement));
   module.setProperty(rt, "loadExtension", std::move(load_extension));
   module.setProperty(rt, "executeRawAsync", std::move(execute_raw_async));
+  module.setProperty(rt, "getDbPath", std::move(get_db_path));
 
   rt.global().setProperty(rt, "__OPSQLiteProxy", std::move(module));
 }

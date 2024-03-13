@@ -199,6 +199,7 @@ interface ISQLite {
     query: string,
     params?: any[]
   ) => Promise<any[]>;
+  getDbPath: (dbName: string, location?: string) => string;
 }
 
 const locks: Record<
@@ -420,6 +421,7 @@ export type OPSQLiteConnection = {
   prepareStatement: (query: string) => PreparedStatementObj;
   loadExtension: (path: string, entryPoint?: string) => void;
   executeRawAsync: (query: string, params?: any[]) => Promise<any[]>;
+  getDbPath: () => string;
 };
 
 export const open = (options: {
@@ -456,5 +458,6 @@ export const open = (options: {
       OPSQLite.loadExtension(options.name, path, entryPoint),
     executeRawAsync: (query, params) =>
       OPSQLite.executeRawAsync(options.name, query, params),
+    getDbPath: () => OPSQLite.getDbPath(options.name, options.location),
   };
 };
