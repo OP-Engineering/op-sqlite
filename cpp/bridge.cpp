@@ -30,8 +30,8 @@ inline void check_db_open(std::string const &db_name) {
 
 /// Returns the completely formed db path, but it also creates any sub-folders
 /// along the way
-std::string get_db_path(std::string const &db_name,
-                        std::string const &location) {
+std::string opsqlite_get_db_path(std::string const &db_name,
+                                 std::string const &location) {
 
   if (location == ":memory:") {
     return location;
@@ -43,7 +43,7 @@ std::string get_db_path(std::string const &db_name,
 
 BridgeResult opsqlite_open(std::string const &dbName,
                            std::string const &lastPath) {
-  std::string dbPath = get_db_path(dbName, lastPath);
+  std::string dbPath = opsqlite_get_db_path(dbName, lastPath);
 
   int sqlOpenFlags =
       SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
@@ -80,7 +80,7 @@ BridgeResult opsqlite_attach(std::string const &mainDBName,
                              std::string const &docPath,
                              std::string const &databaseToAttach,
                              std::string const &alias) {
-  std::string dbPath = get_db_path(databaseToAttach, docPath);
+  std::string dbPath = opsqlite_get_db_path(databaseToAttach, docPath);
   std::string statement = "ATTACH DATABASE '" + dbPath + "' AS " + alias;
 
   BridgeResult result =
@@ -124,7 +124,7 @@ BridgeResult opsqlite_remove(std::string const &dbName,
     }
   }
 
-  std::string dbPath = get_db_path(dbName, docPath);
+  std::string dbPath = opsqlite_get_db_path(dbName, docPath);
 
   if (!file_exists(dbPath)) {
     return {.type = SQLiteError,
