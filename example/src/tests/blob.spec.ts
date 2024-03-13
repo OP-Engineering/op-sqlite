@@ -26,6 +26,7 @@ export function blobTests() {
 
       db = open({
         name: 'blobs',
+        encryptionKey: 'test',
       });
 
       db.execute('DROP TABLE IF EXISTS BlobTable;');

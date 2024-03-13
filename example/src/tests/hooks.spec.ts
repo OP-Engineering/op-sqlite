@@ -13,6 +13,7 @@ async function sleep(ms: number): Promise<void> {
 const expect = chai.expect;
 const DB_CONFIG = {
   name: 'hooksDb',
+  encryptionKey: 'test',
 };
 const chance = new Chance();
 

@@ -9,8 +9,9 @@ export function dbSetupTests() {
   describe('DB setup tests', () => {
     it('Create in memory DB', async () => {
       let inMemoryDb = open({
-        name: 'inMemoryTest',
+        name: 'inMemoryTest.sqlite',
         location: ':memory:',
+        encryptionKey: 'test',
       });
 
       inMemoryDb.execute('DROP TABLE IF EXISTS User;');
@@ -24,8 +25,9 @@ export function dbSetupTests() {
     if (Platform.OS === 'android') {
       it('Create db in external directory Android', () => {
         let androidDb = open({
-          name: 'AndroidSDCardDB',
+          name: 'AndroidSDCardDB.sqlite',
           location: ANDROID_EXTERNAL_FILES_PATH,
+          encryptionKey: 'test',
         });
         androidDb.execute('DROP TABLE IF EXISTS User;');
         androidDb.execute(
@@ -39,6 +41,7 @@ export function dbSetupTests() {
     it('Should load extension on runtime', async () => {
       let db = open({
         name: 'extensionDb',
+        encryptionKey: 'test',
       });
       try {
         db.loadExtension('path');
