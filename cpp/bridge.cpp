@@ -8,21 +8,61 @@
 
 namespace opsqlite {
 
+// TODO this has gotten unweildy, using a HostObject abstraction would be better
 /// Maps to hold the different objects
 std::unordered_map<std::string, sqlite3 *> dbMap =
     std::unordered_map<std::string, sqlite3 *>();
-std::unordered_map<std::string, UpdateCallback> updateCallbackMap =
-    std::unordered_map<std::string, UpdateCallback>();
+std::unordered_map<std::string, std::unordered_map<std::string, UpdateCallback>>
+    updateCallbackMap =
+        std::unordered_map<std::string,
+                           std::unordered_map<std::string, UpdateCallback>>();
 
-std::unordered_map<std::string, CommitCallback> commitCallbackMap =
-    std::unordered_map<std::string, CommitCallback>();
+std::unordered_map<std::string, std::unordered_map<std::string, CommitCallback>>
+    commitCallbackMap =
+        std::unordered_map<std::string,
+                           std::unordered_map<std::string, CommitCallback>>();
 
-std::unordered_map<std::string, RollbackCallback> rollbackCallbackMap =
-    std::unordered_map<std::string, RollbackCallback>();
+std::unordered_map<std::string,
+                   std::unordered_map<std::string, RollbackCallback>>
+    rollbackCallbackMap =
+        std::unordered_map<std::string,
+                           std::unordered_map<std::string, RollbackCallback>>();
 
 inline void check_db_open(std::string const &db_name) {
   if (dbMap.count(db_name) == 0) {
     throw std::runtime_error("[OP-SQLite] DB is not open");
+  }
+}
+
+// Hook native callbacks
+void update_callback(void *user_data, int operation_type, char const *database,
+                     char const *table, sqlite3_int64 rowid) {
+  std::string db_name(database);
+  auto callbacks = updateCallbackMap[db_name];
+  // iterate over the callback map and call them
+
+  for (auto &cb : callbacks) {
+    cb.second(db_name, std::string(table), operation_to_string(operation_type),
+              static_cast<long long>(rowid));
+  }
+  //
+}
+
+int commit_callback(void *database) {
+  std::string db_name(static_cast<char const *>(database));
+  auto callbacks = commitCallbackMap[db_name];
+  for (auto &cb : callbacks) {
+    cb.second(db_name);
+  }
+  // You need to return 0 to allow commits to continue
+  return 0;
+}
+
+void rollback_callback(void *database) {
+  std::string db_name(static_cast<char const *>(database));
+  auto callbacks = rollbackCallbackMap[db_name];
+  for (auto &cb : callbacks) {
+    cb.second(db_name);
   }
 }
 
@@ -68,6 +108,12 @@ BridgeResult opsqlite_open(std::string const &dbName,
   opsqlite_execute(dbName, "PRAGMA key = '" + encryptionKey + "'", nullptr,
                    nullptr, nullptr);
 #endif
+
+  // On connection we register the native hooks, so on JS people can create
+  // reactive queries and their own hooks
+  sqlite3_update_hook(db, &update_callback, nullptr);
+  sqlite3_commit_hook(db, &commit_callback, nullptr);
+  sqlite3_rollback_hook(db, &rollback_callback, nullptr);
 
   return BridgeResult{.type = SQLiteOk, .affectedRows = 0};
 }
@@ -700,51 +746,30 @@ std::string operation_to_string(int operation_type) {
   }
 }
 
-void update_callback(void *dbName, int operation_type, char const *database,
-                     char const *table, sqlite3_int64 rowid) {
-  std::string &strDbName = *(static_cast<std::string *>(dbName));
-  auto callback = updateCallbackMap[strDbName];
-  callback(strDbName, std::string(table), operation_to_string(operation_type),
-           static_cast<int>(rowid));
-}
-
-BridgeResult opsqlite_register_update_hook(std::string const &dbName,
+BridgeResult opsqlite_register_update_hook(std::string const &db_name,
                                            UpdateCallback const callback) {
-  check_db_open(dbName);
+  check_db_open(db_name);
 
-  sqlite3 *db = dbMap[dbName];
-  updateCallbackMap[dbName] = callback;
-  const std::string *key = nullptr;
+  sqlite3 *db = dbMap[db_name];
 
-  // TODO find a more elegant way to retrieve a reference to the key
-  for (auto const &element : dbMap) {
-    if (element.first == dbName) {
-      key = &element.first;
-    }
+  if (updateCallbackMap.count(db_name)) {
+    updateCallbackMap[db_name].push_back(callback);
+  } else {
+    updateCallbackMap[db_name] = {callback};
   }
 
-  sqlite3_update_hook(db, &update_callback, (void *)key);
-
   return {SQLiteOk};
 }
 
-BridgeResult opsqlite_deregister_update_hook(std::string const &dbName) {
-  check_db_open(dbName);
+BridgeResult opsqlite_deregister_update_hook(std::string const &db_name) {
+  check_db_open(db_name);
 
-  sqlite3 *db = dbMap[dbName];
-  updateCallbackMap.erase(dbName);
+  // if()
 
-  sqlite3_update_hook(db, NULL, NULL);
+  // sqlite3 *db = dbMap[dbName];
+  // updateCallbackMap.erase(dbName);
 
   return {SQLiteOk};
-}
-
-int commit_callback(void *dbName) {
-  std::string &strDbName = *(static_cast<std::string *>(dbName));
-  auto callback = commitCallbackMap[strDbName];
-  callback(strDbName);
-  // You need to return 0 to allow commits to continue
-  return 0;
 }
 
 BridgeResult opsqlite_register_commit_hook(std::string const &dbName,
@@ -762,8 +787,6 @@ BridgeResult opsqlite_register_commit_hook(std::string const &dbName,
     }
   }
 
-  sqlite3_commit_hook(db, &commit_callback, (void *)key);
-
   return {SQLiteOk};
 }
 
@@ -775,12 +798,6 @@ BridgeResult opsqlite_deregister_commit_hook(std::string const &dbName) {
   sqlite3_commit_hook(db, NULL, NULL);
 
   return {SQLiteOk};
-}
-
-void rollback_callback(void *dbName) {
-  std::string &strDbName = *(static_cast<std::string *>(dbName));
-  auto callback = rollbackCallbackMap[strDbName];
-  callback(strDbName);
 }
 
 BridgeResult opsqlite_register_rollback_hook(std::string const &dbName,
@@ -798,8 +815,6 @@ BridgeResult opsqlite_register_rollback_hook(std::string const &dbName,
     }
   }
 
-  sqlite3_rollback_hook(db, &rollback_callback, (void *)key);
-
   return {SQLiteOk};
 }
 
@@ -808,8 +823,6 @@ BridgeResult opsqlite_deregister_rollback_hook(std::string const &dbName) {
 
   sqlite3 *db = dbMap[dbName];
   rollbackCallbackMap.erase(dbName);
-
-  sqlite3_rollback_hook(db, NULL, NULL);
 
   return {SQLiteOk};
 }
