@@ -28,7 +28,7 @@ Pod::Spec.new do |s|
   if ENV['OP_SQLITE_USE_SQLCIPHER'] == '1' then
     puts "OP-SQLITE using SQLCipher! 🔒\n"
     s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h"
-    xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_SQLCIPHER=1"
+    xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_SQLCIPHER=1 SQLITE_HAS_CODEC SQLITE_TEMP_STORE=2"
   else
     puts "OP-SQLITE using SQLite! 📦\n"
     s.exclude_files = "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h"
