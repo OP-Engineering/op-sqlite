@@ -1,6 +1,6 @@
 #import "OPSQLite.h"
 #if RCT_NEW_ARCH_ENABLED
-//#import <React/RCTBridge+Private.h>
+#import <React/RCTBridge+Private.h>
 #endif
 #import <React/RCTUtils.h>
 #import <ReactCommon/RCTTurboModule.h>
@@ -84,7 +84,6 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
     (const facebook::react::ObjCTurboModule::InitParams &)params
 {
-    params.instance.
   return std::make_shared<facebook::react::NativeOPSQLiteSpecJSI>(params);
 }
 #endif
