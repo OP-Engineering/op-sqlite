@@ -6,9 +6,10 @@ set (CMAKE_VERBOSE_MAKEFILE ON)
 set (CMAKE_CXX_STANDARD 20)
 set (BUILD_DIR ${CMAKE_SOURCE_DIR}/build)
 
-include_directories(
-  ../cpp
-)
+ include_directories(
+   ../cpp
+   ../cpp/sqlcipher
+ )
 
 add_definitions(
   ${SQLITE_FLAGS}
@@ -21,8 +22,6 @@ add_library(
   ../cpp/bridge.h
   ../cpp/bindings.cpp
   ../cpp/bindings.h
-  ../cpp/sqlite3.h
-  ../cpp/sqlite3.c
   ../cpp/utils.h
   ../cpp/utils.cpp
   ../cpp/ThreadPool.h
@@ -40,6 +39,20 @@ add_library(
   cpp-adapter.cpp
 )
 
+if (OP_SQLITE_USE_SQLCIPHER)
+  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlcipher/sqlite3.h ../cpp/sqlcipher/sqlite3.c)
+
+  add_definitions(
+    -DOP_SQLITE_USE_SQLCIPHER
+    -DSQLITE_HAS_CODEC
+    -DSQLITE_TEMP_STORE=2
+  )
+  
+  find_package(openssl REQUIRED CONFIG)
+else()
+ target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlite3.h ../cpp/sqlite3.c)
+endif()
+
 set_target_properties(
   ${PACKAGE_NAME} PROPERTIES
   CXX_STANDARD 20
@@ -49,12 +62,19 @@ set_target_properties(
 
 find_package(ReactAndroid REQUIRED CONFIG)
 find_package(fbjni REQUIRED CONFIG)
+find_library(LOG_LIB log)
+
 
 target_link_libraries(
   ${PACKAGE_NAME}
+  ${LOG_LIB}
   fbjni::fbjni
   ReactAndroid::jsi
   ReactAndroid::turbomodulejsijni
   ReactAndroid::react_nativemodule_core
   android
 )
+
+if (OP_SQLITE_USE_SQLCIPHER)
+  target_link_libraries(${PACKAGE_NAME} PRIVATE openssl::crypto)
+endif()

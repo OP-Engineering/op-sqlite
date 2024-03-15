@@ -16,6 +16,7 @@ export function preparedStatementsTests() {
 
       db = open({
         name: 'statements',
+        encryptionKey: 'test',
       });
 
       db.execute('DROP TABLE IF EXISTS User;');
@@ -39,7 +40,7 @@ export function preparedStatementsTests() {
       expect(results.rows!._array.length).to.equal(3);
     });
 
-    it('allows re-binding a prepared statement', async () => {
+    it('prepared statement, rebind select', async () => {
       const statement = db.prepareStatement('SELECT * FROM User WHERE id=?;');
       statement.bind([1]);
 
@@ -49,6 +50,17 @@ export function preparedStatementsTests() {
       statement.bind([2]);
       results = statement.execute();
       expect(results.rows!._array[0].name === 'Pablo');
+    });
+
+    it('prepared statement, rebind insert', async () => {
+      const statement = db.prepareStatement(
+        'INSERT INTO "User" (id, name) VALUES(?,?);',
+      );
+      statement.bind([4, 'Juan']);
+      statement.execute();
+
+      statement.bind([5, 'Pedro']);
+      statement.execute();
     });
   });
 }
