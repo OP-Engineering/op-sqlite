@@ -42,10 +42,10 @@ void update_callback(void *user_data, int operation_type, char const *database,
   // iterate over the callback map and call them
 
   for (auto &cb : callbacks) {
-    cb.second(db_name, std::string(table), operation_to_string(operation_type),
+    cb.second(db_name, std::string(table),
+              sqlite_operation_to_string(operation_type),
               static_cast<long long>(rowid));
   }
-  //
 }
 
 int commit_callback(void *database) {
@@ -730,99 +730,83 @@ void opsqlite_close_all() {
   commitCallbackMap.clear();
 }
 
-std::string operation_to_string(int operation_type) {
-  switch (operation_type) {
-  case SQLITE_INSERT:
-    return "INSERT";
-
-  case SQLITE_DELETE:
-    return "DELETE";
-
-  case SQLITE_UPDATE:
-    return "UPDATE";
-
-  default:
-    throw std::invalid_argument("Uknown SQLite operation on hook");
-  }
-}
-
 BridgeResult opsqlite_register_update_hook(std::string const &db_name,
                                            UpdateCallback const callback) {
   check_db_open(db_name);
 
   sqlite3 *db = dbMap[db_name];
+  std::string id = get_uuid();
 
-  if (updateCallbackMap.count(db_name)) {
-    updateCallbackMap[db_name].push_back(callback);
-  } else {
-    updateCallbackMap[db_name] = {callback};
+  if (!updateCallbackMap.count(db_name)) {
+    updateCallbackMap[db_name] =
+        std::unordered_map<std::string, UpdateCallback>();
   }
+
+  updateCallbackMap[db_name][id] = callback;
+
+  return {.type = SQLiteOk, .identifier = id};
+}
+
+BridgeResult opsqlite_deregister_update_hook(std::string const &db_name,
+                                             std::string const &id) {
+  check_db_open(db_name);
+  updateCallbackMap[db_name].erase(id);
 
   return {SQLiteOk};
 }
 
-BridgeResult opsqlite_deregister_update_hook(std::string const &db_name) {
+BridgeResult opsqlite_register_commit_hook(std::string const &db_name,
+                                           CommitCallback const callback) {
   check_db_open(db_name);
 
-  // if()
+  sqlite3 *db = dbMap[db_name];
+  std::string id = get_uuid();
 
-  // sqlite3 *db = dbMap[dbName];
-  // updateCallbackMap.erase(dbName);
-
-  return {SQLiteOk};
-}
-
-BridgeResult opsqlite_register_commit_hook(std::string const &dbName,
-                                           CommitCallback const callback) {
-  check_db_open(dbName);
-
-  sqlite3 *db = dbMap[dbName];
-  commitCallbackMap[dbName] = callback;
-  const std::string *key = nullptr;
-
-  // TODO find a more elegant way to retrieve a reference to the key
-  for (auto const &element : dbMap) {
-    if (element.first == dbName) {
-      key = &element.first;
-    }
+  if (!commitCallbackMap.count(db_name)) {
+    commitCallbackMap[db_name] =
+        std::unordered_map<std::string, CommitCallback>();
   }
 
-  return {SQLiteOk};
+  commitCallbackMap[db_name][id] = callback;
+
+  return {.type = SQLiteOk, .identifier = id};
 }
 
-BridgeResult opsqlite_deregister_commit_hook(std::string const &dbName) {
-  check_db_open(dbName);
+BridgeResult opsqlite_deregister_commit_hook(std::string const &db_name,
+                                             std::string const &id) {
+  check_db_open(db_name);
 
-  sqlite3 *db = dbMap[dbName];
-  commitCallbackMap.erase(dbName);
+  sqlite3 *db = dbMap[db_name];
+  commitCallbackMap[db_name].erase(id);
   sqlite3_commit_hook(db, NULL, NULL);
 
   return {SQLiteOk};
 }
 
-BridgeResult opsqlite_register_rollback_hook(std::string const &dbName,
+BridgeResult opsqlite_register_rollback_hook(std::string const &db_name,
                                              RollbackCallback const callback) {
-  check_db_open(dbName);
+  check_db_open(db_name);
 
-  sqlite3 *db = dbMap[dbName];
-  rollbackCallbackMap[dbName] = callback;
-  const std::string *key = nullptr;
+  sqlite3 *db = dbMap[db_name];
+  std::string id = get_uuid();
 
-  // TODO find a more elegant way to retrieve a reference to the key
-  for (auto const &element : dbMap) {
-    if (element.first == dbName) {
-      key = &element.first;
-    }
+  if (!rollbackCallbackMap.count(db_name)) {
+    rollbackCallbackMap[db_name] =
+        std::unordered_map<std::string, RollbackCallback>();
   }
 
-  return {SQLiteOk};
+  rollbackCallbackMap[db_name][id] = callback;
+
+  return {.type = SQLiteOk, .identifier = id};
 }
 
-BridgeResult opsqlite_deregister_rollback_hook(std::string const &dbName) {
-  check_db_open(dbName);
+BridgeResult opsqlite_deregister_rollback_hook(std::string const &db_name,
+                                               std::string const &id) {
+  check_db_open(db_name);
 
-  sqlite3 *db = dbMap[dbName];
-  rollbackCallbackMap.erase(dbName);
+  sqlite3 *db = dbMap[db_name];
+  rollbackCallbackMap[db_name].erase(id);
+  sqlite3_commit_hook(db, NULL, NULL);
 
   return {SQLiteOk};
 }

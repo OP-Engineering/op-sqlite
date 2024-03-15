@@ -12,6 +12,7 @@ struct BridgeResult {
   std::string message;
   int affectedRows;
   double insertId;
+  std::string identifier;
 };
 
 struct BatchResult {

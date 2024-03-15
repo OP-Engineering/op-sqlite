@@ -3,6 +3,7 @@
 #include "bridge.h"
 #include <fstream>
 #include <iostream>
+#include <random>
 #include <sstream>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -250,6 +251,42 @@ bool file_exists(const std::string &path) {
 int mkdir(std::string const &path) {
   std::filesystem::create_directories(path);
   return 0;
+}
+
+// Semi random function, more than enough for our purposes
+std::string get_uuid() {
+  static std::random_device dev;
+  static std::mt19937 rng(dev());
+
+  std::uniform_int_distribution<int> dist(0, 15);
+
+  const char *v = "0123456789abcdef";
+  const bool dash[] = {0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0};
+
+  std::string res;
+  for (int i = 0; i < 16; i++) {
+    if (dash[i])
+      res += "-";
+    res += v[dist(rng)];
+    res += v[dist(rng)];
+  }
+  return res;
+}
+
+std::string sqlite_operation_to_string(int operation_type) {
+  switch (operation_type) {
+  case SQLITE_INSERT:
+    return "INSERT";
+
+  case SQLITE_DELETE:
+    return "DELETE";
+
+  case SQLITE_UPDATE:
+    return "UPDATE";
+
+  default:
+    throw std::invalid_argument("Uknown SQLite operation on hook");
+  }
 }
 
 } // namespace opsqlite

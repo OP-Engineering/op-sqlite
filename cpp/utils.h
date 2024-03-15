@@ -37,6 +37,10 @@ bool folder_exists(const std::string &foldername);
 
 bool file_exists(const std::string &path);
 
+std::string get_uuid();
+
+std::string sqlite_operation_to_string(int operation_type);
+
 } // namespace opsqlite
 
 #endif /* utils_h */

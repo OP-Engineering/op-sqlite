@@ -511,8 +511,7 @@ void install(jsi::Runtime &rt,
     auto callback = std::make_shared<jsi::Value>(rt, args[1]);
 
     if (callback->isUndefined() || callback->isNull()) {
-      opsqlite_deregister_update_hook(dbName);
-      return {};
+      throw std::runtime_error("[op-sqlite][updateHook] callback is required");
     }
 
     updateHooks[dbName] = callback;
@@ -552,9 +551,13 @@ void install(jsi::Runtime &rt,
           });
     };
 
-    opsqlite_register_update_hook(dbName, std::move(hook));
+    auto register_result =
+        opsqlite_register_update_hook(dbName, std::move(hook));
 
-    return {};
+    return HOSTFN("remove", 0) {
+      opsqlite_deregister_update_hook(dbName, register_result.identifier);
+      return {};
+    });
   });
 
   auto commit_hook = HOSTFN("commitHook", 2) {
@@ -567,8 +570,7 @@ void install(jsi::Runtime &rt,
     auto dbName = args[0].asString(rt).utf8(rt);
     auto callback = std::make_shared<jsi::Value>(rt, args[1]);
     if (callback->isUndefined() || callback->isNull()) {
-      opsqlite_deregister_commit_hook(dbName);
-      return {};
+      throw std::runtime_error("Callback is needed");
     }
     commitHooks[dbName] = callback;
 
@@ -577,9 +579,13 @@ void install(jsi::Runtime &rt,
           [&rt, callback] { callback->asObject(rt).asFunction(rt).call(rt); });
     };
 
-    opsqlite_register_commit_hook(dbName, std::move(hook));
+    auto register_result =
+        opsqlite_register_commit_hook(dbName, std::move(hook));
 
-    return {};
+    return HOSTFN("remove", 0) {
+      opsqlite_deregister_commit_hook(dbName, register_result.identifier);
+      return {};
+    });
   });
 
   auto rollback_hook = HOSTFN("rollbackHook", 2) {
@@ -594,7 +600,7 @@ void install(jsi::Runtime &rt,
     auto callback = std::make_shared<jsi::Value>(rt, args[1]);
 
     if (callback->isUndefined() || callback->isNull()) {
-      opsqlite_deregister_rollback_hook(dbName);
+      throw std::runtime_error("Callback is needed");
       return {};
     }
     rollbackHooks[dbName] = callback;
@@ -604,8 +610,13 @@ void install(jsi::Runtime &rt,
           [&rt, callback] { callback->asObject(rt).asFunction(rt).call(rt); });
     };
 
-    opsqlite_register_rollback_hook(dbName, std::move(hook));
-    return {};
+    auto register_result =
+        opsqlite_register_rollback_hook(dbName, std::move(hook));
+
+    return HOSTFN("remove", 0) {
+      opsqlite_deregister_rollback_hook(dbName, register_result.identifier);
+      return {};
+    });
   });
 
   auto prepare_statement = HOSTFN("prepareStatement", 1) {
