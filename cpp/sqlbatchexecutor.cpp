@@ -57,7 +57,8 @@ BatchResult sqliteExecuteBatch(std::string dbName,
 
   try {
     int affectedRows = 0;
-    opsqlite_execute_literal(dbName, "BEGIN EXCLUSIVE TRANSACTION");
+    opsqlite_execute(dbName, "BEGIN EXCLUSIVE TRANSACTION", nullptr, nullptr,
+                     nullptr);
     for (int i = 0; i < commandCount; i++) {
       auto command = commands->at(i);
       // We do not provide a datastructure to receive query data because we
@@ -65,7 +66,7 @@ BatchResult sqliteExecuteBatch(std::string dbName,
       auto result = opsqlite_execute(dbName, command.sql, command.params.get(),
                                      nullptr, nullptr);
       if (result.type == SQLiteError) {
-        opsqlite_execute_literal(dbName, "ROLLBACK");
+        opsqlite_execute(dbName, "ROLLBACK", nullptr, nullptr, nullptr);
         return BatchResult{
             .type = SQLiteError,
             .message = result.message,
@@ -74,14 +75,14 @@ BatchResult sqliteExecuteBatch(std::string dbName,
         affectedRows += result.affectedRows;
       }
     }
-    opsqlite_execute_literal(dbName, "COMMIT");
+    opsqlite_execute(dbName, "COMMIT", nullptr, nullptr, nullptr);
     return BatchResult{
         .type = SQLiteOk,
         .affectedRows = affectedRows,
         .commands = static_cast<int>(commandCount),
     };
   } catch (std::exception &exc) {
-    opsqlite_execute_literal(dbName, "ROLLBACK");
+    opsqlite_execute(dbName, "ROLLBACK", nullptr, nullptr, nullptr);
     return BatchResult{
         .type = SQLiteError,
         .message = exc.what(),

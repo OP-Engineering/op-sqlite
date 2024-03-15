@@ -8,7 +8,6 @@
 #include "sqlbatchexecutor.h"
 #include "utils.h"
 #include <iostream>
-#include <sqlite3.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -55,32 +54,50 @@ void install(jsi::Runtime &rt,
       throw std::runtime_error("[op-sqlite][open] database name is required");
     }
 
-    if (!args[0].isString()) {
-      throw std::runtime_error(
-          "[op-sqlite][open] database name must be a string");
-    }
-
-    std::string dbName = args[0].asString(rt).utf8(rt);
+    jsi::Object options = args[0].asObject(rt);
+    std::string dbName = options.getProperty(rt, "name").asString(rt).utf8(rt);
     std::string path = std::string(basePath);
+    std::string location;
+    std::string encryptionKey;
 
-    if (count > 1 && !args[1].isUndefined() && !args[1].isNull()) {
-      if (!args[1].isString()) {
-        throw std::runtime_error(
-            "[op-sqlite][open] database location must be a string");
-      }
+    if (options.hasProperty(rt, "location")) {
+      location = options.getProperty(rt, "location").asString(rt).utf8(rt);
+    }
 
-      std::string lastPath = args[1].asString(rt).utf8(rt);
+    if (options.hasProperty(rt, "encryptionKey")) {
+      encryptionKey =
+          options.getProperty(rt, "encryptionKey").asString(rt).utf8(rt);
+    }
 
-      if (lastPath == ":memory:") {
+#ifdef OP_SQLITE_USE_SQLCIPHER
+    if (encryptionKey.empty()) {
+      throw std::runtime_error(
+          "[OP SQLite] using SQLCipher encryption key is required");
+    }
+//      TODO(osp) find a way to display the yellow box from c++
+#else
+    // if (!encryptionKey.empty()) {
+    //   //  RCTLogWarn(@"Your message")
+    //   throw std::runtime_error("[OP SQLite] SQLCipher is not enabled, "
+    //                            "encryption key is not allowed");
+    // }
+#endif
+
+    if (!location.empty()) {
+      if (location == ":memory:") {
         path = ":memory:";
-      } else if (lastPath.rfind("/", 0) == 0) {
-        path = lastPath;
+      } else if (location.rfind("/", 0) == 0) {
+        path = location;
       } else {
-        path = path + "/" + lastPath;
+        path = path + "/" + location;
       }
     }
 
+#ifdef OP_SQLITE_USE_SQLCIPHER
+    BridgeResult result = opsqlite_open(dbName, path, encryptionKey);
+#else
     BridgeResult result = opsqlite_open(dbName, path);
+#endif
 
     if (result.type == SQLiteError) {
       throw std::runtime_error(result.message);
@@ -618,6 +635,30 @@ void install(jsi::Runtime &rt,
     return {};
   });
 
+  auto get_db_path = HOSTFN("getDbPath", 2) {
+    std::string db_name = args[0].asString(rt).utf8(rt);
+    std::string path = std::string(basePath);
+    if (count > 1 && !args[1].isUndefined() && !args[1].isNull()) {
+      if (!args[1].isString()) {
+        throw std::runtime_error(
+            "[op-sqlite][open] database location must be a string");
+      }
+
+      std::string lastPath = args[1].asString(rt).utf8(rt);
+
+      if (lastPath == ":memory:") {
+        path = ":memory:";
+      } else if (lastPath.rfind("/", 0) == 0) {
+        path = lastPath;
+      } else {
+        path = path + "/" + lastPath;
+      }
+    }
+
+    auto result = opsqlite_get_db_path(db_name, path);
+    return jsi::String::createFromUtf8(rt, result);
+  });
+
   jsi::Object module = jsi::Object(rt);
 
   module.setProperty(rt, "open", std::move(open));
@@ -636,6 +677,7 @@ void install(jsi::Runtime &rt,
   module.setProperty(rt, "prepareStatement", std::move(prepare_statement));
   module.setProperty(rt, "loadExtension", std::move(load_extension));
   module.setProperty(rt, "executeRawAsync", std::move(execute_raw_async));
+  module.setProperty(rt, "getDbPath", std::move(get_db_path));
 
   rt.global().setProperty(rt, "__OPSQLiteProxy", std::move(module));
 }

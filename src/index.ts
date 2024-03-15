@@ -153,7 +153,11 @@ export type PreparedStatementObj = {
 };
 
 interface ISQLite {
-  open: (dbName: string, location?: string) => void;
+  open: (options: {
+    name: string;
+    location?: string;
+    encryptionKey?: string;
+  }) => void;
   close: (dbName: string) => void;
   delete: (dbName: string, location?: string) => void;
   attach: (
@@ -199,6 +203,7 @@ interface ISQLite {
     query: string,
     params?: any[]
   ) => Promise<any[]>;
+  getDbPath: (dbName: string, location?: string) => string;
 }
 
 const locks: Record<
@@ -223,10 +228,14 @@ function enhanceQueryResult(result: QueryResult): void {
 }
 
 const _open = OPSQLite.open;
-OPSQLite.open = (dbName: string, location?: string) => {
-  _open(dbName, location);
+OPSQLite.open = (options: {
+  name: string;
+  location?: string;
+  encryptionKey?: string;
+}) => {
+  _open(options);
 
-  locks[dbName] = {
+  locks[options.name] = {
     queue: [],
     inProgress: false,
   };
@@ -420,13 +429,15 @@ export type OPSQLiteConnection = {
   prepareStatement: (query: string) => PreparedStatementObj;
   loadExtension: (path: string, entryPoint?: string) => void;
   executeRawAsync: (query: string, params?: any[]) => Promise<any[]>;
+  getDbPath: () => string;
 };
 
 export const open = (options: {
   name: string;
   location?: string;
+  encryptionKey?: string;
 }): OPSQLiteConnection => {
-  OPSQLite.open(options.name, options.location);
+  OPSQLite.open(options);
 
   return {
     close: () => OPSQLite.close(options.name),
@@ -456,5 +467,6 @@ export const open = (options: {
       OPSQLite.loadExtension(options.name, path, entryPoint),
     executeRawAsync: (query, params) =>
       OPSQLite.executeRawAsync(options.name, query, params),
+    getDbPath: () => OPSQLite.getDbPath(options.name, options.location),
   };
 };

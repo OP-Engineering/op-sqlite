@@ -7,29 +7,10 @@ PODS:
   - hermes-engine (0.74.0-rc.0):
     - hermes-engine/Pre-built (= 0.74.0-rc.0)
   - hermes-engine/Pre-built (0.74.0-rc.0)
-  - op-sqlite (2.0.19):
-    - DoubleConversion
-    - glog
-    - hermes-engine
-    - RCT-Folly (= 2024.01.01.00)
-    - RCTRequired
-    - RCTTypeSafety
+  - op-sqlite (3.0.1):
     - React
     - React-callinvoker
-    - React-Codegen
     - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-rendererdebug
-    - React-utils
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - Yoga
   - RCT-Folly (2024.01.01.00):
     - boost
     - DoubleConversion
@@ -1377,7 +1358,7 @@ SPEC CHECKSUMS:
   fmt: 4c2741a687cc09f0634a2e2c72a838b99f1ff120
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
   hermes-engine: eb5bec1bfb320cd95dbd6a933f8325a31ce39ea6
-  op-sqlite: 990e07d9cb219103846f7bd7911ed3722eee3dfc
+  op-sqlite: 24443c22e059972abf4109b4e781d3f03336a761
   RCT-Folly: 045d6ecaa59d826c5736dfba0b2f4083ff8d79df
   RCTDeprecation: bccbca65e11d68b03947e878ffbbb298a5835ed7
   RCTRequired: dc19ffec0357d0adeb1edc14e8d86ab8004b5216
@@ -1408,9 +1389,9 @@ SPEC CHECKSUMS:
   React-perflogger: 7b860b85fe7f2feaec62e50a71fccd4a11dabce7
   React-RCTActionSheet: 57197bc7fd699d88b2bced8f9922fd6f0a8ac492
   React-RCTAnimation: cc6c3ed9f92622081d37c67376605e960318351f
-  React-RCTAppDelegate: 75b91b777ab664116608781991576da9222cac0e
+  React-RCTAppDelegate: 7908de20a7b9f0004e675a91573ef0b6829836d0
   React-RCTBlob: ac46d8d8cd219b99f9e3fbbd244a3667791ba7e2
-  React-RCTFabric: b6b5cfdcb131695fc53b056f557cd85a573a4a9d
+  React-RCTFabric: af5a886170592c10e0f233841481f688e2514ccd
   React-RCTImage: d9d6583a60233914a929a033e7af1d88ab55860a
   React-RCTLinking: 44664f23cb5ee9bbf6fcc920ce04b4dc77f77a72
   React-RCTNetwork: 8e6002339336b6a743dc5befe9dca8586ae5ef44
@@ -1429,6 +1410,6 @@ SPEC CHECKSUMS:
   SocketRocket: abac6f5de4d4d62d24e11868d7a2f427e0ef940d
   Yoga: 029d14b603bd8ec20dc5e43cf11541457011ec00
 
-PODFILE CHECKSUM: 6732548c1974a432aa18754b625a2cd78cfa026d
+PODFILE CHECKSUM: 0ab74fecad6ac2e35f8eab32fe5772c19d2015b2
 
-COCOAPODS: 1.14.3
+COCOAPODS: 1.14.0

@@ -19,8 +19,16 @@ typedef std::function<void(std::string dbName, std::string tableName,
 typedef std::function<void(std::string dbName)> CommitCallback;
 typedef std::function<void(std::string dbName)> RollbackCallback;
 
+std::string opsqlite_get_db_path(std::string const &db_name,
+                                 std::string const &location);
+
+#ifdef OP_SQLITE_USE_SQLCIPHER
+BridgeResult opsqlite_open(std::string const &dbName, std::string const &dbPath,
+                           std::string const &encryptionKey);
+#else
 BridgeResult opsqlite_open(std::string const &dbName,
                            std::string const &dbPath);
+#endif
 
 BridgeResult opsqlite_close(std::string const &dbName);
 
@@ -45,9 +53,6 @@ BridgeResult opsqlite_execute_raw(std::string const &dbName,
                                   std::string const &query,
                                   const std::vector<JSVariant> *params,
                                   std::vector<std::vector<JSVariant>> *results);
-
-BridgeResult opsqlite_execute_literal(std::string const &dbName,
-                                      std::string const &query);
 
 void opsqlite_close_all();
 
