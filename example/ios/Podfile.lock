@@ -15,10 +15,12 @@ PODS:
     - hermes-engine/Pre-built (= 0.73.1)
   - hermes-engine/Pre-built (0.73.1)
   - libevent (2.1.12)
-  - op-sqlite (3.0.1):
+  - op-sqlite (3.0.3):
+    - OpenSSL-Universal
     - React
     - React-callinvoker
     - React-Core
+  - OpenSSL-Universal (1.1.2200)
   - RCT-Folly (2022.05.16.00):
     - boost
     - DoubleConversion
@@ -1124,6 +1126,7 @@ SPEC REPOS:
   trunk:
     - fmt
     - libevent
+    - OpenSSL-Universal
     - SocketRocket
 
 EXTERNAL SOURCES:
@@ -1240,7 +1243,8 @@ SPEC CHECKSUMS:
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
   hermes-engine: 34df9d5034e90bd9bf1505e1ca198760373935af
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
-  op-sqlite: 24443c22e059972abf4109b4e781d3f03336a761
+  op-sqlite: 0863e28c8cb854b0efff62b6e04f99a9e102229c
+  OpenSSL-Universal: 6e1ae0555546e604dbc632a2b9a24a9c46c41ef6
   RCT-Folly: 7169b2b1c44399c76a47b5deaaba715eeeb476c0
   RCTRequired: 6dda55e483f75d2b43781d8ad5bd7df276a50981
   RCTTypeSafety: df0f2632f4e89938b9b9f6152b5e6c66fc6e969e
@@ -1289,4 +1293,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: 0ab74fecad6ac2e35f8eab32fe5772c19d2015b2
 
-COCOAPODS: 1.14.3
+COCOAPODS: 1.15.2
