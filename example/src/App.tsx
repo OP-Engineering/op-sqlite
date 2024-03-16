@@ -17,7 +17,7 @@ import {
 import {dbSetupTests, queriesTests, runTests, blobTests} from './tests/index';
 import {styled} from 'nativewind';
 import {registerHooksTests} from './tests/hooks.spec';
-import {open} from '@op-engineering/op-sqlite';
+import {moveAssetsDatabase, open} from '@op-engineering/op-sqlite';
 import clsx from 'clsx';
 import {preparedStatementsTests} from './tests/preparedStatements.spec';
 import {constantsTests} from './tests/constants.spec';
@@ -84,11 +84,21 @@ export default function App() {
 
   const copyDbPathToClipboad = async () => {
     const db = await open({name: 'dbPath.sqlite'});
-    db.execute('CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT)');
+    db.execute(
+      'CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY AUTOINCREMENT)',
+    );
     const path = db.getDbPath();
     await db.close();
     console.warn(path);
     Clipboard.setString(path);
+  };
+
+  const openAssetsDb = async () => {
+    const moved = moveAssetsDatabase('sample', 'sqlite');
+    console.log('moved', moved);
+    const db = open({name: 'sample.sqlite'});
+    const users = db.execute('SELECT * FROM User');
+    console.log('users', users.rows?._array);
   };
 
   const allTestsPassed = results.reduce((acc: boolean, r: any) => {
@@ -105,6 +115,7 @@ export default function App() {
           title="Copy DB Path to clipboard"
           onPress={copyDbPathToClipboad}
         />
+        <Button title="Open assets db" onPress={openAssetsDb} />
         <Button title="Create 300k Record DB" onPress={createLargeDb} />
         <Button title="Query 300k Records" onPress={queryLargeDb} />
         {isLoading && <ActivityIndicator color={'white'} size="large" />}
