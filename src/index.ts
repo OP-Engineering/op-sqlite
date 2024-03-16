@@ -6,21 +6,18 @@ declare global {
 }
 
 if (global.__OPSQLiteProxy == null) {
-  const OPSQLiteModule = NativeOPSQLite;
-
-  if (OPSQLiteModule == null) {
+  if (NativeOPSQLite == null) {
     throw new Error('Base module not found. Maybe try rebuilding the app.');
   }
 
-  // Check if we are running on-device (JSI)
-  if (global.nativeCallSyncHook == null || OPSQLiteModule.install == null) {
+  if (NativeOPSQLite.install == null) {
     throw new Error(
       'Failed to install op-sqlite: React Native is not running on-device. OPSQLite can only be used when synchronous method invocations (JSI) are possible. If you are using a remote debugger (e.g. Chrome), switch to an on-device debugger (e.g. Flipper) instead.'
     );
   }
 
   // Call the synchronous blocking install() function
-  const result = OPSQLiteModule.install();
+  const result = NativeOPSQLite.install();
   if (result !== true) {
     throw new Error(
       `Failed to install op-sqlite: The native OPSQLite Module could not be installed! Looks like something went wrong when installing JSI bindings: ${result}`
@@ -469,4 +466,11 @@ export const open = (options: {
       OPSQLite.executeRawAsync(options.name, query, params),
     getDbPath: () => OPSQLite.getDbPath(options.name, options.location),
   };
+};
+
+export const moveAssetsDatabase = (
+  dbName: string,
+  extension: string
+): boolean => {
+  return NativeOPSQLite.moveAssetsDatabase(dbName, extension);
 };
