@@ -96,6 +96,9 @@ export default function App() {
   const openAssetsDb = async () => {
     const moved = moveAssetsDatabase('sample', 'sqlite');
     console.log('moved', moved);
+    const db = open({name: 'sample.sqlite'});
+    const users = db.execute('SELECT * FROM User');
+    console.log('users', users.rows?._array);
   };
 
   const allTestsPassed = results.reduce((acc: boolean, r: any) => {
