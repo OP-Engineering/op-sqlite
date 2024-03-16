@@ -83,7 +83,7 @@ export default function App() {
   };
 
   const copyDbPathToClipboad = async () => {
-    const db = await open({name: 'dbPath.sqlite'});
+    const db = await open({name: 'dbPath.sqlite', encryptionKey: 'test'});
     db.execute(
       'CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY AUTOINCREMENT)',
     );
