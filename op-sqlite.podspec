@@ -28,7 +28,8 @@ Pod::Spec.new do |s|
   if ENV['OP_SQLITE_USE_SQLCIPHER'] == '1' then
     puts "OP-SQLITE using SQLCipher! 🔒\n"
     s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h"
-    xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_SQLCIPHER=1"
+    xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_SQLCIPHER=1 HAVE_FULLFSYNC=1 SQLITE_HAS_CODEC SQLITE_TEMP_STORE=2"
+    s.dependency "OpenSSL-Universal"
   else
     puts "OP-SQLITE using SQLite! 📦\n"
     s.exclude_files = "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h"
@@ -45,8 +46,6 @@ Pod::Spec.new do |s|
   other_cflags = '-DSQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION=1'
 
   optimizedCflags = other_cflags + '$(inherited) -DSQLITE_DQS=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1 -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DEPRECATED=1 -DSQLITE_OMIT_PROGRESS_CALLBACK=1 -DSQLITE_OMIT_SHARED_CACHE=1 -DSQLITE_USE_ALLOCA=1'
-
-  
 
   if ENV['OP_SQLITE_USE_PHONE_VERSION'] == '1' then
     puts "OP-SQLITE using iOS embedded SQLite! 📱\n"
