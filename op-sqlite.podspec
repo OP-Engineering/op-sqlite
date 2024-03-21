@@ -1,6 +1,6 @@
 require "json"
 
-def log_message(message)
+log_message = lambda do |message|
   puts "\e[34m#{message}\e[0m"
 end
 
@@ -30,12 +30,12 @@ Pod::Spec.new do |s|
   }
   
   if ENV['OP_SQLITE_USE_SQLCIPHER'] == '1' then
-    log_message("[OP-SQLITE] using SQLCipher! 🔒")
+    log_message.call("[OP-SQLITE] using SQLCipher! 🔒")
     s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h"
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_SQLCIPHER=1 HAVE_FULLFSYNC=1 SQLITE_HAS_CODEC SQLITE_TEMP_STORE=2"
     s.dependency "OpenSSL-Universal"
   else
-    log_message("[OP-SQLITE] using vanilla SQLite! 📦")
+    log_message.call("[OP-SQLITE] using vanilla SQLite! 📦")
     s.exclude_files = "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h"
   end
   
@@ -52,19 +52,19 @@ Pod::Spec.new do |s|
   optimizedCflags = other_cflags + '$(inherited) -DSQLITE_DQS=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1 -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DEPRECATED=1 -DSQLITE_OMIT_PROGRESS_CALLBACK=1 -DSQLITE_OMIT_SHARED_CACHE=1 -DSQLITE_USE_ALLOCA=1'
 
   if ENV['OP_SQLITE_USE_PHONE_VERSION'] == '1' then
-    log_message("[OP-SQLITE] using iOS embedded SQLite! 📱")
+    log_message.call("[OP-SQLITE] using iOS embedded SQLite! 📱")
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_PHONE_VERSION=1"
     s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h"
     s.library = "sqlite3"
   end
 
   if ENV['OP_SQLITE_PERF'] == '1' then
-    log_message("[OP-SQLITE] performance mode enabled! 🚀")
+    log_message.call("[OP-SQLITE] performance mode enabled! 🚀")
     xcconfig[:OTHER_CFLAGS] = optimizedCflags + ' -DSQLITE_THREADSAFE=0 '
   end
 
   if ENV['OP_SQLITE_PERF'] == '2' then
-    log_message("[OP-SQLITE] (thread safe) performance mode enabled! 🚀")
+    log_message.call("[OP-SQLITE] (thread safe) performance mode enabled! 🚀")
     xcconfig[:OTHER_CFLAGS] = optimizedCflags + ' -DSQLITE_THREADSAFE=1 '
   end
 

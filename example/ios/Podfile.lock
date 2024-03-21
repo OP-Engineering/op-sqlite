@@ -15,7 +15,7 @@ PODS:
     - hermes-engine/Pre-built (= 0.73.1)
   - hermes-engine/Pre-built (0.73.1)
   - libevent (2.1.12)
-  - op-sqlite (3.0.4):
+  - op-sqlite (3.0.6):
     - React
     - React-callinvoker
     - React-Core
@@ -1240,7 +1240,7 @@ SPEC CHECKSUMS:
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
   hermes-engine: 34df9d5034e90bd9bf1505e1ca198760373935af
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
-  op-sqlite: 097c6dacebae2f8daafb59af183a6f937c98b652
+  op-sqlite: 63a87e8bb49150fecd599fa4f23280098b108531
   RCT-Folly: 7169b2b1c44399c76a47b5deaaba715eeeb476c0
   RCTRequired: 6dda55e483f75d2b43781d8ad5bd7df276a50981
   RCTTypeSafety: df0f2632f4e89938b9b9f6152b5e6c66fc6e969e
