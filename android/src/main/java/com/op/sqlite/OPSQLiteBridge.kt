@@ -11,7 +11,6 @@ class OPSQLiteBridge {
         jsCallInvokerHolder: CallInvokerHolderImpl,
         docPath: String
     )
-
     private external fun clearStateNativeJsi()
 
     fun install(context: ReactContext) {
