@@ -45,9 +45,8 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
         return @false;
     }
     
-    using namespace facebook;
-    
-    auto jsiRuntime = (jsi::Runtime *)cxxBridge.runtime;
+
+    auto jsiRuntime = (facebook::jsi::Runtime *)cxxBridge.runtime;
     if (jsiRuntime == nil) {
         return @false;
     }
