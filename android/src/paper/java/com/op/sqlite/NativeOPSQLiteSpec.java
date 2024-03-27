@@ -70,4 +70,8 @@ public abstract class NativeOPSQLiteSpec extends ReactContextBaseJavaModule impl
   @ReactMethod(isBlockingSynchronousMethod = true)
   @DoNotStrip
   public abstract boolean install();
+
+  @ReactMethod(isBlockingSynchronousMethod = true)
+  @DoNotStrip
+  public abstract boolean moveAssetsDatabase(String name, String extension);
 }
