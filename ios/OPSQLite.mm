@@ -78,6 +78,23 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     return @true;
 }
 
+RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(moveAssetsDatabase:(NSString *)name extension:(NSString *)extension) {
+    NSString *documentPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, true) objectAtIndex:0];
+    NSString *sourcePath = [[NSBundle mainBundle] pathForResource:name ofType:extension];
+    NSString *destinationPath = [documentPath stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", name, extension]];
+
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    if ([fileManager fileExistsAtPath:destinationPath]) {
+        return @true;
+    }
+
+    NSError *error;
+    [fileManager copyItemAtPath:sourcePath toPath:destinationPath error:&error];
+    if (error) {
+        return @false;
+    }
+    return @true;
+}
 
 #if RCT_NEW_ARCH_ENABLED
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:

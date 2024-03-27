@@ -10,6 +10,8 @@ export interface Spec extends TurboModule {
   };
 
   install(): boolean;
+
+  moveAssetsDatabase(name: string, extension: string): boolean;
 }
 
 export default TurboModuleRegistry.getEnforcing<Spec>('OPSQLite');

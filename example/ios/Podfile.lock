@@ -7,7 +7,7 @@ PODS:
   - hermes-engine (0.74.0-rc.5):
     - hermes-engine/Pre-built (= 0.74.0-rc.5)
   - hermes-engine/Pre-built (0.74.0-rc.5)
-  - op-sqlite (3.0.1):
+  - op-sqlite (3.0.7):
     - React
     - React-callinvoker
     - React-Core
@@ -1352,13 +1352,13 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  boost: 26fad476bfa736552bbfa698a06cc530475c1505
-  DoubleConversion: fea03f2699887d960129cc54bba7e52542b6f953
+  boost: d3f49c53809116a5d38da093a8aa78bf551aed09
+  DoubleConversion: 76ab83afb40bddeeee456813d9c04f67f78771b5
   FBLazyVector: 5b76d5fff75c5fb146a50a6edee4db626f9914d5
   fmt: 4c2741a687cc09f0634a2e2c72a838b99f1ff120
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
   hermes-engine: 28f3a005a29e856b1b5cd0e20b3fa7bbf862cdf3
-  op-sqlite: 24443c22e059972abf4109b4e781d3f03336a761
+  op-sqlite: af2411e57364db634729dbd4d4b24d0a9d973ab7
   RCT-Folly: 045d6ecaa59d826c5736dfba0b2f4083ff8d79df
   RCTDeprecation: ef45994c9e22748cfeb6553422514437d0ea15f3
   RCTRequired: ab444d2da42365430b9e8e95bd2a0fb18620fdc6
