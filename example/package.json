@@ -8,7 +8,8 @@
     "start": "react-native start",
     "pods": "cd ios && rm -rf Pods && rm -rf Podfile.lock && bundle exec pod install",
     "build:android": "cd android && ./gradlew assembleDebug --no-daemon --console=plain -PreactNativeArchitectures=arm64-v8a",
-    "build:ios": "cd ios && xcodebuild -workspace OPSQLiteExample.xcworkspace -scheme debug -configuration Debug -sdk iphonesimulator CC=clang CPLUSPLUS=clang++ LD=clang LDPLUSPLUS=clang++ GCC_OPTIMIZATION_LEVEL=0 GCC_PRECOMPILE_PREFIX_HEADER=YES ASSETCATALOG_COMPILER_OPTIMIZATION=time DEBUG_INFORMATION_FORMAT=dwarf COMPILER_INDEX_STORE_ENABLE=NO"
+    "build:ios": "cd ios && xcodebuild -workspace OPSQLiteExample.xcworkspace -scheme debug -configuration Debug -sdk iphonesimulator CC=clang CPLUSPLUS=clang++ LD=clang LDPLUSPLUS=clang++ GCC_OPTIMIZATION_LEVEL=0 GCC_PRECOMPILE_PREFIX_HEADER=YES ASSETCATALOG_COMPILER_OPTIMIZATION=time DEBUG_INFORMATION_FORMAT=dwarf COMPILER_INDEX_STORE_ENABLE=NO",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@craftzdog/react-native-buffer": "^6.0.5",
@@ -18,8 +19,10 @@
     "events": "^3.3.0",
     "mocha": "^10.1.0",
     "nativewind": "^2.0.11",
+    "patch-package": "^8.0.0",
+    "postinstall-postinstall": "^2.1.0",
     "react": "18.2.0",
-    "react-native": "patch:react-native@npm%3A0.74.0-rc.5#~/.yarn/patches/react-native-npm-0.74.0-rc.5-293efa8cca.patch",
+    "react-native": "0.74.0-rc.5",
     "react-native-restart": "^0.0.27",
     "reflect-metadata": "^0.1.13",
     "stream-browserify": "^3.0.0",
@@ -54,8 +57,5 @@
   },
   "engines": {
     "node": ">=18"
-  },
-  "resolutions": {
-    "@react-native-community/cli-platform-android@npm:13.6.0": "patch:@react-native-community/cli-platform-android@npm%3A13.6.0#~/.yarn/patches/@react-native-community-cli-platform-android-npm-13.6.0-036e406a84.patch"
   }
 }
