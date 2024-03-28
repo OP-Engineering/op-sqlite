@@ -6,6 +6,8 @@
 #include <jsi/jsi.h>
 #include <typeinfo>
 
+// This file is not using raw jni but rather fbjni, do not change how the native functions are registered
+// https://github.com/facebookincubator/fbjni/blob/main/docs/quickref.md
 struct OPSQLiteBridge : jni::JavaClass<OPSQLiteBridge> {
   static constexpr auto kJavaDescriptor = "Lcom/op/sqlite/OPSQLiteBridge;";
 

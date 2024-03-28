@@ -20,7 +20,7 @@ if (global.__OPSQLiteProxy == null) {
   const result = NativeOPSQLite.install();
   if (result !== true) {
     throw new Error(
-      `Failed to install op-sqlite: The native OPSQLite Module could not be installed! Looks like something went wrong when installing JSI bindings: ${result}`
+      `Failed to install op-sqlite: The native OPSQLite Module could not be installed! Looks like something went wrong when installing JSI bindings, check the native logs for more info`
     );
   }
 

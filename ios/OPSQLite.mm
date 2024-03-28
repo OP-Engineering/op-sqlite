@@ -1,5 +1,7 @@
 #import "OPSQLite.h"
+#if RCT_NEW_ARCH_ENABLED
 #import <React/RCTBridge+Private.h>
+#endif
 #import <React/RCTUtils.h>
 #import <ReactCommon/RCTTurboModule.h>
 #import <jsi/jsi.h>
@@ -36,18 +38,19 @@ RCT_EXPORT_MODULE()
     return [self constantsToExport];
 }
 
+
 RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     RCTCxxBridge *cxxBridge = (RCTCxxBridge *)_bridge;
     if (cxxBridge == nil) {
         return @false;
     }
     
-    using namespace facebook;
-    
-    auto jsiRuntime = (jsi::Runtime *)cxxBridge.runtime;
+
+    auto jsiRuntime = (facebook::jsi::Runtime *)cxxBridge.runtime;
     if (jsiRuntime == nil) {
         return @false;
     }
+    
     auto &runtime = *jsiRuntime;
     auto callInvoker = _bridge.jsCallInvoker;
     
