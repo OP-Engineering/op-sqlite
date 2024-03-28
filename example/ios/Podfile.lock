@@ -8,9 +8,28 @@ PODS:
     - hermes-engine/Pre-built (= 0.74.0-rc.5)
   - hermes-engine/Pre-built (0.74.0-rc.5)
   - op-sqlite (3.0.7):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
     - React
     - React-callinvoker
+    - React-Codegen
     - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - RCT-Folly (2024.01.01.00):
     - boost
     - DoubleConversion
@@ -1358,7 +1377,7 @@ SPEC CHECKSUMS:
   fmt: 4c2741a687cc09f0634a2e2c72a838b99f1ff120
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
   hermes-engine: 28f3a005a29e856b1b5cd0e20b3fa7bbf862cdf3
-  op-sqlite: af2411e57364db634729dbd4d4b24d0a9d973ab7
+  op-sqlite: 13deb04229ba00779b44c83109a6b4b921b371ff
   RCT-Folly: 045d6ecaa59d826c5736dfba0b2f4083ff8d79df
   RCTDeprecation: ef45994c9e22748cfeb6553422514437d0ea15f3
   RCTRequired: ab444d2da42365430b9e8e95bd2a0fb18620fdc6
@@ -1389,9 +1408,9 @@ SPEC CHECKSUMS:
   React-perflogger: 12c33674b7ad945eee0a2bdb982383a1bb81c75e
   React-RCTActionSheet: 6511eba84bb395512cc6631c556a040822c0e88c
   React-RCTAnimation: 8c3f2c976fa43b1e740c70a5cebdf5f01839291d
-  React-RCTAppDelegate: 47727e0ed93c67e646bf2918d4a037c852a29af8
+  React-RCTAppDelegate: 1be086ed87137821387571a8a4e69076850886a4
   React-RCTBlob: cf1232be5c795b44287d3523d2427199fd72fe45
-  React-RCTFabric: a4f8fcd8d3219e76baf6926cfea84e3b9343f9f9
+  React-RCTFabric: ba5941f69bc603e9d3c9a252d9435f864fe5dac6
   React-RCTImage: 04273a4c9e65662a9cd6e7f054f5feec950d120f
   React-RCTLinking: 1fc7437bab8e337b6b3285df9683369e4c5481e3
   React-RCTNetwork: 63d93e9223becd8e8c20d45c9a0b3a32eb2681b6
@@ -1412,4 +1431,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: 0ab74fecad6ac2e35f8eab32fe5772c19d2015b2
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.14.3
