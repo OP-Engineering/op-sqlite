@@ -28,7 +28,8 @@
     "example": "yarn --cwd example",
     "pods": "cd example && yarn pods",
     "bootstrap": "yarn example && yarn && yarn pods",
-    "release": "./bump-version.sh && git add . && git commit -m 'Release v$(node -p \"require('./package.json').version\")' && git tag v$(node -p \"require('./package.json').version\") && git push origin main --tags && npm publish"
+    "release": "./bump-version.sh && git add . && git commit -m 'Release v$(node -p \"require('./package.json').version\")' && git tag v$(node -p \"require('./package.json').version\") && git push origin main --tags && npm publish",
+    "postinstall": "patch-package"
   },
   "keywords": [
     "react-native",
@@ -65,9 +66,6 @@
       "javaPackageName": "com.op.sqlite"
     }
   },
-  "workspaces": [
-    "example"
-  ],
   "prettier": {
     "quoteProps": "consistent",
     "singleQuote": true,
@@ -89,5 +87,8 @@
       ]
     ]
   },
-  "packageManager": "yarn@4.1.1"
+  "dependencies": {
+    "patch-package": "^8.0.0",
+    "postinstall-postinstall": "^2.1.0"
+  }
 }
