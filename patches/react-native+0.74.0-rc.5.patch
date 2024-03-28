@@ -104,3 +104,27 @@ index b5e81c9..1093050 100644
  #import <React/RCTBridge+Private.h>
  #import <React/RCTBridgeModule.h>
  #import <React/RCTConstants.h>
+diff --git a/node_modules/react-native/React/CxxBridge/RCTCxxBridge.mm b/node_modules/react-native/React/CxxBridge/RCTCxxBridge.mm
+index a611708..f5374b9 100644
+--- a/node_modules/react-native/React/CxxBridge/RCTCxxBridge.mm
++++ b/node_modules/react-native/React/CxxBridge/RCTCxxBridge.mm
+@@ -9,6 +9,7 @@
+ #include <future>
+ 
+ #import <React/RCTAssert.h>
++#import <RCTBridge+Inspector.h>
+ #import <React/RCTBridge+Private.h>
+ #import <React/RCTBridge.h>
+ #import <React/RCTBridgeMethod.h>
+diff --git a/node_modules/react-native/ReactCommon/react/runtime/platform/ios/ReactCommon/RCTInstance.mm b/node_modules/react-native/ReactCommon/react/runtime/platform/ios/ReactCommon/RCTInstance.mm
+index a200998..d21b4e8 100644
+--- a/node_modules/react-native/ReactCommon/react/runtime/platform/ios/ReactCommon/RCTInstance.mm
++++ b/node_modules/react-native/ReactCommon/react/runtime/platform/ios/ReactCommon/RCTInstance.mm
+@@ -11,6 +11,7 @@
+ 
+ #import <React/NSDataBigString.h>
+ #import <React/RCTAssert.h>
++#import <RCTBridge+Inspector.h>
+ #import <React/RCTBridge+Private.h>
+ #import <React/RCTBridge.h>
+ #import <React/RCTBridgeModule.h>
