@@ -22,7 +22,7 @@
     "patch-package": "^8.0.0",
     "postinstall-postinstall": "^2.1.0",
     "react": "18.2.0",
-    "react-native": "0.74.0-rc.5",
+    "react-native": "0.74.0-rc.6",
     "react-native-restart": "^0.0.27",
     "reflect-metadata": "^0.1.13",
     "stream-browserify": "^3.0.0",
