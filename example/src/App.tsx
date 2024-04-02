@@ -21,7 +21,6 @@ import {moveAssetsDatabase, open} from '@op-engineering/op-sqlite';
 import clsx from 'clsx';
 import {preparedStatementsTests} from './tests/preparedStatements.spec';
 import {constantsTests} from './tests/constants.spec';
-import performance from 'react-native-performance';
 
 const StyledScrollView = styled(ScrollView, {
   props: {
@@ -53,11 +52,11 @@ export default function App() {
   }, []);
 
   const querySingleRecord = async () => {
-    let start = performance.now();
+    // let start = performance.now();
     await querySingleRecordOnLargeDB();
-    let end = performance.now();
+    // let end = performance.now();
 
-    setSingleRecordTime(end - start);
+    // setSingleRecordTime(end - start);
   };
 
   const createLargeDb = async () => {

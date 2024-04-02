@@ -12,10 +12,10 @@
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
 {
-  return [self getBundleURL];
+  return [self bundleURL];
 }
 
-- (NSURL *)getBundleURL
+- (NSURL *)bundleURL
 {
 #if DEBUG
   return [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@"index"];
@@ -32,6 +32,11 @@
 - (BOOL)concurrentRootEnabled
 {
   return true;
+}
+
+-(BOOL)bridgelessEnabled
+{
+  return YES;
 }
 
 @end

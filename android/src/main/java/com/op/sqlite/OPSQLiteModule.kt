@@ -1,27 +1,27 @@
 package com.op.sqlite
 
+import android.util.Log
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactMethod
-import com.facebook.react.module.annotations.ReactModule;
+import com.facebook.react.bridge.ReactContextBaseJavaModule
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 
-@ReactModule(name = OPSQLiteModule.NAME)
-internal class OPSQLiteModule(context: ReactApplicationContext?) :
-    NativeOPSQLiteSpec(context) {
+//@ReactModule(name = OPSQLiteModule.NAME)
+internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextBaseJavaModule(context) {
     override fun getName(): String {
         return NAME
     }
 
-    override fun getTypedExportedConstants(): MutableMap<String, Any> {
+    fun getTypedExportedConstants(): MutableMap<String, Any> {
         val constants: MutableMap<String, Any> = HashMap()
         val context = reactApplicationContext
-        val dbPath = context
-            .getDatabasePath("defaultDatabase")
-            .absolutePath
-            .replace("defaultDatabase", "")
+        val dbPath =
+                context.getDatabasePath("defaultDatabase")
+                        .absolutePath
+                        .replace("defaultDatabase", "")
         constants["ANDROID_DATABASE_PATH"] = dbPath
         val filesPath = context.filesDir.absolutePath
         constants["ANDROID_FILES_PATH"] = filesPath
@@ -32,32 +32,35 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) :
         return constants
     }
 
+    override fun getConstants(): MutableMap<String, Any>? {
+        return getTypedExportedConstants()
+    }
+
     @ReactMethod(isBlockingSynchronousMethod = true)
-    override fun install(): Boolean {
+    fun install(): Boolean {
         return try {
             OPSQLiteBridge.instance.install(reactApplicationContext)
             true
         } catch (exception: Exception) {
+            Log.e(NAME, "Install exception: $exception")
             false
         }
     }
 
     @ReactMethod(isBlockingSynchronousMethod = true)
-    override fun moveAssetsDatabase(name: String, extension: String): Boolean {
+    fun moveAssetsDatabase(name: String, extension: String): Boolean {
         val context = reactApplicationContext
         val assetsManager = context.assets
 
         try {
-
-//            val assets = assetsManager.list("");
             // Open the input stream for the asset file
             val inputStream: InputStream = assetsManager.open("custom/$name.$extension")
 
             // Create the output file in the documents directory
-            val databasesFolder = context
-                .getDatabasePath("defaultDatabase")
-                .absolutePath
-                .replace("defaultDatabase", "")
+            val databasesFolder =
+                    context.getDatabasePath("defaultDatabase")
+                            .absolutePath
+                            .replace("defaultDatabase", "")
 
             val outputFile = File(databasesFolder, "$name.$extension")
 
@@ -85,7 +88,8 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) :
         }
     }
 
-    override fun onCatalystInstanceDestroy() {
+    override fun invalidate() {
+        super.invalidate()
         OPSQLiteBridge.instance.clearState()
     }
 

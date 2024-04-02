@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.9.0)
 
 set (PACKAGE_NAME "op-sqlite")
 set (CMAKE_VERBOSE_MAKEFILE ON)
-set (CMAKE_CXX_STANDARD 17)
+set (CMAKE_CXX_STANDARD 20)
 set (BUILD_DIR ${CMAKE_SOURCE_DIR}/build)
 
  include_directories(
@@ -55,7 +55,7 @@ endif()
 
 set_target_properties(
   ${PACKAGE_NAME} PROPERTIES
-  CXX_STANDARD 17
+  CXX_STANDARD 20
   CXX_EXTENSIONS OFF
   POSITION_INDEPENDENT_CODE ON
 )
