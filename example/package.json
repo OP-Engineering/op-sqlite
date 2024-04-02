@@ -8,8 +8,7 @@
     "start": "react-native start",
     "pods": "cd ios && rm -rf Pods && rm -rf Podfile.lock && bundle exec pod install",
     "build:android": "cd android && ./gradlew assembleDebug --no-daemon --console=plain -PreactNativeArchitectures=arm64-v8a",
-    "build:ios": "cd ios && xcodebuild -workspace OPSQLiteExample.xcworkspace -scheme debug -configuration Debug -sdk iphonesimulator CC=clang CPLUSPLUS=clang++ LD=clang LDPLUSPLUS=clang++ GCC_OPTIMIZATION_LEVEL=0 GCC_PRECOMPILE_PREFIX_HEADER=YES ASSETCATALOG_COMPILER_OPTIMIZATION=time DEBUG_INFORMATION_FORMAT=dwarf COMPILER_INDEX_STORE_ENABLE=NO",
-    "postinstall": "patch-package"
+    "build:ios": "cd ios && xcodebuild -workspace OPSQLiteExample.xcworkspace -scheme debug -configuration Debug -sdk iphonesimulator CC=clang CPLUSPLUS=clang++ LD=clang LDPLUSPLUS=clang++ GCC_OPTIMIZATION_LEVEL=0 GCC_PRECOMPILE_PREFIX_HEADER=YES ASSETCATALOG_COMPILER_OPTIMIZATION=time DEBUG_INFORMATION_FORMAT=dwarf COMPILER_INDEX_STORE_ENABLE=NO"
   },
   "dependencies": {
     "@craftzdog/react-native-buffer": "^6.0.5",
@@ -19,8 +18,6 @@
     "events": "^3.3.0",
     "mocha": "^10.1.0",
     "nativewind": "^2.0.11",
-    "patch-package": "^8.0.0",
-    "postinstall-postinstall": "^2.1.0",
     "react": "18.2.0",
     "react-native": "0.74.0-rc.6",
     "react-native-restart": "^0.0.27",

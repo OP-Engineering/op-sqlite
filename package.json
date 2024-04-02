@@ -28,8 +28,7 @@
     "example": "yarn --cwd example",
     "pods": "cd example && yarn pods",
     "bootstrap": "yarn example && yarn && yarn pods",
-    "release": "./bump-version.sh && git add . && git commit -m 'Release v$(node -p \"require('./package.json').version\")' && git tag v$(node -p \"require('./package.json').version\") && git push origin main --tags && npm publish",
-    "postinstall": "patch-package"
+    "release": "./bump-version.sh && git add . && git commit -m 'Release v$(node -p \"require('./package.json').version\")' && git tag v$(node -p \"require('./package.json').version\") && git push origin main --tags && npm publish"
   },
   "keywords": [
     "react-native",
@@ -78,10 +77,6 @@
         }
       ]
     ]
-  },
-  "dependencies": {
-    "patch-package": "^8.0.0",
-    "postinstall-postinstall": "^2.1.0"
   },
   "packageManager": "yarn@4.1.1"
 }
