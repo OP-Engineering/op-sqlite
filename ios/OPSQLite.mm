@@ -1,7 +1,5 @@
 #import "OPSQLite.h"
-#if RCT_NEW_ARCH_ENABLED
 #import <React/RCTBridge+Private.h>
-#endif
 #import <React/RCTUtils.h>
 #import <ReactCommon/RCTTurboModule.h>
 #import <jsi/jsi.h>

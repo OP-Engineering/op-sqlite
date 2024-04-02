@@ -27,6 +27,7 @@ DumbHostObject::getPropertyNames(jsi::Runtime &rt) {
 
 jsi::Value DumbHostObject::get(jsi::Runtime &rt,
                                const jsi::PropNameID &propNameID) {
+
   auto name = propNameID.utf8(rt);
   auto fields = metadata.get();
   for (int i = 0; i < fields->size(); i++) {
