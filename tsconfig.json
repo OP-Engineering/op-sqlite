@@ -1,8 +1,5 @@
 {
   "compilerOptions": {
-    "paths": {
-      "@op-engineering/op-sqlite": ["./src/index"]
-    },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "esModuleInterop": true,
@@ -15,5 +12,6 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "esnext"
-  }
+  },
+  "exclude": ["example"]
 }

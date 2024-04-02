@@ -11,6 +11,7 @@ namespace opsqlite {
 /// Maps to hold the different objects
 std::unordered_map<std::string, sqlite3 *> dbMap =
     std::unordered_map<std::string, sqlite3 *>();
+
 std::unordered_map<std::string, UpdateCallback> updateCallbackMap =
     std::unordered_map<std::string, UpdateCallback>();
 

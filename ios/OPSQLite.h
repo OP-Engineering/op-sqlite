@@ -1,15 +1,15 @@
-#ifdef RCT_NEW_ARCH_ENABLED
-#import <OPSQLiteSpec/OPSQLiteSpec.h>
-#else
+// #ifdef RCT_NEW_ARCH_ENABLED
+// #import <OPSQLiteSpec/OPSQLiteSpec.h>
+// #else
 #import <React/RCTBridge.h>
-#endif
+// #endif
 
 @interface OPSQLite : NSObject
-#ifdef RCT_NEW_ARCH_ENABLED
-                                   <NativeOPSQLiteSpec>
-#else
+// #ifdef RCT_NEW_ARCH_ENABLED
+//                                    <NativeOPSQLiteSpec>
+// #else
                                    <RCTBridgeModule>
-#endif
+// #endif
 
 @property(nonatomic, assign) BOOL setBridgeOnMainQueue;
 

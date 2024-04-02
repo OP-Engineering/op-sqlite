@@ -36,18 +36,19 @@ RCT_EXPORT_MODULE()
     return [self constantsToExport];
 }
 
+
 RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     RCTCxxBridge *cxxBridge = (RCTCxxBridge *)_bridge;
     if (cxxBridge == nil) {
         return @false;
     }
     
-    using namespace facebook;
-    
-    auto jsiRuntime = (jsi::Runtime *)cxxBridge.runtime;
+
+    auto jsiRuntime = (facebook::jsi::Runtime *)cxxBridge.runtime;
     if (jsiRuntime == nil) {
         return @false;
     }
+    
     auto &runtime = *jsiRuntime;
     auto callInvoker = _bridge.jsCallInvoker;
     
@@ -93,13 +94,13 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(moveAssetsDatabase:(NSString *)name exten
     return @true;
 }
 
-#if RCT_NEW_ARCH_ENABLED
-- (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
-    (const facebook::react::ObjCTurboModule::InitParams &)params
-{
-  return std::make_shared<facebook::react::NativeOPSQLiteSpecJSI>(params);
-}
-#endif
+// #if RCT_NEW_ARCH_ENABLED
+// - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
+//     (const facebook::react::ObjCTurboModule::InitParams &)params
+// {
+//   return std::make_shared<facebook::react::NativeOPSQLiteSpecJSI>(params);
+// }
+// #endif
 
 - (void)invalidate {
     opsqlite::clearState();
