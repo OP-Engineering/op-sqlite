@@ -127,9 +127,11 @@ android {
 
   sourceSets.main {
     java {
-      if (!isNewArchitectureEnabled()) {
+      // TODO removed the codegen config to allow the package to be built under bridgeless
+      // Once there is a stable API for C++ Turbo Modules, maybe this can be enabled again
+      // if (!isNewArchitectureEnabled()) {
         srcDirs += 'src/paper/java'
-      }
+      // }
     }
   }
 }

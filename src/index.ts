@@ -1,4 +1,5 @@
-import NativeOPSQLite from './NativeOPSQLite';
+// import NativeOPSQLite from './NativeOPSQLite';
+import { NativeModules } from 'react-native';
 
 declare global {
   function nativeCallSyncHook(): unknown;
@@ -6,18 +7,18 @@ declare global {
 }
 
 if (global.__OPSQLiteProxy == null) {
-  if (NativeOPSQLite == null) {
+  if (NativeModules.OPSQLite == null) {
     throw new Error('Base module not found. Maybe try rebuilding the app.');
   }
 
-  if (NativeOPSQLite.install == null) {
+  if (NativeModules.OPSQLite.install == null) {
     throw new Error(
       'Failed to install op-sqlite: React Native is not running on-device. OPSQLite can only be used when synchronous method invocations (JSI) are possible. If you are using a remote debugger (e.g. Chrome), switch to an on-device debugger (e.g. Flipper) instead.'
     );
   }
 
   // Call the synchronous blocking install() function
-  const result = NativeOPSQLite.install();
+  const result = NativeModules.OPSQLite.install();
   if (result !== true) {
     throw new Error(
       `Failed to install op-sqlite: The native OPSQLite Module could not be installed! Looks like something went wrong when installing JSI bindings, check the native logs for more info`
@@ -36,19 +37,14 @@ const proxy = global.__OPSQLiteProxy;
 export const OPSQLite = proxy as ISQLite;
 
 export const {
-  // @ts-expect-error
   IOS_DOCUMENT_PATH,
-  // @ts-expect-error
   IOS_LIBRARY_PATH,
-  // @ts-expect-error
   ANDROID_DATABASE_PATH,
-  // @ts-expect-error
   ANDROID_FILES_PATH,
-  // @ts-expect-error
   ANDROID_EXTERNAL_FILES_PATH,
-} = !!NativeOPSQLite.getConstants
-  ? NativeOPSQLite.getConstants()
-  : NativeOPSQLite;
+} = !!NativeModules.OPSQLite.getConstants
+  ? NativeModules.OPSQLite.getConstants()
+  : NativeModules.OPSQLite;
 
 /**
  * Object returned by SQL Query executions {
@@ -472,5 +468,5 @@ export const moveAssetsDatabase = (
   dbName: string,
   extension: string
 ): boolean => {
-  return NativeOPSQLite.moveAssetsDatabase(dbName, extension);
+  return NativeModules.OPSQLite.moveAssetsDatabase(dbName, extension);
 };

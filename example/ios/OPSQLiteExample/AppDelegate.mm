@@ -34,4 +34,9 @@
   return true;
 }
 
+-(BOOL)bridgelessEnabled
+{
+  return YES;
+}
+
 @end
