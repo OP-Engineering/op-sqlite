@@ -12,6 +12,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "OpenSqliteHo.h"
+
 namespace opsqlite {
 
 namespace jsi = facebook::jsi;
@@ -49,62 +51,7 @@ void install(jsi::Runtime &rt,
   basePath = std::string(docPath);
   invoker = jsCallInvoker;
 
-  auto open = HOSTFN("open", 3) {
-    if (count == 0) {
-      throw std::runtime_error("[op-sqlite][open] database name is required");
-    }
-
-    jsi::Object options = args[0].asObject(rt);
-    std::string dbName = options.getProperty(rt, "name").asString(rt).utf8(rt);
-    std::string path = std::string(basePath);
-    std::string location;
-    std::string encryptionKey;
-
-    if (options.hasProperty(rt, "location")) {
-      location = options.getProperty(rt, "location").asString(rt).utf8(rt);
-    }
-
-    if (options.hasProperty(rt, "encryptionKey")) {
-      encryptionKey =
-          options.getProperty(rt, "encryptionKey").asString(rt).utf8(rt);
-    }
-
-#ifdef OP_SQLITE_USE_SQLCIPHER
-    if (encryptionKey.empty()) {
-      throw std::runtime_error(
-          "[OP SQLite] using SQLCipher encryption key is required");
-    }
-//      TODO(osp) find a way to display the yellow box from c++
-#else
-    // if (!encryptionKey.empty()) {
-    //   //  RCTLogWarn(@"Your message")
-    //   throw std::runtime_error("[OP SQLite] SQLCipher is not enabled, "
-    //                            "encryption key is not allowed");
-    // }
-#endif
-
-    if (!location.empty()) {
-      if (location == ":memory:") {
-        path = ":memory:";
-      } else if (location.rfind("/", 0) == 0) {
-        path = location;
-      } else {
-        path = path + "/" + location;
-      }
-    }
-
-#ifdef OP_SQLITE_USE_SQLCIPHER
-    BridgeResult result = opsqlite_open(dbName, path, encryptionKey);
-#else
-    BridgeResult result = opsqlite_open(dbName, path);
-#endif
-
-    if (result.type == SQLiteError) {
-      throw std::runtime_error(result.message);
-    }
-
-    return {};
-  });
+  auto open = OpenSqliteHo::open(rt, basePath);
 
   auto attach = HOSTFN("attach", 4) {
     if (count < 3) {
