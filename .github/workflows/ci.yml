@@ -152,13 +152,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-turborepo-ios-
 
-      - name: Check turborepo cache for iOS
-        run: |
-          TURBO_CACHE_STATUS=$(node -p "($(yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)).tasks.find(t => t.task === 'build:ios').cache.status")
+      # - name: Check turborepo cache for iOS
+      #   run: |
+      #     TURBO_CACHE_STATUS=$(node -p "($(yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)).tasks.find(t => t.task === 'build:ios').cache.status")
 
-          if [[ $TURBO_CACHE_STATUS == "HIT" ]]; then
-            echo "turbo_cache_hit=1" >> $GITHUB_ENV
-          fi
+      #     if [[ $TURBO_CACHE_STATUS == "HIT" ]]; then
+      #       echo "turbo_cache_hit=1" >> $GITHUB_ENV
+      #     fi
 
       - name: Cache cocoapods
         if: env.turbo_cache_hit != 1
@@ -180,8 +180,9 @@ jobs:
           NO_FLIPPER: 1
 
       - name: Build example for iOS
+        working-directory: example
         run: |
-          yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}"
+          yarn run build:ios
 
   build-ios-sqlcipher:
     runs-on: self-hosted
@@ -207,13 +208,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-turborepo-ios-
 
-      - name: Check turborepo cache for iOS
-        run: |
-          TURBO_CACHE_STATUS=$(node -p "($(yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)).tasks.find(t => t.task === 'build:ios').cache.status")
+      # - name: Check turborepo cache for iOS
+      #   run: |
+      #     TURBO_CACHE_STATUS=$(node -p "($(yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)).tasks.find(t => t.task === 'build:ios').cache.status")
 
-          if [[ $TURBO_CACHE_STATUS == "HIT" ]]; then
-            echo "turbo_cache_hit=1" >> $GITHUB_ENV
-          fi
+      #     if [[ $TURBO_CACHE_STATUS == "HIT" ]]; then
+      #       echo "turbo_cache_hit=1" >> $GITHUB_ENV
+      #     fi
 
       - name: Cache cocoapods
         if: env.turbo_cache_hit != 1
@@ -235,5 +236,6 @@ jobs:
           NO_FLIPPER: 1
 
       - name: Build example for iOS
+        working-directory: example
         run: |
-          yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}"
+          yarn run build:ios
