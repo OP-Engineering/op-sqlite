@@ -39,7 +39,7 @@ jobs:
   #       run: yarn prepare
 
   build-android:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     env:
       TURBO_CACHE_DIR: .turbo/android
     steps:
@@ -193,7 +193,7 @@ jobs:
           yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}"
 
   build-android-sqlcipher:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     env:
       TURBO_CACHE_DIR: .turbo/android
     steps:
