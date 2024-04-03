@@ -8,6 +8,7 @@
         "!android/build",
         "src/*.ts",
         "src/*.tsx",
+        "cpp/**/*",
         "example/package.json",
         "example/android",
         "!example/android/.gradle",
@@ -20,6 +21,7 @@
       "inputs": [
         "package.json",
         "*.podspec",
+        "cpp/**/*",
         "ios",
         "src/*.ts",
         "src/*.tsx",
