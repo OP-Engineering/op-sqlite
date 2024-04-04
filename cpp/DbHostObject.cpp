@@ -7,6 +7,7 @@
 #include "macros.h"
 #include "types.h"
 #include "validators/DbAttachValidator.h"
+#include "validators/DbDetachValidator.h"
 #include "validators/DbOpenValidator.h"
 #include <string>
 
@@ -16,6 +17,8 @@ const std::string DbHostObject::F_OPEN = "open";
 const int DbHostObject::F_OPEN_ARGS_COUNT = 3;
 const std::string DbHostObject::F_ATTACH = "attach";
 const int DbHostObject::F_ATTACH_ARGS_COUNT = 4;
+const std::string DbHostObject::F_DETACH = "detach";
+const int DbHostObject::F_DETACH_ARGS_COUNT = 2;
 
 jsi::Value DbHostObject::get(jsi::Runtime &runtime,
                              const jsi::PropNameID &propNameId) {
@@ -24,6 +27,8 @@ jsi::Value DbHostObject::get(jsi::Runtime &runtime,
     return &DbHostObject::open;
   } else if (methodName == F_ATTACH) {
     return &DbHostObject::attach;
+  } else if (methodName == F_DETACH) {
+    return &DbHostObject::detach;
   }
   return nullptr;
 }
@@ -38,6 +43,7 @@ DbHostObject::getPropertyNames(jsi::Runtime &runtime) {
   std::vector<jsi::PropNameID> properties;
   properties.push_back(jsi::PropNameID::forAscii(runtime, F_OPEN));
   properties.push_back(jsi::PropNameID::forAscii(runtime, F_ATTACH));
+  properties.push_back(jsi::PropNameID::forAscii(runtime, F_DETACH));
   return properties;
 }
 
@@ -108,6 +114,30 @@ jsi::Function DbHostObject::attach(jsi::Runtime &rt,
 
     if (result.type == SQLiteError) {
       throw std::runtime_error(result.message);
+    }
+
+    return {};
+  });
+}
+
+jsi::Function DbHostObject::detach(jsi::Runtime &rt) {
+  using opsqlite::validators::DbDetachValidator;
+  return HOSTFN(F_DETACH, F_DETACH_ARGS_COUNT) {
+    std::string errMsg;
+    if (DbDetachValidator::invalidArgsNumber(errMsg, count)) {
+      throw std::runtime_error(errMsg);
+    }
+    if (DbDetachValidator::noStringArgs(errMsg, args[0], args[1])) {
+      throw std::runtime_error(errMsg);
+      return {};
+    }
+
+    std::string dbName = args[0].asString(rt).utf8(rt);
+    std::string alias = args[1].asString(rt).utf8(rt);
+    BridgeResult result = opsqlite_detach(dbName, alias);
+
+    if (result.type == SQLiteError) {
+      throw jsi::JSError(rt, result.message.c_str());
     }
 
     return {};

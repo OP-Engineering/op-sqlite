@@ -56,27 +56,7 @@ void install(jsi::Runtime &rt,
 
   auto attach = DbHostObject::attach(rt, basePath);
 
-  auto detach = HOSTFN("detach", 2) {
-    if (count < 2) {
-      throw std::runtime_error(
-          "[op-sqlite][detach] Incorrect number of arguments");
-    }
-    if (!args[0].isString() || !args[1].isString()) {
-      throw std::runtime_error(
-          "dbName, databaseToAttach and alias must be a strings");
-      return {};
-    }
-
-    std::string dbName = args[0].asString(rt).utf8(rt);
-    std::string alias = args[1].asString(rt).utf8(rt);
-    BridgeResult result = opsqlite_detach(dbName, alias);
-
-    if (result.type == SQLiteError) {
-      throw jsi::JSError(rt, result.message.c_str());
-    }
-
-    return {};
-  });
+  auto detach = DbHostObject::detach(rt);
 
   auto close = HOSTFN("close", 1) {
     if (count == 0) {

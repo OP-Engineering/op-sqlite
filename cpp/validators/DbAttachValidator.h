@@ -16,9 +16,9 @@ namespace validators {
 class DbAttachValidator {
 public:
   static bool invalidArgsNumber(std::string &msg, int count);
-  static bool noStringArgs(std::string &msg, const jsi::Value &arg1, const jsi::Value &arg2, const jsi::Value &arg3);
-  static bool locationArgDefined(const int count, const jsi::Value &arg);
-  static bool locationArgIsNotString(std::string &msg, const jsi::Value &arg);
+  static bool noStringArgs(std::string &msg, const jsi::Value &arg0, const jsi::Value &arg1, const jsi::Value &arg2);
+  static bool locationArgDefined(const int count, const jsi::Value &arg3);
+  static bool locationArgIsNotString(std::string &msg, const jsi::Value &arg3);
 
 private:
   DbAttachValidator();
