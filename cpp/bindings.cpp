@@ -8,11 +8,12 @@
 #include "sqlbatchexecutor.h"
 #include "utils.h"
 #include <iostream>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "OpenSqliteHo.h"
+#include "DbHostObject.h"
 
 namespace opsqlite {
 
@@ -51,7 +52,7 @@ void install(jsi::Runtime &rt,
   basePath = std::string(docPath);
   invoker = jsCallInvoker;
 
-  auto open = OpenSqliteHo::open(rt, basePath);
+  auto open = DbHostObject::open(rt, basePath);
 
   auto attach = HOSTFN("attach", 4) {
     if (count < 3) {
@@ -248,18 +249,18 @@ void install(jsi::Runtime &rt,
   });
 
   auto execute_async = HOSTFN("executeAsync", 3) {
-    if (count < 3) {
-      throw std::runtime_error(
-          "[op-sqlite][executeAsync] Incorrect arguments for executeAsync");
-    }
+        if (count < 3) {
+          throw std::runtime_error(
+              "[op-sqlite][executeAsync] Incorrect arguments for executeAsync");
+        }
 
-    const std::string dbName = args[0].asString(rt).utf8(rt);
-    const std::string query = args[1].asString(rt).utf8(rt);
-    const jsi::Value &originalParams = args[2];
+        const std::string dbName = args[0].asString(rt).utf8(rt);
+        const std::string query = args[1].asString(rt).utf8(rt);
+        const jsi::Value &originalParams = args[2];
 
-    std::vector<JSVariant> params = toVariantVec(rt, originalParams);
+        std::vector<JSVariant> params = toVariantVec(rt, originalParams);
 
-    auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
+        auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
 
     auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor", 2) {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
@@ -402,16 +403,16 @@ void install(jsi::Runtime &rt,
   });
 
   auto load_file = HOSTFN("loadFile", 2) {
-    if (sizeof(args) < 2) {
-      throw std::runtime_error(
-          "[op-sqlite][loadFile] Incorrect parameter count");
-      return {};
-    }
+        if (sizeof(args) < 2) {
+          throw std::runtime_error(
+              "[op-sqlite][loadFile] Incorrect parameter count");
+          return {};
+        }
 
-    const std::string dbName = args[0].asString(rt).utf8(rt);
-    const std::string sqlFileName = args[1].asString(rt).utf8(rt);
+        const std::string dbName = args[0].asString(rt).utf8(rt);
+        const std::string sqlFileName = args[1].asString(rt).utf8(rt);
 
-    auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
+        auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
         auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor", 2) {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
@@ -448,162 +449,167 @@ void install(jsi::Runtime &rt,
   });
 
   auto update_hook = HOSTFN("updateHook", 2) {
-    if (sizeof(args) < 2) {
-      throw std::runtime_error("[op-sqlite][updateHook] Incorrect parameters: "
-                               "dbName and callback needed");
-      return {};
-    }
+        if (sizeof(args) < 2) {
+          throw std::runtime_error(
+              "[op-sqlite][updateHook] Incorrect parameters: "
+              "dbName and callback needed");
+          return {};
+        }
 
-    auto dbName = args[0].asString(rt).utf8(rt);
-    auto callback = std::make_shared<jsi::Value>(rt, args[1]);
+        auto dbName = args[0].asString(rt).utf8(rt);
+        auto callback = std::make_shared<jsi::Value>(rt, args[1]);
 
-    if (callback->isUndefined() || callback->isNull()) {
-      opsqlite_deregister_update_hook(dbName);
-      return {};
-    }
+        if (callback->isUndefined() || callback->isNull()) {
+          opsqlite_deregister_update_hook(dbName);
+          return {};
+        }
 
-    updateHooks[dbName] = callback;
+        updateHooks[dbName] = callback;
 
-    auto hook = [&rt, callback](std::string dbName, std::string tableName,
-                                std::string operation, int rowId) {
-      std::vector<JSVariant> params;
-      std::vector<DumbHostObject> results;
-      std::shared_ptr<std::vector<SmartHostObject>> metadata =
-          std::make_shared<std::vector<SmartHostObject>>();
+        auto hook = [&rt, callback](std::string dbName, std::string tableName,
+                                    std::string operation, int rowId) {
+          std::vector<JSVariant> params;
+          std::vector<DumbHostObject> results;
+          std::shared_ptr<std::vector<SmartHostObject>> metadata =
+              std::make_shared<std::vector<SmartHostObject>>();
 
-      if (operation != "DELETE") {
-        std::string query = "SELECT * FROM " + tableName +
-                            " where rowid = " + std::to_string(rowId) + ";";
-        opsqlite_execute(dbName, query, &params, &results, metadata);
-      }
+          if (operation != "DELETE") {
+            std::string query = "SELECT * FROM " + tableName +
+                                " where rowid = " + std::to_string(rowId) + ";";
+            opsqlite_execute(dbName, query, &params, &results, metadata);
+          }
 
-      invoker->invokeAsync(
-          [&rt,
-           results = std::make_shared<std::vector<DumbHostObject>>(results),
-           callback, tableName = std::move(tableName),
-           operation = std::move(operation), &rowId] {
-            auto res = jsi::Object(rt);
-            res.setProperty(rt, "table",
-                            jsi::String::createFromUtf8(rt, tableName));
-            res.setProperty(rt, "operation",
-                            jsi::String::createFromUtf8(rt, operation));
-            res.setProperty(rt, "rowId", jsi::Value(rowId));
-            if (results->size() != 0) {
-              res.setProperty(
-                  rt, "row",
-                  jsi::Object::createFromHostObject(
-                      rt, std::make_shared<DumbHostObject>(results->at(0))));
-            }
+          invoker->invokeAsync(
+              [&rt,
+               results = std::make_shared<std::vector<DumbHostObject>>(results),
+               callback, tableName = std::move(tableName),
+               operation = std::move(operation), &rowId] {
+                auto res = jsi::Object(rt);
+                res.setProperty(rt, "table",
+                                jsi::String::createFromUtf8(rt, tableName));
+                res.setProperty(rt, "operation",
+                                jsi::String::createFromUtf8(rt, operation));
+                res.setProperty(rt, "rowId", jsi::Value(rowId));
+                if (results->size() != 0) {
+                  res.setProperty(rt, "row",
+                                  jsi::Object::createFromHostObject(
+                                      rt, std::make_shared<DumbHostObject>(
+                                              results->at(0))));
+                }
 
-            callback->asObject(rt).asFunction(rt).call(rt, res);
-          });
-    };
+                callback->asObject(rt).asFunction(rt).call(rt, res);
+              });
+        };
 
-    opsqlite_register_update_hook(dbName, std::move(hook));
+        opsqlite_register_update_hook(dbName, std::move(hook));
 
-    return {};
+        return {};
   });
 
   auto commit_hook = HOSTFN("commitHook", 2) {
-    if (sizeof(args) < 2) {
-      throw std::runtime_error("[op-sqlite][commitHook] Incorrect parameters: "
-                               "dbName and callback needed");
-      return {};
-    }
+        if (sizeof(args) < 2) {
+          throw std::runtime_error(
+              "[op-sqlite][commitHook] Incorrect parameters: "
+              "dbName and callback needed");
+          return {};
+        }
 
-    auto dbName = args[0].asString(rt).utf8(rt);
-    auto callback = std::make_shared<jsi::Value>(rt, args[1]);
-    if (callback->isUndefined() || callback->isNull()) {
-      opsqlite_deregister_commit_hook(dbName);
-      return {};
-    }
-    commitHooks[dbName] = callback;
+        auto dbName = args[0].asString(rt).utf8(rt);
+        auto callback = std::make_shared<jsi::Value>(rt, args[1]);
+        if (callback->isUndefined() || callback->isNull()) {
+          opsqlite_deregister_commit_hook(dbName);
+          return {};
+        }
+        commitHooks[dbName] = callback;
 
-    auto hook = [&rt, callback](std::string dbName) {
-      invoker->invokeAsync(
-          [&rt, callback] { callback->asObject(rt).asFunction(rt).call(rt); });
-    };
+        auto hook = [&rt, callback](std::string dbName) {
+          invoker->invokeAsync([&rt, callback] {
+            callback->asObject(rt).asFunction(rt).call(rt);
+          });
+        };
 
-    opsqlite_register_commit_hook(dbName, std::move(hook));
+        opsqlite_register_commit_hook(dbName, std::move(hook));
 
-    return {};
+        return {};
   });
 
   auto rollback_hook = HOSTFN("rollbackHook", 2) {
-    if (sizeof(args) < 2) {
-      throw std::runtime_error(
-          "[op-sqlite][rollbackHook] Incorrect parameters: "
-          "dbName and callback needed");
-      return {};
-    }
+        if (sizeof(args) < 2) {
+          throw std::runtime_error(
+              "[op-sqlite][rollbackHook] Incorrect parameters: "
+              "dbName and callback needed");
+          return {};
+        }
 
-    auto dbName = args[0].asString(rt).utf8(rt);
-    auto callback = std::make_shared<jsi::Value>(rt, args[1]);
+        auto dbName = args[0].asString(rt).utf8(rt);
+        auto callback = std::make_shared<jsi::Value>(rt, args[1]);
 
-    if (callback->isUndefined() || callback->isNull()) {
-      opsqlite_deregister_rollback_hook(dbName);
-      return {};
-    }
-    rollbackHooks[dbName] = callback;
+        if (callback->isUndefined() || callback->isNull()) {
+          opsqlite_deregister_rollback_hook(dbName);
+          return {};
+        }
+        rollbackHooks[dbName] = callback;
 
-    auto hook = [&rt, callback](std::string dbName) {
-      invoker->invokeAsync(
-          [&rt, callback] { callback->asObject(rt).asFunction(rt).call(rt); });
-    };
+        auto hook = [&rt, callback](std::string dbName) {
+          invoker->invokeAsync([&rt, callback] {
+            callback->asObject(rt).asFunction(rt).call(rt);
+          });
+        };
 
-    opsqlite_register_rollback_hook(dbName, std::move(hook));
-    return {};
+        opsqlite_register_rollback_hook(dbName, std::move(hook));
+        return {};
   });
 
   auto prepare_statement = HOSTFN("prepareStatement", 1) {
-    auto dbName = args[0].asString(rt).utf8(rt);
-    auto query = args[1].asString(rt).utf8(rt);
+        auto dbName = args[0].asString(rt).utf8(rt);
+        auto query = args[1].asString(rt).utf8(rt);
 
-    sqlite3_stmt *statement = opsqlite_prepare_statement(dbName, query);
+        sqlite3_stmt *statement = opsqlite_prepare_statement(dbName, query);
 
-    auto preparedStatementHostObject =
-        std::make_shared<PreparedStatementHostObject>(dbName, statement);
+        auto preparedStatementHostObject =
+            std::make_shared<PreparedStatementHostObject>(dbName, statement);
 
-    return jsi::Object::createFromHostObject(rt, preparedStatementHostObject);
+        return jsi::Object::createFromHostObject(rt,
+                                                 preparedStatementHostObject);
   });
 
   auto load_extension = HOSTFN("loadExtension", 2) {
-    auto db_name = args[0].asString(rt).utf8(rt);
-    auto path = args[1].asString(rt).utf8(rt);
-    std::string entryPoint = "";
-    if (count > 2 && args[2].isString()) {
-      entryPoint = args[2].asString(rt).utf8(rt);
-    }
+        auto db_name = args[0].asString(rt).utf8(rt);
+        auto path = args[1].asString(rt).utf8(rt);
+        std::string entryPoint = "";
+        if (count > 2 && args[2].isString()) {
+          entryPoint = args[2].asString(rt).utf8(rt);
+        }
 
-    auto result = opsqlite_load_extension(db_name, path, entryPoint);
-    if (result.type == SQLiteError) {
-      throw std::runtime_error(result.message);
-    }
-    return {};
+        auto result = opsqlite_load_extension(db_name, path, entryPoint);
+        if (result.type == SQLiteError) {
+          throw std::runtime_error(result.message);
+        }
+        return {};
   });
 
   auto get_db_path = HOSTFN("getDbPath", 2) {
-    std::string db_name = args[0].asString(rt).utf8(rt);
-    std::string path = std::string(basePath);
-    if (count > 1 && !args[1].isUndefined() && !args[1].isNull()) {
-      if (!args[1].isString()) {
-        throw std::runtime_error(
-            "[op-sqlite][open] database location must be a string");
-      }
+        std::string db_name = args[0].asString(rt).utf8(rt);
+        std::string path = std::string(basePath);
+        if (count > 1 && !args[1].isUndefined() && !args[1].isNull()) {
+          if (!args[1].isString()) {
+            throw std::runtime_error(
+                "[op-sqlite][open] database location must be a string");
+          }
 
-      std::string lastPath = args[1].asString(rt).utf8(rt);
+          std::string lastPath = args[1].asString(rt).utf8(rt);
 
-      if (lastPath == ":memory:") {
-        path = ":memory:";
-      } else if (lastPath.rfind("/", 0) == 0) {
-        path = lastPath;
-      } else {
-        path = path + "/" + lastPath;
-      }
-    }
+          if (lastPath == ":memory:") {
+            path = ":memory:";
+          } else if (lastPath.rfind("/", 0) == 0) {
+            path = lastPath;
+          } else {
+            path = path + "/" + lastPath;
+          }
+        }
 
-    auto result = opsqlite_get_db_path(db_name, path);
-    return jsi::String::createFromUtf8(rt, result);
+        auto result = opsqlite_get_db_path(db_name, path);
+        return jsi::String::createFromUtf8(rt, result);
   });
 
   jsi::Object module = jsi::Object(rt);
@@ -625,6 +631,10 @@ void install(jsi::Runtime &rt,
   module.setProperty(rt, "loadExtension", std::move(load_extension));
   module.setProperty(rt, "executeRawAsync", std::move(execute_raw_async));
   module.setProperty(rt, "getDbPath", std::move(get_db_path));
+
+  auto dbHostObj = std::make_shared<DbHostObject>();
+  module.setProperty(rt, "dbHostObject",
+                     jsi::Object::createFromHostObject(rt, dbHostObj));
 
   rt.global().setProperty(rt, "__OPSQLiteProxy", std::move(module));
 }

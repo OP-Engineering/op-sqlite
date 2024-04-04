@@ -20,6 +20,10 @@ add_library(
   SHARED
   ../cpp/bridge.cpp
   ../cpp/bridge.h
+  ../cpp/DbHostObject.cpp
+  ../cpp/DbHostObject.h
+  ../cpp/validators/DbOpenValidator.cpp
+  ../cpp/validators/DbOpenValidator.h
   ../cpp/bindings.cpp
   ../cpp/bindings.h
   ../cpp/utils.h
