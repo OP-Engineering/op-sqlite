@@ -23,6 +23,7 @@ public:
   static jsi::Function open(jsi::Runtime &rt, const std::string &basePath);
   static jsi::Function attach(jsi::Runtime &rt, const std::string &basePath);
   static jsi::Function detach(jsi::Runtime &rt);
+  static jsi::Function close(jsi::Runtime &rt);
 
 private:
   static const std::string F_OPEN; // open
@@ -31,6 +32,8 @@ private:
   static const int F_ATTACH_ARGS_COUNT;
   static const std::string F_DETACH; // detach
   static const int F_DETACH_ARGS_COUNT;
+  static const std::string F_CLOSE; // close
+  static const int F_CLOSE_ARGS_COUNT;
 };
 
 } // namespace opsqlite

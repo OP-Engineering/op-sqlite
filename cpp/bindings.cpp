@@ -58,26 +58,7 @@ void install(jsi::Runtime &rt,
 
   auto detach = DbHostObject::detach(rt);
 
-  auto close = HOSTFN("close", 1) {
-    if (count == 0) {
-      throw std::runtime_error("[op-sqlite][close] database name is required");
-    }
-
-    if (!args[0].isString()) {
-      throw std::runtime_error(
-          "[op-sqlite][close] database name must be a string");
-    }
-
-    std::string dbName = args[0].asString(rt).utf8(rt);
-
-    BridgeResult result = opsqlite_close(dbName);
-
-    if (result.type == SQLiteError) {
-      throw jsi::JSError(rt, result.message.c_str());
-    }
-
-    return {};
-  });
+  auto close = DbHostObject::close(rt);
 
   auto remove = HOSTFN("delete", 2) {
     if (count == 0) {

@@ -7,6 +7,7 @@
 #include "macros.h"
 #include "types.h"
 #include "validators/DbAttachValidator.h"
+#include "validators/DbCloseValidator.h"
 #include "validators/DbDetachValidator.h"
 #include "validators/DbOpenValidator.h"
 #include <string>
@@ -19,6 +20,8 @@ const std::string DbHostObject::F_ATTACH = "attach";
 const int DbHostObject::F_ATTACH_ARGS_COUNT = 4;
 const std::string DbHostObject::F_DETACH = "detach";
 const int DbHostObject::F_DETACH_ARGS_COUNT = 2;
+const std::string DbHostObject::F_CLOSE = "close";
+const int DbHostObject::F_CLOSE_ARGS_COUNT = 1;
 
 jsi::Value DbHostObject::get(jsi::Runtime &runtime,
                              const jsi::PropNameID &propNameId) {
@@ -29,6 +32,8 @@ jsi::Value DbHostObject::get(jsi::Runtime &runtime,
     return &DbHostObject::attach;
   } else if (methodName == F_DETACH) {
     return &DbHostObject::detach;
+  } else if (methodName == F_CLOSE) {
+    return &DbHostObject::close;
   }
   return nullptr;
 }
@@ -44,6 +49,7 @@ DbHostObject::getPropertyNames(jsi::Runtime &runtime) {
   properties.push_back(jsi::PropNameID::forAscii(runtime, F_OPEN));
   properties.push_back(jsi::PropNameID::forAscii(runtime, F_ATTACH));
   properties.push_back(jsi::PropNameID::forAscii(runtime, F_DETACH));
+  properties.push_back(jsi::PropNameID::forAscii(runtime, F_CLOSE));
   return properties;
 }
 
@@ -135,6 +141,30 @@ jsi::Function DbHostObject::detach(jsi::Runtime &rt) {
     std::string dbName = args[0].asString(rt).utf8(rt);
     std::string alias = args[1].asString(rt).utf8(rt);
     BridgeResult result = opsqlite_detach(dbName, alias);
+
+    if (result.type == SQLiteError) {
+      throw jsi::JSError(rt, result.message.c_str());
+    }
+
+    return {};
+  });
+}
+
+jsi::Function DbHostObject::close(jsi::Runtime &rt) {
+  using opsqlite::validators::DbCloseValidator;
+  return HOSTFN(F_CLOSE, F_CLOSE_ARGS_COUNT) {
+    std::string errMsg;
+    if (DbCloseValidator::invalidArgsNumber(errMsg, count)) {
+      throw std::runtime_error(errMsg);
+    }
+
+    if (DbCloseValidator::noStringArgs(errMsg, args[0])) {
+      throw std::runtime_error(errMsg);
+    }
+
+    std::string dbName = args[0].asString(rt).utf8(rt);
+
+    BridgeResult result = opsqlite_close(dbName);
 
     if (result.type == SQLiteError) {
       throw jsi::JSError(rt, result.message.c_str());

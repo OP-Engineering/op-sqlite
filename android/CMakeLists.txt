@@ -28,6 +28,8 @@ add_library(
   ../cpp/validators/DbAttachValidator.h
   ../cpp/validators/DbDetachValidator.cpp
   ../cpp/validators/DbDetachValidator.h
+  ../cpp/validators/DbCloseValidator.cpp
+  ../cpp/validators/DbCloseValidator.h
   ../cpp/bindings.cpp
   ../cpp/bindings.h
   ../cpp/utils.h
