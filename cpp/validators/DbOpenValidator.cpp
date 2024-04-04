@@ -1,11 +1,9 @@
 #include "DbOpenValidator.h"
 
-using std::string;
-
 namespace opsqlite {
 namespace validators {
 
-bool DbOpenValidator::isParametersNumberNotOk(string &msg, int count) {
+bool DbOpenValidator::invalidArgsNumber(std::string &msg, int count) {
   if (count == 0) {
     msg = "[op-sqlite][open] database name is required";
     return true;
@@ -13,9 +11,9 @@ bool DbOpenValidator::isParametersNumberNotOk(string &msg, int count) {
   return false;
 }
 
-string DbOpenValidator::getPath(jsi::Runtime &rt, const jsi::Object &options, const string &basePath) {
-  string path = basePath;
-  string location = getLocation(rt, options);
+std::string DbOpenValidator::getPath(jsi::Runtime &rt, const jsi::Object &options, const std::string &basePath) {
+  std::string path = basePath;
+  std::string location = getLocation(rt, options);
   if (!location.empty()) {
     if (location == ":memory:") {
       path = ":memory:";
@@ -28,16 +26,16 @@ string DbOpenValidator::getPath(jsi::Runtime &rt, const jsi::Object &options, co
   return path;
 }
 
-string DbOpenValidator::getLocation(jsi::Runtime &rt, const jsi::Object &options) {
-  string location = "";
+std::string DbOpenValidator::getLocation(jsi::Runtime &rt, const jsi::Object &options) {
+  std::string location = "";
   if (options.hasProperty(rt, "location")) {
     location = options.getProperty(rt, "location").asString(rt).utf8(rt);
   }
   return location;
 }
 
-string DbOpenValidator::getEncryptionKey(jsi::Runtime &rt, const jsi::Object &options) {
-  string encryptionKey = "";
+std::string DbOpenValidator::getEncryptionKey(jsi::Runtime &rt, const jsi::Object &options) {
+  std::string encryptionKey = "";
   if (options.hasProperty(rt, "encryptionKey")) {
     encryptionKey = options.getProperty(rt, "encryptionKey").asString(rt).utf8(rt);
   }

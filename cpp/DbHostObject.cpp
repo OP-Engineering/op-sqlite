@@ -6,21 +6,24 @@
 #include "bridge.h"
 #include "macros.h"
 #include "types.h"
+#include "validators/DbAttachValidator.h"
 #include "validators/DbOpenValidator.h"
 #include <string>
-
-using opsqlite::validators::DbOpenValidator;
 
 namespace opsqlite {
 
 const std::string DbHostObject::F_OPEN = "open";
 const int DbHostObject::F_OPEN_ARGS_COUNT = 3;
+const std::string DbHostObject::F_ATTACH = "attach";
+const int DbHostObject::F_ATTACH_ARGS_COUNT = 4;
 
 jsi::Value DbHostObject::get(jsi::Runtime &runtime,
                              const jsi::PropNameID &propNameId) {
   auto methodName = propNameId.utf8(runtime);
   if (methodName == F_OPEN) {
-    return DbHostObject::open;
+    return &DbHostObject::open;
+  } else if (methodName == F_ATTACH) {
+    return &DbHostObject::attach;
   }
   return nullptr;
 }
@@ -34,14 +37,16 @@ std::vector<jsi::PropNameID>
 DbHostObject::getPropertyNames(jsi::Runtime &runtime) {
   std::vector<jsi::PropNameID> properties;
   properties.push_back(jsi::PropNameID::forAscii(runtime, F_OPEN));
+  properties.push_back(jsi::PropNameID::forAscii(runtime, F_ATTACH));
   return properties;
 }
 
 jsi::Function DbHostObject::open(jsi::Runtime &rt,
                                  const std::string &basePath) {
+  using opsqlite::validators::DbOpenValidator;
   return HOSTFN(F_OPEN, F_OPEN_ARGS_COUNT) {
     std::string errMsg;
-    if (DbOpenValidator::isParametersNumberNotOk(errMsg, count)) {
+    if (DbOpenValidator::invalidArgsNumber(errMsg, count)) {
       throw std::runtime_error(errMsg);
     }
 
@@ -65,6 +70,41 @@ jsi::Function DbHostObject::open(jsi::Runtime &rt,
     // }
     BridgeResult result = opsqlite_open(dbName, path);
 #endif
+
+    if (result.type == SQLiteError) {
+      throw std::runtime_error(result.message);
+    }
+
+    return {};
+  });
+}
+
+jsi::Function DbHostObject::attach(jsi::Runtime &rt,
+                                   const std::string &basePath) {
+  using opsqlite::validators::DbAttachValidator;
+  return HOSTFN(F_ATTACH, F_ATTACH_ARGS_COUNT) {
+    std::string errMsg;
+    if (DbAttachValidator::invalidArgsNumber(errMsg, count)) {
+      throw jsi::JSError(rt, errMsg);
+    }
+    if (DbAttachValidator::noStringArgs(errMsg, args[0], args[1], args[2])) {
+      throw jsi::JSError(rt, errMsg);
+      return {};
+    }
+
+    std::string tempDocPath = std::string(basePath);
+    if (DbAttachValidator::locationArgDefined(count, args[3])) {
+      if (DbAttachValidator::locationArgIsNotString(errMsg, args[3])) {
+        throw std::runtime_error(errMsg);
+      }
+      tempDocPath = tempDocPath + "/" + args[3].asString(rt).utf8(rt);
+    }
+
+    std::string dbName = args[0].asString(rt).utf8(rt);
+    std::string databaseToAttach = args[1].asString(rt).utf8(rt);
+    std::string alias = args[2].asString(rt).utf8(rt);
+    BridgeResult result =
+        opsqlite_attach(dbName, tempDocPath, databaseToAttach, alias);
 
     if (result.type == SQLiteError) {
       throw std::runtime_error(result.message);

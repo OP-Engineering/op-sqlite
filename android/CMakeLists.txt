@@ -24,6 +24,8 @@ add_library(
   ../cpp/DbHostObject.h
   ../cpp/validators/DbOpenValidator.cpp
   ../cpp/validators/DbOpenValidator.h
+  ../cpp/validators/DbAttachValidator.cpp
+  ../cpp/validators/DbAttachValidator.h
   ../cpp/bindings.cpp
   ../cpp/bindings.h
   ../cpp/utils.h
