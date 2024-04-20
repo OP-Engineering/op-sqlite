@@ -6,7 +6,8 @@
 #include <jsi/jsi.h>
 #include <typeinfo>
 
-// This file is not using raw jni but rather fbjni, do not change how the native functions are registered
+// This file is not using raw jni but rather fbjni, do not change how the native
+// functions are registered
 // https://github.com/facebookincubator/fbjni/blob/main/docs/quickref.md
 struct OPSQLiteBridge : jni::JavaClass<OPSQLiteBridge> {
   static constexpr auto kJavaDescriptor = "Lcom/op/sqlite/OPSQLiteBridge;";
@@ -27,7 +28,8 @@ private:
     auto jsCallInvoker = jsCallInvokerHolder->cthis()->getCallInvoker();
     std::string dbPathStr = dbPath->toStdString();
 
-    opsqlite::install(*jsiRuntime, jsCallInvoker, dbPathStr.c_str());
+    opsqlite::install(*jsiRuntime, jsCallInvoker, dbPathStr.c_str(),
+                      "libcrsqlite");
   }
 
   static void clearStateNativeJsi(jni::alias_ref<jni::JObject> thiz) {

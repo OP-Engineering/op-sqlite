@@ -77,7 +77,8 @@ BridgeResult opsqlite_open(std::string const &dbName,
                    nullptr, nullptr);
 #endif
 
-#ifdef OP_SQLITE_CRSQLITE
+#ifdef OP_SQLITE_USE_CRSQLITE
+  LOGI("Should load CRSQlite now");
   char *errMsg;
   const char *crsqliteEntryPoint = "sqlite3_crsqlite_init";
 
@@ -87,10 +88,12 @@ BridgeResult opsqlite_open(std::string const &dbName,
 
   if (errMsg != nullptr) {
     return {.type = SQLiteError, .message = errMsg};
+  } else {
+    LOGI("Loaded CRSQlite successfully");
   }
 #endif
 
-  return BridgeResult{.type = SQLiteOk, .affectedRows = 0};
+  return {.type = SQLiteOk, .affectedRows = 0};
 }
 
 BridgeResult opsqlite_close(std::string const &dbName) {
@@ -99,7 +102,7 @@ BridgeResult opsqlite_close(std::string const &dbName) {
 
   sqlite3 *db = dbMap[dbName];
 
-#ifdef OP_SQLITE_CRSQLITE
+#ifdef OP_SQLITE_USE_CRSQLITE
   opsqlite_execute(dbName, "select crsql_finalize();", nullptr, nullptr,
                    nullptr);
 #endif

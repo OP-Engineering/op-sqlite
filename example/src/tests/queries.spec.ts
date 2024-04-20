@@ -34,10 +34,10 @@ export function queriesTests() {
   });
 
   describe('Queries tests', () => {
-    // it('Test crsqlite', async () => {
-    //   const res = db.execute('select crsql_as_crr("User")');
-    //   console.warn(res);
-    // });
+    it('Test crsqlite', async () => {
+      const res = db.execute('select crsql_as_crr("User")');
+      console.warn(res);
+    });
 
     it('Insert', async () => {
       const id = chance.integer();
