@@ -53,6 +53,12 @@ else()
  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlite3.h ../cpp/sqlite3.c)
 endif()
 
+if (OP_SQLITE_USE_CRSQLITE)
+  add_definitions(
+    -DOP_SQLITE_USE_CRSQLITE
+  )
+endif()
+
 set_target_properties(
   ${PACKAGE_NAME} PROPERTIES
   CXX_STANDARD 20
@@ -63,7 +69,6 @@ set_target_properties(
 find_package(ReactAndroid REQUIRED CONFIG)
 find_package(fbjni REQUIRED CONFIG)
 find_library(LOG_LIB log)
-
 
 target_link_libraries(
   ${PACKAGE_NAME}

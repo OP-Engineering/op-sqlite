@@ -87,7 +87,12 @@ android {
 
             if(System.getenv("OP_SQLITE_USE_SQLCIPHER") == '1') {
               println "OP-SQLITE using SQLCipher! 🔒"
-              cFlags += "-DOP_SQLITE_USE_SQLCIPHER=1"
+              cppFlags += "-DOP_SQLITE_USE_SQLCIPHER=1"
+            }
+
+            if(System.getenv("OP_SQLITE_USE_CRSQLITE") == '1') {
+              println "OP-SQLITE using CR-SQLite! 🤖"
+              cppFlags += "-DOP_SQLITE_USE_CRSQLITE=1"
             }
 
             cppFlags "-O2", "-fexceptions", "-frtti", "-std=c++1y", "-DONANDROID"
@@ -95,6 +100,7 @@ android {
             arguments "-DANDROID_STL=c++_shared",
               "-DSQLITE_FLAGS='${SQLITE_FLAGS ? SQLITE_FLAGS : ''}'"
               "-DOP_SQLITE_USE_SQLCIPHER='${System.getenv("OP_SQLITE_USE_SQLCIPHER") == '1'? 1 : 0}'"
+              "-DOP_SQLITE_USE_CRSQLITE='${System.getenv("OP_SQLITE_USE_CRSQLITE") == '1'? 1 : 0}'"
             abiFilters (*reactNativeArchitectures())
         }
     }
