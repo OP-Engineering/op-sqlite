@@ -3,6 +3,7 @@
 #include "SmartHostObject.h"
 #include "logs.h"
 #include "utils.h"
+#include <iostream>
 #include <unordered_map>
 #include <variant>
 
@@ -27,7 +28,12 @@ inline void check_db_open(std::string const &db_name) {
   }
 }
 
-/// Start of api
+//            _____ _____
+//      /\   |  __ \_   _|
+//     /  \  | |__) || |
+//    / /\ \ |  ___/ | |
+//   / ____ \| |    _| |_
+//  /_/    \_\_|   |_____|
 
 /// Returns the completely formed db path, but it also creates any sub-folders
 /// along the way
@@ -43,12 +49,13 @@ std::string opsqlite_get_db_path(std::string const &db_name,
 }
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
-BridgeResult opsqlite_open(std::string const &dbName,
-                           std::string const &last_path,
-                           std::string const &encryptionKey) {
+BridgeResult opsqlite_open(
+    std::string const &dbName, std::string const &last_path,
+    std::string const &crsqlitePath std::string const &encryptionKey) {
 #else
 BridgeResult opsqlite_open(std::string const &dbName,
-                           std::string const &last_path) {
+                           std::string const &last_path,
+                           std::string const &crsqlitePath) {
 #endif
   std::string dbPath = opsqlite_get_db_path(dbName, last_path);
 
@@ -68,6 +75,19 @@ BridgeResult opsqlite_open(std::string const &dbName,
 #ifdef OP_SQLITE_USE_SQLCIPHER
   opsqlite_execute(dbName, "PRAGMA key = '" + encryptionKey + "'", nullptr,
                    nullptr, nullptr);
+#endif
+
+#ifdef OP_SQLITE_CRSQLITE
+  char *errMsg;
+  const char *crsqliteEntryPoint = "sqlite3_crsqlite_init";
+
+  sqlite3_enable_load_extension(db, 1);
+
+  sqlite3_load_extension(db, crsqlitePath.c_str(), crsqliteEntryPoint, &errMsg);
+
+  if (errMsg != nullptr) {
+    return {.type = SQLiteError, .message = errMsg};
+  }
 #endif
 
   return BridgeResult{.type = SQLiteOk, .affectedRows = 0};

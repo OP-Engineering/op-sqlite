@@ -17,6 +17,7 @@ namespace opsqlite {
 namespace jsi = facebook::jsi;
 
 std::string basePath;
+std::string crsqlitePath;
 std::shared_ptr<react::CallInvoker> invoker;
 ThreadPool pool;
 std::unordered_map<std::string, std::shared_ptr<jsi::Value>> updateHooks =
@@ -44,9 +45,11 @@ void clearState() {
 
 void install(jsi::Runtime &rt,
              std::shared_ptr<react::CallInvoker> jsCallInvoker,
-             const char *docPath) {
+             const char *docPath, const char *_crsqlitePath) {
+
   invalidated = false;
   basePath = std::string(docPath);
+  crsqlitePath = std::string(_crsqlitePath);
   invoker = jsCallInvoker;
 
   auto open = HOSTFN("open", 3) {
@@ -94,9 +97,10 @@ void install(jsi::Runtime &rt,
     }
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
-    BridgeResult result = opsqlite_open(dbName, path, encryptionKey);
+    BridgeResult result =
+        opsqlite_open(dbName, path, crsqlitePath, encryptionKey);
 #else
-    BridgeResult result = opsqlite_open(dbName, path);
+    BridgeResult result = opsqlite_open(dbName, path, crsqlitePath);
 #endif
 
     if (result.type == SQLiteError) {
