@@ -68,6 +68,12 @@ Pod::Spec.new do |s|
     xcconfig[:OTHER_CFLAGS] = optimizedCflags + ' -DSQLITE_THREADSAFE=1 '
   end
 
+  if ENV['OP_SQLITE_CRSQLITE'] == '1' then
+    log_message.call("[OP-SQLITE] using CRQSQLite! 🤖")
+    xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_CRSQLITE=1"
+    s.vendored_frameworks = "crsqlite.xcframework"
+  end
+
   s.pod_target_xcconfig = xcconfig
   
 end

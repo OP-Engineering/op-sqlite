@@ -8,7 +8,7 @@ namespace opsqlite {
 
 void install(jsi::Runtime &rt,
              std::shared_ptr<react::CallInvoker> jsCallInvoker,
-             const char *docPath);
+             const char *docPath, const char *crsqlitePath);
 void clearState();
 
 } // namespace opsqlite
