@@ -78,7 +78,6 @@ BridgeResult opsqlite_open(std::string const &dbName,
 #endif
 
 #ifdef OP_SQLITE_USE_CRSQLITE
-  LOGI("Should load CRSQlite now");
   char *errMsg;
   const char *crsqliteEntryPoint = "sqlite3_crsqlite_init";
 

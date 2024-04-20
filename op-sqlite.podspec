@@ -70,7 +70,7 @@ Pod::Spec.new do |s|
 
   if ENV['OP_SQLITE_USE_CRSQLITE'] == '1' then
     log_message.call("[OP-SQLITE] using CRQSQLite! 🤖")
-    xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += "-DOP_SQLITE_USE_CRSQLITE=1"
+    xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_CRSQLITE=1"
     s.vendored_frameworks = "ios/crsqlite.xcframework"
   end
 
