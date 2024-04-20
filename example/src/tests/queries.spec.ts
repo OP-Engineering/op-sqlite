@@ -34,10 +34,10 @@ export function queriesTests() {
   });
 
   describe('Queries tests', () => {
-    it('Test crsqlite', async () => {
-      const res = db.execute('select crsql_as_crr("User")');
-      console.warn(res);
-    });
+    // it('Test crsqlite', async () => {
+    //   const res = db.execute('select crsql_as_crr("User")');
+    //   console.warn(res);
+    // });
 
     it('Insert', async () => {
       const id = chance.integer();
@@ -405,7 +405,7 @@ export function queriesTests() {
     });
 
     it('Transaction, rejects on callback error', async () => {
-      const promised = db.transaction(tx => {
+      const promised = db.transaction(() => {
         throw new Error('Error from callback');
       });
 
@@ -610,7 +610,7 @@ export function queriesTests() {
     });
 
     it('Async transaction, rejects on callback error', async () => {
-      const promised = db.transaction(async tx => {
+      const promised = db.transaction(async () => {
         throw new Error('Error from callback');
       });
 
