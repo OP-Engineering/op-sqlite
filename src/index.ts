@@ -354,7 +354,7 @@ OPSQLite.transaction = async (
 
       throw executionError;
     } finally {
-      locks[dbName].inProgress = false;
+      locks[dbName]!.inProgress = false;
       isFinalized = false;
       startNextTransaction(dbName);
     }
@@ -367,7 +367,7 @@ OPSQLite.transaction = async (
       },
     };
 
-    locks[dbName].queue.push(tx);
+    locks[dbName]!.queue.push(tx);
     startNextTransaction(dbName);
   });
 };
@@ -377,14 +377,14 @@ const startNextTransaction = (dbName: string) => {
     throw Error(`Lock not found for db: ${dbName}`);
   }
 
-  if (locks[dbName].inProgress) {
+  if (locks[dbName]!.inProgress) {
     // Transaction is already in process bail out
     return;
   }
 
-  if (locks[dbName].queue.length) {
-    locks[dbName].inProgress = true;
-    const tx = locks[dbName].queue.shift();
+  if (locks[dbName]!.queue.length) {
+    locks[dbName]!.inProgress = true;
+    const tx = locks[dbName]!.queue.shift();
 
     if (!tx) {
       throw new Error('Could not get a operation on datebase');

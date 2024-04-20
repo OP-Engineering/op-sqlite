@@ -9,11 +9,7 @@ import {
   View,
 } from 'react-native';
 import 'reflect-metadata';
-import {
-  createLargeDB,
-  queryLargeDB,
-  querySingleRecordOnLargeDB,
-} from './Database';
+import {createLargeDB, queryLargeDB} from './Database';
 import {dbSetupTests, queriesTests, runTests, blobTests} from './tests/index';
 import {styled} from 'nativewind';
 import {registerHooksTests} from './tests/hooks.spec';
@@ -37,7 +33,6 @@ export default function App() {
   const [prepareExecutionTimes, setPrepareExecutionTimes] = useState<number[]>(
     [],
   );
-  const [singleRecordTime, setSingleRecordTime] = useState<number>(0);
   const [rawExecutionTimes, setRawExecutionTimes] = useState<number[]>([]);
   useEffect(() => {
     setResults([]);
@@ -50,14 +45,6 @@ export default function App() {
       constantsTests,
     ).then(setResults);
   }, []);
-
-  const querySingleRecord = async () => {
-    // let start = performance.now();
-    await querySingleRecordOnLargeDB();
-    // let end = performance.now();
-
-    // setSingleRecordTime(end - start);
-  };
 
   const createLargeDb = async () => {
     setIsLoading(true);
@@ -118,12 +105,6 @@ export default function App() {
         <Button title="Create 300k Record DB" onPress={createLargeDb} />
         <Button title="Query 300k Records" onPress={queryLargeDb} />
         {isLoading && <ActivityIndicator color={'white'} size="large" />}
-
-        {!!singleRecordTime && (
-          <Text className="text-lg text-white self-center">
-            Query single record time: {singleRecordTime.toFixed(2)}ms
-          </Text>
-        )}
 
         {!!times.length && (
           <Text className="text-lg text-white self-center">

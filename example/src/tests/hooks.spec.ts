@@ -1,6 +1,6 @@
 import Chance from 'chance';
 
-import {OPSQLiteConnection, open} from '@op-engineering/op-sqlite';
+import {type OPSQLiteConnection, open} from '@op-engineering/op-sqlite';
 import chai from 'chai';
 import {describe, it, beforeEach} from './MochaRNAdapter';
 
@@ -44,7 +44,7 @@ export function registerHooksTests() {
       let promise = new Promise(resolve => {
         promiseResolve = resolve;
       });
-      db.updateHook(({rowId, table, operation, row = {}}) => {
+      db.updateHook(({operation}) => {
         // console.warn(
         //   `Hook has been called, rowId: ${rowId}, ${table}, ${operation}`,
         // );
@@ -68,7 +68,7 @@ export function registerHooksTests() {
 
     it('remove update hook', async () => {
       const hookRes: string[] = [];
-      db.updateHook(({rowId, table, operation, row = {}}) => {
+      db.updateHook(({operation}) => {
         hookRes.push(operation);
       });
 
@@ -159,7 +159,7 @@ export function registerHooksTests() {
       });
 
       try {
-        await db.transaction(async tx => {
+        await db.transaction(async () => {
           throw new Error('Blah');
         });
       } catch (e) {
@@ -176,7 +176,7 @@ export function registerHooksTests() {
       });
 
       try {
-        await db.transaction(async tx => {
+        await db.transaction(async () => {
           throw new Error('Blah');
         });
       } catch (e) {
@@ -186,7 +186,7 @@ export function registerHooksTests() {
       db.rollbackHook(null);
 
       try {
-        await db.transaction(async tx => {
+        await db.transaction(async () => {
           throw new Error('Blah');
         });
       } catch (e) {
