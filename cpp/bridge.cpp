@@ -3,6 +3,7 @@
 #include "SmartHostObject.h"
 #include "logs.h"
 #include "utils.h"
+#include <iostream>
 #include <unordered_map>
 #include <variant>
 
@@ -27,7 +28,12 @@ inline void check_db_open(std::string const &db_name) {
   }
 }
 
-/// Start of api
+//            _____ _____
+//      /\   |  __ \_   _|
+//     /  \  | |__) || |
+//    / /\ \ |  ___/ | |
+//   / ____ \| |    _| |_
+//  /_/    \_\_|   |_____|
 
 /// Returns the completely formed db path, but it also creates any sub-folders
 /// along the way
@@ -45,10 +51,12 @@ std::string opsqlite_get_db_path(std::string const &db_name,
 #ifdef OP_SQLITE_USE_SQLCIPHER
 BridgeResult opsqlite_open(std::string const &dbName,
                            std::string const &last_path,
+                           std::string const &crsqlitePath,
                            std::string const &encryptionKey) {
 #else
 BridgeResult opsqlite_open(std::string const &dbName,
-                           std::string const &last_path) {
+                           std::string const &last_path,
+                           std::string const &crsqlitePath) {
 #endif
   std::string dbPath = opsqlite_get_db_path(dbName, last_path);
 
@@ -70,7 +78,22 @@ BridgeResult opsqlite_open(std::string const &dbName,
                    nullptr, nullptr);
 #endif
 
-  return BridgeResult{.type = SQLiteOk, .affectedRows = 0};
+#ifdef OP_SQLITE_USE_CRSQLITE
+  char *errMsg;
+  const char *crsqliteEntryPoint = "sqlite3_crsqlite_init";
+
+  sqlite3_enable_load_extension(db, 1);
+
+  sqlite3_load_extension(db, crsqlitePath.c_str(), crsqliteEntryPoint, &errMsg);
+
+  if (errMsg != nullptr) {
+    return {.type = SQLiteError, .message = errMsg};
+  } else {
+    LOGI("Loaded CRSQlite successfully");
+  }
+#endif
+
+  return {.type = SQLiteOk, .affectedRows = 0};
 }
 
 BridgeResult opsqlite_close(std::string const &dbName) {
@@ -78,6 +101,11 @@ BridgeResult opsqlite_close(std::string const &dbName) {
   check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
+
+#ifdef OP_SQLITE_USE_CRSQLITE
+  opsqlite_execute(dbName, "select crsql_finalize();", nullptr, nullptr,
+                   nullptr);
+#endif
 
   sqlite3_close_v2(db);
 
