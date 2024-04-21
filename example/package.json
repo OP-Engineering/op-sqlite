@@ -54,5 +54,10 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "op-sqlite": {
+    "sqlcipher": false,
+    "crsqlite": false,
+    "performance_mode": "1"
   }
 }
