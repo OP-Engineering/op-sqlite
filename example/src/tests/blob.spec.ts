@@ -1,20 +1,10 @@
-import {OPSQLiteConnection, open} from '@op-engineering/op-sqlite';
+import {type OPSQLiteConnection, open} from '@op-engineering/op-sqlite';
 import chai from 'chai';
 import {beforeEach, describe, it} from './MochaRNAdapter';
 
 let expect = chai.expect;
 
 let db: OPSQLiteConnection;
-
-function areBuffersEqual(buf1: ArrayBuffer, buf2: ArrayBuffer) {
-  if (buf1.byteLength != buf2.byteLength) return false;
-  var dv1 = new Uint8Array(buf1);
-  var dv2 = new Uint8Array(buf2);
-  for (var i = 0; i != buf1.byteLength; i++) {
-    if (dv1[i] != dv2[i]) return false;
-  }
-  return true;
-}
 
 export function blobTests() {
   beforeEach(() => {

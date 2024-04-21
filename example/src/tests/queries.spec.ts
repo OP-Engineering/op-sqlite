@@ -1,8 +1,8 @@
 import Chance from 'chance';
 import {
   open,
-  OPSQLiteConnection,
-  SQLBatchTuple,
+  type OPSQLiteConnection,
+  type SQLBatchTuple,
 } from '@op-engineering/op-sqlite';
 import {beforeEach, describe, it} from './MochaRNAdapter';
 import chai from 'chai';
@@ -34,6 +34,11 @@ export function queriesTests() {
   });
 
   describe('Queries tests', () => {
+    it('Test crsqlite', async () => {
+      const res = db.execute('select crsql_as_crr("User")');
+      console.warn(res);
+    });
+
     it('Insert', async () => {
       const id = chance.integer();
       const name = chance.name();
@@ -116,7 +121,7 @@ export function queriesTests() {
 
       const countRes = db.execute('SELECT COUNT(*) as count FROM User');
 
-      expect(countRes.metadata?.[0].type).to.equal('UNKNOWN');
+      expect(countRes.metadata?.[0]?.type).to.equal('UNKNOWN');
       expect(countRes.rows?._array.length).to.equal(1);
       expect(countRes.rows?.item(0).count).to.equal(1);
 
@@ -133,14 +138,14 @@ export function queriesTests() {
 
       const sumRes = db.execute('SELECT SUM(age) as sum FROM User;');
 
-      expect(sumRes.metadata?.[0].type).to.equal('UNKNOWN');
+      expect(sumRes.metadata?.[0]?.type).to.equal('UNKNOWN');
       expect(sumRes.rows?.item(0).sum).to.equal(age + age2);
 
       // MAX(networth), MIN(networth)
       const maxRes = db.execute('SELECT MAX(networth) as `max` FROM User;');
       const minRes = db.execute('SELECT MIN(networth) as `min` FROM User;');
-      expect(maxRes.metadata?.[0].type).to.equal('UNKNOWN');
-      expect(minRes.metadata?.[0].type).to.equal('UNKNOWN');
+      expect(maxRes.metadata?.[0]?.type).to.equal('UNKNOWN');
+      expect(minRes.metadata?.[0]?.type).to.equal('UNKNOWN');
       const maxNetworth = Math.max(networth, networth2);
       const minNetworth = Math.min(networth, networth2);
 
@@ -400,7 +405,7 @@ export function queriesTests() {
     });
 
     it('Transaction, rejects on callback error', async () => {
-      const promised = db.transaction(tx => {
+      const promised = db.transaction(() => {
         throw new Error('Error from callback');
       });
 
@@ -605,7 +610,7 @@ export function queriesTests() {
     });
 
     it('Async transaction, rejects on callback error', async () => {
-      const promised = db.transaction(async tx => {
+      const promised = db.transaction(async () => {
         throw new Error('Error from callback');
       });
 

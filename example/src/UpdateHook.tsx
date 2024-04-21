@@ -6,7 +6,7 @@ import React, {
   useRef,
 } from 'react';
 import {ActivityIndicator, Text, View} from 'react-native';
-import {OPSQLiteConnection, open} from '@op-engineering/op-sqlite';
+import {type OPSQLiteConnection, open} from '@op-engineering/op-sqlite';
 
 interface IDbContext {
   db: OPSQLiteConnection;
