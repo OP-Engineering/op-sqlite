@@ -34,10 +34,10 @@ export function queriesTests() {
   });
 
   describe('Queries tests', () => {
-    it('Test crsqlite', async () => {
-      const res = db.execute('select crsql_as_crr("User")');
-      console.warn(res);
-    });
+    // it('Test crsqlite', async () => {
+    //   const res = db.execute('select crsql_as_crr("User")');
+    //   console.warn(res);
+    // });
 
     it('Insert', async () => {
       const id = chance.integer();
@@ -789,6 +789,19 @@ export function queriesTests() {
         'SELECT id, name, age, networth FROM User',
       );
       expect(res).to.eql([[id, name, age, networth]]);
+    });
+
+    it('Create fts5 virtual table', async () => {
+      db.execute('CREATE VIRTUAL TABLE fts5_table USING fts5(name, content);');
+      db.execute('INSERT INTO fts5_table (name, content) VALUES(?, ?)', [
+        'test',
+        'test content',
+      ]);
+
+      const res = db.execute('SELECT * FROM fts5_table');
+      expect(res.rows?._array).to.eql([
+        {name: 'test', content: 'test content'},
+      ]);
     });
   });
 }

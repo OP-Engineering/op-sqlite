@@ -8,6 +8,22 @@ package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 folly_compiler_flags = '-DFOLLY_NO_CONFIG -DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1 -Wno-comma -Wno-shorten-64-to-32'
 fabric_enabled = ENV['RCT_NEW_ARCH_ENABLED'] == '1'
 
+parent_folder_name = File.basename(__dir__)
+app_package = nil
+# for development purposes on user machines the podspec should be able to read the package.json from the root folder
+# since it lives inside node_modules/@op-engineering/op-sqlite
+if parent_folder_name == "op-sqlite"
+  app_package = JSON.parse(File.read(File.join(__dir__, "example", "package.json")))
+else
+  app_package = JSON.parse(File.read(File.join(__dir__, "..", "..", "package.json")))
+end
+
+log_message.call("[OP-SQLITE] Configuration:")
+use_sqlcipher = ENV['OP_SQLITE_USE_SQLCIPHER'] == '1' || app_package["op-sqlite"]["sqlcipher"] == true
+use_crsqlite = ENV['OP_SQLITE_USE_CRSQLITE'] == '1' || app_package["op-sqlite"]["crsqlite"] == true
+performance_mode = ENV['OP_SQLITE_PERF'] || app_package["op-sqlite"]["performance_mode"] || "0"
+phone_version = ENV['OP_SQLITE_USE_PHONE_VERSION'] == '1' || app_package["op-sqlite"]["phoneVersion"] == true
+
 Pod::Spec.new do |s|
   s.name         = "op-sqlite"
   s.version      = package["version"]
@@ -19,7 +35,6 @@ Pod::Spec.new do |s|
   s.platforms    = { :ios => "13.0", :osx => "10.15" }
   s.source       = { :git => "https://github.com/op-engineering/op-sqlite.git", :tag => "#{s.version}" }
   
-  # s.header_mappings_dir = "cpp"
   s.source_files = "ios/**/*.{h,m,mm}", "cpp/**/*.{h,cpp,c}"
 
   xcconfig = {
@@ -29,13 +44,13 @@ Pod::Spec.new do |s|
     :CLANG_CXX_LANGUAGE_STANDARD => "c++17",
   }
   
-  if ENV['OP_SQLITE_USE_SQLCIPHER'] == '1' then
-    log_message.call("[OP-SQLITE] using SQLCipher! 🔒")
+  if use_sqlcipher then
+    log_message.call("[OP-SQLITE] using SQLCipher 🔒")
     s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h"
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_SQLCIPHER=1 HAVE_FULLFSYNC=1 SQLITE_HAS_CODEC SQLITE_TEMP_STORE=2"
     s.dependency "OpenSSL-Universal"
   else
-    log_message.call("[OP-SQLITE] using vanilla SQLite! 📦")
+    log_message.call("[OP-SQLITE] using vanilla SQLite 📦")
     s.exclude_files = "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h"
   end
   
@@ -51,25 +66,25 @@ Pod::Spec.new do |s|
 
   optimizedCflags = other_cflags + '$(inherited) -DSQLITE_DQS=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1 -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DEPRECATED=1 -DSQLITE_OMIT_PROGRESS_CALLBACK=1 -DSQLITE_OMIT_SHARED_CACHE=1 -DSQLITE_USE_ALLOCA=1'
 
-  if ENV['OP_SQLITE_USE_PHONE_VERSION'] == '1' then
-    log_message.call("[OP-SQLITE] using iOS embedded SQLite! 📱")
+  if phone_version then
+    log_message.call("[OP-SQLITE] using iOS embedded SQLite 📱")
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_PHONE_VERSION=1"
     s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h"
     s.library = "sqlite3"
   end
 
-  if ENV['OP_SQLITE_PERF'] == '1' then
-    log_message.call("[OP-SQLITE] performance mode enabled! 🚀")
+  if performance_mode == '1' then
+    log_message.call("[OP-SQLITE] Thread unsafe (1) performance mode enabled. Use only transactions! 🚀🚀")
     xcconfig[:OTHER_CFLAGS] = optimizedCflags + ' -DSQLITE_THREADSAFE=0 '
   end
 
-  if ENV['OP_SQLITE_PERF'] == '2' then
-    log_message.call("[OP-SQLITE] (thread safe) performance mode enabled! 🚀")
+  if performance_mode == '2' then
+    log_message.call("[OP-SQLITE] Thread safe (2) performance mode enabled 🚀")
     xcconfig[:OTHER_CFLAGS] = optimizedCflags + ' -DSQLITE_THREADSAFE=1 '
   end
 
-  if ENV['OP_SQLITE_USE_CRSQLITE'] == '1' then
-    log_message.call("[OP-SQLITE] using CRQSQLite! 🤖")
+  if use_crsqlite then
+    log_message.call("[OP-SQLITE] using CRQSQLite 🤖")
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_CRSQLITE=1"
     s.vendored_frameworks = "ios/crsqlite.xcframework"
   end
