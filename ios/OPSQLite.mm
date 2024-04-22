@@ -78,6 +78,10 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
   NSBundle *bundle = [NSBundle bundleWithIdentifier:@"io.vlcn.crsqlite"];
   NSString *crsqlitePath = [bundle pathForResource:@"crsqlite" ofType:@""];
 
+  if (crsqlitePath == nil) {
+    crsqlitePath = @"";
+  }
+
   opsqlite::install(runtime, callInvoker, [documentPath UTF8String],
                     [crsqlitePath UTF8String]);
   return @true;
