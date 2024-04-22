@@ -663,6 +663,14 @@ void install(jsi::Runtime &rt,
     return jsi::String::createFromUtf8(rt, result);
   });
 
+  auto is_sqlcipher = HOSTFN("isSQLCipher", 0) {
+#ifdef OP_SQLITE_USE_SQLCIPHER
+    return true;
+#else
+    return false;
+#endif
+  });
+
   jsi::Object module = jsi::Object(rt);
 
   module.setProperty(rt, "open", std::move(open));
@@ -682,6 +690,7 @@ void install(jsi::Runtime &rt,
   module.setProperty(rt, "loadExtension", std::move(load_extension));
   module.setProperty(rt, "executeRawAsync", std::move(execute_raw_async));
   module.setProperty(rt, "getDbPath", std::move(get_db_path));
+  module.setProperty(rt, "isSQLCipher", std::move(is_sqlcipher));
 
   rt.global().setProperty(rt, "__OPSQLiteProxy", std::move(module));
 }

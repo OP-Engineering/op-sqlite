@@ -145,6 +145,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Turn on SQLCipher
+        run: |
+          node ./scripts/turnOnSQLCipher.js
+
       - name: Setup
         uses: ./.github/actions/setup
 
@@ -184,7 +188,7 @@ jobs:
         # if: env.turbo_cache_hit != 1 && steps.cocoapods-cache.outputs.cache-hit != 'true'
         run: |
           cd example/ios
-          OP_SQLITE_USE_SQLCIPHER=1 bundle exec pod install
+          bundle exec pod install
         env:
           NO_FLIPPER: 1
 
@@ -199,6 +203,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Turn on SQLCipher
+        run: |
+          node ./scripts/turnOnSQLCipher.js
 
       - name: Setup
         uses: ./.github/actions/setup
@@ -234,4 +242,4 @@ jobs:
         env:
           JAVA_OPTS: '-XX:MaxHeapSize=6g'
         run: |
-          OP_SQLITE_USE_SQLCIPHER=1 yarn turbo run build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}"
+          yarn turbo run build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}"

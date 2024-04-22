@@ -1,12 +1,28 @@
-import {ANDROID_EXTERNAL_FILES_PATH, open} from '@op-engineering/op-sqlite';
+import {
+  ANDROID_EXTERNAL_FILES_PATH,
+  isSQLCipher,
+  open,
+} from '@op-engineering/op-sqlite';
 import chai from 'chai';
 import {describe, it} from './MochaRNAdapter';
 import {Platform} from 'react-native';
 
 let expect = chai.expect;
 
+const expectedVersion = isSQLCipher() ? '3.44.2' : '3.45.1';
+
 export function dbSetupTests() {
   describe('DB setup tests', () => {
+    it(`Should match the sqlite expected version ${expectedVersion}`, async () => {
+      let db = open({
+        name: 'versionTest.sqlite',
+        encryptionKey: 'test',
+      });
+      const res = db.execute('select sqlite_version();');
+      expect(res.rows?._array[0]['sqlite_version()']).to.equal(expectedVersion);
+      db.close();
+    });
+
     it('Create in memory DB', async () => {
       let inMemoryDb = open({
         name: 'inMemoryTest.sqlite',
