@@ -31,6 +31,7 @@ def useSQLCipher = false
 def useCRSQLite = false
 def performanceMode = "0"
 def sqliteFlags = ""
+def enableFTS5 = false
 
 def packageJsonFile = new File("$rootDir/../package.json")
 def packageJson = new JsonSlurper().parseText(packageJsonFile.text)
@@ -41,6 +42,7 @@ if(opsqliteConfig) {
   useCRSQLite = opsqliteConfig["crsqlite"]
   performanceMode = opsqliteConfig["performanceMode"] ? opsqliteConfig["performanceMode"] : ""
   sqliteFlags = opsqliteConfig["sqliteFlags"] ? opsqliteConfig["sqliteFlags"] : ""
+  enableFTS5 = opsqliteConfig["fts5"]
 }
 
 if(useSQLCipher) {
@@ -59,6 +61,10 @@ if(performanceMode == "1") {
 
 if(performanceMode == "2") {
   println "[OP-SQLITE] Thread safe performance mode enabled! 🚀"
+}
+
+if(enableFTS5) {
+  println "[OP-SQLITE] FTS5 enabled! 🔎"
 }
 
 if (isNewArchitectureEnabled()) {
@@ -120,6 +126,9 @@ android {
             }
             if(performanceMode == '2') {
               cFlags += ["-DSQLITE_DQS=0", "-DSQLITE_THREADSAFE=1", "-DSQLITE_DEFAULT_MEMSTATUS=0", "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1", "-DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1", "-DSQLITE_MAX_EXPR_DEPTH=0", "-DSQLITE_OMIT_DEPRECATED=1", "-DSQLITE_OMIT_PROGRESS_CALLBACK=1", "-DSQLITE_OMIT_SHARED_CACHE=1", "-DSQLITE_USE_ALLOCA=1"]
+            }
+            if(enableFTS5) {
+              cFlags += ["-DSQLITE_ENABLE_FTS4=1", "-DSQLITE_ENABLE_FTS3_PARENTHESIS=1", "-DSQLITE_ENABLE_FTS5=1"]
             }
 
             cppFlags "-O2", "-fexceptions", "-frtti", "-std=c++1y", "-DONANDROID"

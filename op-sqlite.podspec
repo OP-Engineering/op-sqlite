@@ -24,6 +24,7 @@ use_crsqlite = false
 performance_mode = "0"
 phone_version = false
 sqlite_flags = ""
+fts5 = false
 
 if(op_sqlite_config != nil)
   use_sqlcipher = op_sqlite_config["sqlcipher"] == true
@@ -31,6 +32,7 @@ if(op_sqlite_config != nil)
   performance_mode = op_sqlite_config["performanceMode"] || "0"
   phone_version = op_sqlite_config["iosSqlite"] == true
   sqlite_flags = op_sqlite_config["sqliteFlags"] || ""
+  fts5 = op_sqlite_config["fts5"] == true
 end
 
 if phone_version && use_sqlcipher
@@ -82,8 +84,24 @@ Pod::Spec.new do |s|
 
   optimizedCflags = other_cflags + '$(inherited) -DSQLITE_DQS=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1 -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DEPRECATED=1 -DSQLITE_OMIT_PROGRESS_CALLBACK=1 -DSQLITE_OMIT_SHARED_CACHE=1 -DSQLITE_USE_ALLOCA=1'
 
+  if fts5 && !phone_version then
+    log_message.call("[OP-SQLITE] FTS5 enabled 🔎")
+    xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " SQLITE_ENABLE_FTS5=1"
+  end
  
   if phone_version then
+    if use_sqlcipher then
+      raise "SQLCipher is not supported with phone version"
+    end
+
+    if use_crsqlite then
+      raise "CRSQLite is not supported with phone version"
+    end
+
+    if fts5 then
+      raise "FTS5 is not supported with phone version"
+    end
+
     log_message.call("[OP-SQLITE] using iOS embedded SQLite 📱")
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_PHONE_VERSION=1"
     s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h"
