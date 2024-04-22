@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "android": "react-native run-android",
-    "ios": "react-native run-ios --scheme='debug'",
+    "ios": "react-native run-ios --scheme='debug' --simulator='iPhone 15 Pro'",
     "start": "react-native start",
     "pods": "cd ios && rm -rf Pods && rm -rf Podfile.lock && bundle exec pod install",
     "build:android": "cd android && ./gradlew assembleDebug --no-daemon --console=plain -PreactNativeArchitectures=arm64-v8a",
@@ -56,8 +56,8 @@
     "node": ">=18"
   },
   "op-sqlite": {
-    "sqlcipher": true,
-    "crsqlite": true,
+    "sqlcipher": false,
+    "crsqlite": false,
     "performanceMode": "1",
     "iosSqlite": false,
     "sqliteFlags": "-DSQLITE_DQS=0"
