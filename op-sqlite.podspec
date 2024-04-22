@@ -12,10 +12,10 @@ parent_folder_name = File.basename(__dir__)
 app_package = nil
 # for development purposes on user machines the podspec should be able to read the package.json from the root folder
 # since it lives inside node_modules/@op-engineering/op-sqlite
-if parent_folder_name == "op-sqlite"
-  app_package = JSON.parse(File.read(File.join(__dir__, "example", "package.json")))
+if __dir__.include?("node_modules")
+  app_package = JSON.parse(File.read(File.join(__dir__, "..", "..", "..", "package.json")))
 else
-  app_package = JSON.parse(File.read(File.join(__dir__, "..", "..", "package.json")))
+  app_package = JSON.parse(File.read(File.join(__dir__, "example", "package.json")))
 end
 
 op_sqlite_config = app_package["op-sqlite"]
