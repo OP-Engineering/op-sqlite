@@ -43,7 +43,7 @@ if (OP_SQLITE_USE_SQLCIPHER)
   target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlcipher/sqlite3.h ../cpp/sqlcipher/sqlite3.c)
 
   add_definitions(
-    -DOP_SQLITE_USE_SQLCIPHER
+    -DOP_SQLITE_USE_SQLCIPHER=1
     -DSQLITE_HAS_CODEC
     -DSQLITE_TEMP_STORE=2
   )
@@ -55,7 +55,7 @@ endif()
 
 if (OP_SQLITE_USE_CRSQLITE)
   add_definitions(
-    -DOP_SQLITE_USE_CRSQLITE
+    -DOP_SQLITE_USE_CRSQLITE=1
   )
 endif()
 

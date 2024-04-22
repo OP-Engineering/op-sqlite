@@ -1,4 +1,5 @@
 import java.nio.file.Paths
+import groovy.json.JsonSlurper
 
 buildscript {
   repositories {
@@ -26,7 +27,39 @@ def isNewArchitectureEnabled() {
   return project.hasProperty("newArchEnabled") && project.newArchEnabled == "true"
 }
 
-def SQLITE_FLAGS = rootProject.properties['OPSQLiteFlags']
+def useSQLCipher = false
+def useCRSQLite = false
+def performanceMode = "0"
+def sqliteFlags = ""
+
+def packageJsonFile = new File("$rootDir/../package.json")
+def packageJson = new JsonSlurper().parseText(packageJsonFile.text)
+
+def opsqliteConfig = packageJson["op-sqlite"]
+if(opsqliteConfig) {
+  useSQLCipher = opsqliteConfig["sqlcipher"]
+  useCRSQLite = opsqliteConfig["crsqlite"]
+  performanceMode = opsqliteConfig["performanceMode"] ? opsqliteConfig["performanceMode"] : ""
+  sqliteFlags = opsqliteConfig["sqliteFlags"] ? opsqliteConfig["sqliteFlags"] : ""
+}
+
+if(useSQLCipher) {
+  println "[OP-SQLITE] using SQLCipher 🔒"
+} else {
+  println "[OP-SQLITE] using Vanilla SQLite"
+}
+
+if(useCRSQLite) {
+  println "[OP-SQLITE] using CR-SQLite 🤖"
+}
+
+if(performanceMode == "1") {
+  println "[OP-SQLITE] Thread unsafe performance mode enabled. Use only transactions! 🚀"
+}
+
+if(performanceMode == "2") {
+  println "[OP-SQLITE] Thread safe performance mode enabled! 🚀"
+}
 
 if (isNewArchitectureEnabled()) {
     apply plugin: "com.facebook.react"
@@ -47,8 +80,6 @@ def reactNativeArchitectures() {
 def getExtOrDefault(name) {
   return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties["OPSQLite" + name]
 }
-
-def USE_HERMES = rootProject.ext.hermesEnabled
 
 android {
   
@@ -76,31 +107,19 @@ android {
     
     externalNativeBuild {
         cmake {
-            if(System.getenv("OP_SQLITE_PERF") == '1') {
-              println "OP-SQLITE performance mode enabled! 🚀"
+            if(performanceMode == '1') {
               cFlags  += ["-DSQLITE_DQS=0", "-DSQLITE_THREADSAFE=0", "-DSQLITE_DEFAULT_MEMSTATUS=0", "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1", "-DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1", "-DSQLITE_MAX_EXPR_DEPTH=0", "-DSQLITE_OMIT_DEPRECATED=1", "-DSQLITE_OMIT_PROGRESS_CALLBACK=1", "-DSQLITE_OMIT_SHARED_CACHE=1", "-DSQLITE_USE_ALLOCA=1"]
             }
-            if(System.getenv("OP_SQLITE_PERF") == '2') {
-              println "OP-SQLITE (thread safe) performance mode enabled! 🚀"
+            if(performanceMode == '2') {
               cFlags += ["-DSQLITE_DQS=0", "-DSQLITE_THREADSAFE=1", "-DSQLITE_DEFAULT_MEMSTATUS=0", "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1", "-DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1", "-DSQLITE_MAX_EXPR_DEPTH=0", "-DSQLITE_OMIT_DEPRECATED=1", "-DSQLITE_OMIT_PROGRESS_CALLBACK=1", "-DSQLITE_OMIT_SHARED_CACHE=1", "-DSQLITE_USE_ALLOCA=1"]
-            }
-
-            if(System.getenv("OP_SQLITE_USE_SQLCIPHER") == '1') {
-              println "OP-SQLITE using SQLCipher! 🔒"
-              cppFlags += "-DOP_SQLITE_USE_SQLCIPHER=1"
-            }
-
-            if(System.getenv("OP_SQLITE_USE_CRSQLITE") == '1') {
-              println "OP-SQLITE using CR-SQLite! 🤖"
-              cppFlags += "-DOP_SQLITE_USE_CRSQLITE=1"
             }
 
             cppFlags "-O2", "-fexceptions", "-frtti", "-std=c++1y", "-DONANDROID"
             abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
             arguments "-DANDROID_STL=c++_shared",
-              "-DSQLITE_FLAGS='${SQLITE_FLAGS ? SQLITE_FLAGS : ''}'"
-              "-DOP_SQLITE_USE_SQLCIPHER='${System.getenv("OP_SQLITE_USE_SQLCIPHER") == '1'? 1 : 0}'"
-              "-DOP_SQLITE_USE_CRSQLITE='${System.getenv("OP_SQLITE_USE_CRSQLITE") == '1'? 1 : 0}'"
+              "-DSQLITE_FLAGS='$sqliteFlags'"
+              "-DOP_SQLITE_USE_SQLCIPHER='${useSQLCipher? 1 : 0}'"
+              "-DOP_SQLITE_USE_CRSQLITE='${useCRSQLite? 1 : 0}'"
             abiFilters (*reactNativeArchitectures())
         }
     }

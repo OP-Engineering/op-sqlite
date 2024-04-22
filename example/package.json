@@ -54,5 +54,12 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "op-sqlite": {
+    "sqlcipher": true,
+    "crsqlite": true,
+    "performanceMode": "1",
+    "iosSqlite": false,
+    "sqliteFlags": "-DSQLITE_DQS=0"
   }
 }
