@@ -8,6 +8,36 @@ package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 folly_compiler_flags = '-DFOLLY_NO_CONFIG -DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1 -Wno-comma -Wno-shorten-64-to-32'
 fabric_enabled = ENV['RCT_NEW_ARCH_ENABLED'] == '1'
 
+parent_folder_name = File.basename(__dir__)
+app_package = nil
+# for development purposes on user machines the podspec should be able to read the package.json from the root folder
+# since it lives inside node_modules/@op-engineering/op-sqlite
+if __dir__.include?("node_modules")
+  app_package = JSON.parse(File.read(File.join(__dir__, "..", "..", "..", "package.json")))
+else
+  app_package = JSON.parse(File.read(File.join(__dir__, "example", "package.json")))
+end
+
+op_sqlite_config = app_package["op-sqlite"]
+use_sqlcipher = false
+use_crsqlite = false
+performance_mode = "0"
+phone_version = false
+sqlite_flags = ""
+
+if(op_sqlite_config != nil)
+  use_sqlcipher = op_sqlite_config["sqlcipher"] == true
+  use_crsqlite = op_sqlite_config["crsqlite"] == true
+  performance_mode = op_sqlite_config["performanceMode"] || "0"
+  phone_version = op_sqlite_config["iosSqlite"] == true
+  sqlite_flags = op_sqlite_config["sqliteFlags"] || ""
+end
+
+if phone_version && use_sqlcipher
+  raise "Cannot use phone embedded version and SQLCipher. SQLCipher needs to be compiled from sources with the project."
+end
+
+
 Pod::Spec.new do |s|
   s.name         = "op-sqlite"
   s.version      = package["version"]
