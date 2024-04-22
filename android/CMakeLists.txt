@@ -39,7 +39,8 @@ add_library(
   cpp-adapter.cpp
 )
 
-if (OP_SQLITE_USE_SQLCIPHER)
+if (USE_SQLCIPHER)
+  message("Using SQLCipher!")
   target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlcipher/sqlite3.h ../cpp/sqlcipher/sqlite3.c)
 
   add_definitions(
@@ -53,7 +54,7 @@ else()
  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlite3.h ../cpp/sqlite3.c)
 endif()
 
-if (OP_SQLITE_USE_CRSQLITE)
+if (USE_CRSQLITE)
   add_definitions(
     -DOP_SQLITE_USE_CRSQLITE=1
   )
@@ -70,16 +71,25 @@ find_package(ReactAndroid REQUIRED CONFIG)
 find_package(fbjni REQUIRED CONFIG)
 find_library(LOG_LIB log)
 
-target_link_libraries(
-  ${PACKAGE_NAME}
-  ${LOG_LIB}
-  fbjni::fbjni
-  ReactAndroid::jsi
-  ReactAndroid::turbomodulejsijni
-  ReactAndroid::react_nativemodule_core
-  android
-)
-
-if (OP_SQLITE_USE_SQLCIPHER)
-  target_link_libraries(${PACKAGE_NAME} PRIVATE openssl::crypto)
+if (USE_SQLCIPHER)
+  target_link_libraries(
+    ${PACKAGE_NAME}
+    ${LOG_LIB}
+    fbjni::fbjni
+    ReactAndroid::jsi
+    ReactAndroid::turbomodulejsijni
+    ReactAndroid::react_nativemodule_core
+    android
+    openssl::crypto
+  )
+else()
+  target_link_libraries(
+    ${PACKAGE_NAME}
+    ${LOG_LIB}
+    fbjni::fbjni
+    ReactAndroid::jsi
+    ReactAndroid::turbomodulejsijni
+    ReactAndroid::react_nativemodule_core
+    android
+  )
 endif()

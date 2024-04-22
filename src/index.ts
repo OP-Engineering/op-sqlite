@@ -197,6 +197,7 @@ interface ISQLite {
     params?: any[]
   ) => Promise<any[]>;
   getDbPath: (dbName: string, location?: string) => string;
+  isSQLCipher: () => boolean;
 }
 
 const locks: Record<
@@ -469,4 +470,8 @@ export const moveAssetsDatabase = (
   extension: string
 ): boolean => {
   return NativeModules.OPSQLite.moveAssetsDatabase(dbName, extension);
+};
+
+export const isSQLCipher = (): boolean => {
+  return OPSQLite.isSQLCipher();
 };
