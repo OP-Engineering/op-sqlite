@@ -18,11 +18,25 @@ else
   app_package = JSON.parse(File.read(File.join(__dir__, "..", "..", "package.json")))
 end
 
-log_message.call("[OP-SQLITE] Configuration:")
-use_sqlcipher = ENV['OP_SQLITE_USE_SQLCIPHER'] == '1' || app_package["op-sqlite"]["sqlcipher"] == true
-use_crsqlite = ENV['OP_SQLITE_USE_CRSQLITE'] == '1' || app_package["op-sqlite"]["crsqlite"] == true
-performance_mode = ENV['OP_SQLITE_PERF'] || app_package["op-sqlite"]["performance_mode"] || "0"
-phone_version = ENV['OP_SQLITE_USE_PHONE_VERSION'] == '1' || app_package["op-sqlite"]["phoneVersion"] == true
+op_sqlite_config = app_package["op-sqlite"]
+use_sqlcipher = false
+use_crsqlite = false
+performance_mode = "0"
+phone_version = false
+sqlite_flags = ""
+
+if(op_sqlite_config != nil)
+  use_sqlcipher = op_sqlite_config["sqlcipher"] == true
+  use_crsqlite = op_sqlite_config["crsqlite"] == true
+  performance_mode = op_sqlite_config["performanceMode"] || "0"
+  phone_version = op_sqlite_config["iosSqlite"] == true
+  sqlite_flags = op_sqlite_config["sqliteFlags"] || ""
+end
+
+if phone_version && use_sqlcipher
+  raise "Cannot use phone embedded version and SQLCipher. SQLCipher needs to be compiled from sources with the project."
+end
+
 
 Pod::Spec.new do |s|
   s.name         = "op-sqlite"
@@ -43,6 +57,8 @@ Pod::Spec.new do |s|
     :USE_HEADERMAP => "No",
     :CLANG_CXX_LANGUAGE_STANDARD => "c++17",
   }
+
+  log_message.call("[OP-SQLITE] Configuration:")
   
   if use_sqlcipher then
     log_message.call("[OP-SQLITE] using SQLCipher 🔒")
@@ -66,6 +82,7 @@ Pod::Spec.new do |s|
 
   optimizedCflags = other_cflags + '$(inherited) -DSQLITE_DQS=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1 -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DEPRECATED=1 -DSQLITE_OMIT_PROGRESS_CALLBACK=1 -DSQLITE_OMIT_SHARED_CACHE=1 -DSQLITE_USE_ALLOCA=1'
 
+ 
   if phone_version then
     log_message.call("[OP-SQLITE] using iOS embedded SQLite 📱")
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_PHONE_VERSION=1"
@@ -89,6 +106,10 @@ Pod::Spec.new do |s|
     s.vendored_frameworks = "ios/crsqlite.xcframework"
   end
 
+  if sqlite_flags != "" then
+    log_message.call("[OP-SQLITE] Custom SQLite flags: #{sqlite_flags}")
+    xcconfig[:OTHER_CFLAGS] += " #{sqlite_flags}"
+  end
+
   s.pod_target_xcconfig = xcconfig
-  
 end
