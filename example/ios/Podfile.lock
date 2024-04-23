@@ -4,9 +4,9 @@ PODS:
   - FBLazyVector (0.74.0)
   - fmt (9.1.0)
   - glog (0.3.5)
-  - hermes-engine (0.74.0-rc.6):
-    - hermes-engine/Pre-built (= 0.74.0-rc.6)
-  - hermes-engine/Pre-built (0.74.0-rc.6)
+  - hermes-engine (0.74.0):
+    - hermes-engine/Pre-built (= 0.74.0)
+  - hermes-engine/Pre-built (0.74.0)
   - op-sqlite (5.0.5):
     - React
     - React-callinvoker
@@ -1357,7 +1357,7 @@ SPEC CHECKSUMS:
   FBLazyVector: 026c8f4ae67b06e088ae01baa2271ef8a26c0e8c
   fmt: 4c2741a687cc09f0634a2e2c72a838b99f1ff120
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
-  hermes-engine: 1a846a8f620a08c60f5f89aa65b8664f769f742f
+  hermes-engine: 6eae7edb2f563ee41d7c1f91f4f2e57c26d8a5c3
   op-sqlite: 6d94938ac5f70ff65c2e0c96dc8a20ed83b1cdbd
   RCT-Folly: 045d6ecaa59d826c5736dfba0b2f4083ff8d79df
   RCTDeprecation: 3ca8b6c36bfb302e1895b72cfe7db0de0c92cd47
