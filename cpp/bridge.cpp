@@ -204,7 +204,7 @@ inline void opsqlite_bind_statement(sqlite3_stmt *statement,
     } else if (std::holds_alternative<ArrayBuffer>(value)) {
       ArrayBuffer buffer = std::get<ArrayBuffer>(value);
       sqlite3_bind_blob(statement, sqIndex, buffer.data.get(), buffer.size,
-                        SQLITE_STATIC);
+                        SQLITE_TRANSIENT);
     } else {
       sqlite3_bind_null(statement, sqIndex);
     }
