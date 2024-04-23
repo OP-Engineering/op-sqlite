@@ -67,5 +67,39 @@ export function blobTests() {
       const finalUint8 = new Uint8Array(result.rows!._array[0].content);
       expect(finalUint8[0]).to.equal(42);
     });
+
+    it('Uint8Array in prepared statement', async () => {
+      const uint8 = new Uint8Array(2);
+      uint8[0] = 46;
+
+      const statement = db.prepareStatement(
+        'INSERT OR REPLACE INTO BlobTable VALUES (?, ?);',
+      );
+      statement.bind([1, uint8]);
+
+      statement.execute();
+
+      const result = db.execute('SELECT content FROM BlobTable');
+
+      const finalUint8 = new Uint8Array(result.rows!._array[0].content);
+      expect(finalUint8[0]).to.equal(46);
+    });
+
+    it('Buffer in prepared statement', async () => {
+      const uint8 = new Uint8Array(2);
+      uint8[0] = 52;
+
+      const statement = db.prepareStatement(
+        'INSERT OR REPLACE INTO BlobTable VALUES (?, ?);',
+      );
+      statement.bind([1, uint8.buffer]);
+
+      statement.execute();
+
+      const result = db.execute('SELECT content FROM BlobTable');
+
+      const finalUint8 = new Uint8Array(result.rows!._array[0].content);
+      expect(finalUint8[0]).to.equal(52);
+    });
   });
 }

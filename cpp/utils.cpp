@@ -114,13 +114,13 @@ std::vector<JSVariant> toVariantVec(jsi::Runtime &rt,
       auto obj = value.asObject(rt);
       if (obj.isArrayBuffer(rt)) {
         auto buffer = obj.getArrayBuffer(rt);
-
-        uint8_t *data = new uint8_t[buffer.size(rt)];
+        size_t size = buffer.size(rt);
+        uint8_t *data = new uint8_t[size];
         // You cannot share raw memory between native and JS
         // always copy the data
         // see https://github.com/facebook/hermes/pull/419 and
         // https://github.com/facebook/hermes/issues/564.
-        memcpy(data, buffer.data(rt), buffer.size(rt));
+        memcpy(data, buffer.data(rt), size);
 
         res.push_back(JSVariant(ArrayBuffer{
             .data = std::shared_ptr<uint8_t>{data}, .size = buffer.size(rt)}));
