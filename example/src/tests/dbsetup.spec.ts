@@ -19,10 +19,8 @@ export function dbSetupTests() {
         encryptionKey: 'test',
       });
 
-      const cipherVersion = db.execute('PRAGMA cipher_version;');
-      console.warn(cipherVersion);
       const res = db.execute('select sqlite_version();');
-      // console.warn(res.rows?._array[0]['sqlite_version()']);
+
       expect(res.rows?._array[0]['sqlite_version()']).to.equal(expectedVersion);
       db.close();
     });

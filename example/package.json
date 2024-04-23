@@ -60,6 +60,6 @@
     "crsqlite": false,
     "performanceMode": "1",
     "iosSqlite": false,
-    "sqliteFlags": "-DSQLITE_DQS=0"
+    "fts5": true
   }
 }

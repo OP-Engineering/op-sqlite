@@ -422,9 +422,7 @@ export function queriesTests() {
 
     it('Transaction, rejects on invalid query', async () => {
       const promised = db.transaction(async tx => {
-        console.log('execute bad start');
         tx.execute('SELECT * FROM [tableThatDoesNotExist];');
-        console.log('execute bad done');
       });
 
       // ASSERT: should return a promise that eventually rejects
@@ -791,17 +789,17 @@ export function queriesTests() {
       expect(res).to.eql([[id, name, age, networth]]);
     });
 
-    // it('Create fts5 virtual table', async () => {
-    //   db.execute('CREATE VIRTUAL TABLE fts5_table USING fts5(name, content);');
-    //   db.execute('INSERT INTO fts5_table (name, content) VALUES(?, ?)', [
-    //     'test',
-    //     'test content',
-    //   ]);
+    it('Create fts5 virtual table', () => {
+      db.execute('CREATE VIRTUAL TABLE fts5_table USING fts5(name, content);');
+      db.execute('INSERT INTO fts5_table (name, content) VALUES(?, ?)', [
+        'test',
+        'test content',
+      ]);
 
-    //   const res = db.execute('SELECT * FROM fts5_table');
-    //   expect(res.rows?._array).to.eql([
-    //     {name: 'test', content: 'test content'},
-    //   ]);
-    // });
+      const res = db.execute('SELECT * FROM fts5_table');
+      expect(res.rows?._array).to.eql([
+        {name: 'test', content: 'test content'},
+      ]);
+    });
   });
 }
