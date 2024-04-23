@@ -29,7 +29,8 @@
     "example": "yarn --cwd example",
     "pods": "cd example && yarn pods",
     "bootstrap": "yarn example && yarn && yarn pods",
-    "release": "./bump-version.sh && git add . && git commit -m 'Release v$(node -p \"require('./package.json').version\")' && git tag v$(node -p \"require('./package.json').version\") && git push origin main --tags && npm publish"
+    "release": "./bump-version.sh && git add . && git commit -m 'Release v$(node -p \"require('./package.json').version\")' && git tag v$(node -p \"require('./package.json').version\") && git push origin main --tags && npm publish",
+    "clang-format-check": "clang-format -i cpp/*.cpp cpp/*.h"
   },
   "keywords": [
     "react-native",
@@ -47,6 +48,7 @@
     "registry": "https://registry.npmjs.org/"
   },
   "devDependencies": {
+    "clang-format": "^1.8.0",
     "lefthook": "^1.5.5",
     "react": "18.2.0",
     "react-native": "0.74.0-rc.6",
