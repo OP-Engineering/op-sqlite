@@ -279,6 +279,30 @@ OPSQLite.executeAsync = async (
   return res;
 };
 
+const _prepareStatement = OPSQLite.prepareStatement;
+OPSQLite.prepareStatement = (dbName: string, query: string) => {
+  const stmt = _prepareStatement(dbName, query);
+
+  return {
+    bind: (params: any[]) => {
+      const sanitizedParams = params.map((p) => {
+        if (ArrayBuffer.isView(p)) {
+          return p.buffer;
+        }
+
+        return p;
+      });
+
+      stmt.bind(sanitizedParams);
+    },
+    execute: () => {
+      const res = stmt.execute();
+      enhanceQueryResult(res);
+      return res;
+    },
+  };
+};
+
 OPSQLite.transaction = async (
   dbName: string,
   fn: (tx: Transaction) => Promise<void>

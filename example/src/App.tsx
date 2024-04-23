@@ -156,8 +156,6 @@ export default function App() {
           </Text>
         )}
 
-        {/* <UpdateHookPage /> */}
-
         <Text
           className={clsx('font-bold flex-1 text-white p-2 mt-4', {
             'bg-green-500': allTestsPassed,
@@ -165,33 +163,48 @@ export default function App() {
           })}>
           Test Suite
         </Text>
-        {results.map((r: any, i: number) => {
-          if (r.type === 'grouping') {
-            return (
-              <Text className="p-2 font-semibold text-white" key={i}>
-                {r.description}
-              </Text>
-            );
-          }
+        {results
+          .filter((t: any) => t.type !== 'grouping')
+          .sort((a: any, b: any) => {
+            if (a.type === 'incorrect') {
+              return -1;
+            }
 
-          if (r.type === 'incorrect') {
+            if (b.type === 'incorrect') {
+              return 1;
+            }
+
+            return 0;
+          })
+          .map((r: any, i: number) => {
+            if (r.type === 'grouping') {
+              return (
+                <Text className="p-2 font-semibold text-white" key={i}>
+                  {r.description}
+                </Text>
+              );
+            }
+
+            if (r.type === 'incorrect') {
+              return (
+                <View
+                  className="border-b border-neutral-800 p-2 flex-row"
+                  key={i}>
+                  <Text className="text-red-500 flex-1">
+                    {r.description}: {r.errorMsg}
+                  </Text>
+                </View>
+              );
+            }
+
             return (
               <View
                 className="border-b border-neutral-800 p-2 flex-row"
                 key={i}>
-                <Text className="text-red-500 flex-1">
-                  {r.description}: {r.errorMsg}
-                </Text>
+                <Text className="text-green-500 flex-1">{r.description}</Text>
               </View>
             );
-          }
-
-          return (
-            <View className="border-b border-neutral-800 p-2 flex-row" key={i}>
-              <Text className="text-green-500 flex-1">{r.description}</Text>
-            </View>
-          );
-        })}
+          })}
       </StyledScrollView>
     </SafeAreaView>
   );

@@ -42,6 +42,7 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
       if (_statement == nullptr) {
         throw std::runtime_error("statement has been freed");
       }
+
       std::vector<DumbHostObject> results;
       std::shared_ptr<std::vector<SmartHostObject>> metadata =
           std::make_shared<std::vector<SmartHostObject>>();
