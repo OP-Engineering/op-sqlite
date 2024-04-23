@@ -6031,7 +6031,7 @@ SQLITE_API int sqlite3_set_clientdata(sqlite3 *, const char *, void *,
 */
 typedef void (*sqlite3_destructor_type)(void *);
 #define SQLITE_STATIC ((sqlite3_destructor_type)0)
-#define SQLITE_TRANSIENT ((sqlite3_destructor_type) - 1)
+#define SQLITE_TRANSIENT ((sqlite3_destructor_type)-1)
 
 /*
 ** CAPI3REF: Setting The Result Of An SQL Function
@@ -7415,17 +7415,17 @@ struct sqlite3_index_info {
     unsigned char op;     /* Constraint operator */
     unsigned char usable; /* True if this constraint is usable */
     int iTermOffset;      /* Used internally - xBestIndex should ignore */
-  } *aConstraint;         /* Table of WHERE clause constraints */
+  } * aConstraint;        /* Table of WHERE clause constraints */
   int nOrderBy;           /* Number of terms in the ORDER BY clause */
   struct sqlite3_index_orderby {
     int iColumn;        /* Column number */
     unsigned char desc; /* True for DESC.  False for ASC. */
-  } *aOrderBy;          /* The ORDER BY clause */
+  } * aOrderBy;         /* The ORDER BY clause */
   /* Outputs */
   struct sqlite3_index_constraint_usage {
     int argvIndex;      /* if >0, constraint is part of argv to xFilter */
     unsigned char omit; /* Do not code a test for this constraint */
-  } *aConstraintUsage;
+  } * aConstraintUsage;
   int idxNum;           /* Number used to identify the index */
   char *idxStr;         /* String, possibly obtained from sqlite3_malloc */
   int needToFreeIdxStr; /* Free idxStr using sqlite3_free() if true */
