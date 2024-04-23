@@ -40,7 +40,6 @@ add_library(
 )
 
 if (USE_SQLCIPHER)
-  message("Using SQLCipher!")
   target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlcipher/sqlite3.h ../cpp/sqlcipher/sqlite3.c)
 
   add_definitions(
