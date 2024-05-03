@@ -1,5 +1,7 @@
 import {
+  ANDROID_DATABASE_PATH,
   ANDROID_EXTERNAL_FILES_PATH,
+  IOS_LIBRARY_PATH,
   isSQLCipher,
   open,
 } from '@op-engineering/op-sqlite';
@@ -67,6 +69,26 @@ export function dbSetupTests() {
         // TODO load a sample extension
         expect(e).to.exist;
       }
+    });
+
+    it('Should delete db', async () => {
+      let db = open({
+        name: 'deleteTest',
+        encryptionKey: 'test',
+      });
+
+      db.delete();
+    });
+
+    it('Should delete db with absolute path', async () => {
+      let db = open({
+        name: 'deleteTest',
+        encryptionKey: 'test',
+        location:
+          Platform.OS === 'ios' ? IOS_LIBRARY_PATH : ANDROID_DATABASE_PATH,
+      });
+
+      db.delete();
     });
 
     // it('Should fail creating in-memory with non-bool arg', async () => {
