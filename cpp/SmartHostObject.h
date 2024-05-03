@@ -12,7 +12,7 @@ namespace jsi = facebook::jsi;
 
 class JSI_EXPORT SmartHostObject : public jsi::HostObject {
 public:
-  SmartHostObject(){};
+  SmartHostObject() {};
 
   std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt);
 
