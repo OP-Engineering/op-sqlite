@@ -15,7 +15,7 @@ namespace jsi = facebook::jsi;
 
 class JSI_EXPORT DumbHostObject : public jsi::HostObject {
 public:
-  DumbHostObject(){};
+  DumbHostObject() {};
 
   DumbHostObject(std::shared_ptr<std::vector<SmartHostObject>> metadata);
 
