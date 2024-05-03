@@ -199,7 +199,7 @@ void install(jsi::Runtime &rt,
 
     std::string dbName = args[0].asString(rt).utf8(rt);
 
-    std::string tempDocPath = std::string(basePath);
+    std::string path = std::string(basePath);
 
     if (count > 1 && !args[1].isUndefined() && !args[1].isNull()) {
       if (!args[1].isString()) {
@@ -207,10 +207,20 @@ void install(jsi::Runtime &rt,
             "[op-sqlite][open] database location must be a string");
       }
 
-      tempDocPath = tempDocPath + "/" + args[1].asString(rt).utf8(rt);
+      std::string location = args[1].asString(rt).utf8(rt);
+
+      if (!location.empty()) {
+        if (location == ":memory:") {
+          path = ":memory:";
+        } else if (location.rfind("/", 0) == 0) {
+          path = location;
+        } else {
+          path = path + "/" + location;
+        }
+      }
     }
 
-    BridgeResult result = opsqlite_remove(dbName, tempDocPath);
+    BridgeResult result = opsqlite_remove(dbName, path);
 
     if (result.type == SQLiteError) {
       throw std::runtime_error(result.message);
