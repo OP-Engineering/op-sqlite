@@ -88,16 +88,17 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 }
 
 RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(moveAssetsDatabase
-                                       : (NSString *)name extension
-                                       : (NSString *)extension) {
+                                       : (NSDictionary *)args) {
   NSString *documentPath = [NSSearchPathForDirectoriesInDomains(
       NSLibraryDirectory, NSUserDomainMask, true) objectAtIndex:0];
-  NSString *sourcePath = [[NSBundle mainBundle] pathForResource:name
-                                                         ofType:extension];
 
-  NSString *destinationPath = [documentPath
-      stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", name,
-                                                                extension]];
+  NSString *filename = args[@"filename"];
+
+  NSString *sourcePath = [[NSBundle mainBundle] pathForResource:filename
+                                                         ofType:nil];
+
+  NSString *destinationPath
+      [documentPath stringByAppendingPathComponent:filename];
 
   NSFileManager *fileManager = [NSFileManager defaultManager];
   if ([fileManager fileExistsAtPath:destinationPath]) {
