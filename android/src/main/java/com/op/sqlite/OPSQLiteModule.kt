@@ -4,6 +4,7 @@ import android.util.Log
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.ReactContextBaseJavaModule
+import com.facebook.react.bridge.ReadableMap
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
@@ -48,13 +49,15 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextB
     }
 
     @ReactMethod(isBlockingSynchronousMethod = true)
-    fun moveAssetsDatabase(name: String, extension: String): Boolean {
+    fun moveAssetsDatabase(args: ReadableMap): Boolean {
+        val filename = args.getString("filename")
+        val path = args.getString("path") ?: "custom"
         val context = reactApplicationContext
         val assetsManager = context.assets
 
         try {
             // Open the input stream for the asset file
-            val inputStream: InputStream = assetsManager.open("custom/$name.$extension")
+            val inputStream: InputStream = assetsManager.open("$path/$filename")
 
             // Create the output file in the documents directory
             val databasesFolder =
@@ -62,7 +65,7 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextB
                             .absolutePath
                             .replace("defaultDatabase", "")
 
-            val outputFile = File(databasesFolder, "$name.$extension")
+            val outputFile = File(databasesFolder, filename)
 
             if (outputFile.exists()) {
                 return true
