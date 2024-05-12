@@ -13,6 +13,7 @@
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		3B5A9E3FD2C56B364AF5A4F3 /* libPods-OPSQLiteExample.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6EE3066EB7AAB7E17B1CAB50 /* libPods-OPSQLiteExample.a */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		AC1DF06E9759460CAA51B7B1 /* sample2.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = 9218E48CFB1F478CAC374D68 /* sample2.sqlite */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,6 +32,7 @@
 		89C6BE57DB24E9ADA2F236DE /* Pods-OPSQLiteExample-OPSQLiteExampleTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OPSQLiteExample-OPSQLiteExampleTests.release.xcconfig"; path = "Target Support Files/Pods-OPSQLiteExample-OPSQLiteExampleTests/Pods-OPSQLiteExample-OPSQLiteExampleTests.release.xcconfig"; sourceTree = "<group>"; };
 		96FD9FD0FC4F4540AC7A9CE6 /* sample.sqlite */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sample.sqlite; path = ../assets/sample.sqlite; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		9218E48CFB1F478CAC374D68 /* sample2.sqlite */ = {isa = PBXFileReference; name = "sample2.sqlite"; path = "../assets/sqlite/sample2.sqlite"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,6 +104,7 @@
 			isa = PBXGroup;
 			children = (
 				96FD9FD0FC4F4540AC7A9CE6 /* sample.sqlite */,
+				9218E48CFB1F478CAC374D68 /* sample2.sqlite */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -181,6 +184,7 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				022AA638EE144393ADDCAEC0 /* sample.sqlite in Resources */,
+				AC1DF06E9759460CAA51B7B1 /* sample2.sqlite in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

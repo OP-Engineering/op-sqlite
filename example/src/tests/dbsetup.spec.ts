@@ -3,6 +3,7 @@ import {
   ANDROID_EXTERNAL_FILES_PATH,
   IOS_LIBRARY_PATH,
   isSQLCipher,
+  moveAssetsDatabase,
   open,
 } from '@op-engineering/op-sqlite';
 import chai from 'chai';
@@ -89,6 +90,29 @@ export function dbSetupTests() {
       });
 
       db.delete();
+    });
+
+    it('Moves assets database simple', async () => {
+      const copied = await moveAssetsDatabase({filename: 'sample.sqlite'});
+
+      expect(copied).to.equal(true);
+    });
+    it('Moves assets database with path', async () => {
+      const copied = await moveAssetsDatabase({
+        filename: 'sample2.sqlite',
+        path: 'sqlite',
+      });
+
+      expect(copied).to.equal(true);
+    });
+    it('Moves assets database with path and overwrite', async () => {
+      const copied = await moveAssetsDatabase({
+        filename: 'sample2.sqlite',
+        path: 'sqlite',
+        overwrite: true,
+      });
+
+      expect(copied).to.equal(true);
     });
 
     // it('Should fail creating in-memory with non-bool arg', async () => {
