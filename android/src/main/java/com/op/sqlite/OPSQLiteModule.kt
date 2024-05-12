@@ -1,6 +1,7 @@
 package com.op.sqlite
 
 import android.util.Log
+import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.ReactContextBaseJavaModule
@@ -9,6 +10,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
+import com.facebook.react.util.RNLog;
 
 //@ReactModule(name = OPSQLiteModule.NAME)
 internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextBaseJavaModule(context) {
@@ -48,10 +50,11 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextB
         }
     }
 
-    @ReactMethod(isBlockingSynchronousMethod = true)
-    fun moveAssetsDatabase(args: ReadableMap): Boolean {
-        val filename = args.getString("filename")
+    @ReactMethod
+    fun moveAssetsDatabase(args: ReadableMap, promise: Promise) {
+        val filename = args.getString("filename")!!
         val path = args.getString("path") ?: "custom"
+        val overwrite = if(args.hasKey("overwrite")) { args.getBoolean("overwrite") } else false
         val context = reactApplicationContext
         val assetsManager = context.assets
 
@@ -68,7 +71,12 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextB
             val outputFile = File(databasesFolder, filename)
 
             if (outputFile.exists()) {
-                return true
+                if(overwrite) {
+                    outputFile.delete()
+                } else {
+                    promise.resolve(true)
+                    return
+                }
             }
 
             // Open the output stream for the output file
@@ -85,9 +93,10 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextB
             inputStream.close()
             outputStream.close()
 
-            return true
+            promise.resolve(true)
         } catch (exception: Exception) {
-            return false
+            RNLog.e(this.reactApplicationContext, "Exception: $exception")
+            promise.resolve(false)
         }
     }
 

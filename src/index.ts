@@ -492,6 +492,7 @@ export const open = (options: {
 export const moveAssetsDatabase = (args: {
   filename: string;
   path?: string;
+  overwrite?: boolean;
 }): boolean => {
   return NativeModules.OPSQLite.moveAssetsDatabase(args);
 };

@@ -92,14 +92,27 @@ export function dbSetupTests() {
       db.delete();
     });
 
-    it('Moves assets database', async () => {
-      const copied1 = moveAssetsDatabase({filename: 'sample.sqlite'});
-      const copied2 = moveAssetsDatabase({
+    it('Moves assets database simple', async () => {
+      const copied = await moveAssetsDatabase({filename: 'sample.sqlite'});
+
+      expect(copied).to.equal(true);
+    });
+    it('Moves assets database with path', async () => {
+      const copied = await moveAssetsDatabase({
         filename: 'sample2.sqlite',
         path: 'sqlite',
       });
-      expect(copied1).to.equal(true);
-      expect(copied2).to.equal(true);
+
+      expect(copied).to.equal(true);
+    });
+    it('Moves assets database with path and overwrite', async () => {
+      const copied = await moveAssetsDatabase({
+        filename: 'sample2.sqlite',
+        path: 'sqlite',
+        overwrite: true,
+      });
+
+      expect(copied).to.equal(true);
     });
 
     // it('Should fail creating in-memory with non-bool arg', async () => {
