@@ -59,10 +59,7 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextB
         val assetsManager = context.assets
 
         try {
-            // Open the input stream for the asset file
-            val inputStream: InputStream = assetsManager.open("$path/$filename")
 
-            // Create the output file in the documents directory
             val databasesFolder =
                     context.getDatabasePath("defaultDatabase")
                             .absolutePath
@@ -78,6 +75,8 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextB
                     return
                 }
             }
+
+            val inputStream: InputStream = assetsManager.open("$path/$filename")
 
             // Open the output stream for the output file
             val outputStream: OutputStream = FileOutputStream(outputFile)
