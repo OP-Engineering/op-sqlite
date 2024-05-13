@@ -489,11 +489,11 @@ export const open = (options: {
   };
 };
 
-export const moveAssetsDatabase = (args: {
+export const moveAssetsDatabase = async (args: {
   filename: string;
   path?: string;
   overwrite?: boolean;
-}): boolean => {
+}): Promise<boolean> => {
   return NativeModules.OPSQLite.moveAssetsDatabase(args);
 };
 
