@@ -99,7 +99,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
 
   auto remove = HOSTFN("delete", 1) {
 
-    std::string location = std::string(base_path);
+    std::string path = std::string(base_path);
 
     if (count == 1 && !args[0].isUndefined() && !args[0].isNull()) {
       if (!args[1].isString()) {
@@ -107,10 +107,20 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
             "[op-sqlite][open] database location must be a string");
       }
 
-      location = location + "/" + args[1].asString(rt).utf8(rt);
+      std::string location = args[1].asString(rt).utf8(rt);
+
+      if (!location.empty()) {
+        if (location == ":memory:") {
+          path = ":memory:";
+        } else if (location.rfind("/", 0) == 0) {
+          path = location;
+        } else {
+          path = path + "/" + location;
+        }
+      }
     }
 
-    BridgeResult result = opsqlite_remove(db_name, location);
+    BridgeResult result = opsqlite_remove(db_name, path);
 
     if (result.type == SQLiteError) {
       throw std::runtime_error(result.message);
