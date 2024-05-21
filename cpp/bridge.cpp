@@ -529,9 +529,7 @@ opsqlite_execute(std::string const &dbName, std::string const &query,
     return {.type = SQLiteError,
             .message =
                 "[op-sqlite] SQLite error code: " + std::to_string(result) +
-                ", description: " + std::string(errorMessage) +
-                ".\nSee SQLite error codes reference: "
-                "https://www.sqlite.org/rescode.html"};
+                ", description: " + std::string(errorMessage)};
   }
 
   int changedRowCount = sqlite3_changes(db);
@@ -686,9 +684,7 @@ opsqlite_execute_raw(std::string const &dbName, std::string const &query,
     return {.type = SQLiteError,
             .message =
                 "[op-sqlite] SQLite error code: " + std::to_string(step) +
-                ", description: " + std::string(errorMessage) +
-                ".\nSee SQLite error codes reference: "
-                "https://www.sqlite.org/rescode.html"};
+                ", description: " + std::string(errorMessage)};
   }
 
   int changedRowCount = sqlite3_changes(db);
@@ -843,7 +839,7 @@ BridgeResult opsqlite_deregister_rollback_hook(std::string const &dbName) {
   return {SQLiteOk};
 }
 
-BridgeResult opsqlite_load_extension(std::string &db_name, std::string &path,
+BridgeResult opsqlite_load_extension(std::string const &db_name, std::string &path,
                                      std::string &entry_point) {
 #ifdef OP_SQLITE_USE_PHONE_VERSION
   throw std::runtime_error(

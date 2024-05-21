@@ -1,15 +1,11 @@
 import Chance from 'chance';
-import {
-  open,
-  type OPSQLiteConnection,
-  type SQLBatchTuple,
-} from '@op-engineering/op-sqlite';
+import {open, type DB, type SQLBatchTuple} from '@op-engineering/op-sqlite';
 import {beforeEach, describe, it} from './MochaRNAdapter';
 import chai from 'chai';
 
 const expect = chai.expect;
 const chance = new Chance();
-let db: OPSQLiteConnection;
+let db: DB;
 
 export function queriesTests() {
   beforeEach(() => {
@@ -29,7 +25,7 @@ export function queriesTests() {
         'CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL, nickname TEXT) STRICT;',
       );
     } catch (e) {
-      console.warn('error on before each', e);
+      console.error('error on before each', e);
     }
   });
 
@@ -444,7 +440,8 @@ export function queriesTests() {
         await new Promise<void>(done => {
           setTimeout(() => done(), 50);
         });
-        tx.execute('SELECT * FROM [User];');
+        console.warn('mark1');
+        tx.execute('SELECT * FROM User;');
         ranCallback = true;
       });
 
@@ -570,8 +567,7 @@ export function queriesTests() {
         const promised = db.transaction(async tx => {
           // ACT: Upsert statement to create record / increment the value
           await tx.executeAsync(
-            `
-              INSERT OR REPLACE INTO [User] ([id], [name], [age], [networth])
+            `INSERT OR REPLACE INTO [User] ([id], [name], [age], [networth])
               SELECT ?, ?, ?,
                 IFNULL((
                   SELECT [networth] + 1000

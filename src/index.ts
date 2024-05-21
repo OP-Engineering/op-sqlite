@@ -34,7 +34,7 @@ if (global.__OPSQLiteProxy == null) {
 }
 
 const proxy = global.__OPSQLiteProxy;
-export const OPSQLite = proxy as ISQLite;
+export const OPSQLite = proxy as OPSQLiteProxy;
 
 export const {
   IOS_DOCUMENT_PATH,
@@ -145,14 +145,9 @@ export type PreparedStatementObj = {
   execute: () => QueryResult;
 };
 
-interface ISQLite {
-  open: (options: {
-    name: string;
-    location?: string;
-    encryptionKey?: string;
-  }) => void;
-  close: (dbName: string) => void;
-  delete: (dbName: string, location?: string) => void;
+export type DB = {
+  close: () => void;
+  delete: (location?: string) => void;
   attach: (
     mainDbName: string,
     dbNameToAttach: string,
@@ -160,24 +155,13 @@ interface ISQLite {
     location?: string
   ) => void;
   detach: (mainDbName: string, alias: string) => void;
-  transaction: (
-    dbName: string,
-    fn: (tx: Transaction) => Promise<void>
-  ) => Promise<void>;
-  execute: (dbName: string, query: string, params?: any[]) => QueryResult;
-  executeAsync: (
-    dbName: string,
-    query: string,
-    params?: any[]
-  ) => Promise<QueryResult>;
-  executeBatch: (dbName: string, commands: SQLBatchTuple[]) => BatchQueryResult;
-  executeBatchAsync: (
-    dbName: string,
-    commands: SQLBatchTuple[]
-  ) => Promise<BatchQueryResult>;
-  loadFile: (dbName: string, location: string) => Promise<FileLoadResult>;
+  transaction: (fn: (tx: Transaction) => Promise<void>) => Promise<void>;
+  execute: (query: string, params?: any[]) => QueryResult;
+  executeAsync: (query: string, params?: any[]) => Promise<QueryResult>;
+  executeBatch: (commands: SQLBatchTuple[]) => BatchQueryResult;
+  executeBatchAsync: (commands: SQLBatchTuple[]) => Promise<BatchQueryResult>;
+  loadFile: (location: string) => Promise<FileLoadResult>;
   updateHook: (
-    dbName: string,
     callback?:
       | ((params: {
           table: string;
@@ -187,18 +171,22 @@ interface ISQLite {
         }) => void)
       | null
   ) => void;
-  commitHook: (dbName: string, callback?: (() => void) | null) => void;
-  rollbackHook: (dbName: string, callback?: (() => void) | null) => void;
-  prepareStatement: (dbName: string, query: string) => PreparedStatementObj;
-  loadExtension: (dbName: string, path: string, entryPoint?: string) => void;
-  executeRawAsync: (
-    dbName: string,
-    query: string,
-    params?: any[]
-  ) => Promise<any[]>;
-  getDbPath: (dbName: string, location?: string) => string;
+  commitHook: (callback?: (() => void) | null) => void;
+  rollbackHook: (callback?: (() => void) | null) => void;
+  prepareStatement: (query: string) => PreparedStatementObj;
+  loadExtension: (path: string, entryPoint?: string) => void;
+  executeRawAsync: (query: string, params?: any[]) => Promise<any[]>;
+  getDbPath: (location?: string) => string;
+};
+
+type OPSQLiteProxy = {
+  open: (options: {
+    name: string;
+    location?: string;
+    encryptionKey?: string;
+  }) => DB;
   isSQLCipher: () => boolean;
-}
+};
 
 const locks: Record<
   string,
@@ -220,206 +208,6 @@ function enhanceQueryResult(result: QueryResult): void {
     result.rows.item = (idx: number) => result.rows?._array[idx];
   }
 }
-
-const _open = OPSQLite.open;
-OPSQLite.open = (options: {
-  name: string;
-  location?: string;
-  encryptionKey?: string;
-}) => {
-  _open(options);
-
-  locks[options.name] = {
-    queue: [],
-    inProgress: false,
-  };
-};
-
-const _close = OPSQLite.close;
-OPSQLite.close = (dbName: string) => {
-  _close(dbName);
-  delete locks[dbName];
-};
-
-const _execute = OPSQLite.execute;
-OPSQLite.execute = (
-  dbName: string,
-  query: string,
-  params?: any[] | undefined
-): QueryResult => {
-  const sanitizedParams = params?.map((p) => {
-    if (ArrayBuffer.isView(p)) {
-      return p.buffer;
-    }
-
-    return p;
-  });
-
-  const result = _execute(dbName, query, sanitizedParams);
-  enhanceQueryResult(result);
-  return result;
-};
-
-const _executeAsync = OPSQLite.executeAsync;
-OPSQLite.executeAsync = async (
-  dbName: string,
-  query: string,
-  params?: any[] | undefined
-): Promise<QueryResult> => {
-  const sanitizedParams = params?.map((p) => {
-    if (ArrayBuffer.isView(p)) {
-      return p.buffer;
-    }
-
-    return p;
-  });
-
-  const res = await _executeAsync(dbName, query, sanitizedParams);
-  enhanceQueryResult(res);
-  return res;
-};
-
-const _prepareStatement = OPSQLite.prepareStatement;
-OPSQLite.prepareStatement = (dbName: string, query: string) => {
-  const stmt = _prepareStatement(dbName, query);
-
-  return {
-    bind: (params: any[]) => {
-      const sanitizedParams = params.map((p) => {
-        if (ArrayBuffer.isView(p)) {
-          return p.buffer;
-        }
-
-        return p;
-      });
-
-      stmt.bind(sanitizedParams);
-    },
-    execute: () => {
-      const res = stmt.execute();
-      enhanceQueryResult(res);
-      return res;
-    },
-  };
-};
-
-OPSQLite.transaction = async (
-  dbName: string,
-  fn: (tx: Transaction) => Promise<void>
-): Promise<void> => {
-  if (!locks[dbName]) {
-    throw Error(`SQLite Error: No lock found on db: ${dbName}`);
-  }
-
-  let isFinalized = false;
-
-  // Local transaction context object implementation
-  const execute = (query: string, params?: any[]): QueryResult => {
-    if (isFinalized) {
-      throw Error(
-        `SQLite Error: Cannot execute query on finalized transaction: ${dbName}`
-      );
-    }
-    return OPSQLite.execute(dbName, query, params);
-  };
-
-  const executeAsync = (query: string, params?: any[] | undefined) => {
-    if (isFinalized) {
-      throw Error(
-        `SQLite Error: Cannot execute query on finalized transaction: ${dbName}`
-      );
-    }
-    return OPSQLite.executeAsync(dbName, query, params);
-  };
-
-  const commit = () => {
-    if (isFinalized) {
-      throw Error(
-        `SQLite Error: Cannot execute commit on finalized transaction: ${dbName}`
-      );
-    }
-    const result = OPSQLite.execute(dbName, 'COMMIT');
-    isFinalized = true;
-    return result;
-  };
-
-  const rollback = () => {
-    if (isFinalized) {
-      throw Error(
-        `SQLite Error: Cannot execute rollback on finalized transaction: ${dbName}`
-      );
-    }
-    const result = OPSQLite.execute(dbName, 'ROLLBACK');
-    isFinalized = true;
-    return result;
-  };
-
-  async function run() {
-    try {
-      await OPSQLite.executeAsync(dbName, 'BEGIN TRANSACTION');
-
-      await fn({
-        commit,
-        execute,
-        executeAsync,
-        rollback,
-      });
-
-      if (!isFinalized) {
-        commit();
-      }
-    } catch (executionError) {
-      if (!isFinalized) {
-        try {
-          rollback();
-        } catch (rollbackError) {
-          throw rollbackError;
-        }
-      }
-
-      throw executionError;
-    } finally {
-      locks[dbName]!.inProgress = false;
-      isFinalized = false;
-      startNextTransaction(dbName);
-    }
-  }
-
-  return await new Promise((resolve, reject) => {
-    const tx: PendingTransaction = {
-      start: () => {
-        run().then(resolve).catch(reject);
-      },
-    };
-
-    locks[dbName]!.queue.push(tx);
-    startNextTransaction(dbName);
-  });
-};
-
-const startNextTransaction = (dbName: string) => {
-  if (!locks[dbName]) {
-    throw Error(`Lock not found for db: ${dbName}`);
-  }
-
-  if (locks[dbName]!.inProgress) {
-    // Transaction is already in process bail out
-    return;
-  }
-
-  if (locks[dbName]!.queue.length) {
-    locks[dbName]!.inProgress = true;
-    const tx = locks[dbName]!.queue.shift();
-
-    if (!tx) {
-      throw new Error('Could not get a operation on datebase');
-    }
-
-    setImmediate(() => {
-      tx.start();
-    });
-  }
-};
 
 export type OPSQLiteConnection = {
   close: () => void;
@@ -454,38 +242,177 @@ export const open = (options: {
   name: string;
   location?: string;
   encryptionKey?: string;
-}): OPSQLiteConnection => {
-  OPSQLite.open(options);
+}): DB => {
+  const db = OPSQLite.open(options);
 
+  const lock = {
+    queue: [] as PendingTransaction[],
+    inProgress: false,
+  };
+
+  const startNextTransaction = () => {
+    if (lock.inProgress) {
+      // Transaction is already in process bail out
+      return;
+    }
+
+    if (lock.queue.length) {
+      lock.inProgress = true;
+      const tx = lock.queue.shift();
+
+      if (!tx) {
+        throw new Error('Could not get a operation on database');
+      }
+
+      setImmediate(() => {
+        tx.start();
+      });
+    }
+  };
+
+  // spreading the object is not working, so we need to do it manually
   return {
-    close: () => OPSQLite.close(options.name),
-    delete: () => OPSQLite.delete(options.name, options.location),
-    attach: (dbNameToAttach: string, alias: string, location?: string) =>
-      OPSQLite.attach(options.name, dbNameToAttach, alias, location),
-    detach: (alias: string) => OPSQLite.detach(options.name, alias),
-    transaction: (fn: (tx: Transaction) => Promise<void>) =>
-      OPSQLite.transaction(options.name, fn),
-    execute: (query: string, params?: any[] | undefined): QueryResult =>
-      OPSQLite.execute(options.name, query, params),
-    executeAsync: (
-      query: string,
-      params?: any[] | undefined
-    ): Promise<QueryResult> =>
-      OPSQLite.executeAsync(options.name, query, params),
-    executeBatch: (commands: SQLBatchTuple[]) =>
-      OPSQLite.executeBatch(options.name, commands),
-    executeBatchAsync: (commands: SQLBatchTuple[]) =>
-      OPSQLite.executeBatchAsync(options.name, commands),
-    loadFile: (location: string) => OPSQLite.loadFile(options.name, location),
-    updateHook: (callback) => OPSQLite.updateHook(options.name, callback),
-    commitHook: (callback) => OPSQLite.commitHook(options.name, callback),
-    rollbackHook: (callback) => OPSQLite.rollbackHook(options.name, callback),
-    prepareStatement: (query) => OPSQLite.prepareStatement(options.name, query),
-    loadExtension: (path, entryPoint) =>
-      OPSQLite.loadExtension(options.name, path, entryPoint),
-    executeRawAsync: (query, params) =>
-      OPSQLite.executeRawAsync(options.name, query, params),
-    getDbPath: () => OPSQLite.getDbPath(options.name, options.location),
+    delete: db.delete,
+    attach: db.attach,
+    detach: db.detach,
+    executeBatch: db.executeBatch,
+    executeBatchAsync: db.executeBatchAsync,
+    executeAsync: db.executeAsync,
+    loadFile: db.loadFile,
+    updateHook: db.updateHook,
+    commitHook: db.commitHook,
+    rollbackHook: db.rollbackHook,
+    loadExtension: db.loadExtension,
+    executeRawAsync: db.executeRawAsync,
+    getDbPath: db.getDbPath,
+    close: () => {
+      db.close();
+      delete locks[options.name];
+    },
+    execute: (query: string, params?: any[] | undefined): QueryResult => {
+      const sanitizedParams = params?.map((p) => {
+        if (ArrayBuffer.isView(p)) {
+          return p.buffer;
+        }
+
+        return p;
+      });
+
+      const result = db.execute(query, sanitizedParams);
+      enhanceQueryResult(result);
+      return result;
+    },
+    prepareStatement: (query: string) => {
+      const stmt = db.prepareStatement(query);
+
+      return {
+        bind: (params: any[]) => {
+          const sanitizedParams = params.map((p) => {
+            if (ArrayBuffer.isView(p)) {
+              return p.buffer;
+            }
+
+            return p;
+          });
+
+          stmt.bind(sanitizedParams);
+        },
+        execute: () => {
+          const res = stmt.execute();
+          enhanceQueryResult(res);
+          return res;
+        },
+      };
+    },
+    transaction: async (
+      fn: (tx: Transaction) => Promise<void>
+    ): Promise<void> => {
+      let isFinalized = false;
+
+      // Local transaction context object implementation
+      const execute = (query: string, params?: any[]): QueryResult => {
+        if (isFinalized) {
+          throw Error(
+            `OP-Sqlite Error: Database: ${options.name}. Cannot execute query on finalized transaction`
+          );
+        }
+        return db.execute(query, params);
+      };
+
+      const executeAsync = (query: string, params?: any[] | undefined) => {
+        if (isFinalized) {
+          throw Error(
+            `OP-Sqlite Error: Database: ${options.name}. Cannot execute query on finalized transaction`
+          );
+        }
+        return db.executeAsync(query, params);
+      };
+
+      const commit = () => {
+        if (isFinalized) {
+          throw Error(
+            `OP-Sqlite Error: Database: ${options.name}. Cannot execute query on finalized transaction`
+          );
+        }
+        const result = db.execute('COMMIT;');
+        isFinalized = true;
+        return result;
+      };
+
+      const rollback = () => {
+        if (isFinalized) {
+          throw Error(
+            `OP-Sqlite Error: Database: ${options.name}. Cannot execute query on finalized transaction`
+          );
+        }
+        const result = db.execute('ROLLBACK;');
+        isFinalized = true;
+        return result;
+      };
+
+      async function run() {
+        try {
+          await db.executeAsync('BEGIN;');
+
+          await fn({
+            commit,
+            execute,
+            executeAsync,
+            rollback,
+          });
+
+          if (!isFinalized) {
+            commit();
+          }
+        } catch (executionError) {
+          console.warn('transaction error', executionError);
+          if (!isFinalized) {
+            try {
+              rollback();
+            } catch (rollbackError) {
+              throw rollbackError;
+            }
+          }
+
+          throw executionError;
+        } finally {
+          lock.inProgress = false;
+          isFinalized = false;
+          startNextTransaction();
+        }
+      }
+
+      return await new Promise((resolve, reject) => {
+        const tx: PendingTransaction = {
+          start: () => {
+            run().then(resolve).catch(reject);
+          },
+        };
+
+        lock.queue.push(tx);
+        startNextTransaction();
+      });
+    },
   };
 };
 
