@@ -1,13 +1,16 @@
 package com.op.sqlite
 
 import android.util.Log
+import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.ReactContextBaseJavaModule
+import com.facebook.react.bridge.ReadableMap
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
+import com.facebook.react.util.RNLog;
 
 //@ReactModule(name = OPSQLiteModule.NAME)
 internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextBaseJavaModule(context) {
@@ -47,26 +50,33 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextB
         }
     }
 
-    @ReactMethod(isBlockingSynchronousMethod = true)
-    fun moveAssetsDatabase(name: String, extension: String): Boolean {
+    @ReactMethod
+    fun moveAssetsDatabase(args: ReadableMap, promise: Promise) {
+        val filename = args.getString("filename")!!
+        val path = args.getString("path") ?: "custom"
+        val overwrite = if(args.hasKey("overwrite")) { args.getBoolean("overwrite") } else false
         val context = reactApplicationContext
         val assetsManager = context.assets
 
         try {
-            // Open the input stream for the asset file
-            val inputStream: InputStream = assetsManager.open("custom/$name.$extension")
 
-            // Create the output file in the documents directory
             val databasesFolder =
                     context.getDatabasePath("defaultDatabase")
                             .absolutePath
                             .replace("defaultDatabase", "")
 
-            val outputFile = File(databasesFolder, "$name.$extension")
+            val outputFile = File(databasesFolder, filename)
 
             if (outputFile.exists()) {
-                return true
+                if(overwrite) {
+                    outputFile.delete()
+                } else {
+                    promise.resolve(true)
+                    return
+                }
             }
+
+            val inputStream: InputStream = assetsManager.open("$path/$filename")
 
             // Open the output stream for the output file
             val outputStream: OutputStream = FileOutputStream(outputFile)
@@ -82,9 +92,10 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextB
             inputStream.close()
             outputStream.close()
 
-            return true
+            promise.resolve(true)
         } catch (exception: Exception) {
-            return false
+            RNLog.e(this.reactApplicationContext, "Exception: $exception")
+            promise.resolve(false)
         }
     }
 

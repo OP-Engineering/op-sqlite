@@ -87,29 +87,46 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
   return @true;
 }
 
-RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(moveAssetsDatabase
-                                       : (NSString *)name extension
-                                       : (NSString *)extension) {
+RCT_EXPORT_METHOD(moveAssetsDatabase
+                  : (NSDictionary *)args resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
   NSString *documentPath = [NSSearchPathForDirectoriesInDomains(
       NSLibraryDirectory, NSUserDomainMask, true) objectAtIndex:0];
-  NSString *sourcePath = [[NSBundle mainBundle] pathForResource:name
-                                                         ofType:extension];
 
-  NSString *destinationPath = [documentPath
-      stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", name,
-                                                                extension]];
+  NSString *filename = args[@"filename"];
+  BOOL overwrite = args[@"overwrite"];
 
-  NSFileManager *fileManager = [NSFileManager defaultManager];
-  if ([fileManager fileExistsAtPath:destinationPath]) {
-    return @true;
-  }
+  NSString *sourcePath = [[NSBundle mainBundle] pathForResource:filename
+                                                         ofType:nil];
+
+  NSString *destinationPath =
+      [documentPath stringByAppendingPathComponent:filename];
 
   NSError *error;
+  NSFileManager *fileManager = [NSFileManager defaultManager];
+  if ([fileManager fileExistsAtPath:destinationPath]) {
+    if (overwrite) {
+      [fileManager removeItemAtPath:destinationPath error:&error];
+      if (error) {
+        NSLog(@"Error: %@", error);
+        resolve(@false);
+        return;
+      }
+    } else {
+      resolve(@true);
+      return;
+    }
+  }
+
   [fileManager copyItemAtPath:sourcePath toPath:destinationPath error:&error];
   if (error) {
-    return @false;
+    NSLog(@"Error: %@", error);
+    resolve(@false);
+    return;
   }
-  return @true;
+  resolve(@true);
+  return;
 }
 
 // #if RCT_NEW_ARCH_ENABLED
