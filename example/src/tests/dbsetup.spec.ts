@@ -1,6 +1,9 @@
 import {
+  ANDROID_DATABASE_PATH,
   ANDROID_EXTERNAL_FILES_PATH,
+  IOS_LIBRARY_PATH,
   isSQLCipher,
+  moveAssetsDatabase,
   open,
 } from '@op-engineering/op-sqlite';
 import chai from 'chai';
@@ -67,6 +70,49 @@ export function dbSetupTests() {
         // TODO load a sample extension
         expect(e).to.exist;
       }
+    });
+
+    it('Should delete db', async () => {
+      let db = open({
+        name: 'deleteTest',
+        encryptionKey: 'test',
+      });
+
+      db.delete();
+    });
+
+    it('Should delete db with absolute path', async () => {
+      let db = open({
+        name: 'deleteTest',
+        encryptionKey: 'test',
+        location:
+          Platform.OS === 'ios' ? IOS_LIBRARY_PATH : ANDROID_DATABASE_PATH,
+      });
+
+      db.delete();
+    });
+
+    it('Moves assets database simple', async () => {
+      const copied = await moveAssetsDatabase({filename: 'sample.sqlite'});
+
+      expect(copied).to.equal(true);
+    });
+    it('Moves assets database with path', async () => {
+      const copied = await moveAssetsDatabase({
+        filename: 'sample2.sqlite',
+        path: 'sqlite',
+      });
+
+      expect(copied).to.equal(true);
+    });
+    it('Moves assets database with path and overwrite', async () => {
+      const copied = await moveAssetsDatabase({
+        filename: 'sample2.sqlite',
+        path: 'sqlite',
+        overwrite: true,
+      });
+
+      expect(copied).to.equal(true);
     });
 
     // it('Should fail creating in-memory with non-bool arg', async () => {

@@ -416,11 +416,12 @@ export const open = (options: {
   };
 };
 
-export const moveAssetsDatabase = (
-  dbName: string,
-  extension: string
-): boolean => {
-  return NativeModules.OPSQLite.moveAssetsDatabase(dbName, extension);
+export const moveAssetsDatabase = async (args: {
+  filename: string;
+  path?: string;
+  overwrite?: boolean;
+}): Promise<boolean> => {
+  return NativeModules.OPSQLite.moveAssetsDatabase(args);
 };
 
 export const isSQLCipher = (): boolean => {
