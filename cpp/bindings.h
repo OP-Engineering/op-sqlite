@@ -2,9 +2,11 @@
 #include <jsi/jsi.h>
 #include <jsi/jsilib.h>
 
-using namespace facebook;
 
 namespace opsqlite {
+
+namespace jsi = facebook::jsi;
+namespace react = facebook::react;
 
 void install(jsi::Runtime &rt,
              std::shared_ptr<react::CallInvoker> jsCallInvoker,

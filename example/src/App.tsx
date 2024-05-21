@@ -91,6 +91,10 @@ export default function App() {
     return acc && r.type !== 'incorrect';
   }, true);
 
+  const testMockDB = async () => {
+    const db = open({name: 'test.db'});
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-neutral-900">
       <StyledScrollView>
@@ -101,6 +105,7 @@ export default function App() {
           title="Copy DB Path to clipboard"
           onPress={copyDbPathToClipboad}
         />
+        <Button title="Test" onPress={testMockDB} />
         <Button title="Open assets db" onPress={openAssetsDb} />
         <Button title="Create 300k Record DB" onPress={createLargeDb} />
         <Button title="Query 300k Records" onPress={queryLargeDb} />
