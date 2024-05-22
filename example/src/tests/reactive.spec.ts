@@ -43,7 +43,7 @@ export function reactiveTests() {
 
       const unsubscribe2 = db.reactiveExecute({
         query: 'SELECT name FROM User;',
-        arguments: [1],
+        arguments: [],
         tables: ['User'],
         callback: data => {
           emittedUser = data.rows._array[0];
