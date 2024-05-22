@@ -249,13 +249,13 @@ export const open = (options: {
   };
 
   // spreading the object is not working, so we need to do it manually
-  return {
+  let enhancedDb = {
     delete: db.delete,
     attach: db.attach,
     detach: db.detach,
     executeBatch: db.executeBatch,
     executeBatchAsync: db.executeBatchAsync,
-    executeAsync: db.executeAsync,
+
     loadFile: db.loadFile,
     updateHook: db.updateHook,
     commitHook: db.commitHook,
@@ -278,6 +278,22 @@ export const open = (options: {
       });
 
       const result = db.execute(query, sanitizedParams);
+      enhanceQueryResult(result);
+      return result;
+    },
+    executeAsync: async (
+      query: string,
+      params?: any[] | undefined
+    ): Promise<QueryResult> => {
+      const sanitizedParams = params?.map((p) => {
+        if (ArrayBuffer.isView(p)) {
+          return p.buffer;
+        }
+
+        return p;
+      });
+
+      const result = await db.executeAsync(query, sanitizedParams);
       enhanceQueryResult(result);
       return result;
     },
@@ -315,7 +331,7 @@ export const open = (options: {
             `OP-Sqlite Error: Database: ${options.name}. Cannot execute query on finalized transaction`
           );
         }
-        return db.execute(query, params);
+        return enhancedDb.execute(query, params);
       };
 
       const executeAsync = (query: string, params?: any[] | undefined) => {
@@ -324,7 +340,7 @@ export const open = (options: {
             `OP-Sqlite Error: Database: ${options.name}. Cannot execute query on finalized transaction`
           );
         }
-        return db.executeAsync(query, params);
+        return enhancedDb.executeAsync(query, params);
       };
 
       const commit = () => {
@@ -333,7 +349,7 @@ export const open = (options: {
             `OP-Sqlite Error: Database: ${options.name}. Cannot execute query on finalized transaction`
           );
         }
-        const result = db.execute('COMMIT;');
+        const result = enhancedDb.execute('COMMIT;');
         isFinalized = true;
         return result;
       };
@@ -344,14 +360,14 @@ export const open = (options: {
             `OP-Sqlite Error: Database: ${options.name}. Cannot execute query on finalized transaction`
           );
         }
-        const result = db.execute('ROLLBACK;');
+        const result = enhancedDb.execute('ROLLBACK;');
         isFinalized = true;
         return result;
       };
 
       async function run() {
         try {
-          await db.executeAsync('BEGIN;');
+          await enhancedDb.executeAsync('BEGIN TRANSACTION;');
 
           await fn({
             commit,
@@ -359,7 +375,7 @@ export const open = (options: {
             executeAsync,
             rollback,
           });
-
+          console.warn('finished executing user function for transaction');
           if (!isFinalized) {
             commit();
           }
@@ -393,6 +409,8 @@ export const open = (options: {
       });
     },
   };
+
+  return enhancedDb;
 };
 
 export const moveAssetsDatabase = async (args: {

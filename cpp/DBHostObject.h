@@ -44,6 +44,8 @@ public:
   std::shared_ptr<ThreadPool> thread_pool;
   std::string db_name;
   std::shared_ptr<jsi::Value> update_hook_callback;
+  std::shared_ptr<jsi::Value> commit_hook_callback;
+  std::shared_ptr<jsi::Value> rollback_hook_callback;
   jsi::Runtime &rt;
   std::vector<std::shared_ptr<ReactiveQuery>> reactive_queries;
   bool has_update_hook_registered = false;

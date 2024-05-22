@@ -15,7 +15,7 @@ export function reactiveTests() {
       }
 
       db = open({
-        name: 'queries.sqlite',
+        name: 'reactive.sqlite',
         encryptionKey: 'test',
       });
 

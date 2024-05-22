@@ -513,69 +513,59 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
 
     if (callback->isUndefined() || callback->isNull()) {
       update_hook_callback = nullptr;
-      // opsqlite_deregister_update_hook(dbName);
-
     } else {
-
       update_hook_callback = callback;
     }
     auto_register_update_hook();
     return {};
   });
 
-  //    auto commit_hook = HOSTFN("commitHook", 2) {
-  //      if (sizeof(args) < 2) {
-  //        throw std::runtime_error("[op-sqlite][commitHook] Incorrect
-  //        parameters: "
-  //                                 "dbName and callback needed");
-  //        return {};
-  //      }
-  //
-  //      auto dbName = args[0].asString(rt).utf8(rt);
-  //      auto callback = std::make_shared<jsi::Value>(rt, args[1]);
-  //      if (callback->isUndefined() || callback->isNull()) {
-  //        opsqlite_deregister_commit_hook(dbName);
-  //        return {};
-  //      }
-  //      commitHooks[dbName] = callback;
-  //
-  //      auto hook = [&rt, callback](std::string dbName) {
-  //        invoker->invokeAsync(
-  //            [&rt, callback] {
-  //            callback->asObject(rt).asFunction(rt).call(rt); });
-  //      };
-  //
-  //      opsqlite_register_commit_hook(dbName, std::move(hook));
-  //
-  //      return {};
-  //    });
-  //
-  //    auto rollback_hook = HOSTFN("rollbackHook", 2) {
-  //      if (sizeof(args) < 2) {
-  //        throw std::runtime_error(
-  //            "[op-sqlite][rollbackHook] Incorrect parameters: "
-  //            "dbName and callback needed");
-  //        return {};
-  //      }
-  //
-  //      auto dbName = args[0].asString(rt).utf8(rt);
-  //      auto callback = std::make_shared<jsi::Value>(rt, args[1]);
-  //
-  //      if (callback->isUndefined() || callback->isNull()) {
-  //        opsqlite_deregister_rollback_hook(dbName);
-  //        return {};
-  //      }
-  //      rollbackHooks[dbName] = callback;
-  //
-  //      auto hook = [&rt, callback](std::string dbName) {
-  //        invoker->invokeAsync(
-  //            [&rt, callback] {
-  //            callback->asObject(rt).asFunction(rt).call(rt); });
-  //      };
-  //
-  //      opsqlite_register_rollback_hook(dbName, std::move(hook));
-  //      return {};
-  //    });
+  auto commit_hook = HOSTFN("commitHook", 1) {
+    if (sizeof(args) < 1) {
+      throw std::runtime_error("[op-sqlite][commitHook] callback needed");
+      return {};
+    }
+
+    auto callback = std::make_shared<jsi::Value>(rt, args[0]);
+    if (callback->isUndefined() || callback->isNull()) {
+      opsqlite_deregister_commit_hook(db_name);
+      return {};
+    }
+    commit_hook_callback = callback;
+
+    auto hook = [&rt, jsCallInvoker, callback](std::string dbName) {
+      jsCallInvoker->invokeAsync(
+          [&rt, callback] { callback->asObject(rt).asFunction(rt).call(rt); });
+    };
+
+    opsqlite_register_commit_hook(db_name, std::move(hook));
+
+    return {};
+  });
+
+  auto rollback_hook = HOSTFN("rollbackHook", 1) {
+    if (sizeof(args) < 1) {
+      throw std::runtime_error(
+          "[op-sqlite][rollbackHook] callback needed");
+      return {};
+    }
+
+    auto callback = std::make_shared<jsi::Value>(rt, args[0]);
+
+    if (callback->isUndefined() || callback->isNull()) {
+      opsqlite_deregister_rollback_hook(db_name);
+      return {};
+    }
+    rollback_hook_callback = callback;
+
+    auto hook = [&rt, jsCallInvoker, callback](std::string db_name) {
+      jsCallInvoker->invokeAsync(
+          [&rt, callback] { callback->asObject(rt).asFunction(rt).call(rt); });
+    };
+
+    opsqlite_register_rollback_hook(db_name, std::move(hook));
+    return {};
+  });
 
   auto prepare_statement = HOSTFN("prepareStatement", 1) {
     auto query = args[0].asString(rt).utf8(rt);
@@ -685,8 +675,8 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
   function_map["executeBatchAsync"] = std::move(execute_batch_async);
   function_map["loadFile"] = std::move(load_file);
   function_map["updateHook"] = std::move(update_hook);
-  //    function_map["commitHook"] = std::move(commit_hook);
-  //    function_map["rollbackHook"] = std::move(rollback_hook);
+  function_map["commitHook"] = std::move(commit_hook);
+  function_map["rollbackHook"] = std::move(rollback_hook);
   function_map["prepareStatement"] = std::move(prepare_statement);
   function_map["loadExtension"] = std::move(load_extension);
   function_map["getDbPath"] = std::move(get_db_path);
@@ -736,12 +726,12 @@ jsi::Value DBHostObject::get(jsi::Runtime &rt,
   if (name == "updateHook") {
     return jsi::Value(rt, function_map["updateHook"]);
   }
-  //    if (name == "commitHook") {
-  //      return jsi::Value(rt, function_map["commitHook"]);
-  //    }
-  //    if (name == "rollbackHook") {
-  //      return jsi::Value(rt, function_map["rollbackHook"]);
-  //    }
+  if (name == "commitHook") {
+    return jsi::Value(rt, function_map["commitHook"]);
+  }
+  if (name == "rollbackHook") {
+    return jsi::Value(rt, function_map["rollbackHook"]);
+  }
   if (name == "prepareStatement") {
     return jsi::Value(rt, function_map["prepareStatement"]);
   }

@@ -41,7 +41,7 @@ export default function App() {
       dbSetupTests,
       queriesTests,
       blobTests,
-      // registerHooksTests,
+      registerHooksTests,
       preparedStatementsTests,
       constantsTests,
       reactiveTests,
