@@ -39,7 +39,7 @@ export default function App() {
     setResults([]);
     runTests(
       dbSetupTests,
-      // queriesTests,
+      queriesTests,
       blobTests,
       // registerHooksTests,
       preparedStatementsTests,
