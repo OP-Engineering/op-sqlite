@@ -79,8 +79,20 @@ JSVariant toVariant(jsi::Runtime &rt, const jsi::Value &value) {
   }
 }
 
-std::vector<JSVariant> toVariantVec(jsi::Runtime &rt,
-                                    jsi::Value const &params) {
+std::vector<std::string> to_string_vec(jsi::Runtime &rt,
+                                       jsi::Value const &xs) {
+    
+  jsi::Array values = xs.asObject(rt).asArray(rt);
+  std::vector<std::string> res;
+  for (int ii = 0; ii < values.length(rt); ii++) {
+    std::string value = values.getValueAtIndex(rt, ii).asString(rt).utf8(rt);
+    res.push_back(value);
+  }
+  return res;
+}
+
+std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt,
+                                      jsi::Value const &params) {
   std::vector<JSVariant> res;
 
   if (params.isNull() || params.isUndefined()) {

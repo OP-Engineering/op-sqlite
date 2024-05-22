@@ -11,6 +11,49 @@ namespace opsqlite {
 namespace jsi = facebook::jsi;
 namespace react = facebook::react;
 
+void DBHostObject::auto_register_update_hook() {
+  if (update_hook_callback == nullptr) {
+    opsqlite_deregister_update_hook(db_name);
+    return;
+  }
+
+  auto hook = [this](std::string dbName, std::string tableName,
+                     std::string operation, int rowId) {
+    std::vector<JSVariant> params;
+    std::vector<DumbHostObject> results;
+    std::shared_ptr<std::vector<SmartHostObject>> metadata =
+        std::make_shared<std::vector<SmartHostObject>>();
+
+    if (operation != "DELETE") {
+      std::string query = "SELECT * FROM " + tableName +
+                          " where rowid = " + std::to_string(rowId) + ";";
+      opsqlite_execute(dbName, query, &params, &results, metadata);
+    }
+
+    jsCallInvoker->invokeAsync(
+        [this, results = std::make_shared<std::vector<DumbHostObject>>(results),
+         callback = update_hook_callback, tableName = std::move(tableName),
+         operation = std::move(operation), &rowId] {
+          auto res = jsi::Object(rt);
+          res.setProperty(rt, "table",
+                          jsi::String::createFromUtf8(rt, tableName));
+          res.setProperty(rt, "operation",
+                          jsi::String::createFromUtf8(rt, operation));
+          res.setProperty(rt, "rowId", jsi::Value(rowId));
+          if (results->size() != 0) {
+            res.setProperty(
+                rt, "row",
+                jsi::Object::createFromHostObject(
+                    rt, std::make_shared<DumbHostObject>(results->at(0))));
+          }
+
+          callback->asObject(rt).asFunction(rt).call(rt, res);
+        });
+  };
+
+  opsqlite_register_update_hook(db_name, std::move(hook));
+}
+
 DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
                            std::shared_ptr<react::CallInvoker> jsCallInvoker,
                            std::shared_ptr<ThreadPool> thread_pool,
@@ -18,7 +61,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
                            std::string &crsqlite_path,
                            std::string &encryption_key)
     : base_path(base_path), jsCallInvoker(jsCallInvoker),
-      thread_pool(thread_pool), db_name(db_name) {
+      thread_pool(thread_pool), db_name(db_name), rt(rt) {
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
   BridgeResult result =
@@ -135,7 +178,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
 
     if (count == 2) {
       const jsi::Value &originalParams = args[1];
-      params = toVariantVec(rt, originalParams);
+      params = to_variant_vec(rt, originalParams);
     }
 
     std::vector<DumbHostObject> results;
@@ -158,7 +201,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
 
     if (count == 2) {
       const jsi::Value &originalParams = args[1];
-      params = toVariantVec(rt, originalParams);
+      params = to_variant_vec(rt, originalParams);
     }
 
     auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
@@ -216,7 +259,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
 
     if (count == 2) {
       const jsi::Value &originalParams = args[1];
-      params = toVariantVec(rt, originalParams);
+      params = to_variant_vec(rt, originalParams);
     }
 
     auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
@@ -404,67 +447,22 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
     return promise;
   });
 
-  //    auto update_hook = HOSTFN("updateHook", 2) {
-  //      if (sizeof(args) < 2) {
-  //        throw std::runtime_error("[op-sqlite][updateHook] Incorrect
-  //        parameters: "
-  //                                 "dbName and callback needed");
-  //        return {};
-  //      }
-  //
-  //      auto dbName = args[0].asString(rt).utf8(rt);
-  //      auto callback = std::make_shared<jsi::Value>(rt, args[1]);
-  //
-  //      if (callback->isUndefined() || callback->isNull()) {
-  //        opsqlite_deregister_update_hook(dbName);
-  //        return {};
-  //      }
-  //
-  //      updateHooks[dbName] = callback;
-  //
-  //      auto hook = [&rt, callback](std::string dbName, std::string tableName,
-  //                                  std::string operation, int rowId) {
-  //        std::vector<JSVariant> params;
-  //        std::vector<DumbHostObject> results;
-  //        std::shared_ptr<std::vector<SmartHostObject>> metadata =
-  //            std::make_shared<std::vector<SmartHostObject>>();
-  //
-  //        if (operation != "DELETE") {
-  //          std::string query = "SELECT * FROM " + tableName +
-  //                              " where rowid = " + std::to_string(rowId) +
-  //                              ";";
-  //          opsqlite_execute(dbName, query, &params, &results, metadata);
-  //        }
-  //
-  //        invoker->invokeAsync(
-  //            [&rt,
-  //             results =
-  //             std::make_shared<std::vector<DumbHostObject>>(results),
-  //             callback, tableName = std::move(tableName),
-  //             operation = std::move(operation), &rowId] {
-  //              auto res = jsi::Object(rt);
-  //              res.setProperty(rt, "table",
-  //                              jsi::String::createFromUtf8(rt, tableName));
-  //              res.setProperty(rt, "operation",
-  //                              jsi::String::createFromUtf8(rt, operation));
-  //              res.setProperty(rt, "rowId", jsi::Value(rowId));
-  //              if (results->size() != 0) {
-  //                res.setProperty(
-  //                    rt, "row",
-  //                    jsi::Object::createFromHostObject(
-  //                        rt,
-  //                        std::make_shared<DumbHostObject>(results->at(0))));
-  //              }
-  //
-  //              callback->asObject(rt).asFunction(rt).call(rt, res);
-  //            });
-  //      };
-  //
-  //      opsqlite_register_update_hook(dbName, std::move(hook));
-  //
-  //      return {};
-  //    });
-  //
+  auto update_hook = HOSTFN("updateHook", 1) {
+    auto callback = std::make_shared<jsi::Value>(rt, args[0]);
+
+    if (callback->isUndefined() || callback->isNull()) {
+      update_hook_callback = nullptr;
+      // opsqlite_deregister_update_hook(dbName);
+
+    } else {
+
+      update_hook_callback = callback;
+    }
+
+    auto_register_update_hook();
+    return {};
+  });
+
   //    auto commit_hook = HOSTFN("commitHook", 2) {
   //      if (sizeof(args) < 2) {
   //        throw std::runtime_error("[op-sqlite][commitHook] Incorrect
@@ -567,6 +565,35 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
     return jsi::String::createFromUtf8(rt, result);
   });
 
+  auto reactive_execute = HOSTFN("reactiveExecute", 0) {
+
+    auto query = args[0].asObject(rt);
+    // if (!query.hasProperty(rt, "query") || !query.hasProperty(rt, "args") ||
+    //     !query.hasProperty(rt, "tables") || !query.hasProperty(rt, "rowIds")
+    //     || !query.hasProperty(rt, "callback")) {
+    //   throw std::runtime_error(
+    //       "[op-sqlite][reactiveExecute] Query object must have query, args, "
+    //       "tables, rowIds and callback properties");
+    // }
+
+    const std::string query_str =
+        query.getProperty(rt, "query").asString(rt).utf8(rt);
+    auto argsArray = query.getProperty(rt, "args");
+    auto tablesArray = query.getProperty(rt, "tables");
+//    auto rowIdsArray = query.getProperty(rt, "rowIds");
+    auto callback = std::make_shared<jsi::Value>(query.getProperty(rt, "callback"));
+
+    std::vector<JSVariant> query_args = to_variant_vec(rt, argsArray);
+    std::vector<std::string> tables = to_string_vec(rt, tablesArray);
+//    std::vector<std::string> rowIds = to_string_vec(rt, rowIdsArray);
+      std::vector<std::string> rowIds;
+
+    ReactiveQuery reactiveQuery = {query_str, query_args, tables, rowIds, callback};
+    reactive_queries.push_back(reactiveQuery);
+
+    return {};
+  });
+
   function_map["attach"] = std::move(attach);
   function_map["detach"] = std::move(detach);
   function_map["close"] = std::move(close);
@@ -577,12 +604,13 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
   function_map["executeBatch"] = std::move(execute_batch);
   function_map["executeBatchAsync"] = std::move(execute_batch_async);
   function_map["loadFile"] = std::move(load_file);
-  //    function_map["updateHook"] = std::move(update_hook);
+  function_map["updateHook"] = std::move(update_hook);
   //    function_map["commitHook"] = std::move(commit_hook);
   //    function_map["rollbackHook"] = std::move(rollback_hook);
   function_map["prepareStatement"] = std::move(prepare_statement);
   function_map["loadExtension"] = std::move(load_extension);
   function_map["getDbPath"] = std::move(get_db_path);
+          function_map["reactiveExecute"] = std::move(reactive_execute);
 };
 
 std::vector<jsi::PropNameID> DBHostObject::getPropertyNames(jsi::Runtime &rt) {
@@ -625,9 +653,9 @@ jsi::Value DBHostObject::get(jsi::Runtime &rt,
   if (name == "loadFile") {
     return jsi::Value(rt, function_map["loadFile"]);
   }
-  //    if (name == "updateHook") {
-  //      return jsi::Value(rt, function_map["updateHook"]);
-  //    }
+  if (name == "updateHook") {
+    return jsi::Value(rt, function_map["updateHook"]);
+  }
   //    if (name == "commitHook") {
   //      return jsi::Value(rt, function_map["commitHook"]);
   //    }
@@ -643,6 +671,9 @@ jsi::Value DBHostObject::get(jsi::Runtime &rt,
   if (name == "getDbPath") {
     return jsi::Value(rt, function_map["getDbPath"]);
   }
+    if(name == "reactiveExecute") {
+        return jsi::Value(rt, function_map["reactiveExecute"]);
+    }
 
   return {};
 }

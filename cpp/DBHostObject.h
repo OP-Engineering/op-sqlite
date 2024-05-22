@@ -14,6 +14,14 @@ namespace opsqlite {
 namespace jsi = facebook::jsi;
 namespace react = facebook::react;
 
+struct ReactiveQuery {
+    std::string query;
+    std::vector<JSVariant> args;
+    std::vector<std::string> tables;
+    std::vector<std::string> rowIds;
+    std::shared_ptr<jsi::Value> callback;
+};
+
 class JSI_EXPORT DBHostObject : public jsi::HostObject {
 public:
   DBHostObject(jsi::Runtime &rt, std::string &base_path,
@@ -26,6 +34,8 @@ public:
 
   jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID);
 
+  void auto_register_update_hook();
+
   std::unordered_map<std::string, jsi::Value> function_map;
   std::string base_path;
 
@@ -33,6 +43,9 @@ public:
   std::shared_ptr<react::CallInvoker> jsCallInvoker;
   std::shared_ptr<ThreadPool> thread_pool;
   std::string db_name;
+  std::shared_ptr<jsi::Value> update_hook_callback;
+    jsi::Runtime &rt;
+    std::vector<ReactiveQuery> reactive_queries;
 };
 
 } // namespace opsqlite
