@@ -397,13 +397,11 @@ opsqlite_execute(std::string const &dbName, std::string const &query,
 
     if (statementStatus != SQLITE_OK) {
       const char *message = sqlite3_errmsg(db);
-      return {
-          .type = SQLiteError,
-          .message = "[op-sqlite] SQL statement error on opsqlite_execute:\n" +
-                     std::to_string(statementStatus) + " description:\n" +
-                     std::string(message) +
-                     ". See error codes: https://www.sqlite.org/rescode.html",
-      };
+      return {.type = SQLiteError,
+              .message =
+                  "[op-sqlite] SQL statement error on opsqlite_execute:\n" +
+                  std::to_string(statementStatus) + " description:\n" +
+                  std::string(message)};
     }
 
     // The statement did not fail to parse but there is nothing to do, just
@@ -573,8 +571,7 @@ opsqlite_execute_raw(std::string const &dbName, std::string const &query,
           .type = SQLiteError,
           .message = "[op-sqlite] SQL statement error:" +
                      std::to_string(statementStatus) +
-                     " description:" + std::string(message) +
-                     ". See error codes: https://www.sqlite.org/rescode.html",
+                     " description:" + std::string(message),
       };
     }
 
@@ -839,7 +836,8 @@ BridgeResult opsqlite_deregister_rollback_hook(std::string const &dbName) {
   return {SQLiteOk};
 }
 
-BridgeResult opsqlite_load_extension(std::string const &db_name, std::string &path,
+BridgeResult opsqlite_load_extension(std::string const &db_name,
+                                     std::string &path,
                                      std::string &entry_point) {
 #ifdef OP_SQLITE_USE_PHONE_VERSION
   throw std::runtime_error(

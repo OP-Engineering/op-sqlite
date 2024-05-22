@@ -1,7 +1,6 @@
-import Chance from 'chance';
 import {open, type DB} from '@op-engineering/op-sqlite';
-import {beforeEach, describe, it} from './MochaRNAdapter';
 import chai from 'chai';
+import {beforeEach, describe, it} from './MochaRNAdapter';
 import {sleep} from './utils';
 
 const expect = chai.expect;
@@ -37,7 +36,7 @@ export function reactiveTests() {
         query: 'SELECT * FROM User;',
         arguments: [],
         tables: ['User'],
-        callback: data => {
+        callback: () => {
           fullSelectRan = true;
         },
       });
@@ -66,6 +65,37 @@ export function reactiveTests() {
       expect(emittedUser).to.deep.eq({
         name: 'Foo',
       });
+
+      unsubscribe();
+      unsubscribe2();
+    });
+
+    it('Can unsubscribe from reactive query', async () => {
+      let emittedCount = 0;
+      const unsubscribe = db.reactiveExecute({
+        query: 'SELECT * FROM User;',
+        arguments: [],
+        tables: ['User'],
+        callback: () => {
+          emittedCount++;
+        },
+      });
+
+      expect(unsubscribe).to.be.a('function');
+
+      db.execute(
+        'INSERT INTO User (id, name, age, networth, nickname) VALUES (?, ?, ?, ?, ?);',
+        [1, 'John', 30, 1000, 'Johnny'],
+      );
+
+      await sleep(20);
+
+      unsubscribe();
+
+      db.execute('UPDATE User SET name = ? WHERE id = ?;', ['Foo', 1]);
+
+      await sleep(20);
+      expect(emittedCount).to.eq(1);
     });
 
     it('Row reactive query', async () => {
@@ -78,7 +108,7 @@ export function reactiveTests() {
         arguments: [],
         tables: ['User'],
         rowIds: [2],
-        callback: data => {
+        callback: () => {
           firstReactiveRan = true;
         },
       });
@@ -87,7 +117,7 @@ export function reactiveTests() {
         query: 'SELECT * FROM User;',
         arguments: [],
         tables: ['Foo'],
-        callback: data => {
+        callback: () => {
           secondReactiveRan = true;
         },
       });
@@ -118,6 +148,9 @@ export function reactiveTests() {
       expect(emittedUser).to.deep.eq({
         name: 'Foo',
       });
+      unsubscribe();
+      unsubscribe2();
+      unsubscribe3();
     });
   });
 }

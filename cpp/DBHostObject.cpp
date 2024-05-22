@@ -58,20 +58,21 @@ void DBHostObject::auto_register_update_hook() {
           });
     }
 
-    for (const auto &query : reactive_queries) {
+    for (const auto &query_ptr : reactive_queries) {
 
-      if (query.tables.size() == 0) {
+      auto query = query_ptr.get();
+      if (query->tables.size() == 0) {
         continue;
       }
 
-      if (std::find(query.tables.begin(), query.tables.end(), table_name) ==
-          query.tables.end()) {
+      if (std::find(query->tables.begin(), query->tables.end(), table_name) ==
+          query->tables.end()) {
         continue;
       }
 
-      if (query.rowIds.size() > 0 &&
-          std::find(query.rowIds.begin(), query.rowIds.end(), rowId) ==
-              query.rowIds.end()) {
+      if (query->rowIds.size() > 0 &&
+          std::find(query->rowIds.begin(), query->rowIds.end(), rowId) ==
+              query->rowIds.end()) {
         continue;
       }
 
@@ -79,12 +80,12 @@ void DBHostObject::auto_register_update_hook() {
       std::shared_ptr<std::vector<SmartHostObject>> metadata =
           std::make_shared<std::vector<SmartHostObject>>();
 
-      auto status = opsqlite_execute(dbName, query.query, &query.args, &results,
-                                     metadata);
+      auto status = opsqlite_execute(dbName, query->query, &query->args,
+                                     &results, metadata);
 
       if (status.type == SQLiteError) {
         jsCallInvoker->invokeAsync(
-            [this, callback = query.callback, status = std::move(status)] {
+            [this, callback = query->callback, status = std::move(status)] {
               auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
               auto error = errorCtr.callAsConstructor(
                   rt, jsi::String::createFromUtf8(rt, status.message));
@@ -94,7 +95,7 @@ void DBHostObject::auto_register_update_hook() {
         jsCallInvoker->invokeAsync(
             [this,
              results = std::make_shared<std::vector<DumbHostObject>>(results),
-             callback = query.callback, metadata, status = std::move(status)] {
+             callback = query->callback, metadata, status = std::move(status)] {
               if (status.type == SQLiteOk) {
                 auto jsiResult =
                     createResult(rt, status, results.get(), metadata);
@@ -646,20 +647,31 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
 
     std::vector<JSVariant> query_args = to_variant_vec(rt, argsArray);
     std::vector<std::string> tables = to_string_vec(rt, tablesArray);
-    //    std::vector<std::string> rowIds = to_string_vec(rt, rowIdsArray);
     std::vector<int> rowIds;
     if (query.hasProperty(rt, "rowIds")) {
       auto rowIdsArray = query.getProperty(rt, "rowIds");
       rowIds = to_int_vec(rt, rowIdsArray);
     }
 
-    ReactiveQuery reactiveQuery = {query_str, query_args, tables, rowIds,
-                                   callback};
+    std::shared_ptr<ReactiveQuery> reactiveQuery =
+        std::make_shared<ReactiveQuery>(
+            ReactiveQuery{query_str, query_args, tables, rowIds, callback});
+
     reactive_queries.push_back(reactiveQuery);
 
     auto_register_update_hook();
 
-    return {};
+    auto unsubscribe = HOSTFN("unsubscribe", 0) {
+      auto it = std::find(reactive_queries.begin(), reactive_queries.end(),
+                          reactiveQuery);
+      if (it != reactive_queries.end()) {
+        reactive_queries.erase(it);
+      }
+      auto_register_update_hook();
+      return {};
+    });
+
+    return unsubscribe;
   });
 
   function_map["attach"] = std::move(attach);
