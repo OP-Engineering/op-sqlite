@@ -1,14 +1,9 @@
 import Chance from 'chance';
 
-import {type OPSQLiteConnection, open} from '@op-engineering/op-sqlite';
+import {type DB, open} from '@op-engineering/op-sqlite';
 import chai from 'chai';
 import {describe, it, beforeEach} from './MochaRNAdapter';
-
-async function sleep(ms: number): Promise<void> {
-  return new Promise<void>(resolve => {
-    setTimeout(resolve, ms);
-  });
-}
+import {sleep} from './utils';
 
 const expect = chai.expect;
 const DB_CONFIG = {
@@ -17,7 +12,7 @@ const DB_CONFIG = {
 };
 const chance = new Chance();
 
-let db: OPSQLiteConnection;
+let db: DB;
 
 export function registerHooksTests() {
   beforeEach(() => {

@@ -19,7 +19,8 @@ jsi::Value toJSI(jsi::Runtime &rt, JSVariant value);
 
 JSVariant toVariant(jsi::Runtime &rt, jsi::Value const &value);
 std::vector<std::string> to_string_vec(jsi::Runtime &rt, jsi::Value const &xs);
-std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt, jsi::Value const &args);
+std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt, jsi::Value const &xs);
+std::vector<int> to_int_vec(jsi::Runtime &rt, jsi::Value const &xs);
 
 jsi::Value createResult(jsi::Runtime &rt, BridgeResult status,
                         std::vector<DumbHostObject> *results,

@@ -181,7 +181,7 @@ export type DB = {
     query: string;
     arguments: any[];
     tables: string[];
-    rowIds?: string | number[];
+    rowIds?: number[];
     callback: (response: any) => void;
   }) => () => void;
 };

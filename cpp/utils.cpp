@@ -79,9 +79,8 @@ JSVariant toVariant(jsi::Runtime &rt, const jsi::Value &value) {
   }
 }
 
-std::vector<std::string> to_string_vec(jsi::Runtime &rt,
-                                       jsi::Value const &xs) {
-    
+std::vector<std::string> to_string_vec(jsi::Runtime &rt, jsi::Value const &xs) {
+
   jsi::Array values = xs.asObject(rt).asArray(rt);
   std::vector<std::string> res;
   for (int ii = 0; ii < values.length(rt); ii++) {
@@ -91,15 +90,24 @@ std::vector<std::string> to_string_vec(jsi::Runtime &rt,
   return res;
 }
 
-std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt,
-                                      jsi::Value const &params) {
+std::vector<int> to_int_vec(jsi::Runtime &rt, jsi::Value const &xs) {
+  jsi::Array values = xs.asObject(rt).asArray(rt);
+  std::vector<int> res;
+  for (int ii = 0; ii < values.length(rt); ii++) {
+    int value = static_cast<int>(values.getValueAtIndex(rt, ii).asNumber());
+    res.push_back(value);
+  }
+  return res;
+}
+
+std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt, jsi::Value const &xs) {
   std::vector<JSVariant> res;
 
-  if (params.isNull() || params.isUndefined()) {
+  if (xs.isNull() || xs.isUndefined()) {
     return res;
   }
 
-  jsi::Array values = params.asObject(rt).asArray(rt);
+  jsi::Array values = xs.asObject(rt).asArray(rt);
 
   for (int ii = 0; ii < values.length(rt); ii++) {
     jsi::Value value = values.getValueAtIndex(rt, ii);
