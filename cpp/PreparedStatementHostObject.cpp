@@ -29,7 +29,7 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
       }
 
       const jsi::Value &js_params = args[0];
-      std::vector<JSVariant> params = toVariantVec(rt, js_params);
+      std::vector<JSVariant> params = to_variant_vec(rt, js_params);
 
       opsqlite_bind_statement(_statement, &params);
 

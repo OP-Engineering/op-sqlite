@@ -177,6 +177,13 @@ export type DB = {
   loadExtension: (path: string, entryPoint?: string) => void;
   executeRawAsync: (query: string, params?: any[]) => Promise<any[]>;
   getDbPath: (location?: string) => string;
+  reactiveExecute: (params: {
+    query: string;
+    arguments: any[];
+    tables: string[];
+    rowIds?: string | number[];
+    callback: (response: any) => void;
+  }) => () => void;
 };
 
 type OPSQLiteProxy = {
@@ -208,35 +215,6 @@ function enhanceQueryResult(result: QueryResult): void {
     result.rows.item = (idx: number) => result.rows?._array[idx];
   }
 }
-
-export type OPSQLiteConnection = {
-  close: () => void;
-  delete: () => void;
-  attach: (dbNameToAttach: string, alias: string, location?: string) => void;
-  detach: (alias: string) => void;
-  transaction: (fn: (tx: Transaction) => Promise<void>) => Promise<void>;
-  execute: (query: string, params?: any[]) => QueryResult;
-  executeAsync: (query: string, params?: any[]) => Promise<QueryResult>;
-  executeBatch: (commands: SQLBatchTuple[]) => BatchQueryResult;
-  executeBatchAsync: (commands: SQLBatchTuple[]) => Promise<BatchQueryResult>;
-  loadFile: (location: string) => Promise<FileLoadResult>;
-  updateHook: (
-    callback:
-      | ((params: {
-          table: string;
-          operation: UpdateHookOperation;
-          row?: any;
-          rowId: number;
-        }) => void)
-      | null
-  ) => void;
-  commitHook: (callback: (() => void) | null) => void;
-  rollbackHook: (callback: (() => void) | null) => void;
-  prepareStatement: (query: string) => PreparedStatementObj;
-  loadExtension: (path: string, entryPoint?: string) => void;
-  executeRawAsync: (query: string, params?: any[]) => Promise<any[]>;
-  getDbPath: () => string;
-};
 
 export const open = (options: {
   name: string;
@@ -285,6 +263,7 @@ export const open = (options: {
     loadExtension: db.loadExtension,
     executeRawAsync: db.executeRawAsync,
     getDbPath: db.getDbPath,
+    reactiveExecute: db.reactiveExecute,
     close: () => {
       db.close();
       delete locks[options.name];

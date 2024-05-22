@@ -18,8 +18,8 @@ namespace jsi = facebook::jsi;
 jsi::Value toJSI(jsi::Runtime &rt, JSVariant value);
 
 JSVariant toVariant(jsi::Runtime &rt, jsi::Value const &value);
-
-std::vector<JSVariant> toVariantVec(jsi::Runtime &rt, jsi::Value const &args);
+std::vector<std::string> to_string_vec(jsi::Runtime &rt, jsi::Value const &xs);
+std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt, jsi::Value const &args);
 
 jsi::Value createResult(jsi::Runtime &rt, BridgeResult status,
                         std::vector<DumbHostObject> *results,

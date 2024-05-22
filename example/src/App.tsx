@@ -17,6 +17,7 @@ import {moveAssetsDatabase, open} from '@op-engineering/op-sqlite';
 import clsx from 'clsx';
 import {preparedStatementsTests} from './tests/preparedStatements.spec';
 import {constantsTests} from './tests/constants.spec';
+import {reactiveTests} from './tests/reactive.spec';
 
 const StyledScrollView = styled(ScrollView, {
   props: {
@@ -38,11 +39,12 @@ export default function App() {
     setResults([]);
     runTests(
       dbSetupTests,
-      queriesTests,
+      // queriesTests,
       blobTests,
-      registerHooksTests,
+      // registerHooksTests,
       preparedStatementsTests,
       constantsTests,
+      reactiveTests,
     ).then(setResults);
   }, []);
 

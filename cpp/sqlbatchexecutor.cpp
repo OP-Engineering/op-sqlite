@@ -34,12 +34,12 @@ void toBatchArguments(jsi::Runtime &rt, jsi::Array const &batchParams,
       for (int x = 0; x < batchUpdateParams.length(rt); x++) {
         const jsi::Value &p = batchUpdateParams.getValueAtIndex(rt, x);
         auto params =
-            std::make_shared<std::vector<JSVariant>>(toVariantVec(rt, p));
+            std::make_shared<std::vector<JSVariant>>(to_variant_vec(rt, p));
         commands->push_back({query, params});
       }
     } else {
       auto params = std::make_shared<std::vector<JSVariant>>(
-          toVariantVec(rt, commandParams));
+          to_variant_vec(rt, commandParams));
       commands->push_back({query, params});
     }
   }
