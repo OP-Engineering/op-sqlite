@@ -545,8 +545,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
 
   auto rollback_hook = HOSTFN("rollbackHook", 1) {
     if (sizeof(args) < 1) {
-      throw std::runtime_error(
-          "[op-sqlite][rollbackHook] callback needed");
+      throw std::runtime_error("[op-sqlite][rollbackHook] callback needed");
       return {};
     }
 

@@ -1,10 +1,10 @@
-import {type OPSQLiteConnection, open} from '@op-engineering/op-sqlite';
+import {type DB, open} from '@op-engineering/op-sqlite';
 import chai from 'chai';
 import {beforeEach, describe, it} from './MochaRNAdapter';
 
 let expect = chai.expect;
 
-let db: OPSQLiteConnection;
+let db: DB;
 
 export function preparedStatementsTests() {
   beforeEach(() => {

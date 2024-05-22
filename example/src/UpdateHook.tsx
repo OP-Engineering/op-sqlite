@@ -6,17 +6,17 @@ import React, {
   useRef,
 } from 'react';
 import {ActivityIndicator, Text, View} from 'react-native';
-import {type OPSQLiteConnection, open} from '@op-engineering/op-sqlite';
+import {type DB, open} from '@op-engineering/op-sqlite';
 
 interface IDbContext {
-  db: OPSQLiteConnection;
+  db: DB;
 }
 
 const DbContext = createContext<IDbContext | null>(null);
 
 const UpdateHookPage = () => {
   const [loading, setLoading] = useState(true);
-  const dbRef = useRef<OPSQLiteConnection>();
+  const dbRef = useRef<DB>();
 
   useEffect(() => {
     function setup() {

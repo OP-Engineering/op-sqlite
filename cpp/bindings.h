@@ -2,7 +2,6 @@
 #include <jsi/jsi.h>
 #include <jsi/jsilib.h>
 
-
 namespace opsqlite {
 
 namespace jsi = facebook::jsi;
