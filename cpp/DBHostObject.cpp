@@ -73,12 +73,13 @@ void DBHostObject::auto_register_update_hook() {
         }
 
         // Table has matched
-        
+
         // If no ids are specified, then we should fire
         if (discriminator.ids.size() == 0) {
           shouldFire = true;
           break;
-        } else { // If ids are specified, then we should check if the rowId matches
+        } else { // If ids are specified, then we should check if the rowId
+                 // matches
           for (const auto &discrimator_id : discriminator.ids) {
             if (rowId == discrimator_id) {
               shouldFire = true;
@@ -88,7 +89,7 @@ void DBHostObject::auto_register_update_hook() {
         }
       }
 
-      if(!shouldFire) {
+      if (!shouldFire) {
         continue;
       }
 
@@ -96,7 +97,8 @@ void DBHostObject::auto_register_update_hook() {
       std::shared_ptr<std::vector<SmartHostObject>> metadata =
           std::make_shared<std::vector<SmartHostObject>>();
 
-      auto status = opsqlite_execute_prepared_statement(db_name, query->stmt, &results, metadata);  
+      auto status = opsqlite_execute_prepared_statement(db_name, query->stmt,
+                                                        &results, metadata);
 
       if (status.type == SQLiteError) {
         jsCallInvoker->invokeAsync(
@@ -644,7 +646,8 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
     const std::string query_str =
         query.getProperty(rt, "query").asString(rt).utf8(rt);
     auto js_args = query.getProperty(rt, "args");
-    auto js_discriminators = query.getProperty(rt, "fireOn").asObject(rt).asArray(rt);
+    auto js_discriminators =
+        query.getProperty(rt, "fireOn").asObject(rt).asArray(rt);
     auto variant_args = to_variant_vec(rt, js_args);
 
     sqlite3_stmt *stmt = opsqlite_prepare_statement(db_name, query_str);
@@ -652,8 +655,6 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
 
     auto callback =
         std::make_shared<jsi::Value>(query.getProperty(rt, "callback"));
-
-    
 
     // std::vector<JSVariant> query_args = to_variant_vec(rt, argsArray);
     // std::vector<std::string> tables = to_string_vec(rt, tablesArray);
@@ -666,13 +667,17 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
     std::vector<TableRowDiscriminator> discriminators;
 
     for (size_t i = 0; i < js_discriminators.length(rt); i++) {
-      auto js_discriminator = js_discriminators.getValueAtIndex(rt, i).asObject(rt);
-      std::string table = js_discriminator.getProperty(rt, "table").asString(rt).utf8(rt);
+      auto js_discriminator =
+          js_discriminators.getValueAtIndex(rt, i).asObject(rt);
+      std::string table =
+          js_discriminator.getProperty(rt, "table").asString(rt).utf8(rt);
       std::vector<int> ids;
       if (js_discriminator.hasProperty(rt, "ids")) {
-        auto js_ids = js_discriminator.getProperty(rt, "ids").asObject(rt).asArray(rt);
+        auto js_ids =
+            js_discriminator.getProperty(rt, "ids").asObject(rt).asArray(rt);
         for (size_t j = 0; j < js_ids.length(rt); j++) {
-          ids.push_back(static_cast<int>(js_ids.getValueAtIndex(rt, j).asNumber()));
+          ids.push_back(
+              static_cast<int>(js_ids.getValueAtIndex(rt, j).asNumber()));
         }
       }
       discriminators.push_back({table, ids});
