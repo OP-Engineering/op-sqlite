@@ -35,7 +35,11 @@ export function reactiveTests() {
       const unsubscribe = db.reactiveExecute({
         query: 'SELECT * FROM User;',
         arguments: [],
-        tables: ['User'],
+        fireOn: [
+          {
+            table: 'User',
+          },
+        ],
         callback: () => {
           fullSelectRan = true;
         },
@@ -44,7 +48,11 @@ export function reactiveTests() {
       const unsubscribe2 = db.reactiveExecute({
         query: 'SELECT name FROM User;',
         arguments: [],
-        tables: ['User'],
+        fireOn: [
+          {
+            table: 'User',
+          },
+        ],
         callback: data => {
           emittedUser = data.rows._array[0];
         },
@@ -75,7 +83,11 @@ export function reactiveTests() {
       const unsubscribe = db.reactiveExecute({
         query: 'SELECT * FROM User;',
         arguments: [],
-        tables: ['User'],
+        fireOn: [
+          {
+            table: 'User',
+          },
+        ],
         callback: () => {
           emittedCount++;
         },
@@ -106,8 +118,12 @@ export function reactiveTests() {
       const unsubscribe = db.reactiveExecute({
         query: 'SELECT * FROM User;',
         arguments: [],
-        tables: ['User'],
-        rowIds: [2],
+        fireOn: [
+          {
+            table: 'User',
+            ids: [2],
+          },
+        ],
         callback: () => {
           firstReactiveRan = true;
         },
@@ -116,7 +132,11 @@ export function reactiveTests() {
       const unsubscribe2 = db.reactiveExecute({
         query: 'SELECT * FROM User;',
         arguments: [],
-        tables: ['Foo'],
+        fireOn: [
+          {
+            table: 'Foo',
+          },
+        ],
         callback: () => {
           secondReactiveRan = true;
         },
@@ -124,9 +144,13 @@ export function reactiveTests() {
 
       const unsubscribe3 = db.reactiveExecute({
         query: 'SELECT name FROM User;',
-        arguments: [1],
-        tables: ['User'],
-        rowIds: [1],
+        arguments: [],
+        fireOn: [
+          {
+            table: 'User',
+            ids: [1],
+          },
+        ],
         callback: data => {
           emittedUser = data.rows._array[0];
         },
