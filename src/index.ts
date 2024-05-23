@@ -180,8 +180,10 @@ export type DB = {
   reactiveExecute: (params: {
     query: string;
     arguments: any[];
-    tables: string[];
-    rowIds?: number[];
+    fireOn: {
+      table: string;
+      ids?: number[];
+    }[];
     callback: (response: any) => void;
   }) => () => void;
 };

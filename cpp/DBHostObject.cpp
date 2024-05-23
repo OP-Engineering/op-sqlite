@@ -61,18 +61,34 @@ void DBHostObject::auto_register_update_hook() {
     for (const auto &query_ptr : reactive_queries) {
 
       auto query = query_ptr.get();
-      if (query->tables.size() == 0) {
+      if (query->discriminators.size() == 0) {
         continue;
       }
 
-      if (std::find(query->tables.begin(), query->tables.end(), table_name) ==
-          query->tables.end()) {
-        continue;
+      bool shouldFire = false;
+
+      for (const auto &discriminator : query->discriminators) {
+        if (discriminator.table != table_name) {
+          continue;
+        }
+
+        // Table has matched
+        
+        // If no ids are specified, then we should fire
+        if (discriminator.ids.size() == 0) {
+          shouldFire = true;
+          break;
+        } else { // If ids are specified, then we should check if the rowId matches
+          for (const auto &discrimator_id : discriminator.ids) {
+            if (rowId == discrimator_id) {
+              shouldFire = true;
+              break;
+            }
+          }
+        }
       }
 
-      if (query->rowIds.size() > 0 &&
-          std::find(query->rowIds.begin(), query->rowIds.end(), rowId) ==
-              query->rowIds.end()) {
+      if(!shouldFire) {
         continue;
       }
 
@@ -80,8 +96,7 @@ void DBHostObject::auto_register_update_hook() {
       std::shared_ptr<std::vector<SmartHostObject>> metadata =
           std::make_shared<std::vector<SmartHostObject>>();
 
-      auto status = opsqlite_execute(dbName, query->query, &query->args,
-                                     &results, metadata);
+      auto status = opsqlite_execute_prepared_statement(db_name, query->stmt, &results, metadata);  
 
       if (status.type == SQLiteError) {
         jsCallInvoker->invokeAsync(
@@ -628,23 +643,44 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
 
     const std::string query_str =
         query.getProperty(rt, "query").asString(rt).utf8(rt);
-    auto argsArray = query.getProperty(rt, "args");
-    auto tablesArray = query.getProperty(rt, "tables");
+    auto js_args = query.getProperty(rt, "args");
+    auto js_discriminators = query.getProperty(rt, "fireOn").asObject(rt).asArray(rt);
+    auto variant_args = to_variant_vec(rt, js_args);
+
+    sqlite3_stmt *stmt = opsqlite_prepare_statement(db_name, query_str);
+    opsqlite_bind_statement(stmt, &variant_args);
 
     auto callback =
         std::make_shared<jsi::Value>(query.getProperty(rt, "callback"));
 
-    std::vector<JSVariant> query_args = to_variant_vec(rt, argsArray);
-    std::vector<std::string> tables = to_string_vec(rt, tablesArray);
-    std::vector<int> rowIds;
-    if (query.hasProperty(rt, "rowIds")) {
-      auto rowIdsArray = query.getProperty(rt, "rowIds");
-      rowIds = to_int_vec(rt, rowIdsArray);
+    
+
+    // std::vector<JSVariant> query_args = to_variant_vec(rt, argsArray);
+    // std::vector<std::string> tables = to_string_vec(rt, tablesArray);
+    // std::vector<int> rowIds;
+    // if (query.hasProperty(rt, "rowIds")) {
+    //   auto rowIdsArray = query.getProperty(rt, "rowIds");
+    //   rowIds = to_int_vec(rt, rowIdsArray);
+    // }
+
+    std::vector<TableRowDiscriminator> discriminators;
+
+    for (size_t i = 0; i < js_discriminators.length(rt); i++) {
+      auto js_discriminator = js_discriminators.getValueAtIndex(rt, i).asObject(rt);
+      std::string table = js_discriminator.getProperty(rt, "table").asString(rt).utf8(rt);
+      std::vector<int> ids;
+      if (js_discriminator.hasProperty(rt, "ids")) {
+        auto js_ids = js_discriminator.getProperty(rt, "ids").asObject(rt).asArray(rt);
+        for (size_t j = 0; j < js_ids.length(rt); j++) {
+          ids.push_back(static_cast<int>(js_ids.getValueAtIndex(rt, j).asNumber()));
+        }
+      }
+      discriminators.push_back({table, ids});
     }
 
     std::shared_ptr<ReactiveQuery> reactiveQuery =
         std::make_shared<ReactiveQuery>(
-            ReactiveQuery{query_str, query_args, tables, rowIds, callback});
+            ReactiveQuery{stmt, discriminators, callback});
 
     reactive_queries.push_back(reactiveQuery);
 

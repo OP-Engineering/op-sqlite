@@ -8,17 +8,22 @@
 #include <jsi/jsi.h>
 #include <unordered_map>
 #include <vector>
+#include "sqlite3.h"
 
 namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 namespace react = facebook::react;
 
+struct TableRowDiscriminator {
+  std::string table;
+  std::vector<int> ids;
+};
+
+
 struct ReactiveQuery {
-  std::string query;
-  std::vector<JSVariant> args;
-  std::vector<std::string> tables;
-  std::vector<int> rowIds;
+  sqlite3_stmt *stmt;
+  std::vector<TableRowDiscriminator> discriminators;
   std::shared_ptr<jsi::Value> callback;
 };
 
