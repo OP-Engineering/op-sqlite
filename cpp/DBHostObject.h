@@ -2,13 +2,13 @@
 #define DBHostObject_h
 
 #include "ThreadPool.h"
+#include "sqlite3.h"
 #include "types.h"
 #include <ReactCommon/CallInvoker.h>
 #include <any>
 #include <jsi/jsi.h>
 #include <unordered_map>
 #include <vector>
-#include "sqlite3.h"
 
 namespace opsqlite {
 
@@ -19,7 +19,6 @@ struct TableRowDiscriminator {
   std::string table;
   std::vector<int> ids;
 };
-
 
 struct ReactiveQuery {
   sqlite3_stmt *stmt;
