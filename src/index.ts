@@ -195,6 +195,7 @@ type OPSQLiteProxy = {
     encryptionKey?: string;
   }) => DB;
   isSQLCipher: () => boolean;
+  isLibsql: () => boolean;
 };
 
 const locks: Record<
@@ -377,7 +378,7 @@ export const open = (options: {
             executeAsync,
             rollback,
           });
-          console.warn('finished executing user function for transaction');
+
           if (!isFinalized) {
             commit();
           }
@@ -425,4 +426,8 @@ export const moveAssetsDatabase = async (args: {
 
 export const isSQLCipher = (): boolean => {
   return OPSQLite.isSQLCipher();
+};
+
+export const isLibsql = (): boolean => {
+  return OPSQLite.isLibsql();
 };

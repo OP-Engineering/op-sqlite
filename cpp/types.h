@@ -29,4 +29,9 @@ struct ArrayBuffer {
 using JSVariant = std::variant<nullptr_t, bool, int, double, long, long long,
                                std::string, ArrayBuffer>;
 
+struct BatchArguments {
+  std::string sql;
+  std::shared_ptr<std::vector<JSVariant>> params;
+};
+
 #endif /* types_h */

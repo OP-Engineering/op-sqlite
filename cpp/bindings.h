@@ -1,3 +1,5 @@
+#pragma once
+
 #include <ReactCommon/CallInvoker.h>
 #include <jsi/jsi.h>
 #include <jsi/jsilib.h>

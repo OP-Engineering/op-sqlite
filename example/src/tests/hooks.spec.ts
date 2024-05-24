@@ -1,6 +1,6 @@
 import Chance from 'chance';
 
-import {type DB, open} from '@op-engineering/op-sqlite';
+import {type DB, open, isLibsql} from '@op-engineering/op-sqlite';
 import chai from 'chai';
 import {describe, it, beforeEach} from './MochaRNAdapter';
 import {sleep} from './utils';
@@ -34,6 +34,10 @@ export function registerHooksTests() {
   });
 
   describe('Hooks', () => {
+    // libsql does not support hooks
+    if (isLibsql()) {
+      return;
+    }
     it('update hook', async () => {
       let promiseResolve: any;
       let promise = new Promise(resolve => {

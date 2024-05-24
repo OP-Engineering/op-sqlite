@@ -1,12 +1,14 @@
 #include "bindings.h"
 #include "DBHostObject.h"
 #include "DumbHostObject.h"
-#include "PreparedStatementHostObject.h"
 #include "ThreadPool.h"
+#ifdef OP_SQLITE_USE_LIBSQL
+#include "libsql/bridge.h"
+#else
 #include "bridge.h"
+#endif
 #include "logs.h"
 #include "macros.h"
-#include "sqlbatchexecutor.h"
 #include "utils.h"
 #include <iostream>
 #include <string>
@@ -21,12 +23,6 @@ std::string basePath;
 std::string crsqlitePath;
 std::shared_ptr<react::CallInvoker> invoker;
 std::shared_ptr<ThreadPool> thread_pool = std::make_shared<ThreadPool>();
-// std::unordered_map<std::string, std::shared_ptr<jsi::Value>> updateHooks =
-//     std::unordered_map<std::string, std::shared_ptr<jsi::Value>>();
-// std::unordered_map<std::string, std::shared_ptr<jsi::Value>> commitHooks =
-//     std::unordered_map<std::string, std::shared_ptr<jsi::Value>>();
-// std::unordered_map<std::string, std::shared_ptr<jsi::Value>> rollbackHooks =
-//     std::unordered_map<std::string, std::shared_ptr<jsi::Value>>();
 
 // React native will try to clean the module on JS context invalidation
 // (CodePush/Hot Reload) The clearState function is called and we use this flag
@@ -36,12 +32,9 @@ bool invalidated = false;
 void clearState() {
   invalidated = true;
   // Will terminate all operations and database connections
-  opsqlite_close_all();
+  //  opsqlite_close_all();
   // We then join all the threads before the context gets invalidated
   thread_pool->restartPool();
-  //  updateHooks.clear();
-  //  commitHooks.clear();
-  //  rollbackHooks.clear();
 }
 
 void install(jsi::Runtime &rt,
@@ -104,9 +97,18 @@ void install(jsi::Runtime &rt,
 #endif
   });
 
+  auto is_libsql = HOSTFN("isLibsql", 0) {
+#ifdef OP_SQLITE_USE_LIBSQL
+    return true;
+#else
+    return false;
+#endif
+  });
+
   jsi::Object module = jsi::Object(rt);
   module.setProperty(rt, "open", std::move(open));
   module.setProperty(rt, "isSQLCipher", std::move(is_sqlcipher));
+  module.setProperty(rt, "isLibsql", std::move(is_libsql));
 
   rt.global().setProperty(rt, "__OPSQLiteProxy", std::move(module));
 }

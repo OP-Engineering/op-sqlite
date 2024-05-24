@@ -1,8 +1,11 @@
 #include "DBHostObject.h"
 #include "PreparedStatementHostObject.h"
+#if OP_SQLITE_USE_LIBSQL
+#include "libsql/bridge.h"
+#else
 #include "bridge.h"
+#endif
 #include "macros.h"
-#include "sqlbatchexecutor.h"
 #include "utils.h"
 #include <iostream>
 
@@ -11,6 +14,7 @@ namespace opsqlite {
 namespace jsi = facebook::jsi;
 namespace react = facebook::react;
 
+#ifndef OP_SQLITE_USE_LIBSQL
 void DBHostObject::auto_register_update_hook() {
   if (update_hook_callback == nullptr && reactive_queries.size() == 0 &&
       has_update_hook_registered) {
@@ -131,6 +135,7 @@ void DBHostObject::auto_register_update_hook() {
   opsqlite_register_update_hook(db_name, std::move(hook));
   has_update_hook_registered = true;
 }
+#endif
 
 DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
                            std::shared_ptr<react::CallInvoker> jsCallInvoker,
@@ -144,6 +149,8 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
 #ifdef OP_SQLITE_USE_SQLCIPHER
   BridgeResult result =
       opsqlite_open(db_name, path, crsqlite_path, encryption_key);
+#elif OP_SQLITE_USE_LIBSQL
+  BridgeResult result = opsqlite_libsql_open(db_name, path);
 #else
   BridgeResult result = opsqlite_open(db_name, path, crsqlite_path);
 #endif
@@ -176,9 +183,13 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
     std::string dbName = args[0].asString(rt).utf8(rt);
     std::string databaseToAttach = args[1].asString(rt).utf8(rt);
     std::string alias = args[2].asString(rt).utf8(rt);
+#ifdef OP_SQLITE_USE_LIBSQL
+    BridgeResult result =
+        opsqlite_libsql_attach(dbName, tempDocPath, databaseToAttach, alias);
+#else
     BridgeResult result =
         opsqlite_attach(dbName, tempDocPath, databaseToAttach, alias);
-
+#endif
     if (result.type == SQLiteError) {
       throw std::runtime_error(result.message);
     }
@@ -199,7 +210,11 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
 
     std::string dbName = args[0].asString(rt).utf8(rt);
     std::string alias = args[1].asString(rt).utf8(rt);
+#ifdef OP_SQLITE_USE_LIBSQL
+    BridgeResult result = opsqlite_libsql_detach(dbName, alias);
+#else
     BridgeResult result = opsqlite_detach(dbName, alias);
+#endif
 
     if (result.type == SQLiteError) {
       throw jsi::JSError(rt, result.message.c_str());
@@ -209,7 +224,11 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
   });
 
   auto close = HOSTFN("close", 0) {
+#ifdef OP_SQLITE_USE_LIBSQL
+    BridgeResult result = opsqlite_libsql_close(db_name);
+#else
     BridgeResult result = opsqlite_close(db_name);
+#endif
 
     if (result.type == SQLiteError) {
       throw jsi::JSError(rt, result.message.c_str());
@@ -241,7 +260,11 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
       }
     }
 
+#ifdef OP_SQLITE_USE_LIBSQL
+    BridgeResult result = opsqlite_libsql_remove(db_name, path);
+#else
     BridgeResult result = opsqlite_remove(db_name, path);
+#endif
 
     if (result.type == SQLiteError) {
       throw std::runtime_error(result.message);
@@ -263,7 +286,12 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
     std::shared_ptr<std::vector<SmartHostObject>> metadata =
         std::make_shared<std::vector<SmartHostObject>>();
 
+#ifdef OP_SQLITE_USE_LIBSQL
+    auto status =
+        opsqlite_libsql_execute(db_name, query, &params, &results, metadata);
+#else
     auto status = opsqlite_execute(db_name, query, &params, &results, metadata);
+#endif
 
     if (status.type == SQLiteError) {
       throw std::runtime_error(status.message);
@@ -283,7 +311,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
     }
 
     auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
-    auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor", 2) {
+     auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor", 2) {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
@@ -292,7 +320,12 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
         try {
           std::vector<std::vector<JSVariant>> results;
 
+#ifdef OP_SQLITE_USE_LIBSQL
+          auto status =
+              opsqlite_libsql_execute_raw(db_name, query, &params, &results);
+#else
           auto status = opsqlite_execute_raw(db_name, query, &params, &results);
+#endif
           //
           //            if (invalidated) {
           //              return;
@@ -325,13 +358,12 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
       thread_pool->queueWork(task);
 
       return {};
-    }));
+     }));
 
-    return promise;
+     return promise;
   });
 
   auto execute_async = HOSTFN("executeAsync", 2) {
-
     const std::string query = args[0].asString(rt).utf8(rt);
     std::vector<JSVariant> params;
 
@@ -351,9 +383,13 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
           std::vector<DumbHostObject> results;
           std::shared_ptr<std::vector<SmartHostObject>> metadata =
               std::make_shared<std::vector<SmartHostObject>>();
-
+#ifdef OP_SQLITE_USE_LIBSQL
+          auto status = opsqlite_libsql_execute(db_name, query, &params,
+                                                &results, metadata);
+#else
           auto status =
               opsqlite_execute(db_name, query, &params, &results, metadata);
+#endif
 
           //            if (invalidated) {
           //              return;
@@ -408,9 +444,13 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
     }
     const jsi::Array &batchParams = params.asObject(rt).asArray(rt);
     std::vector<BatchArguments> commands;
-    toBatchArguments(rt, batchParams, &commands);
+    to_batch_arguments(rt, batchParams, &commands);
 
-    auto batchResult = sqliteExecuteBatch(db_name, &commands);
+#ifdef OP_SQLITE_USE_LIBSQL
+    auto batchResult = opsqlite_libsql_execute_batch(db_name, &commands);
+#else
+    auto batchResult = opsqlite_execute_batch(db_name, &commands);
+#endif
     if (batchResult.type == SQLiteOk) {
       auto res = jsi::Object(rt);
       res.setProperty(rt, "rowsAffected", jsi::Value(batchResult.affectedRows));
@@ -439,10 +479,10 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
     const jsi::Array &batchParams = params.asObject(rt).asArray(rt);
 
     std::vector<BatchArguments> commands;
-    toBatchArguments(rt, batchParams, &commands);
+    to_batch_arguments(rt, batchParams, &commands);
 
     auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
-    auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor", 2) {
+     auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor", 2) {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
@@ -451,7 +491,12 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
                        std::make_shared<std::vector<BatchArguments>>(commands),
                    resolve, reject]() {
         try {
-          auto batchResult = sqliteExecuteBatch(db_name, commands.get());
+#ifdef OP_SQLITE_USE_LIBSQL
+          auto batchResult =
+              opsqlite_libsql_execute_batch(db_name, commands.get());
+#else
+          auto batchResult = opsqlite_execute_batch(db_name, commands.get());
+#endif
           jsCallInvoker->invokeAsync([&rt, batchResult = std::move(batchResult),
                                       resolve, reject] {
             if (batchResult.type == SQLiteOk) {
@@ -474,11 +519,12 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
       thread_pool->queueWork(task);
 
       return {};
-           }));
+            }));
 
-    return promise;
+     return promise;
   });
 
+#ifndef OP_SQLITE_USE_LIBSQL
   auto load_file = HOSTFN("loadFile", 1) {
     if (sizeof(args) < 1) {
       throw std::runtime_error(
@@ -489,7 +535,8 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
     const std::string sqlFileName = args[0].asString(rt).utf8(rt);
 
     auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
-    auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor", 2) {
+        auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor", 2)
+        {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
@@ -520,9 +567,9 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
       };
       thread_pool->queueWork(task);
       return {};
-           }));
+               }));
 
-    return promise;
+        return promise;
   });
 
   auto update_hook = HOSTFN("updateHook", 1) {
@@ -583,17 +630,6 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
     return {};
   });
 
-  auto prepare_statement = HOSTFN("prepareStatement", 1) {
-    auto query = args[0].asString(rt).utf8(rt);
-
-    sqlite3_stmt *statement = opsqlite_prepare_statement(db_name, query);
-
-    auto preparedStatementHostObject =
-        std::make_shared<PreparedStatementHostObject>(db_name, statement);
-
-    return jsi::Object::createFromHostObject(rt, preparedStatementHostObject);
-  });
-
   auto load_extension = HOSTFN("loadExtension", 1) {
     auto path = args[0].asString(rt).utf8(rt);
     std::string entry_point = "";
@@ -606,29 +642,6 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
       throw std::runtime_error(result.message);
     }
     return {};
-  });
-
-  auto get_db_path = HOSTFN("getDbPath", 1) {
-    std::string path = std::string(base_path);
-    if (count == 1 && !args[0].isUndefined() && !args[0].isNull()) {
-      if (!args[0].isString()) {
-        throw std::runtime_error(
-            "[op-sqlite][open] database location must be a string");
-      }
-
-      std::string lastPath = args[0].asString(rt).utf8(rt);
-
-      if (lastPath == ":memory:") {
-        path = ":memory:";
-      } else if (lastPath.rfind("/", 0) == 0) {
-        path = lastPath;
-      } else {
-        path = path + "/" + lastPath;
-      }
-    }
-
-    auto result = opsqlite_get_db_path(db_name, path);
-    return jsi::String::createFromUtf8(rt, result);
   });
 
   auto reactive_execute = HOSTFN("reactiveExecute", 0) {
@@ -704,6 +717,44 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
     return unsubscribe;
   });
 
+#endif
+
+  auto prepare_statement = HOSTFN("prepareStatement", 1) {
+    auto query = args[0].asString(rt).utf8(rt);
+#ifdef OP_SQLITE_USE_LIBSQL
+    libsql_stmt_t statement = opsqlite_libsql_prepare_statement(db_name, query);
+#else
+    sqlite3_stmt *statement = opsqlite_prepare_statement(db_name, query);
+#endif
+    auto preparedStatementHostObject =
+        std::make_shared<PreparedStatementHostObject>(db_name, statement);
+
+    return jsi::Object::createFromHostObject(rt, preparedStatementHostObject);
+  });
+
+  auto get_db_path = HOSTFN("getDbPath", 1) {
+    std::string path = std::string(base_path);
+    if (count == 1 && !args[0].isUndefined() && !args[0].isNull()) {
+      if (!args[0].isString()) {
+        throw std::runtime_error(
+            "[op-sqlite][open] database location must be a string");
+      }
+
+      std::string lastPath = args[0].asString(rt).utf8(rt);
+
+      if (lastPath == ":memory:") {
+        path = ":memory:";
+      } else if (lastPath.rfind("/", 0) == 0) {
+        path = lastPath;
+      } else {
+        path = path + "/" + lastPath;
+      }
+    }
+
+    auto result = opsqlite_get_db_path(db_name, path);
+    return jsi::String::createFromUtf8(rt, result);
+  });
+
   function_map["attach"] = std::move(attach);
   function_map["detach"] = std::move(detach);
   function_map["close"] = std::move(close);
@@ -713,14 +764,16 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
   function_map["delete"] = std::move(remove);
   function_map["executeBatch"] = std::move(execute_batch);
   function_map["executeBatchAsync"] = std::move(execute_batch_async);
+#ifndef OP_SQLITE_USE_LIBSQL
   function_map["loadFile"] = std::move(load_file);
   function_map["updateHook"] = std::move(update_hook);
   function_map["commitHook"] = std::move(commit_hook);
   function_map["rollbackHook"] = std::move(rollback_hook);
-  function_map["prepareStatement"] = std::move(prepare_statement);
   function_map["loadExtension"] = std::move(load_extension);
-  function_map["getDbPath"] = std::move(get_db_path);
   function_map["reactiveExecute"] = std::move(reactive_execute);
+#endif
+  function_map["prepareStatement"] = std::move(prepare_statement);
+  function_map["getDbPath"] = std::move(get_db_path);
 };
 
 std::vector<jsi::PropNameID> DBHostObject::getPropertyNames(jsi::Runtime &rt) {
@@ -760,6 +813,44 @@ jsi::Value DBHostObject::get(jsi::Runtime &rt,
   if (name == "executeBatchAsync") {
     return jsi::Value(rt, function_map["executeBatchAsync"]);
   }
+  if (name == "prepareStatement") {
+    return jsi::Value(rt, function_map["prepareStatement"]);
+  }
+  if (name == "getDbPath") {
+    return jsi::Value(rt, function_map["getDbPath"]);
+  }
+#ifdef OP_SQLITE_USE_LIBSQL
+  if (name == "loadFile") {
+    return HOSTFN("loadFile", 0) {
+      throw std::runtime_error("[op-sqlite] Load file not implemented");
+    });
+  }
+  if (name == "updateHook") {
+    return HOSTFN("updateHook", 0) {
+      throw std::runtime_error("[op-sqlite] Hooks not supported in libsql");
+    });
+  }
+  if (name == "commitHook") {
+    return HOSTFN("commitHook", 0) {
+      throw std::runtime_error("[op-sqlite] Hooks not supported in libsql");
+    });
+  }
+  if (name == "rollbackHook") {
+    return HOSTFN("rollbackHook", 0) {
+      throw std::runtime_error("[op-sqlite] Hooks not supported in libsql");
+    });
+  }
+  if (name == "loadExtension") {
+    return HOSTFN("loadExtension", 0) {
+      throw std::runtime_error("[op-sqlite] Hooks not supported in libsql");
+    });
+  }
+  if (name == "reactiveExecute") {
+    return HOSTFN("reactiveExecute", 0) {
+      throw std::runtime_error("[op-sqlite] Hooks not supported in libsql");
+    });
+  }
+#else
   if (name == "loadFile") {
     return jsi::Value(rt, function_map["loadFile"]);
   }
@@ -772,25 +863,20 @@ jsi::Value DBHostObject::get(jsi::Runtime &rt,
   if (name == "rollbackHook") {
     return jsi::Value(rt, function_map["rollbackHook"]);
   }
-  if (name == "prepareStatement") {
-    return jsi::Value(rt, function_map["prepareStatement"]);
-  }
   if (name == "loadExtension") {
     return jsi::Value(rt, function_map["loadExtension"]);
-  }
-  if (name == "getDbPath") {
-    return jsi::Value(rt, function_map["getDbPath"]);
   }
   if (name == "reactiveExecute") {
     return jsi::Value(rt, function_map["reactiveExecute"]);
   }
+#endif
 
   return {};
 }
 
-// void DBHostObject::set(jsi::Runtime &rt, const jsi::PropNameID &name,
-//                        const jsi::Value &value) {
-//   throw std::runtime_error("You cannot write to this object!");
-// }
+void DBHostObject::set(jsi::Runtime &rt, const jsi::PropNameID &name,
+                       const jsi::Value &value) {
+  throw std::runtime_error("You cannot write to this object!");
+}
 
 } // namespace opsqlite
