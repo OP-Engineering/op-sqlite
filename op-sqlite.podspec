@@ -21,6 +21,7 @@ end
 op_sqlite_config = app_package["op-sqlite"]
 use_sqlcipher = false
 use_crsqlite = false
+use_libsql = false
 performance_mode = "0"
 phone_version = false
 sqlite_flags = ""
@@ -29,6 +30,7 @@ fts5 = false
 if(op_sqlite_config != nil)
   use_sqlcipher = op_sqlite_config["sqlcipher"] == true
   use_crsqlite = op_sqlite_config["crsqlite"] == true
+  use_libsql = op_sqlite_config["libsql"] == true
   performance_mode = op_sqlite_config["performanceMode"] || "0"
   phone_version = op_sqlite_config["iosSqlite"] == true
   sqlite_flags = op_sqlite_config["sqliteFlags"] || ""
@@ -64,12 +66,15 @@ Pod::Spec.new do |s|
   
   if use_sqlcipher then
     log_message.call("[OP-SQLITE] using SQLCipher 🔒")
-    s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h"
+    s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h"
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_SQLCIPHER=1 HAVE_FULLFSYNC=1 SQLITE_HAS_CODEC SQLITE_TEMP_STORE=2"
-    s.dependency "OpenSSL-Universal"
+    s.dependency "OpenSSL-Universal"    
+  elsif use_libsql then
+    log_message.call("[OP-SQLITE] using libsql 📘")
+    s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/bridge.h", "cpp/bridge.cpp"
   else
     log_message.call("[OP-SQLITE] using vanilla SQLite 📦")
-    s.exclude_files = "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h"
+    s.exclude_files = "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h"
   end
   
   s.dependency "React-callinvoker"
@@ -122,6 +127,18 @@ Pod::Spec.new do |s|
     log_message.call("[OP-SQLITE] using CRQSQLite 🤖")
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_CRSQLITE=1"
     s.vendored_frameworks = "ios/crsqlite.xcframework"
+  end
+
+  if use_libsql then
+    if use_crsqlite then
+      raise "Cannot use CRSQLite and libsql at the same time"
+    end
+
+    if use_sqlcipher then
+      raise "Cannot use SQLCipher and libsql at the same time"
+    end
+    xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_LIBSQL=1"
+    s.vendored_frameworks = "ios/libsql.xcframework"
   end
 
   if sqlite_flags != "" then

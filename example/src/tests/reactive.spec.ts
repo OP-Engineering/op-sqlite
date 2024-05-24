@@ -1,4 +1,4 @@
-import {open, type DB} from '@op-engineering/op-sqlite';
+import {isLibsql, open, type DB} from '@op-engineering/op-sqlite';
 import chai from 'chai';
 import {beforeEach, describe, it} from './MochaRNAdapter';
 import {sleep} from './utils';
@@ -29,6 +29,10 @@ export function reactiveTests() {
   });
 
   describe('Reactive queries', () => {
+    // libsql does not support reactive queries
+    if (isLibsql()) {
+      return;
+    }
     it('Table reactive query', async () => {
       let fullSelectRan = false;
       let emittedUser = null;

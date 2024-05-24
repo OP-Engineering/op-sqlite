@@ -16,19 +16,18 @@ namespace opsqlite {
 namespace jsi = facebook::jsi;
 
 jsi::Value toJSI(jsi::Runtime &rt, JSVariant value);
-
 JSVariant toVariant(jsi::Runtime &rt, jsi::Value const &value);
 std::vector<std::string> to_string_vec(jsi::Runtime &rt, jsi::Value const &xs);
 std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt, jsi::Value const &xs);
 std::vector<int> to_int_vec(jsi::Runtime &rt, jsi::Value const &xs);
-
 jsi::Value createResult(jsi::Runtime &rt, BridgeResult status,
                         std::vector<DumbHostObject> *results,
                         std::shared_ptr<std::vector<SmartHostObject>> metadata);
-
 jsi::Value
 create_raw_result(jsi::Runtime &rt, BridgeResult status,
                   const std::vector<std::vector<JSVariant>> *results);
+void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batchParams,
+                      std::vector<BatchArguments> *commands);
 
 BatchResult importSQLFile(std::string dbName, std::string fileLocation);
 

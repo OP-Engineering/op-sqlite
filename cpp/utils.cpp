@@ -1,6 +1,8 @@
 #include "utils.h"
 #include "SmartHostObject.h"
-#include "bridge.h"
+#ifndef OP_SQLITE_USE_LIBSQL
+ #include "bridge.h"
+#endif
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -12,7 +14,6 @@ namespace opsqlite {
 namespace jsi = facebook::jsi;
 
 jsi::Value toJSI(jsi::Runtime &rt, JSVariant value) {
-
   if (std::holds_alternative<bool>(value)) {
     return std::get<bool>(value);
   } else if (std::holds_alternative<int>(value)) {
@@ -22,7 +23,8 @@ jsi::Value toJSI(jsi::Runtime &rt, JSVariant value) {
   } else if (std::holds_alternative<double>(value)) {
     return jsi::Value(std::get<double>(value));
   } else if (std::holds_alternative<std::string>(value)) {
-    return jsi::String::createFromUtf8(rt, std::get<std::string>(value));
+    auto str = std::get<std::string>(value);
+    return jsi::String::createFromUtf8(rt, str);
   } else if (std::holds_alternative<ArrayBuffer>(value)) {
     auto jsBuffer = std::get<ArrayBuffer>(value);
     jsi::Function array_buffer_ctor =
@@ -80,7 +82,6 @@ JSVariant toVariant(jsi::Runtime &rt, const jsi::Value &value) {
 }
 
 std::vector<std::string> to_string_vec(jsi::Runtime &rt, jsi::Value const &xs) {
-
   jsi::Array values = xs.asObject(rt).asArray(rt);
   std::vector<std::string> res;
   for (int ii = 0; ii < values.length(rt); ii++) {
@@ -218,44 +219,87 @@ create_raw_result(jsi::Runtime &rt, BridgeResult status,
   return res;
 }
 
-BatchResult importSQLFile(std::string dbName, std::string fileLocation) {
-  std::string line;
-  std::ifstream sqFile(fileLocation);
-  if (sqFile.is_open()) {
-    try {
-      int affectedRows = 0;
-      int commands = 0;
-      opsqlite_execute(dbName, "BEGIN EXCLUSIVE TRANSACTION", nullptr, nullptr,
-                       nullptr);
-      while (std::getline(sqFile, line, '\n')) {
-        if (!line.empty()) {
-          BridgeResult result =
-              opsqlite_execute(dbName, line, nullptr, nullptr, nullptr);
-          if (result.type == SQLiteError) {
-            opsqlite_execute(dbName, "ROLLBACK", nullptr, nullptr, nullptr);
-            sqFile.close();
-            return {SQLiteError, result.message, 0, commands};
-          } else {
-            affectedRows += result.affectedRows;
-            commands++;
-          }
-        }
-      }
-      sqFile.close();
-      opsqlite_execute(dbName, "COMMIT", nullptr, nullptr, nullptr);
-      return {SQLiteOk, "", affectedRows, commands};
-    } catch (...) {
-      sqFile.close();
-      opsqlite_execute(dbName, "ROLLBACK", nullptr, nullptr, nullptr);
-      return {SQLiteError,
-              "[op-sqlite][loadSQLFile] Unexpected error, transaction was "
-              "rolledback",
-              0, 0};
+void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batchParams,
+                        std::vector<BatchArguments> *commands) {
+  for (int i = 0; i < batchParams.length(rt); i++) {
+    const jsi::Array &command =
+        batchParams.getValueAtIndex(rt, i).asObject(rt).asArray(rt);
+    if (command.length(rt) == 0) {
+      continue;
     }
-  } else {
-    return {SQLiteError, "[op-sqlite][loadSQLFile] Could not open file", 0, 0};
+
+    const std::string query =
+        command.getValueAtIndex(rt, 0).asString(rt).utf8(rt);
+    const jsi::Value &commandParams = command.length(rt) > 1
+                                          ? command.getValueAtIndex(rt, 1)
+                                          : jsi::Value::undefined();
+    if (!commandParams.isUndefined() &&
+        commandParams.asObject(rt).isArray(rt) &&
+        commandParams.asObject(rt).asArray(rt).length(rt) > 0 &&
+        commandParams.asObject(rt)
+            .asArray(rt)
+            .getValueAtIndex(rt, 0)
+            .isObject()) {
+      // This arguments is an array of arrays, like a batch update of a single
+      // sql command.
+      const jsi::Array &batchUpdateParams =
+          commandParams.asObject(rt).asArray(rt);
+      for (int x = 0; x < batchUpdateParams.length(rt); x++) {
+        const jsi::Value &p = batchUpdateParams.getValueAtIndex(rt, x);
+        auto params =
+            std::make_shared<std::vector<JSVariant>>(to_variant_vec(rt, p));
+        commands->push_back({query, params});
+      }
+    } else {
+      auto params = std::make_shared<std::vector<JSVariant>>(
+          to_variant_vec(rt, commandParams));
+      commands->push_back({query, params});
+    }
   }
 }
+
+#ifndef OP_SQLITE_USE_LIBSQL
+ BatchResult importSQLFile(std::string dbName, std::string fileLocation) {
+   std::string line;
+   std::ifstream sqFile(fileLocation);
+   if (sqFile.is_open()) {
+     try {
+       int affectedRows = 0;
+       int commands = 0;
+       opsqlite_execute(dbName, "BEGIN EXCLUSIVE TRANSACTION", nullptr,
+       nullptr,
+                        nullptr);
+       while (std::getline(sqFile, line, '\n')) {
+         if (!line.empty()) {
+           BridgeResult result =
+               opsqlite_execute(dbName, line, nullptr, nullptr, nullptr);
+           if (result.type == SQLiteError) {
+             opsqlite_execute(dbName, "ROLLBACK", nullptr, nullptr, nullptr);
+             sqFile.close();
+             return {SQLiteError, result.message, 0, commands};
+           } else {
+             affectedRows += result.affectedRows;
+             commands++;
+           }
+         }
+       }
+       sqFile.close();
+       opsqlite_execute(dbName, "COMMIT", nullptr, nullptr, nullptr);
+       return {SQLiteOk, "", affectedRows, commands};
+     } catch (...) {
+       sqFile.close();
+       opsqlite_execute(dbName, "ROLLBACK", nullptr, nullptr, nullptr);
+       return {SQLiteError,
+               "[op-sqlite][loadSQLFile] Unexpected error, transaction was "
+               "rolledback",
+               0, 0};
+     }
+   } else {
+     return {SQLiteError, "[op-sqlite][loadSQLFile] Could not open file", 0,
+     0};
+   }
+ }
+#endif
 
 bool folder_exists(const std::string &foldername) {
   struct stat buffer;

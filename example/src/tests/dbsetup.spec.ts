@@ -2,6 +2,7 @@ import {
   ANDROID_DATABASE_PATH,
   ANDROID_EXTERNAL_FILES_PATH,
   IOS_LIBRARY_PATH,
+  isLibsql,
   isSQLCipher,
   moveAssetsDatabase,
   open,
@@ -12,7 +13,11 @@ import {Platform} from 'react-native';
 
 let expect = chai.expect;
 
-const expectedVersion = isSQLCipher() ? '3.44.2' : '3.45.1';
+const expectedVersion = isLibsql()
+  ? '3.44.0'
+  : isSQLCipher()
+  ? '3.44.2'
+  : '3.45.1';
 
 export function dbSetupTests() {
   describe('DB setup tests', () => {

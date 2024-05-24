@@ -11,7 +11,6 @@
 *************************************************************************
 ** This header file defines the interface that the SQLite library
 ** presents to client programs.  If a C-function, structure, datatype,
-** or constant definition does not appear in this file, then it is
 ** not a published API of SQLite, is subject to change without
 ** notice, and should not be referenced by programs that use SQLite.
 **

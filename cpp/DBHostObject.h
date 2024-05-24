@@ -35,8 +35,9 @@ public:
                std::string &encryption_key);
 
   std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt);
-
   jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID);
+    void set(jsi::Runtime &rt, const jsi::PropNameID &name,
+                           const jsi::Value &value);
 
   void auto_register_update_hook();
 

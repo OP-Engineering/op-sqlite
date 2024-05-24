@@ -1,5 +1,10 @@
 import Chance from 'chance';
-import {open, type DB, type SQLBatchTuple} from '@op-engineering/op-sqlite';
+import {
+  isLibsql,
+  open,
+  type DB,
+  type SQLBatchTuple,
+} from '@op-engineering/op-sqlite';
 import {beforeEach, describe, it} from './MochaRNAdapter';
 import chai from 'chai';
 
@@ -150,6 +155,9 @@ export function queriesTests() {
     });
 
     it('Executes all the statements in a single string', async () => {
+      if (isLibsql()) {
+        return;
+      }
       db.execute(
         `CREATE TABLE T1 ( id INT PRIMARY KEY) STRICT;
         CREATE TABLE T2 ( id INT PRIMARY KEY) STRICT;`,
@@ -186,6 +194,24 @@ export function queriesTests() {
           `cannot store TEXT value in INT column User.id`,
         );
       }
+    });
+
+    it('Async Insert', async () => {
+      const id = chance.integer();
+      const name = chance.name();
+      const age = chance.integer();
+      const networth = chance.floating();
+      const res = await db.executeAsync(
+        'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+        [id, name, age, networth],
+      );
+
+      expect(res.rowsAffected).to.equal(1);
+      expect(res.insertId).to.equal(1);
+      expect(res.metadata).to.eql([]);
+      expect(res.rows?._array).to.eql([]);
+      expect(res.rows?.length).to.equal(0);
+      expect(res.rows?.item).to.be.a('function');
     });
 
     it('Transaction, auto commit', async () => {
