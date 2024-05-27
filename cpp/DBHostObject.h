@@ -34,7 +34,9 @@ public:
                std::string &encryption_key);
 
 #ifdef OP_SQLITE_USE_LIBSQL
-  DBHostObject(jsi::Runtime &rt, std::string &url, std::string &auth_token, std::shared_ptr<react::CallInvoker> js_call_invoker, std::shared_ptr<ThreadPool> thread_pool);
+  DBHostObject(jsi::Runtime &rt, std::string &url, std::string &auth_token,
+               std::shared_ptr<react::CallInvoker> js_call_invoker,
+               std::shared_ptr<ThreadPool> thread_pool);
 #endif
 
   std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt);
