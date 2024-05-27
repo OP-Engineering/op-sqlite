@@ -561,8 +561,7 @@ void DBHostObject::create_jsi_functions() {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-      auto task = [&rt, this, sqlFileName, resolve,
-                   reject]() {
+      auto task = [&rt, this, sqlFileName, resolve, reject]() {
         try {
           const auto importResult = importSQLFile(db_name, sqlFileName);
 
