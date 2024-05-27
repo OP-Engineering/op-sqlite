@@ -1,7 +1,7 @@
 #include "utils.h"
 #include "SmartHostObject.h"
 #ifndef OP_SQLITE_USE_LIBSQL
- #include "bridge.h"
+#include "bridge.h"
 #endif
 #include <fstream>
 #include <iostream>
@@ -259,46 +259,44 @@ void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batchParams,
 }
 
 #ifndef OP_SQLITE_USE_LIBSQL
- BatchResult importSQLFile(std::string dbName, std::string fileLocation) {
-   std::string line;
-   std::ifstream sqFile(fileLocation);
-   if (sqFile.is_open()) {
-     try {
-       int affectedRows = 0;
-       int commands = 0;
-       opsqlite_execute(dbName, "BEGIN EXCLUSIVE TRANSACTION", nullptr,
-       nullptr,
-                        nullptr);
-       while (std::getline(sqFile, line, '\n')) {
-         if (!line.empty()) {
-           BridgeResult result =
-               opsqlite_execute(dbName, line, nullptr, nullptr, nullptr);
-           if (result.type == SQLiteError) {
-             opsqlite_execute(dbName, "ROLLBACK", nullptr, nullptr, nullptr);
-             sqFile.close();
-             return {SQLiteError, result.message, 0, commands};
-           } else {
-             affectedRows += result.affectedRows;
-             commands++;
-           }
-         }
-       }
-       sqFile.close();
-       opsqlite_execute(dbName, "COMMIT", nullptr, nullptr, nullptr);
-       return {SQLiteOk, "", affectedRows, commands};
-     } catch (...) {
-       sqFile.close();
-       opsqlite_execute(dbName, "ROLLBACK", nullptr, nullptr, nullptr);
-       return {SQLiteError,
-               "[op-sqlite][loadSQLFile] Unexpected error, transaction was "
-               "rolledback",
-               0, 0};
-     }
-   } else {
-     return {SQLiteError, "[op-sqlite][loadSQLFile] Could not open file", 0,
-     0};
-   }
- }
+BatchResult importSQLFile(std::string dbName, std::string fileLocation) {
+  std::string line;
+  std::ifstream sqFile(fileLocation);
+  if (sqFile.is_open()) {
+    try {
+      int affectedRows = 0;
+      int commands = 0;
+      opsqlite_execute(dbName, "BEGIN EXCLUSIVE TRANSACTION", nullptr, nullptr,
+                       nullptr);
+      while (std::getline(sqFile, line, '\n')) {
+        if (!line.empty()) {
+          BridgeResult result =
+              opsqlite_execute(dbName, line, nullptr, nullptr, nullptr);
+          if (result.type == SQLiteError) {
+            opsqlite_execute(dbName, "ROLLBACK", nullptr, nullptr, nullptr);
+            sqFile.close();
+            return {SQLiteError, result.message, 0, commands};
+          } else {
+            affectedRows += result.affectedRows;
+            commands++;
+          }
+        }
+      }
+      sqFile.close();
+      opsqlite_execute(dbName, "COMMIT", nullptr, nullptr, nullptr);
+      return {SQLiteOk, "", affectedRows, commands};
+    } catch (...) {
+      sqFile.close();
+      opsqlite_execute(dbName, "ROLLBACK", nullptr, nullptr, nullptr);
+      return {SQLiteError,
+              "[op-sqlite][loadSQLFile] Unexpected error, transaction was "
+              "rolledback",
+              0, 0};
+    }
+  } else {
+    return {SQLiteError, "[op-sqlite][loadSQLFile] Could not open file", 0, 0};
+  }
+}
 #endif
 
 bool folder_exists(const std::string &foldername) {

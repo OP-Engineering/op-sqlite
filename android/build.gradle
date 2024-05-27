@@ -28,6 +28,7 @@ def isNewArchitectureEnabled() {
 }
 
 def useSQLCipher = false
+def useLibsql = false
 def useCRSQLite = false
 def performanceMode = "0"
 def sqliteFlags = ""
@@ -43,10 +44,13 @@ if(opsqliteConfig) {
   performanceMode = opsqliteConfig["performanceMode"] ? opsqliteConfig["performanceMode"] : ""
   sqliteFlags = opsqliteConfig["sqliteFlags"] ? opsqliteConfig["sqliteFlags"] : ""
   enableFTS5 = opsqliteConfig["fts5"]
+  useLibsql = opsqliteConfig["libsql"]
 }
 
 if(useSQLCipher) {
   println "[OP-SQLITE] using SQLCipher 🔒"
+} else if(useLibsql) {
+  println "[OP-SQLITE] using libsql 📦"
 } else {
   println "[OP-SQLITE] using Vanilla SQLite"
 }
@@ -117,6 +121,10 @@ android {
               cFlags += "-DOP_SQLITE_USE_SQLCIPHER=1"
               cppFlags += "-DOP_SQLITE_USE_SQLCIPHER=1"
             }
+            if(useLibsql) {
+              cFlags += "-DOP_SQLITE_USE_LIBSQL=1"
+              cppFlags += "-DOP_SQLITE_USE_LIBSQL=1"
+            }
             if(useCRSQLite) {
               cFlags += "-DOP_SQLITE_USE_CRSQLITE=1"
               cppFlags += "-DOP_SQLITE_USE_CRSQLITE=1"
@@ -136,7 +144,8 @@ android {
             arguments "-DANDROID_STL=c++_shared",
               "-DSQLITE_FLAGS='$sqliteFlags'",
               "-DUSE_SQLCIPHER=${useSQLCipher ? 1 : 0}",
-              "-DUSE_CRSQLITE=${useCRSQLite ? 1 : 0}"
+              "-DUSE_CRSQLITE=${useCRSQLite ? 1 : 0}",
+              "-DUSE_LIBSQL=${useLibsql ? 1 : 0}"
             abiFilters (*reactNativeArchitectures())
         }
     }

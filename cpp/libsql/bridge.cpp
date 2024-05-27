@@ -304,13 +304,11 @@ BridgeResult opsqlite_libsql_execute_prepared_statement(
   }
 
   libsql_free_rows(rows);
-  libsql_free_stmt(stmt);
 
   int changes = libsql_changes(c);
   long long insert_row_id = libsql_last_insert_rowid(c);
 
-  //         TODO: C Bindings are missing the reset function add them later
-  //         libsql_stmt
+  libsql_reset_stmt(stmt, &err);
 
   return {.type = SQLiteOk,
           .affectedRows = changes,

@@ -27,7 +27,7 @@ jsi::Value
 create_raw_result(jsi::Runtime &rt, BridgeResult status,
                   const std::vector<std::vector<JSVariant>> *results);
 void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batchParams,
-                      std::vector<BatchArguments> *commands);
+                        std::vector<BatchArguments> *commands);
 
 BatchResult importSQLFile(std::string dbName, std::string fileLocation);
 

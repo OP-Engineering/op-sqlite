@@ -6,6 +6,10 @@
 #include <jsi/jsi.h>
 #include <typeinfo>
 
+namespace jsi = facebook::jsi;
+namespace react = facebook::react;
+namespace jni = facebook::jni;
+
 // This file is not using raw jni but rather fbjni, do not change how the native
 // functions are registered
 // https://github.com/facebookincubator/fbjni/blob/main/docs/quickref.md
