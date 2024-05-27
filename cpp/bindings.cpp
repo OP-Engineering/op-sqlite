@@ -19,9 +19,9 @@ namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 
-std::string basePath;
-std::string crsqlitePath;
-std::shared_ptr<react::CallInvoker> invoker;
+std::string _base_path;
+std::string _crsqlite_path;
+std::shared_ptr<react::CallInvoker> _invoker;
 std::shared_ptr<ThreadPool> thread_pool = std::make_shared<ThreadPool>();
 
 // React native will try to clean the module on JS context invalidation
@@ -31,29 +31,28 @@ bool invalidated = false;
 
 void clearState() {
   invalidated = true;
-  // Will terminate all operations and database connections
-  //  opsqlite_close_all();
+
+#ifdef OP_SQLITE_USE_LIBSQL
+  opsqlite_libsql_close_all();
+#else
+  opsqlite_close_all();
+#endif
+
   // We then join all the threads before the context gets invalidated
   thread_pool->restartPool();
 }
 
-void install(jsi::Runtime &rt,
-             std::shared_ptr<react::CallInvoker> js_call_invoker,
-             const char *doc_path, const char *_crsqlitePath) {
-
+void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
+             const char *base_path, const char *crsqlite_path) {
   invalidated = false;
-  basePath = std::string(doc_path);
-  crsqlitePath = std::string(_crsqlitePath);
-  invoker = js_call_invoker;
+  _base_path = std::string(base_path);
+  _crsqlite_path = std::string(crsqlite_path);
+  _invoker = invoker;
 
-  auto open = HOSTFN("open", 3) {
-    if (count == 0) {
-      throw std::runtime_error("[op-sqlite][open] database name is required");
-    }
-
+  auto open = HOSTFN("open", 1) {
     jsi::Object options = args[0].asObject(rt);
-    std::string dbName = options.getProperty(rt, "name").asString(rt).utf8(rt);
-    std::string path = std::string(basePath);
+    std::string name = options.getProperty(rt, "name").asString(rt).utf8(rt);
+    std::string path = std::string(_base_path);
     std::string location;
     std::string encryptionKey;
 
@@ -83,9 +82,9 @@ void install(jsi::Runtime &rt,
       }
     }
 
-    std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-        rt, basePath, invoker, thread_pool, dbName, path, crsqlitePath,
-        encryptionKey);
+    std::shared_ptr<DBHostObject> db =
+        std::make_shared<DBHostObject>(rt, path, invoker, thread_pool, name,
+                                       path, _crsqlite_path, encryptionKey);
     return jsi::Object::createFromHostObject(rt, db);
   });
 
@@ -105,10 +104,25 @@ void install(jsi::Runtime &rt,
 #endif
   });
 
+#ifdef OP_SQLITE_USE_LIBSQL
+  auto open_remote = HOSTFN("openRemote", 1) {
+    jsi::Object options = args[0].asObject(rt);
+    std::string url = options.getProperty(rt, "url").asString(rt).utf8(rt);
+    std::string auth_token =
+        options.getProperty(rt, "authToken").asString(rt).utf8(rt);
+
+    std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(rt, url, auth_token, invoker, thread_pool);
+    return jsi::Object::createFromHostObject(rt, db);
+  });
+#endif
+
   jsi::Object module = jsi::Object(rt);
   module.setProperty(rt, "open", std::move(open));
   module.setProperty(rt, "isSQLCipher", std::move(is_sqlcipher));
   module.setProperty(rt, "isLibsql", std::move(is_libsql));
+#ifdef OP_SQLITE_USE_LIBSQL
+  module.setProperty(rt, "openRemote", std::move(open_remote));
+#endif
 
   rt.global().setProperty(rt, "__OPSQLiteProxy", std::move(module));
 }

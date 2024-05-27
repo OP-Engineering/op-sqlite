@@ -1,5 +1,4 @@
-#ifndef DBHostObject_h
-#define DBHostObject_h
+#pragma once
 
 #include "ThreadPool.h"
 #include "sqlite3.h"
@@ -34,16 +33,21 @@ public:
                std::string &path, std::string &crsqlite_path,
                std::string &encryption_key);
 
+#ifdef OP_SQLITE_USE_LIBSQL
+  DBHostObject(jsi::Runtime &rt, std::string &url, std::string &auth_token, std::shared_ptr<react::CallInvoker> js_call_invoker, std::shared_ptr<ThreadPool> thread_pool);
+#endif
+
   std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt);
   jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID);
   void set(jsi::Runtime &rt, const jsi::PropNameID &name,
            const jsi::Value &value);
 
+private:
   void auto_register_update_hook();
+  void create_jsi_functions();
 
   std::unordered_map<std::string, jsi::Value> function_map;
   std::string base_path;
-
   std::shared_ptr<jsi::Value> update_hook;
   std::shared_ptr<react::CallInvoker> jsCallInvoker;
   std::shared_ptr<ThreadPool> thread_pool;
@@ -57,5 +61,3 @@ public:
 };
 
 } // namespace opsqlite
-
-#endif /* DBHostObject_h */
