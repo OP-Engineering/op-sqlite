@@ -111,7 +111,8 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
     std::string auth_token =
         options.getProperty(rt, "authToken").asString(rt).utf8(rt);
 
-    std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(rt, url, auth_token, invoker, thread_pool);
+    std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
+        rt, url, auth_token, invoker, thread_pool);
     return jsi::Object::createFromHostObject(rt, db);
   });
 #endif

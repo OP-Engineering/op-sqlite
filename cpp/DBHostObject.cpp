@@ -561,7 +561,7 @@ void DBHostObject::create_jsi_functions() {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-      auto task = [&rt, &db_name, &jsCallInvoker, sqlFileName, resolve,
+      auto task = [&rt, this, sqlFileName, resolve,
                    reject]() {
         try {
           const auto importResult = importSQLFile(db_name, sqlFileName);
@@ -618,7 +618,7 @@ void DBHostObject::create_jsi_functions() {
     }
     commit_hook_callback = callback;
 
-    auto hook = [&rt, jsCallInvoker, callback](std::string dbName) {
+    auto hook = [&rt, this, callback](std::string dbName) {
       jsCallInvoker->invokeAsync(
           [&rt, callback] { callback->asObject(rt).asFunction(rt).call(rt); });
     };
@@ -642,7 +642,7 @@ void DBHostObject::create_jsi_functions() {
     }
     rollback_hook_callback = callback;
 
-    auto hook = [&rt, jsCallInvoker, callback](std::string db_name) {
+    auto hook = [&rt, this, callback](std::string db_name) {
       jsCallInvoker->invokeAsync(
           [&rt, callback] { callback->asObject(rt).asFunction(rt).call(rt); });
     };
