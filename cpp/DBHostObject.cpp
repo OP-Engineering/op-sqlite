@@ -137,6 +137,23 @@ void DBHostObject::auto_register_update_hook() {
 }
 #endif
 
+#ifdef OP_SQLITE_USE_LIBSQL
+DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &url,
+                           std::string &auth_token,
+                           std::shared_ptr<react::CallInvoker> js_call_invoker,
+                           std::shared_ptr<ThreadPool> thread_pool)
+    : db_name(url), jsCallInvoker(js_call_invoker), thread_pool(thread_pool),
+      rt(rt) {
+  BridgeResult result = opsqlite_libsql_open_remote(url, auth_token);
+
+  if (result.type == SQLiteError) {
+    throw std::runtime_error(result.message);
+  }
+
+  create_jsi_functions();
+}
+#endif
+
 DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
                            std::shared_ptr<react::CallInvoker> jsCallInvoker,
                            std::shared_ptr<ThreadPool> thread_pool,
@@ -159,6 +176,10 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
     throw std::runtime_error(result.message);
   }
 
+  create_jsi_functions();
+};
+
+void DBHostObject::create_jsi_functions() {
   auto attach = HOSTFN("attach", 4) {
     if (count < 3) {
       throw jsi::JSError(rt,
@@ -311,11 +332,11 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
     }
 
     auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
-     auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor", 2) {
+    auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor", 2) {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-      auto task = [&rt, db_name, query, params = std::move(params), resolve,
+      auto task = [&rt, this, query, params = std::move(params), resolve,
                    reject, invoker = this->jsCallInvoker]() {
         try {
           std::vector<std::vector<JSVariant>> results;
@@ -360,7 +381,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
       return {};
      }));
 
-     return promise;
+    return promise;
   });
 
   auto execute_async = HOSTFN("executeAsync", 2) {
@@ -377,7 +398,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-      auto task = [&rt, &db_name, query, params = std::move(params), resolve,
+      auto task = [&rt, this, query, params = std::move(params), resolve,
                    reject, invoker = this->jsCallInvoker]() {
         try {
           std::vector<DumbHostObject> results;
@@ -486,7 +507,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-      auto task = [&rt, &db_name, &jsCallInvoker,
+      auto task = [&rt, this,
                    commands =
                        std::make_shared<std::vector<BatchArguments>>(commands),
                    resolve, reject]() {
@@ -764,6 +785,8 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
   function_map["delete"] = std::move(remove);
   function_map["executeBatch"] = std::move(execute_batch);
   function_map["executeBatchAsync"] = std::move(execute_batch_async);
+  function_map["prepareStatement"] = std::move(prepare_statement);
+  function_map["getDbPath"] = std::move(get_db_path);
 #ifndef OP_SQLITE_USE_LIBSQL
   function_map["loadFile"] = std::move(load_file);
   function_map["updateHook"] = std::move(update_hook);
@@ -772,9 +795,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
   function_map["loadExtension"] = std::move(load_extension);
   function_map["reactiveExecute"] = std::move(reactive_execute);
 #endif
-  function_map["prepareStatement"] = std::move(prepare_statement);
-  function_map["getDbPath"] = std::move(get_db_path);
-};
+}
 
 std::vector<jsi::PropNameID> DBHostObject::getPropertyNames(jsi::Runtime &rt) {
   std::vector<jsi::PropNameID> keys;

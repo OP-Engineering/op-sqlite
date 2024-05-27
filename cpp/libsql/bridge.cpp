@@ -80,6 +80,30 @@ BridgeResult opsqlite_libsql_open(std::string const &name,
   return {.type = SQLiteOk, .affectedRows = 0};
 }
 
+BridgeResult opsqlite_libsql_open_remote(std::string const &url,
+                                         std::string const &auth_token) {
+  int status = 0;
+  libsql_database_t db;
+  libsql_connection_t c;
+  const char *err = NULL;
+
+  status = libsql_open_remote(url.c_str(), auth_token.c_str(), &db, &err);
+
+  if (status != 0) {
+    return {.type = SQLiteError, .message = err};
+  }
+
+  status = libsql_connect(db, &c, &err);
+
+  if (status != 0) {
+    return {.type = SQLiteError, .message = err};
+  }
+
+  db_map[url] = {.db = db, .c = c};
+
+  return {.type = SQLiteOk, .affectedRows = 0};
+}
+
 BridgeResult opsqlite_libsql_close(std::string const &name) {
 
   check_db_open(name);
@@ -94,6 +118,15 @@ BridgeResult opsqlite_libsql_close(std::string const &name) {
   return BridgeResult{
       .type = SQLiteOk,
   };
+}
+
+void opsqlite_libsql_close_all() {
+  //  for (auto const &db : db_map) {
+  //      libsql_close();
+  //  }
+  for (auto const &db : db_map) {
+    opsqlite_libsql_close(db.first);
+  }
 }
 
 BridgeResult opsqlite_libsql_attach(std::string const &mainDBName,
@@ -160,8 +193,6 @@ BridgeResult opsqlite_libsql_remove(std::string const &name,
 
 void opsqlite_libsql_bind_statement(libsql_stmt_t statement,
                                     const std::vector<JSVariant> *values) {
-
-  // sqlite3_clear_bindings(statement);
   const char *err;
   size_t size = values->size();
 

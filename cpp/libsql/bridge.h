@@ -30,6 +30,9 @@ std::string opsqlite_get_db_path(std::string const &name,
 BridgeResult opsqlite_libsql_open(std::string const &name,
                                   std::string const &path);
 
+BridgeResult opsqlite_libsql_open_remote(std::string const &url,
+                                         std::string const &auth_token);
+
 BridgeResult opsqlite_libsql_close(std::string const &name);
 
 BridgeResult opsqlite_libsql_remove(std::string const &name,
@@ -57,18 +60,7 @@ BatchResult
 opsqlite_libsql_execute_batch(std::string const &name,
                               std::vector<BatchArguments> *commands);
 
-// void opsqlite_close_all();
-
-// BridgeResult opsqlite_register_update_hook(std::string const &dbName,
-//                                            UpdateCallback const callback);
-// BridgeResult opsqlite_deregister_update_hook(std::string const &dbName);
-// BridgeResult opsqlite_register_commit_hook(std::string const &dbName,
-//                                            CommitCallback const callback);
-// BridgeResult opsqlite_deregister_commit_hook(std::string const &dbName);
-// BridgeResult opsqlite_register_rollback_hook(std::string const &dbName,
-//                                              RollbackCallback const
-//                                              callback);
-// BridgeResult opsqlite_deregister_rollback_hook(std::string const &dbName);
+void opsqlite_libsql_close_all();
 
 libsql_stmt_t opsqlite_libsql_prepare_statement(std::string const &name,
                                                 std::string const &query);
@@ -80,9 +72,5 @@ BridgeResult opsqlite_libsql_execute_prepared_statement(
     std::string const &name, libsql_stmt_t stmt,
     std::vector<DumbHostObject> *results,
     std::shared_ptr<std::vector<SmartHostObject>> metadatas);
-
-// BridgeResult opsqlite_load_extension(std::string const &db_name,
-//                                      std::string &path,
-//                                      std::string &entry_point);
 
 } // namespace opsqlite
