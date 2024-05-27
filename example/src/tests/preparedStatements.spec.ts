@@ -1,4 +1,4 @@
-import {type DB, open, isLibsql} from '@op-engineering/op-sqlite';
+import {open, type DB} from '@op-engineering/op-sqlite';
 import chai from 'chai';
 import {beforeEach, describe, it} from './MochaRNAdapter';
 
@@ -30,10 +30,6 @@ export function preparedStatementsTests() {
   });
 
   describe('PreparedStatements', () => {
-    if (isLibsql()) {
-      return;
-    }
-
     it('Creates a prepared statement and executes a prepared statement', async () => {
       const statement = db.prepareStatement('SELECT * FROM User;');
       let results = statement.execute();
