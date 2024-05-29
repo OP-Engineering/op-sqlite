@@ -6,7 +6,7 @@ import {
   type DB,
   type SQLBatchTuple,
 } from '@op-engineering/op-sqlite';
-import {beforeEach, describe, it, itOnly} from './MochaRNAdapter';
+import {beforeEach, describe, it} from './MochaRNAdapter';
 import chai from 'chai';
 
 const expect = chai.expect;
@@ -37,7 +37,7 @@ export function queriesTests() {
 
   describe('Queries tests', () => {
     if (isLibsql()) {
-      itOnly('Test remote open', async () => {
+      it('Test remote open', async () => {
         const remoteDb = openRemote({
           url: 'libsql://foo-ospfranco.turso.io',
           authToken:
