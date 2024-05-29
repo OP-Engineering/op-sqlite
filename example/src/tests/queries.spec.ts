@@ -2,10 +2,11 @@ import Chance from 'chance';
 import {
   isLibsql,
   open,
+  openRemote,
   type DB,
   type SQLBatchTuple,
 } from '@op-engineering/op-sqlite';
-import {beforeEach, describe, it} from './MochaRNAdapter';
+import {beforeEach, describe, it, itOnly} from './MochaRNAdapter';
 import chai from 'chai';
 
 const expect = chai.expect;
@@ -35,10 +36,20 @@ export function queriesTests() {
   });
 
   describe('Queries tests', () => {
-    // it('Test crsqlite', async () => {
-    //   const res = db.execute('select crsql_as_crr("User")');
-    //   console.warn(res);
-    // });
+    if (isLibsql()) {
+      itOnly('Test remote open', async () => {
+        const remoteDb = openRemote({
+          url: 'libsql://foo-ospfranco.turso.io',
+          authToken:
+            'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3MTY5NTc5OTUsImlkIjoiZmJkNzZmMjYtZTliYy00MGJiLTlmYmYtMDczZjFmMjdjOGY4In0.U3cAWBOvcdiqoPN3MB81sco7x8CGOjjtZ1ZEf30uo2iPcAmOuJzcnAznmDlZ6SpQd4qzuJxE4mAIoRlOkpzgBQ',
+        });
+
+        const res = remoteDb.execute('SELECT 1');
+
+        console.warn(res);
+        expect(res.rowsAffected).to.equal(0);
+      });
+    }
 
     it('Insert', async () => {
       const id = chance.integer();
