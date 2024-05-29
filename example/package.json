@@ -61,6 +61,6 @@
     "performanceMode": "1",
     "iosSqlite": false,
     "fts5": true,
-    "libsql": false
+    "libsql": true
   }
 }
