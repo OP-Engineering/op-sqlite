@@ -56,11 +56,11 @@
     "node": ">=18"
   },
   "op-sqlite": {
-    "sqlcipher": false,
+    "sqlcipher": true,
     "crsqlite": false,
     "performanceMode": "1",
     "iosSqlite": false,
     "fts5": true,
-    "libsql": true
+    "libsql": false
   }
 }

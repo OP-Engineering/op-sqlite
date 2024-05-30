@@ -5,6 +5,7 @@
 #else
 #include "bridge.h"
 #endif
+#include "logs.h"
 #include "macros.h"
 #include "utils.h"
 #include <iostream>
@@ -26,7 +27,7 @@ void DBHostObject::auto_register_update_hook() {
     return;
   }
 
-  auto hook = [this](std::string dbName, std::string table_name,
+  auto hook = [this](std::string name, std::string table_name,
                      std::string operation, int rowId) {
     if (update_hook_callback != nullptr) {
       std::vector<JSVariant> params;
@@ -37,17 +38,17 @@ void DBHostObject::auto_register_update_hook() {
       if (operation != "DELETE") {
         std::string query = "SELECT * FROM " + table_name +
                             " where rowid = " + std::to_string(rowId) + ";";
-        opsqlite_execute(dbName, query, &params, &results, metadata);
+        opsqlite_execute(name, query, &params, &results, metadata);
       }
 
       jsCallInvoker->invokeAsync(
           [this,
            results = std::make_shared<std::vector<DumbHostObject>>(results),
-           callback = update_hook_callback, tableName = std::move(table_name),
+           callback = update_hook_callback, table_name,
            operation = std::move(operation), &rowId] {
             auto res = jsi::Object(rt);
             res.setProperty(rt, "table",
-                            jsi::String::createFromUtf8(rt, tableName));
+                            jsi::String::createFromUtf8(rt, table_name));
             res.setProperty(rt, "operation",
                             jsi::String::createFromUtf8(rt, operation));
             res.setProperty(rt, "rowId", jsi::Value(rowId));
@@ -63,7 +64,6 @@ void DBHostObject::auto_register_update_hook() {
     }
 
     for (const auto &query_ptr : reactive_queries) {
-
       auto query = query_ptr.get();
       if (query->discriminators.size() == 0) {
         continue;
@@ -75,7 +75,6 @@ void DBHostObject::auto_register_update_hook() {
         if (discriminator.table != table_name) {
           continue;
         }
-
         // Table has matched
 
         // If no ids are specified, then we should fire
