@@ -477,7 +477,6 @@ export function queriesTests() {
         await new Promise<void>(done => {
           setTimeout(() => done(), 50);
         });
-        console.warn('mark1');
         tx.execute('SELECT * FROM User;');
         ranCallback = true;
       });

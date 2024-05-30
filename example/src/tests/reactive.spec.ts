@@ -2,8 +2,10 @@ import {isLibsql, open, type DB} from '@op-engineering/op-sqlite';
 import chai from 'chai';
 import {beforeEach, describe, it} from './MochaRNAdapter';
 import {sleep} from './utils';
+import Chance from 'chance';
 
 const expect = chai.expect;
+const chance = new Chance();
 let db: DB;
 
 export function reactiveTests() {
@@ -165,11 +167,11 @@ export function reactiveTests() {
         [1, 'John', 30, 1000, 'Johnny'],
       );
 
-      await sleep(20);
+      await sleep(0);
 
       db.execute('UPDATE User SET name = ? WHERE id = ?;', ['Foo', 1]);
 
-      await sleep(20);
+      await sleep(0);
 
       expect(firstReactiveRan).to.be.false;
       expect(secondReactiveRan).to.be.false;
@@ -179,6 +181,57 @@ export function reactiveTests() {
       unsubscribe();
       unsubscribe2();
       unsubscribe3();
+    });
+
+    it('Update hook and reactive queries work at the same time', async () => {
+      let promiseResolve: any;
+      let promise = new Promise(resolve => {
+        promiseResolve = resolve;
+      });
+      db.updateHook(({operation}) => {
+        promiseResolve?.(operation);
+      });
+
+      let emittedUser = null;
+      const unsubscribe = db.reactiveExecute({
+        query: 'SELECT * FROM User;',
+        arguments: [],
+        fireOn: [
+          {
+            table: 'User',
+          },
+        ],
+        callback: data => {
+          emittedUser = data.rows._array[0];
+        },
+      });
+
+      const id = chance.integer({
+        min: 1,
+        max: 100000,
+      });
+      const name = chance.name();
+      const age = chance.integer();
+      const networth = chance.floating();
+      db.execute(
+        'INSERT INTO User (id, name, age, networth, nickname) VALUES (?, ?, ?, ?, ?);',
+        [id, name, age, networth, 'Johnny'],
+      );
+
+      const operation = await promise;
+
+      await sleep(0);
+
+      expect(operation).to.equal('INSERT');
+      expect(emittedUser).to.deep.eq({
+        id,
+        name,
+        age,
+        networth,
+        nickname: 'Johnny',
+      });
+
+      unsubscribe();
     });
   });
 }
