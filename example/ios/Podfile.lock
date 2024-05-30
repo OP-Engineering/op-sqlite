@@ -8,9 +8,11 @@ PODS:
     - hermes-engine/Pre-built (= 0.74.0)
   - hermes-engine/Pre-built (0.74.0)
   - op-sqlite (6.0.3):
+    - OpenSSL-Universal
     - React
     - React-callinvoker
     - React-Core
+  - OpenSSL-Universal (3.1.5004)
   - RCT-Folly (2024.01.01.00):
     - boost
     - DoubleConversion
@@ -1234,6 +1236,7 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - OpenSSL-Universal
     - SocketRocket
 
 EXTERNAL SOURCES:
@@ -1358,7 +1361,8 @@ SPEC CHECKSUMS:
   fmt: 4c2741a687cc09f0634a2e2c72a838b99f1ff120
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
   hermes-engine: 6eae7edb2f563ee41d7c1f91f4f2e57c26d8a5c3
-  op-sqlite: ec06c8f35496c7021fa83bb65c2e7e7326fae2e7
+  op-sqlite: 557247bb21ec97c23ff45a012cc1cbea2c42bcaf
+  OpenSSL-Universal: 0db2e81615ad95efc90ce13a638986858da38c0d
   RCT-Folly: 045d6ecaa59d826c5736dfba0b2f4083ff8d79df
   RCTDeprecation: 3ca8b6c36bfb302e1895b72cfe7db0de0c92cd47
   RCTRequired: 9fc183af555fd0c89a366c34c1ae70b7e03b1dc5

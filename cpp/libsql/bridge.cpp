@@ -42,15 +42,8 @@ std::string opsqlite_get_db_path(std::string const &db_name,
   return location + "/" + db_name;
 }
 
-#ifdef OP_SQLITE_USE_SQLCIPHER
-BridgeResult opsqlite_open(std::string const &dbName,
-                           std::string const &last_path,
-                           std::string const &crsqlitePath,
-                           std::string const &encryptionKey) {
-#else
 BridgeResult opsqlite_libsql_open(std::string const &name,
                                   std::string const &last_path) {
-#endif
   std::string path = opsqlite_get_db_path(name, last_path);
 
   int status = 0;
@@ -71,11 +64,6 @@ BridgeResult opsqlite_libsql_open(std::string const &name,
   }
 
   db_map[name] = {.db = db, .c = c};
-
-#ifdef OP_SQLITE_USE_SQLCIPHER
-  opsqlite_execute(dbName, "PRAGMA key = '" + encryptionKey + "'", nullptr,
-                   nullptr, nullptr);
-#endif
 
   return {.type = SQLiteOk, .affectedRows = 0};
 }
