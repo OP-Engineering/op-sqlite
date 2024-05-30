@@ -1,6 +1,6 @@
 import {isLibsql, open, type DB} from '@op-engineering/op-sqlite';
 import chai from 'chai';
-import {beforeEach, describe, it, itOnly} from './MochaRNAdapter';
+import {beforeEach, describe, it} from './MochaRNAdapter';
 import {sleep} from './utils';
 import Chance from 'chance';
 
