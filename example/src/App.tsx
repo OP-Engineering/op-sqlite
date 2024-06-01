@@ -89,7 +89,16 @@ export default function App() {
     console.log('users', users.rows?._array);
   };
 
+  let passingTests = 0;
+  let failingTests = 0;
+
   const allTestsPassed = results.reduce((acc: boolean, r: any) => {
+    if (r.type === 'incorrect') {
+      failingTests++;
+    } else if (r.type === 'correct') {
+      passingTests++;
+    }
+
     return acc && r.type !== 'incorrect';
   }, true);
 
@@ -163,7 +172,7 @@ export default function App() {
             'bg-green-500': allTestsPassed,
             'bg-red-500': !allTestsPassed,
           })}>
-          Test Suite
+          Test Suite {passingTests}/{passingTests + failingTests}
         </Text>
         {results
           .filter((t: any) => t.type !== 'grouping')
