@@ -27,6 +27,7 @@ struct ReactiveQuery {
 
 class JSI_EXPORT DBHostObject : public jsi::HostObject {
 public:
+  // Constructor for local databases
   DBHostObject(jsi::Runtime &rt, std::string &base_path,
                std::shared_ptr<react::CallInvoker> js_call_invoker,
                std::shared_ptr<ThreadPool> thread_pool, std::string &db_name,
@@ -34,9 +35,15 @@ public:
                std::string &encryption_key);
 
 #ifdef OP_SQLITE_USE_LIBSQL
+  // Constructor for remoteOpen, purely for remote databases
   DBHostObject(jsi::Runtime &rt, std::string &url, std::string &auth_token,
                std::shared_ptr<react::CallInvoker> js_call_invoker,
                std::shared_ptr<ThreadPool> thread_pool);
+
+  // Constructor for a local database with remote sync
+  DBHostObject(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
+               std::shared_ptr<ThreadPool> thread_pool, std::string &db_name,
+               std::string &path, std::string &url, std::string &auth_token);
 #endif
 
   std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt);

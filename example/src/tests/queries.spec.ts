@@ -3,6 +3,7 @@ import {
   isLibsql,
   open,
   openRemote,
+  openSync,
   type DB,
   type SQLBatchTuple,
 } from '@op-engineering/op-sqlite';
@@ -37,7 +38,7 @@ export function queriesTests() {
 
   describe('Queries tests', () => {
     if (isLibsql()) {
-      it('Test remote open', async () => {
+      it('Remote open a turso database', async () => {
         const remoteDb = openRemote({
           url: 'libsql://foo-ospfranco.turso.io',
           authToken:
@@ -46,7 +47,18 @@ export function queriesTests() {
 
         const res = remoteDb.execute('SELECT 1');
 
-        console.warn(res);
+        expect(res.rowsAffected).to.equal(0);
+      });
+
+      it('Open a libsql database replicated to turso', async () => {
+        const remoteDb = openSync({
+          url: 'libsql://foo-ospfranco.turso.io',
+          authToken:
+            'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3MTY5NTc5OTUsImlkIjoiZmJkNzZmMjYtZTliYy00MGJiLTlmYmYtMDczZjFmMjdjOGY4In0.U3cAWBOvcdiqoPN3MB81sco7x8CGOjjtZ1ZEf30uo2iPcAmOuJzcnAznmDlZ6SpQd4qzuJxE4mAIoRlOkpzgBQ',
+          name: 'my replica',
+        });
+
+        const res = remoteDb.execute('SELECT 1');
         expect(res.rowsAffected).to.equal(0);
       });
     }
