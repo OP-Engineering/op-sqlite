@@ -42,6 +42,35 @@ std::string opsqlite_get_db_path(std::string const &db_name,
   return location + "/" + db_name;
 }
 
+BridgeResult opsqlite_libsql_open_sync(std::string const &name,
+                                       std::string const &base_path,
+                                       std::string const &url,
+                                       std::string const &auth_token) {
+  std::string path = opsqlite_get_db_path(name, base_path);
+
+  int status = 0;
+  libsql_database_t db;
+  libsql_connection_t c;
+  const char *err = NULL;
+
+  status = libsql_open_sync_with_webpki(
+      path.c_str(), url.c_str(), auth_token.c_str(), '1', nullptr, &db, &err);
+
+  if (status != 0) {
+    return {.type = SQLiteError, .message = err};
+  }
+
+  status = libsql_connect(db, &c, &err);
+
+  if (status != 0) {
+    return {.type = SQLiteError, .message = err};
+  }
+
+  db_map[name] = {.db = db, .c = c};
+
+  return {.type = SQLiteOk, .affectedRows = 0};
+}
+
 BridgeResult opsqlite_libsql_open(std::string const &name,
                                   std::string const &last_path) {
   std::string path = opsqlite_get_db_path(name, last_path);
@@ -75,7 +104,8 @@ BridgeResult opsqlite_libsql_open_remote(std::string const &url,
   libsql_connection_t c;
   const char *err = NULL;
 
-  status = libsql_open_remote(url.c_str(), auth_token.c_str(), &db, &err);
+  status = libsql_open_remote_with_webpki(url.c_str(), auth_token.c_str(), &db,
+                                          &err);
 
   if (status != 0) {
     return {.type = SQLiteError, .message = err};

@@ -195,6 +195,12 @@ type OPSQLiteProxy = {
     encryptionKey?: string;
   }) => DB;
   openRemote: (options: { url: string; authToken: string }) => DB;
+  openSync: (options: {
+    url: string;
+    authToken: string;
+    name: string;
+    location?: string;
+  }) => DB;
   isSQLCipher: () => boolean;
   isLibsql: () => boolean;
 };
@@ -220,14 +226,7 @@ function enhanceQueryResult(result: QueryResult): void {
   }
 }
 
-// TODO de-dupe this function with open
-export const openRemote = (options: { url: string; authToken: string }): DB => {
-  if (!isLibsql()) {
-    throw new Error('This function is only available for libsql');
-  }
-
-  const db = OPSQLite.openRemote(options);
-
+function enhanceDB(db: DB, options: any): DB {
   const lock = {
     queue: [] as PendingTransaction[],
     inProgress: false,
@@ -416,6 +415,33 @@ export const openRemote = (options: { url: string; authToken: string }): DB => {
   };
 
   return enhancedDb;
+}
+
+export const openSync = (options: {
+  url: string;
+  authToken: string;
+  name: string;
+  location?: string;
+}): DB => {
+  if (!isLibsql()) {
+    throw new Error('This function is only available for libsql');
+  }
+
+  const db = OPSQLite.openSync(options);
+  const enhancedDb = enhanceDB(db, options);
+
+  return enhancedDb;
+};
+
+export const openRemote = (options: { url: string; authToken: string }): DB => {
+  if (!isLibsql()) {
+    throw new Error('This function is only available for libsql');
+  }
+
+  const db = OPSQLite.openRemote(options);
+  const enhancedDb = enhanceDB(db, options);
+
+  return enhancedDb;
 };
 
 export const open = (options: {
@@ -424,193 +450,7 @@ export const open = (options: {
   encryptionKey?: string;
 }): DB => {
   const db = OPSQLite.open(options);
-
-  const lock = {
-    queue: [] as PendingTransaction[],
-    inProgress: false,
-  };
-
-  const startNextTransaction = () => {
-    if (lock.inProgress) {
-      // Transaction is already in process bail out
-      return;
-    }
-
-    if (lock.queue.length) {
-      lock.inProgress = true;
-      const tx = lock.queue.shift();
-
-      if (!tx) {
-        throw new Error('Could not get a operation on database');
-      }
-
-      setImmediate(() => {
-        tx.start();
-      });
-    }
-  };
-
-  // spreading the object is not working, so we need to do it manually
-  let enhancedDb = {
-    delete: db.delete,
-    attach: db.attach,
-    detach: db.detach,
-    executeBatch: db.executeBatch,
-    executeBatchAsync: db.executeBatchAsync,
-
-    loadFile: db.loadFile,
-    updateHook: db.updateHook,
-    commitHook: db.commitHook,
-    rollbackHook: db.rollbackHook,
-    loadExtension: db.loadExtension,
-    executeRawAsync: db.executeRawAsync,
-    getDbPath: db.getDbPath,
-    reactiveExecute: db.reactiveExecute,
-    close: () => {
-      db.close();
-      delete locks[options.name];
-    },
-    execute: (query: string, params?: any[] | undefined): QueryResult => {
-      const sanitizedParams = params?.map((p) => {
-        if (ArrayBuffer.isView(p)) {
-          return p.buffer;
-        }
-
-        return p;
-      });
-
-      const result = db.execute(query, sanitizedParams);
-      enhanceQueryResult(result);
-      return result;
-    },
-    executeAsync: async (
-      query: string,
-      params?: any[] | undefined
-    ): Promise<QueryResult> => {
-      const sanitizedParams = params?.map((p) => {
-        if (ArrayBuffer.isView(p)) {
-          return p.buffer;
-        }
-
-        return p;
-      });
-
-      const result = await db.executeAsync(query, sanitizedParams);
-      enhanceQueryResult(result);
-      return result;
-    },
-    prepareStatement: (query: string) => {
-      const stmt = db.prepareStatement(query);
-
-      return {
-        bind: (params: any[]) => {
-          const sanitizedParams = params.map((p) => {
-            if (ArrayBuffer.isView(p)) {
-              return p.buffer;
-            }
-
-            return p;
-          });
-
-          stmt.bind(sanitizedParams);
-        },
-        execute: () => {
-          const res = stmt.execute();
-          enhanceQueryResult(res);
-          return res;
-        },
-      };
-    },
-    transaction: async (
-      fn: (tx: Transaction) => Promise<void>
-    ): Promise<void> => {
-      let isFinalized = false;
-
-      // Local transaction context object implementation
-      const execute = (query: string, params?: any[]): QueryResult => {
-        if (isFinalized) {
-          throw Error(
-            `OP-Sqlite Error: Database: ${options.name}. Cannot execute query on finalized transaction`
-          );
-        }
-        return enhancedDb.execute(query, params);
-      };
-
-      const executeAsync = (query: string, params?: any[] | undefined) => {
-        if (isFinalized) {
-          throw Error(
-            `OP-Sqlite Error: Database: ${options.name}. Cannot execute query on finalized transaction`
-          );
-        }
-        return enhancedDb.executeAsync(query, params);
-      };
-
-      const commit = () => {
-        if (isFinalized) {
-          throw Error(
-            `OP-Sqlite Error: Database: ${options.name}. Cannot execute query on finalized transaction`
-          );
-        }
-        const result = enhancedDb.execute('COMMIT;');
-        isFinalized = true;
-        return result;
-      };
-
-      const rollback = () => {
-        if (isFinalized) {
-          throw Error(
-            `OP-Sqlite Error: Database: ${options.name}. Cannot execute query on finalized transaction`
-          );
-        }
-        const result = enhancedDb.execute('ROLLBACK;');
-        isFinalized = true;
-        return result;
-      };
-
-      async function run() {
-        try {
-          await enhancedDb.executeAsync('BEGIN TRANSACTION;');
-
-          await fn({
-            commit,
-            execute,
-            executeAsync,
-            rollback,
-          });
-
-          if (!isFinalized) {
-            commit();
-          }
-        } catch (executionError) {
-          console.warn('transaction error', executionError);
-          if (!isFinalized) {
-            try {
-              rollback();
-            } catch (rollbackError) {
-              throw rollbackError;
-            }
-          }
-
-          throw executionError;
-        } finally {
-          lock.inProgress = false;
-          isFinalized = false;
-          startNextTransaction();
-        }
-      }
-
-      return await new Promise((resolve, reject) => {
-        const tx: PendingTransaction = {
-          start: () => {
-            run().then(resolve).catch(reject);
-          },
-        };
-
-        lock.queue.push(tx);
-        startNextTransaction();
-      });
-    },
-  };
+  const enhancedDb = enhanceDB(db, options);
 
   return enhancedDb;
 };
