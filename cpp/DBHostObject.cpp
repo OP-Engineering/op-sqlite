@@ -151,6 +151,23 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &url,
 
   create_jsi_functions();
 }
+
+DBHostObject::DBHostObject(jsi::Runtime &rt,
+                           std::shared_ptr<react::CallInvoker> invoker,
+                           std::shared_ptr<ThreadPool> thread_pool,
+                           std::string &db_name, std::string &path,
+                           std::string &url, std::string &auth_token)
+    : db_name(url), jsCallInvoker(invoker), thread_pool(thread_pool), rt(rt) {
+  BridgeResult result =
+      opsqlite_libsql_open_sync(db_name, path, url, auth_token);
+
+  if (result.type == SQLiteError) {
+    throw std::runtime_error(result.message);
+  }
+
+  create_jsi_functions();
+}
+
 #endif
 
 DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
