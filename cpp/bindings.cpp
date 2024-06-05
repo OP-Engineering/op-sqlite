@@ -115,6 +115,34 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
         rt, url, auth_token, invoker, thread_pool);
     return jsi::Object::createFromHostObject(rt, db);
   });
+
+  auto open_sync = HOSTFN("openSync", 1) {
+    jsi::Object options = args[0].asObject(rt);
+    std::string name = options.getProperty(rt, "name").asString(rt).utf8(rt);
+    std::string path = std::string(_base_path);
+    std::string url = options.getProperty(rt, "url").asString(rt).utf8(rt);
+    std::string auth_token =
+        options.getProperty(rt, "authToken").asString(rt).utf8(rt);
+    std::string location;
+
+    if (options.hasProperty(rt, "location")) {
+      location = options.getProperty(rt, "location").asString(rt).utf8(rt);
+    }
+
+    if (!location.empty()) {
+      if (location == ":memory:") {
+        path = ":memory:";
+      } else if (location.rfind("/", 0) == 0) {
+        path = location;
+      } else {
+        path = path + "/" + location;
+      }
+    }
+
+    std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
+        rt, invoker, thread_pool, name, path, url, auth_token);
+    return jsi::Object::createFromHostObject(rt, db);
+  });
 #endif
 
   jsi::Object module = jsi::Object(rt);
@@ -123,6 +151,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
   module.setProperty(rt, "isLibsql", std::move(is_libsql));
 #ifdef OP_SQLITE_USE_LIBSQL
   module.setProperty(rt, "openRemote", std::move(open_remote));
+  module.setProperty(rt, "openSync", std::move(open_sync));
 #endif
 
   rt.global().setProperty(rt, "__OPSQLiteProxy", std::move(module));
