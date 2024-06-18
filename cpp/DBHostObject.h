@@ -66,7 +66,7 @@ private:
   std::shared_ptr<jsi::Value> rollback_hook_callback;
   jsi::Runtime &rt;
   std::vector<std::shared_ptr<ReactiveQuery>> reactive_queries;
-  bool has_update_hook_registered = false;
+  bool is_update_hook_registered = false;
 };
 
 } // namespace opsqlite

@@ -17,13 +17,14 @@ namespace react = facebook::react;
 
 #ifndef OP_SQLITE_USE_LIBSQL
 void DBHostObject::auto_register_update_hook() {
-  if (update_hook_callback == nullptr && reactive_queries.size() == 0 &&
-      has_update_hook_registered) {
+  if (update_hook_callback == nullptr && reactive_queries.empty() &&
+      is_update_hook_registered) {
     opsqlite_deregister_update_hook(db_name);
+    is_update_hook_registered = false;
     return;
   }
 
-  if (has_update_hook_registered) {
+  if (is_update_hook_registered) {
     return;
   }
 
@@ -52,7 +53,7 @@ void DBHostObject::auto_register_update_hook() {
             res.setProperty(rt, "operation",
                             jsi::String::createFromUtf8(rt, operation));
             res.setProperty(rt, "rowId", jsi::Value(rowId));
-            if (results->size() != 0) {
+            if (!results->empty()) {
               res.setProperty(
                   rt, "row",
                   jsi::Object::createFromHostObject(
@@ -65,7 +66,7 @@ void DBHostObject::auto_register_update_hook() {
 
     for (const auto &query_ptr : reactive_queries) {
       auto query = query_ptr.get();
-      if (query->discriminators.size() == 0) {
+      if (query->discriminators.empty()) {
         continue;
       }
 
@@ -116,23 +117,16 @@ void DBHostObject::auto_register_update_hook() {
             [this,
              results = std::make_shared<std::vector<DumbHostObject>>(results),
              callback = query->callback, metadata, status = std::move(status)] {
-              if (status.type == SQLiteOk) {
-                auto jsiResult =
-                    createResult(rt, status, results.get(), metadata);
-                callback->asObject(rt).asFunction(rt).call(rt, jsiResult);
-              } else {
-                auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-                auto error = errorCtr.callAsConstructor(
-                    rt, jsi::String::createFromUtf8(rt, status.message));
-                callback->asObject(rt).asFunction(rt).call(rt, error);
-              }
+              auto jsiResult =
+                  createResult(rt, status, results.get(), metadata);
+              callback->asObject(rt).asFunction(rt).call(rt, jsiResult);
             });
       }
     }
   };
 
   opsqlite_register_update_hook(db_name, std::move(hook));
-  has_update_hook_registered = true;
+  is_update_hook_registered = true;
 }
 #endif
 
