@@ -58,9 +58,9 @@
   "op-sqlite": {
     "sqlcipher": false,
     "crsqlite": false,
-    "performanceMode": "1",
+    "performanceMode": "2",
     "iosSqlite": false,
-    "fts5": false,
+    "fts5": true,
     "libsql": false
   }
 }
