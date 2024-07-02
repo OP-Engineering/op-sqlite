@@ -130,5 +130,18 @@ export function dbSetupTests() {
     //     expect(!!e).to.equal(true);
     //   }
     // });
+
+    it('Creates new connections per query and closes them', async () => {
+      for (let i = 0; i < 100; i++) {
+        let db = open({
+          name: 'versionTest.sqlite',
+          encryptionKey: 'test',
+        });
+
+        db.execute('select 1;');
+
+        db.close();
+      }
+    });
   });
 }
