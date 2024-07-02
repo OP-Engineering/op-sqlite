@@ -65,13 +65,6 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
           options.getProperty(rt, "encryptionKey").asString(rt).utf8(rt);
     }
 
-#ifdef OP_SQLITE_USE_SQLCIPHER
-    if (encryptionKey.empty()) {
-      throw std::runtime_error(
-          "[OP SQLite] using SQLCipher encryption key is required");
-    }
-#endif
-
     if (!location.empty()) {
       if (location == ":memory:") {
         path = ":memory:";
