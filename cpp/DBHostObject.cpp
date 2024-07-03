@@ -688,7 +688,7 @@ void DBHostObject::create_jsi_functions() {
 
     const std::string query_str =
         query.getProperty(rt, "query").asString(rt).utf8(rt);
-    auto js_args = query.getProperty(rt, "args");
+    auto js_args = query.getProperty(rt, "arguments");
     auto js_discriminators =
         query.getProperty(rt, "fireOn").asObject(rt).asArray(rt);
     auto variant_args = to_variant_vec(rt, js_args);
