@@ -80,7 +80,9 @@ BridgeResult opsqlite_libsql_open_sync(std::string const &name,
 }
 
 BridgeResult opsqlite_libsql_open(std::string const &name,
-                                  std::string const &last_path) {
+                                  std::string const &last_path,
+                                  std::string const &crsqlitePath) {
+  // TODO: use crsqlitePath to load crsqlite extension
   std::string path = opsqlite_get_db_path(name, last_path);
 
   int status = 0;

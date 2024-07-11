@@ -28,7 +28,8 @@ std::string opsqlite_get_db_path(std::string const &name,
                                  std::string const &location);
 
 BridgeResult opsqlite_libsql_open(std::string const &name,
-                                  std::string const &path);
+                                  std::string const &path,
+                                  std::string const &crsqlitePath);
 
 BridgeResult opsqlite_libsql_open_remote(std::string const &url,
                                          std::string const &auth_token);
