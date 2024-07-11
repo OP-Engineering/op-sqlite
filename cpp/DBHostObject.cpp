@@ -179,7 +179,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
   BridgeResult result =
       opsqlite_open(db_name, path, crsqlite_path, encryption_key);
 #elif OP_SQLITE_USE_LIBSQL
-  BridgeResult result = opsqlite_libsql_open(db_name, path);
+  BridgeResult result = opsqlite_libsql_open(db_name, path, crsqlite_path);
 #else
   BridgeResult result = opsqlite_open(db_name, path, crsqlite_path);
 #endif
