@@ -28,8 +28,7 @@
     "prepare": "bob build",
     "example": "yarn --cwd example",
     "pods": "cd example && yarn pods",
-    "bootstrap": "yarn example && yarn && yarn pods",
-    "release": "./bump-version.sh && git add . && git commit -m 'Release v$(node -p \"require('./package.json').version\")' && git tag v$(node -p \"require('./package.json').version\") && git push origin main --tags && npm publish",
+    "release": "./bump-version.sh && git add . && git commit -m 'Release v$(node -p \"require('./package.json').version\")' && git tag v$(node -p \"require('./package.json').version\") && git push --tags && npm publish",
     "clang-format-check": "clang-format -i cpp/*.cpp cpp/*.h"
   },
   "keywords": [
@@ -84,5 +83,5 @@
       ]
     ]
   },
-  "packageManager": "yarn@4.1.1"
+  "packageManager": "yarn@4.3.1"
 }
