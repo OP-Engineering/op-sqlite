@@ -151,7 +151,8 @@ DBHostObject::DBHostObject(jsi::Runtime &rt,
                            std::shared_ptr<ThreadPool> thread_pool,
                            std::string &db_name, std::string &path,
                            std::string &url, std::string &auth_token)
-    : db_name(url), jsCallInvoker(invoker), thread_pool(thread_pool), rt(rt) {
+    : db_name(db_name), jsCallInvoker(invoker), thread_pool(thread_pool),
+      rt(rt) {
   BridgeResult result =
       opsqlite_libsql_open_sync(db_name, path, url, auth_token);
 
