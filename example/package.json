@@ -60,7 +60,7 @@
     "crsqlite": false,
     "performanceMode": "2",
     "iosSqlite": false,
-    "fts5": true,
-    "libsql": false
+    "fts5": false,
+    "libsql": true
   }
 }
