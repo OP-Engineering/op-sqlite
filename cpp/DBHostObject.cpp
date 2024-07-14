@@ -556,6 +556,16 @@ void DBHostObject::create_jsi_functions() {
      return promise;
   });
 
+#ifdef OP_SQLITE_USE_LIBSQL
+  auto sync = HOSTFN("sync", 0) {
+    BridgeResult result = opsqlite_libsql_sync(db_name);
+    if (result.type == SQLiteError) {
+      throw std::runtime_error(result.message);
+    }
+    return {};
+  });
+#endif
+
 #ifndef OP_SQLITE_USE_LIBSQL
   auto load_file = HOSTFN("loadFile", 1) {
     if (sizeof(args) < 1) {
