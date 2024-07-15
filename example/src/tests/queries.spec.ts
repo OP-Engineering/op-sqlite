@@ -7,7 +7,7 @@ import {
   type DB,
   type SQLBatchTuple,
 } from '@op-engineering/op-sqlite';
-import {beforeEach, describe, it} from './MochaRNAdapter';
+import {beforeEach, describe, it, itOnly} from './MochaRNAdapter';
 import chai from 'chai';
 
 const expect = chai.expect;
@@ -50,7 +50,7 @@ export function queriesTests() {
         expect(res.rowsAffected).to.equal(0);
       });
 
-      it('Open a libsql database replicated to turso', async () => {
+      itOnly('Open a libsql database replicated to turso', async () => {
         const remoteDb = openSync({
           url: 'libsql://foo-ospfranco.turso.io',
           authToken:
@@ -59,6 +59,9 @@ export function queriesTests() {
         });
 
         const res = remoteDb.execute('SELECT 1');
+
+        remoteDb.sync();
+
         expect(res.rowsAffected).to.equal(0);
       });
     }

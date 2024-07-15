@@ -51,6 +51,8 @@ BridgeResult opsqlite_libsql_attach(std::string const &mainDBName,
 BridgeResult opsqlite_libsql_detach(std::string const &mainDBName,
                                     std::string const &alias);
 
+BridgeResult opsqlite_libsql_sync(std::string const &name);
+
 BridgeResult opsqlite_libsql_execute(
     std::string const &name, std::string const &query,
     const std::vector<JSVariant> *params, std::vector<DumbHostObject> *results,

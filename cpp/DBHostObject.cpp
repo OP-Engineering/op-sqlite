@@ -556,6 +556,16 @@ void DBHostObject::create_jsi_functions() {
      return promise;
   });
 
+#ifdef OP_SQLITE_USE_LIBSQL
+  auto sync = HOSTFN("sync", 0) {
+    BridgeResult result = opsqlite_libsql_sync(db_name);
+    if (result.type == SQLiteError) {
+      throw std::runtime_error(result.message);
+    }
+    return {};
+  });
+#endif
+
 #ifndef OP_SQLITE_USE_LIBSQL
   auto load_file = HOSTFN("loadFile", 1) {
     if (sizeof(args) < 1) {
@@ -797,7 +807,9 @@ void DBHostObject::create_jsi_functions() {
   function_map["executeBatchAsync"] = std::move(execute_batch_async);
   function_map["prepareStatement"] = std::move(prepare_statement);
   function_map["getDbPath"] = std::move(get_db_path);
-#ifndef OP_SQLITE_USE_LIBSQL
+#ifdef OP_SQLITE_USE_LIBSQL
+  function_map["sync"] = std::move(sync);
+#else OP_SQLITE_USE_LIBSQL
   function_map["loadFile"] = std::move(load_file);
   function_map["updateHook"] = std::move(update_hook);
   function_map["commitHook"] = std::move(commit_hook);
@@ -849,6 +861,9 @@ jsi::Value DBHostObject::get(jsi::Runtime &rt,
   }
   if (name == "getDbPath") {
     return jsi::Value(rt, function_map["getDbPath"]);
+  }
+  if (name == "sync") {
+    return jsi::Value(rt, function_map["sync"]);
   }
 #ifdef OP_SQLITE_USE_LIBSQL
   if (name == "loadFile") {
