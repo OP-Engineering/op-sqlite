@@ -186,6 +186,21 @@ BridgeResult opsqlite_libsql_detach(std::string const &mainDBName,
   };
 }
 
+BridgeResult opsqlite_libsql_sync(std::string const &name) {
+  check_db_open(name);
+
+  auto db = db_map[name].db;
+  const char *err = NULL;
+
+  int status = libsql_sync(db, &err);
+
+  if (status != 0) {
+    return {.type = SQLiteError, .message = err};
+  }
+
+  return {.type = SQLiteOk};
+}
+
 BridgeResult opsqlite_libsql_remove(std::string const &name,
                                     std::string const &path) {
   if (db_map.count(name) == 1) {
