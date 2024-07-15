@@ -26,9 +26,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "prepare": "bob build",
-    "example": "yarn --cwd example",
     "pods": "cd example && yarn pods",
-    "release": "./bump-version.sh && git add . && git commit -m 'Release v$(node -p \"require('./package.json').version\")' && git push && git tag v$(node -p \"require('./package.json').version\") && git push --tags && npm publish",
+    "release": "./scripts/release.sh",
     "clang-format-check": "clang-format -i cpp/*.cpp cpp/*.h"
   },
   "keywords": [
