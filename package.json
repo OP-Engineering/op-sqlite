@@ -1,6 +1,6 @@
 {
   "name": "@op-engineering/op-sqlite",
-  "version": "6.2.1",
+  "version": "6.2.5",
   "description": "Next generation SQLite for React Native",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
@@ -27,7 +27,7 @@
     "typecheck": "tsc --noEmit",
     "prepare": "bob build",
     "pods": "cd example && yarn pods",
-    "release": "./scripts/release.sh",
+    "release": "cd scripts && ./release.sh",
     "clang-format-check": "clang-format -i cpp/*.cpp cpp/*.h"
   },
   "keywords": [
