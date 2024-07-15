@@ -59,19 +59,20 @@ export const {
 export type QueryResult = {
   insertId?: number;
   rowsAffected: number;
+  res?: any[];
   rows?: {
     /** Raw array with all dataset */
     _array: any[];
-    /** The lengh of the dataset */
+    /** The length of the dataset */
     length: number;
-    /** A convenience function to acess the index based the row object
+    /** A convenience function to access the index based the row object
      * @param idx the row index
      * @returns the row structure identified by column names
      */
     item: (idx: number) => any;
   };
   /**
-   * Query metadata, avaliable only for select query results
+   * Query metadata, available only for select query results
    */
   metadata?: ColumnMetadata[];
 };
@@ -81,12 +82,12 @@ export type QueryResult = {
  * Describes some information about columns fetched by the query
  */
 export type ColumnMetadata = {
-  /** The name used for this column for this resultset */
+  /** The name used for this column for this result set */
   name: string;
   /** The declared column type for this column, when fetched directly from a table or a View resulting from a table column. "UNKNOWN" for dynamic values, like function returned ones. */
   type: string;
   /**
-   * The index for this column for this resultset*/
+   * The index for this column for this result set*/
   index: number;
 };
 
@@ -186,6 +187,7 @@ export type DB = {
     }[];
     callback: (response: any) => void;
   }) => () => void;
+  sync: () => void;
 };
 
 type OPSQLiteProxy = {
@@ -211,7 +213,6 @@ const locks: Record<
 > = {};
 
 // Enhance some host functions
-
 // Add 'item' function to result object to allow the sqlite-storage typeorm driver to work
 function enhanceQueryResult(result: QueryResult): void {
   // Add 'item' function to result object to allow the sqlite-storage typeorm driver to work
@@ -222,6 +223,7 @@ function enhanceQueryResult(result: QueryResult): void {
       item: (idx: number) => result.rows?._array[idx],
     };
   } else {
+    result.res = result.rows._array;
     result.rows.item = (idx: number) => result.rows?._array[idx];
   }
 }
@@ -268,6 +270,7 @@ function enhanceDB(db: DB, options: any): DB {
     executeRawAsync: db.executeRawAsync,
     getDbPath: db.getDbPath,
     reactiveExecute: db.reactiveExecute,
+    sync: db.sync,
     close: () => {
       db.close();
       delete locks[options.url];
