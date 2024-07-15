@@ -189,10 +189,10 @@ BridgeResult opsqlite_libsql_detach(std::string const &mainDBName,
 BridgeResult opsqlite_libsql_sync(std::string const &name) {
   check_db_open(name);
 
-  libsql_connection_t c = db_map[name].c;
+  auto db = db_map[name].db;
   const char *err = NULL;
 
-  int status = libsql_sync(c, &err);
+  int status = libsql_sync(db, &err);
 
   if (status != 0) {
     return {.type = SQLiteError, .message = err};
