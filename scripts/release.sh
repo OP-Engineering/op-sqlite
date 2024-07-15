@@ -1,6 +1,6 @@
 set -ex
 
-./bump-version.sh
+npm --no-git-tag-version version patch
 git add ..
 git commit -m 'Release v$(node -p \"require('../package.json').version\")' 
 git push 
