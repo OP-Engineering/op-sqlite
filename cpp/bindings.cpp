@@ -123,6 +123,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
     std::string url = options.getProperty(rt, "url").asString(rt).utf8(rt);
     std::string auth_token =
         options.getProperty(rt, "authToken").asString(rt).utf8(rt);
+      int sync_interval = static_cast<int>(options.getProperty(rt, "syncInterval").asNumber());
     std::string location;
 
     if (options.hasProperty(rt, "location")) {
@@ -140,7 +141,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
     }
 
     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-        rt, invoker, thread_pool, name, path, url, auth_token);
+        rt, invoker, thread_pool, name, path, url, auth_token, sync_interval);
     return jsi::Object::createFromHostObject(rt, db);
   });
 #endif
