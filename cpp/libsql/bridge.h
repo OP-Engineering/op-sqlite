@@ -36,7 +36,8 @@ BridgeResult opsqlite_libsql_open_remote(std::string const &url,
 BridgeResult opsqlite_libsql_open_sync(std::string const &name,
                                        std::string const &path,
                                        std::string const &url,
-                                       std::string const &auth_token);
+                                       std::string const &auth_token,
+                                       int sync_interval);
 
 BridgeResult opsqlite_libsql_close(std::string const &name);
 
