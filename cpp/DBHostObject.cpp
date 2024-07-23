@@ -150,11 +150,12 @@ DBHostObject::DBHostObject(jsi::Runtime &rt,
                            std::shared_ptr<react::CallInvoker> invoker,
                            std::shared_ptr<ThreadPool> thread_pool,
                            std::string &db_name, std::string &path,
-                           std::string &url, std::string &auth_token)
+                           std::string &url, std::string &auth_token,
+                           int sync_interval)
     : db_name(db_name), jsCallInvoker(invoker), thread_pool(thread_pool),
       rt(rt) {
   BridgeResult result =
-      opsqlite_libsql_open_sync(db_name, path, url, auth_token);
+      opsqlite_libsql_open_sync(db_name, path, url, auth_token, sync_interval);
 
   if (result.type == SQLiteError) {
     throw std::runtime_error(result.message);
@@ -809,7 +810,7 @@ void DBHostObject::create_jsi_functions() {
   function_map["getDbPath"] = std::move(get_db_path);
 #ifdef OP_SQLITE_USE_LIBSQL
   function_map["sync"] = std::move(sync);
-#else OP_SQLITE_USE_LIBSQL
+#else
   function_map["loadFile"] = std::move(load_file);
   function_map["updateHook"] = std::move(update_hook);
   function_map["commitHook"] = std::move(commit_hook);
