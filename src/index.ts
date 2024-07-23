@@ -425,6 +425,7 @@ export const openSync = (options: {
   authToken: string;
   name: string;
   location?: string;
+  syncInterval: number;
 }): DB => {
   if (!isLibsql()) {
     throw new Error('This function is only available for libsql');

@@ -43,7 +43,7 @@ public:
   // Constructor for a local database with remote sync
   DBHostObject(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
                std::shared_ptr<ThreadPool> thread_pool, std::string &db_name,
-               std::string &path, std::string &url, std::string &auth_token);
+               std::string &path, std::string &url, std::string &auth_token, int sync_interval);
 #endif
 
   std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt);

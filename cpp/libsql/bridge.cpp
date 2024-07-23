@@ -45,7 +45,8 @@ std::string opsqlite_get_db_path(std::string const &db_name,
 BridgeResult opsqlite_libsql_open_sync(std::string const &name,
                                        std::string const &base_path,
                                        std::string const &url,
-                                       std::string const &auth_token) {
+                                       std::string const &auth_token,
+                                       int sync_interval) {
   std::string path = opsqlite_get_db_path(name, base_path);
 
   int status = 0;
@@ -53,9 +54,16 @@ BridgeResult opsqlite_libsql_open_sync(std::string const &name,
   libsql_connection_t c;
   const char *err = NULL;
 
-  status = libsql_open_sync_with_webpki(
-      path.c_str(), url.c_str(), auth_token.c_str(), '1', nullptr, &db, &err);
-
+    libsql_config config = {
+        .db_path = path.c_str(),
+        .primary_url = url.c_str(),
+        .auth_token = auth_token.c_str(),
+        .read_your_writes = '1',
+        .encryption_key = nullptr,
+        .sync_interval = sync_interval,
+        .with_webpki = '1'
+    };
+    status = libsql_open_sync_with_config(config, &db, &err);
   if (status != 0) {
     return {.type = SQLiteError, .message = err};
   }
