@@ -123,7 +123,8 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
     std::string url = options.getProperty(rt, "url").asString(rt).utf8(rt);
     std::string auth_token =
         options.getProperty(rt, "authToken").asString(rt).utf8(rt);
-      int sync_interval = static_cast<int>(options.getProperty(rt, "syncInterval").asNumber());
+    int sync_interval =
+        static_cast<int>(options.getProperty(rt, "syncInterval").asNumber());
     std::string location;
 
     if (options.hasProperty(rt, "location")) {
