@@ -1,7 +1,7 @@
 set -ex
 
-cd ..
-npm --no-git-tag-version version patch
+# cd ..
+npm --no-git-tag-version version $1
 VERSION=$(node -p "require('./package.json').version")
 echo "Releasing $VERSION"
 git add .
