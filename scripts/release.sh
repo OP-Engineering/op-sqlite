@@ -9,4 +9,4 @@ git commit -m "Release v$VERSION"
 git push 
 git tag "$VERSION"
 git push --tags 
-npm publish
+# npm publish
