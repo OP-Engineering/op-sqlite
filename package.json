@@ -27,7 +27,6 @@
     "typecheck": "tsc --noEmit",
     "prepare": "bob build",
     "pods": "cd example && yarn pods",
-    "release": "cd scripts && ./release.sh",
     "clang-format-check": "clang-format -i cpp/*.cpp cpp/*.h"
   },
   "keywords": [
