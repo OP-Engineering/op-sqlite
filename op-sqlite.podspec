@@ -130,15 +130,15 @@ Pod::Spec.new do |s|
   end
 
   if use_libsql then
-    if use_crsqlite then
-      raise "Cannot use CRSQLite and libsql at the same time"
-    end
-
     if use_sqlcipher then
       raise "Cannot use SQLCipher and libsql at the same time"
     end
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_LIBSQL=1"
-    s.vendored_frameworks = "ios/libsql.xcframework"
+    if use_crsqlite then
+      s.vendored_frameworks = "ios/libsql.xcframework", "ios/crsqlite.xcframework"
+    else
+      s.vendored_frameworks = "ios/libsql.xcframework"
+    end
   end
 
   if sqlite_flags != "" then
