@@ -7,7 +7,7 @@ let expect = chai.expect;
 let db: DB;
 
 export function preparedStatementsTests() {
-  beforeEach(() => {
+  beforeEach(async () => {
     try {
       if (db) {
         db.close();
@@ -19,11 +19,22 @@ export function preparedStatementsTests() {
         encryptionKey: 'test',
       });
 
-      db.execute('DROP TABLE IF EXISTS User;');
-      db.execute('CREATE TABLE User ( id INT PRIMARY KEY, name TEXT) STRICT;');
-      db.execute('INSERT INTO "User" (id, name) VALUES(?,?)', [1, 'Oscar']);
-      db.execute('INSERT INTO "User" (id, name) VALUES(?,?)', [2, 'Pablo']);
-      db.execute('INSERT INTO "User" (id, name) VALUES(?,?)', [3, 'Carlos']);
+      await db.execute('DROP TABLE IF EXISTS User;');
+      await db.execute(
+        'CREATE TABLE User ( id INT PRIMARY KEY, name TEXT) STRICT;',
+      );
+      await db.execute('INSERT INTO "User" (id, name) VALUES(?,?)', [
+        1,
+        'Oscar',
+      ]);
+      await db.execute('INSERT INTO "User" (id, name) VALUES(?,?)', [
+        2,
+        'Pablo',
+      ]);
+      await db.execute('INSERT INTO "User" (id, name) VALUES(?,?)', [
+        3,
+        'Carlos',
+      ]);
     } catch (e) {
       console.warn('error on before each', e);
     }

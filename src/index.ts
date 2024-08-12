@@ -71,6 +71,10 @@ export type QueryResult = {
      */
     item: (idx: number) => any;
   };
+  // An array of intermediate results, just values without column names
+  rawRows?: any[];
+  columnNames?: string[];
+
   /**
    * Query metadata, available only for select query results
    */
@@ -119,13 +123,9 @@ export interface FileLoadResult extends BatchQueryResult {
 }
 
 export interface Transaction {
-  commit: () => QueryResult;
-  execute: (query: string, params?: any[]) => QueryResult;
-  executeAsync: (
-    query: string,
-    params?: any[] | undefined
-  ) => Promise<QueryResult>;
-  rollback: () => QueryResult;
+  commit: () => Promise<QueryResult>;
+  execute: (query: string, params?: any[]) => Promise<QueryResult>;
+  rollback: () => Promise<QueryResult>;
 }
 
 export interface PendingTransaction {
@@ -157,10 +157,12 @@ export type DB = {
   ) => void;
   detach: (mainDbName: string, alias: string) => void;
   transaction: (fn: (tx: Transaction) => Promise<void>) => Promise<void>;
-  execute: (query: string, params?: any[]) => QueryResult;
-  executeAsync: (query: string, params?: any[]) => Promise<QueryResult>;
-  executeBatch: (commands: SQLBatchTuple[]) => BatchQueryResult;
-  executeBatchAsync: (commands: SQLBatchTuple[]) => Promise<BatchQueryResult>;
+  execute: (query: string, params?: any[]) => Promise<QueryResult>;
+  executeWithHostObjects: (
+    query: string,
+    params?: any[]
+  ) => Promise<QueryResult>;
+  executeBatch: (commands: SQLBatchTuple[]) => Promise<BatchQueryResult>;
   loadFile: (location: string) => Promise<FileLoadResult>;
   updateHook: (
     callback?:
@@ -176,7 +178,7 @@ export type DB = {
   rollbackHook: (callback?: (() => void) | null) => void;
   prepareStatement: (query: string) => PreparedStatementObj;
   loadExtension: (path: string, entryPoint?: string) => void;
-  executeRawAsync: (query: string, params?: any[]) => Promise<any[]>;
+  executeRaw: (query: string, params?: any[]) => Promise<any[]>;
   getDbPath: (location?: string) => string;
   reactiveExecute: (params: {
     query: string;
@@ -260,14 +262,12 @@ function enhanceDB(db: DB, options: any): DB {
     attach: db.attach,
     detach: db.detach,
     executeBatch: db.executeBatch,
-    executeBatchAsync: db.executeBatchAsync,
-
     loadFile: db.loadFile,
     updateHook: db.updateHook,
     commitHook: db.commitHook,
     rollbackHook: db.rollbackHook,
     loadExtension: db.loadExtension,
-    executeRawAsync: db.executeRawAsync,
+    executeRaw: db.executeRaw,
     getDbPath: db.getDbPath,
     reactiveExecute: db.reactiveExecute,
     sync: db.sync,
@@ -275,20 +275,7 @@ function enhanceDB(db: DB, options: any): DB {
       db.close();
       delete locks[options.url];
     },
-    execute: (query: string, params?: any[] | undefined): QueryResult => {
-      const sanitizedParams = params?.map((p) => {
-        if (ArrayBuffer.isView(p)) {
-          return p.buffer;
-        }
-
-        return p;
-      });
-
-      const result = db.execute(query, sanitizedParams);
-      enhanceQueryResult(result);
-      return result;
-    },
-    executeAsync: async (
+    executeWithHostObjects: async (
       query: string,
       params?: any[] | undefined
     ): Promise<QueryResult> => {
@@ -300,9 +287,46 @@ function enhanceDB(db: DB, options: any): DB {
         return p;
       });
 
-      const result = await db.executeAsync(query, sanitizedParams);
+      const result = await db.executeWithHostObjects(query, sanitizedParams);
       enhanceQueryResult(result);
       return result;
+    },
+    execute: async (
+      query: string,
+      params?: any[] | undefined
+    ): Promise<QueryResult> => {
+      const sanitizedParams = params?.map((p) => {
+        if (ArrayBuffer.isView(p)) {
+          return p.buffer;
+        }
+
+        return p;
+      });
+      console.log('🟧');
+      let intermediateResult = await db.execute(query, sanitizedParams);
+      console.log('🟦');
+      console.log('query', query);
+      console.log('intermediate result', intermediateResult);
+      let rows: any[] = [];
+      for (let i = 0; i < (intermediateResult.rawRows?.length ?? 0); i++) {
+        let row: any = {};
+        for (let j = 0; j < intermediateResult.columnNames!.length ?? 0; j++) {
+          let columnName = intermediateResult.columnNames![j]!;
+          row[columnName] = intermediateResult.rawRows![i][j];
+        }
+        rows.push(row);
+      }
+
+      let res = {
+        ...intermediateResult,
+        rows: {
+          _array: rows,
+          length: rows.length,
+          item: (idx: number) => rows[idx],
+        },
+      };
+      console.log('returning', res);
+      return res;
     },
     prepareStatement: (query: string) => {
       const stmt = db.prepareStatement(query);
@@ -331,55 +355,67 @@ function enhanceDB(db: DB, options: any): DB {
     ): Promise<void> => {
       let isFinalized = false;
 
-      // Local transaction context object implementation
-      const execute = (query: string, params?: any[]): QueryResult => {
+      const execute = async (query: string, params?: any[] | undefined) => {
         if (isFinalized) {
           throw Error(
             `OP-Sqlite Error: Database: ${options.url}. Cannot execute query on finalized transaction`
           );
         }
-        return enhancedDb.execute(query, params);
+        let intermediateResult = await enhancedDb.execute(query, params);
+        let rows: any[] = [];
+        for (let i = 0; i < (intermediateResult.rawRows?.length ?? 0); i++) {
+          let row: any = {};
+          for (
+            let j = 0;
+            j < intermediateResult.columnNames!.length ?? 0;
+            j++
+          ) {
+            let columnName = intermediateResult.columnNames![j]!;
+            row[columnName] = intermediateResult.rawRows![i][j];
+          }
+          rows.push(row);
+        }
+
+        let res = {
+          ...intermediateResult,
+          rows: {
+            _array: rows,
+            length: 0,
+            item: (idx: number) => rows[idx],
+          },
+        };
+        return res;
       };
 
-      const executeAsync = (query: string, params?: any[] | undefined) => {
+      const commit = async (): Promise<QueryResult> => {
         if (isFinalized) {
           throw Error(
             `OP-Sqlite Error: Database: ${options.url}. Cannot execute query on finalized transaction`
           );
         }
-        return enhancedDb.executeAsync(query, params);
-      };
-
-      const commit = () => {
-        if (isFinalized) {
-          throw Error(
-            `OP-Sqlite Error: Database: ${options.url}. Cannot execute query on finalized transaction`
-          );
-        }
-        const result = enhancedDb.execute('COMMIT;');
+        const result = await enhancedDb.execute('COMMIT;');
         isFinalized = true;
         return result;
       };
 
-      const rollback = () => {
+      const rollback = async (): Promise<QueryResult> => {
         if (isFinalized) {
           throw Error(
             `OP-Sqlite Error: Database: ${options.url}. Cannot execute query on finalized transaction`
           );
         }
-        const result = enhancedDb.execute('ROLLBACK;');
+        const result = await enhancedDb.execute('ROLLBACK;');
         isFinalized = true;
         return result;
       };
 
       async function run() {
         try {
-          await enhancedDb.executeAsync('BEGIN TRANSACTION;');
+          await enhancedDb.execute('BEGIN TRANSACTION;');
 
           await fn({
             commit,
             execute,
-            executeAsync,
             rollback,
           });
 

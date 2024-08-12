@@ -123,8 +123,7 @@ BridgeResult opsqlite_attach(std::string const &mainDBName,
   std::string dbPath = opsqlite_get_db_path(databaseToAttach, docPath);
   std::string statement = "ATTACH DATABASE '" + dbPath + "' AS " + alias;
 
-  BridgeResult result =
-      opsqlite_execute(mainDBName, statement, nullptr, nullptr, nullptr);
+  BridgeResult result = opsqlite_execute(mainDBName, statement, nullptr);
 
   if (result.type == SQLiteError) {
     return {
@@ -141,8 +140,7 @@ BridgeResult opsqlite_attach(std::string const &mainDBName,
 BridgeResult opsqlite_detach(std::string const &mainDBName,
                              std::string const &alias) {
   std::string statement = "DETACH DATABASE " + alias;
-  BridgeResult result =
-      opsqlite_execute(mainDBName, statement, nullptr, nullptr, nullptr);
+  BridgeResult result = opsqlite_execute(mainDBName, statement, nullptr);
   if (result.type == SQLiteError) {
     return BridgeResult{
         .type = SQLiteError,
@@ -368,12 +366,152 @@ sqlite3_stmt *opsqlite_prepare_statement(std::string const &dbName,
   return statement;
 }
 
+BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
+                              const std::vector<JSVariant> *params) {
+  check_db_open(name);
+
+  sqlite3 *db = dbMap[name];
+
+  sqlite3_stmt *statement;
+  const char *errorMessage;
+  const char *remainingStatement = nullptr;
+
+  bool isFailed = false;
+  int result, i, count, column_type;
+  std::string column_name, column_declared_type;
+  std::vector<std::string> column_names;
+  std::vector<std::vector<JSVariant>> rows;
+  std::vector<JSVariant> row;
+
+  do {
+    const char *queryStr =
+        remainingStatement == nullptr ? query.c_str() : remainingStatement;
+
+    int statementStatus =
+        sqlite3_prepare_v2(db, queryStr, -1, &statement, &remainingStatement);
+
+    if (statementStatus != SQLITE_OK) {
+      errorMessage = sqlite3_errmsg(db);
+      return {.type = SQLiteError,
+              .message =
+                  "[op-sqlite] SQL prepare error: " + std::string(errorMessage),
+              .affectedRows = 0};
+    }
+
+    if (params != nullptr && params->size() > 0) {
+      opsqlite_bind_statement(statement, params);
+    }
+
+    bool isConsuming = true;
+
+    while (isConsuming) {
+      result = sqlite3_step(statement);
+
+      switch (result) {
+      case SQLITE_ROW:
+        i = 0;
+        row = std::vector<JSVariant>();
+        count = sqlite3_column_count(statement);
+
+        while (i < count) {
+          column_type = sqlite3_column_type(statement, i);
+          column_name = sqlite3_column_name(statement, i);
+          column_names.push_back(column_name);
+
+          switch (column_type) {
+
+          case SQLITE_INTEGER: {
+            /**
+             * It's not possible to send a int64_t in a jsi::Value because JS
+             * cannot represent the whole number range. Instead, we're sending a
+             * double, which can represent all integers up to 53 bits long,
+             * which is more than what was there before (a 32-bit int).
+             *
+             * See
+             * https://github.com/ospfranco/react-native-quick-sqlite/issues/16
+             * for more context.
+             */
+            double column_value = sqlite3_column_double(statement, i);
+            row.push_back(JSVariant(column_value));
+            break;
+          }
+
+          case SQLITE_FLOAT: {
+            double column_value = sqlite3_column_double(statement, i);
+            row.push_back(JSVariant(column_value));
+            break;
+          }
+
+          case SQLITE_TEXT: {
+            const char *column_value = reinterpret_cast<const char *>(
+                sqlite3_column_text(statement, i));
+            int byteLen = sqlite3_column_bytes(statement, i);
+            // Specify length too; in case string contains NULL in the middle
+            // (which SQLite supports!)
+            row.push_back(JSVariant(std::string(column_value, byteLen)));
+            break;
+          }
+
+          case SQLITE_BLOB: {
+            int blob_size = sqlite3_column_bytes(statement, i);
+            const void *blob = sqlite3_column_blob(statement, i);
+            uint8_t *data = new uint8_t[blob_size];
+            memcpy(data, blob, blob_size);
+            row.push_back(
+                JSVariant(ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+                                      .size = static_cast<size_t>(blob_size)}));
+            break;
+          }
+
+          case SQLITE_NULL:
+            // Intentionally left blank to switch to default case
+          default:
+            row.push_back(JSVariant(nullptr));
+            break;
+          }
+          i++;
+        }
+
+        rows.push_back(row);
+        break;
+
+      case SQLITE_DONE:
+        isConsuming = false;
+        break;
+
+      default:
+        isFailed = true;
+        isConsuming = false;
+      }
+    }
+
+    sqlite3_finalize(statement);
+  } while (remainingStatement != NULL && strcmp(remainingStatement, "") != 0 &&
+           !isFailed);
+
+  if (isFailed) {
+    const char *message = sqlite3_errmsg(db);
+    return {.type = SQLiteError,
+            .message =
+                "[op-sqlite] SQL execution error: " + std::string(message),
+            .affectedRows = 0,
+            .insertId = 0};
+  }
+
+  int changedRowCount = sqlite3_changes(db);
+  long long latestInsertRowId = sqlite3_last_insert_rowid(db);
+  return {.type = SQLiteOk,
+          .affectedRows = changedRowCount,
+          .insertId = static_cast<double>(latestInsertRowId),
+          .rows = std::move(rows),
+          .column_names = std::move(column_names)};
+}
+
 /// Base execution function, returns HostObjects to the JS environment
-BridgeResult
-opsqlite_execute(std::string const &dbName, std::string const &query,
-                 const std::vector<JSVariant> *params,
-                 std::vector<DumbHostObject> *results,
-                 std::shared_ptr<std::vector<SmartHostObject>> metadatas) {
+BridgeResult opsqlite_execute_host_objects(
+    std::string const &dbName, std::string const &query,
+    const std::vector<JSVariant> *params, std::vector<DumbHostObject> *results,
+    std::shared_ptr<std::vector<SmartHostObject>> metadatas) {
 
   check_db_open(dbName);
 
@@ -879,16 +1017,14 @@ BatchResult opsqlite_execute_batch(std::string dbName,
 
   try {
     int affectedRows = 0;
-    opsqlite_execute(dbName, "BEGIN EXCLUSIVE TRANSACTION", nullptr, nullptr,
-                     nullptr);
+    opsqlite_execute(dbName, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
     for (int i = 0; i < commandCount; i++) {
       auto command = commands->at(i);
       // We do not provide a datastructure to receive query data because we
       // don't need/want to handle this results in a batch execution
-      auto result = opsqlite_execute(dbName, command.sql, command.params.get(),
-                                     nullptr, nullptr);
+      auto result = opsqlite_execute(dbName, command.sql, command.params.get());
       if (result.type == SQLiteError) {
-        opsqlite_execute(dbName, "ROLLBACK", nullptr, nullptr, nullptr);
+        opsqlite_execute(dbName, "ROLLBACK", nullptr);
         return BatchResult{
             .type = SQLiteError,
             .message = result.message,
@@ -897,14 +1033,14 @@ BatchResult opsqlite_execute_batch(std::string dbName,
         affectedRows += result.affectedRows;
       }
     }
-    opsqlite_execute(dbName, "COMMIT", nullptr, nullptr, nullptr);
+    opsqlite_execute(dbName, "COMMIT", nullptr);
     return BatchResult{
         .type = SQLiteOk,
         .affectedRows = affectedRows,
         .commands = static_cast<int>(commandCount),
     };
   } catch (std::exception &exc) {
-    opsqlite_execute(dbName, "ROLLBACK", nullptr, nullptr, nullptr);
+    opsqlite_execute(dbName, "ROLLBACK", nullptr);
     return BatchResult{
         .type = SQLiteError,
         .message = exc.what(),

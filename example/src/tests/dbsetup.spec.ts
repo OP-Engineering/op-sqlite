@@ -27,7 +27,7 @@ export function dbSetupTests() {
         encryptionKey: 'test',
       });
 
-      const res = db.execute('select sqlite_version();');
+      const res = await db.execute('select sqlite_version();');
 
       expect(res.rows?._array[0]['sqlite_version()']).to.equal(expectedVersion);
       db.close();
