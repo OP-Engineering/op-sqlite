@@ -44,8 +44,11 @@ BridgeResult opsqlite_attach(std::string const &mainDBName,
 BridgeResult opsqlite_detach(std::string const &mainDBName,
                              std::string const &alias);
 
+BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
+                              const std::vector<JSVariant> *params);
+
 BridgeResult
-opsqlite_execute(std::string const &dbName, std::string const &query,
+opsqlite_execute_host_objects(std::string const &dbName, std::string const &query,
                  const std::vector<JSVariant> *params,
                  std::vector<DumbHostObject> *results,
                  std::shared_ptr<std::vector<SmartHostObject>> metadatas);

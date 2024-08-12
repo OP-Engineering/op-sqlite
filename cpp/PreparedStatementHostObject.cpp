@@ -23,7 +23,7 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
   auto name = propNameID.utf8(rt);
 
   if (name == "bind") {
-    return HOSTFN("bind", 1) {
+    return HOSTFN("bind") {
       if (_stmt == nullptr) {
         throw std::runtime_error("statement has been freed");
       }
@@ -41,7 +41,7 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
   }
 
   if (name == "execute") {
-    return HOSTFN("execute", 1) {
+    return HOSTFN("execute") {
       if (_stmt == nullptr) {
         throw std::runtime_error("statement has been freed");
       }

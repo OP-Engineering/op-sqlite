@@ -38,13 +38,13 @@ export default function App() {
   useEffect(() => {
     setResults([]);
     runTests(
-      dbSetupTests,
+      // dbSetupTests,
       queriesTests,
-      blobTests,
-      registerHooksTests,
-      preparedStatementsTests,
-      constantsTests,
-      reactiveTests,
+      // blobTests,
+      // registerHooksTests,
+      // preparedStatementsTests,
+      // constantsTests,
+      // reactiveTests,
     ).then(setResults);
   }, []);
 

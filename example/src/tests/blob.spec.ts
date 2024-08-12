@@ -7,7 +7,7 @@ let expect = chai.expect;
 let db: DB;
 
 export function blobTests() {
-  beforeEach(() => {
+  beforeEach(async () => {
     try {
       if (db) {
         db.close();
@@ -19,8 +19,8 @@ export function blobTests() {
         encryptionKey: 'test',
       });
 
-      db.execute('DROP TABLE IF EXISTS BlobTable;');
-      db.execute(
+      await db.execute('DROP TABLE IF EXISTS BlobTable;');
+      await db.execute(
         'CREATE TABLE BlobTable ( id INT PRIMARY KEY, content BLOB) STRICT;',
       );
     } catch (e) {
