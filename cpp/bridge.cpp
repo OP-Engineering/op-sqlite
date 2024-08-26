@@ -51,12 +51,14 @@ std::string opsqlite_get_db_path(std::string const &db_name,
 #ifdef OP_SQLITE_USE_SQLCIPHER
 BridgeResult opsqlite_open(std::string const &dbName,
                            std::string const &last_path,
-                           std::string const &crsqlitePath,
+                           std::string const &crsqlite_path,
+                           std::string const &sqlite_vec_path,
                            std::string const &encryptionKey) {
 #else
 BridgeResult opsqlite_open(std::string const &dbName,
                            std::string const &last_path,
-                           std::string const &crsqlitePath) {
+                           std::string const &crsqlite_path,
+                           std::string const &sqlite_vec_path) {
 #endif
   std::string dbPath = opsqlite_get_db_path(dbName, last_path);
 
@@ -78,19 +80,34 @@ BridgeResult opsqlite_open(std::string const &dbName,
                    nullptr, nullptr);
 #endif
 
-#ifdef OP_SQLITE_USE_CRSQLITE
-  char *errMsg;
-  const char *crsqliteEntryPoint = "sqlite3_crsqlite_init";
-
   sqlite3_enable_load_extension(db, 1);
 
-  sqlite3_load_extension(db, crsqlitePath.c_str(), crsqliteEntryPoint, &errMsg);
+  char *errMsg;
+
+#ifdef OP_SQLITE_USE_CRSQLITE
+  const char *crsqliteEntryPoint = "sqlite3_crsqlite_init";
+
+  sqlite3_load_extension(db, crsqlite_path.c_str(), crsqliteEntryPoint,
+                         &errMsg);
 
   if (errMsg != nullptr) {
     return {.type = SQLiteError, .message = errMsg};
   } else {
     LOGI("Loaded CRSQlite successfully");
   }
+#endif
+
+#ifdef OP_SQLITE_USE_SQLITE_VEC
+  const char *vec_entry_point = "sqlite3_vec_init";
+
+  sqlite3_load_extension(db, sqlite_vec_path.c_str(), vec_entry_point, &errMsg);
+
+  if (errMsg != nullptr) {
+    return {.type = SQLiteError, .message = errMsg};
+  } else {
+    LOGI("Loaded sqlite-vec successfully");
+  }
+
 #endif
 
   return {.type = SQLiteOk, .affectedRows = 0};
