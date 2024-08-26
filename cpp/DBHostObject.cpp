@@ -836,8 +836,8 @@ jsi::Value DBHostObject::get(jsi::Runtime &rt,
   if (name == "close") {
     return jsi::Value(rt, function_map["close"]);
   }
-  if (name == "executeRawAsync") {
-    return jsi::Value(rt, function_map["executeRawAsync"]);
+  if (name == "executeRaw") {
+    return jsi::Value(rt, function_map["executeRaw"]);
   }
   if (name == "execute") {
     return jsi::Value(rt, function_map["execute"]);

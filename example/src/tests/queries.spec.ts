@@ -97,10 +97,7 @@ export function queriesTests() {
         [id, name, age, networth],
       );
 
-      console.log('🟩 INSERTED');
-
       const res = await db.execute('SELECT * FROM User');
-      console.log('🟩 SELECTED');
 
       expect(res.rowsAffected).to.equal(1);
       expect(res.insertId).to.equal(1);
