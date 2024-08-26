@@ -19,8 +19,26 @@ const expectedVersion = isLibsql()
   ? '3.44.2'
   : '3.45.1';
 
+const expectedSqliteVecVersion = 'v0.1.2-alpha.7';
+
 export function dbSetupTests() {
   describe('DB setup tests', () => {
+    it('Should match the sqlite_vec version', async () => {
+      let db = open({
+        name: 'versionTest.sqlite',
+      });
+
+      const res = db.execute('select vec_version();');
+
+      console.log('🟥🟥🟥🟥🟥🟥🟥🟥🟥');
+      console.log(res.rows?._array[0]);
+
+      expect(res.rows?._array[0]['vec_version()']).to.equal(
+        expectedSqliteVecVersion,
+      );
+      db.close();
+    });
+
     it(`Should match the sqlite expected version ${expectedVersion}`, async () => {
       let db = open({
         name: 'versionTest.sqlite',

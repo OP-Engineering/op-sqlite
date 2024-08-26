@@ -21,6 +21,7 @@ namespace jsi = facebook::jsi;
 
 std::string _base_path;
 std::string _crsqlite_path;
+std::string _sqlite_vec_path;
 std::shared_ptr<react::CallInvoker> _invoker;
 std::shared_ptr<ThreadPool> thread_pool = std::make_shared<ThreadPool>();
 
@@ -43,10 +44,12 @@ void clearState() {
 }
 
 void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
-             const char *base_path, const char *crsqlite_path) {
+             const char *base_path, const char *crsqlite_path,
+             const char *sqlite_vec_path) {
   invalidated = false;
   _base_path = std::string(base_path);
   _crsqlite_path = std::string(crsqlite_path);
+  _sqlite_vec_path = std::string(sqlite_vec_path);
   _invoker = invoker;
 
   auto open = HOSTFN("open", 1) {
@@ -82,9 +85,9 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
       }
     }
 
-    std::shared_ptr<DBHostObject> db =
-        std::make_shared<DBHostObject>(rt, path, invoker, thread_pool, name,
-                                       path, _crsqlite_path, encryptionKey);
+    std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
+        rt, path, invoker, thread_pool, name, path, _crsqlite_path,
+        _sqlite_vec_path, encryptionKey);
     return jsi::Object::createFromHostObject(rt, db);
   });
 

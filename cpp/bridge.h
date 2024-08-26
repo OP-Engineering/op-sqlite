@@ -28,7 +28,8 @@ BridgeResult opsqlite_open(std::string const &dbName, std::string const &dbPath,
                            std::string const &encryptionKey);
 #else
 BridgeResult opsqlite_open(std::string const &dbName, std::string const &dbPath,
-                           std::string const &crsqlitePath);
+                           std::string const &crsqlite_path,
+                           std::string const &sqlite_vec_path);
 #endif
 
 BridgeResult opsqlite_close(std::string const &dbName);
