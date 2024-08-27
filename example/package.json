@@ -58,7 +58,7 @@
   },
   "op-sqlite": {
     "sqlcipher": false,
-    "crsqlite": false,
+    "crsqlite": true,
     "performanceMode": "2",
     "iosSqlite": false,
     "fts5": true,
