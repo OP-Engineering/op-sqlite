@@ -14,7 +14,7 @@
     "ios",
     "cpp",
     "op-sqlite.podspec",
-    "crsqlite.xcframework",
+    "ios/**.xcframework",
     "!lib/typescript/example",
     "!android/build",
     "!android/.cxx",
