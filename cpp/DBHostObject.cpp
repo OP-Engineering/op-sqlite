@@ -177,8 +177,8 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
       thread_pool(thread_pool), db_name(db_name), rt(rt) {
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
-  BridgeResult result =
-      opsqlite_open(db_name, path, crsqlite_path, sqlite_vec_path, encryption_key);
+  BridgeResult result = opsqlite_open(db_name, path, crsqlite_path,
+                                      sqlite_vec_path, encryption_key);
 #elif OP_SQLITE_USE_LIBSQL
   BridgeResult result = opsqlite_libsql_open(db_name, path, crsqlite_path);
 #else
