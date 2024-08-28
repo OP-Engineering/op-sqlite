@@ -171,17 +171,19 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
                            std::shared_ptr<ThreadPool> thread_pool,
                            std::string &db_name, std::string &path,
                            std::string &crsqlite_path,
+                           std::string &sqlite_vec_path,
                            std::string &encryption_key)
     : base_path(base_path), jsCallInvoker(jsCallInvoker),
       thread_pool(thread_pool), db_name(db_name), rt(rt) {
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
   BridgeResult result =
-      opsqlite_open(db_name, path, crsqlite_path, encryption_key);
+      opsqlite_open(db_name, path, crsqlite_path, sqlite_vec_path, encryption_key);
 #elif OP_SQLITE_USE_LIBSQL
   BridgeResult result = opsqlite_libsql_open(db_name, path, crsqlite_path);
 #else
-  BridgeResult result = opsqlite_open(db_name, path, crsqlite_path);
+  BridgeResult result =
+      opsqlite_open(db_name, path, crsqlite_path, sqlite_vec_path);
 #endif
 
   if (result.type == SQLiteError) {
