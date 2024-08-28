@@ -26,6 +26,7 @@ performance_mode = "0"
 phone_version = false
 sqlite_flags = ""
 fts5 = false
+use_sqlite_vec = false
 
 if(op_sqlite_config != nil)
   use_sqlcipher = op_sqlite_config["sqlcipher"] == true
@@ -35,6 +36,7 @@ if(op_sqlite_config != nil)
   phone_version = op_sqlite_config["iosSqlite"] == true
   sqlite_flags = op_sqlite_config["sqliteFlags"] || ""
   fts5 = op_sqlite_config["fts5"] == true
+  use_sqlite_vec = op_sqlite_config["sqliteVec"] == true
 end
 
 if phone_version && use_sqlcipher
@@ -86,8 +88,8 @@ Pod::Spec.new do |s|
   end
 
   other_cflags = '-DSQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION=1'
-
   optimizedCflags = other_cflags + '$(inherited) -DSQLITE_DQS=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1 -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DEPRECATED=1 -DSQLITE_OMIT_PROGRESS_CALLBACK=1 -DSQLITE_OMIT_SHARED_CACHE=1 -DSQLITE_USE_ALLOCA=1'
+  frameworks = []
 
   if fts5 && !phone_version then
     log_message.call("[OP-SQLITE] FTS5 enabled 🔎")
@@ -126,7 +128,13 @@ Pod::Spec.new do |s|
   if use_crsqlite then
     log_message.call("[OP-SQLITE] using CRQSQLite 🤖")
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_CRSQLITE=1"
-    s.vendored_frameworks = "ios/crsqlite.xcframework"
+    frameworks.push("ios/crsqlite.xcframework")
+  end
+
+  if use_sqlite_vec then
+    log_message.call("[OP-SQLITE] using Sqlite Vec ↗️")
+    xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_SQLITE_VEC=1"
+    frameworks.push("ios/sqlitevec.xcframework")
   end
 
   if use_libsql then
@@ -135,9 +143,9 @@ Pod::Spec.new do |s|
     end
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_LIBSQL=1"
     if use_crsqlite then
-      s.vendored_frameworks = "ios/libsql.xcframework", "ios/crsqlite.xcframework"
+      frameworks = ["ios/libsql.xcframework", "ios/crsqlite.xcframework"]
     else
-      s.vendored_frameworks = "ios/libsql.xcframework"
+      frameworks = ["ios/libsql.xcframework"]
     end
   end
 
@@ -147,4 +155,5 @@ Pod::Spec.new do |s|
   end
 
   s.pod_target_xcconfig = xcconfig
+  s.vendored_frameworks = frameworks
 end
