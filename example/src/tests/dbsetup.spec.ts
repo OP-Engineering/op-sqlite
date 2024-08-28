@@ -30,12 +30,10 @@ export function dbSetupTests() {
 
       const res = db.execute('select vec_version();');
 
-      console.log('🟥🟥🟥🟥🟥🟥🟥🟥🟥');
-      console.log(res.rows?._array[0]);
-
       expect(res.rows?._array[0]['vec_version()']).to.equal(
         expectedSqliteVecVersion,
       );
+
       db.close();
     });
 
