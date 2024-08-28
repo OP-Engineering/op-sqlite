@@ -81,12 +81,9 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
                                                       ofType:@""];
   NSBundle *libsqlitevec_bundle =
       [NSBundle bundleWithIdentifier:@"com.ospfranco.sqlitevec"];
-  NSString *sqlite_vec_path =
-      [libsqlitevec_bundle pathForResource:@"sqlitevec" ofType:@""];
+  NSString *sqlite_vec_path = [libsqlitevec_bundle pathForResource:@"sqlitevec"
+                                                            ofType:@""];
 
-    
-//    NSString *sqlite_vec_path = @"";
-    
   if (crsqlite_path == nil) {
     crsqlite_path = @"";
   }
