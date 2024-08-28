@@ -58,11 +58,11 @@
   },
   "op-sqlite": {
     "sqlcipher": false,
-    "crsqlite": true,
+    "crsqlite": false,
     "performanceMode": "2",
     "iosSqlite": false,
     "fts5": true,
     "libsql": false,
-    "sqliteVec": true
+    "sqliteVec": false
   }
 }
