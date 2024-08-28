@@ -71,6 +71,7 @@ export function dbSetupTests() {
           location: ANDROID_EXTERNAL_FILES_PATH,
           encryptionKey: 'test',
         });
+
         androidDb.execute('DROP TABLE IF EXISTS User;');
         androidDb.execute(
           'CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL) STRICT;',
