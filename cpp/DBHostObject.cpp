@@ -767,7 +767,8 @@ void DBHostObject::create_jsi_functions() {
     sqlite3_stmt *statement = opsqlite_prepare_statement(db_name, query);
 #endif
     auto preparedStatementHostObject =
-        std::make_shared<PreparedStatementHostObject>(db_name, statement, jsCallInvoker, thread_pool);
+        std::make_shared<PreparedStatementHostObject>(
+            db_name, statement, jsCallInvoker, thread_pool);
 
     return jsi::Object::createFromHostObject(rt, preparedStatementHostObject);
   });
