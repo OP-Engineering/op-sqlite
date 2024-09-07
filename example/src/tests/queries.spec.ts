@@ -7,7 +7,7 @@ import {
   type DB,
   type SQLBatchTuple,
 } from '@op-engineering/op-sqlite';
-import {beforeEach, describe, it} from './MochaRNAdapter';
+import {beforeEach, describe, it, itOnly} from './MochaRNAdapter';
 import chai from 'chai';
 
 const expect = chai.expect;
@@ -202,15 +202,11 @@ export function queriesTests() {
         "SELECT name FROM sqlite_master WHERE type='table' AND name='T1';",
       );
 
-      console.log('t1 🟦🟦🟦🟦🟦', t1name);
-
       expect(t1name.rows?._array[0].name).to.equal('T1');
 
       let t2name = await db.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='T2';",
       );
-
-      console.log('t2 🟦🟦🟦🟦', t2name);
 
       expect(t2name.rows?._array[0].name).to.equal('T2');
     });
@@ -523,6 +519,7 @@ export function queriesTests() {
       await db.executeBatch(commands);
 
       const res = await db.execute('SELECT * FROM User');
+      console.log(res);
       expect(res.rows?._array).to.eql([
         {id: id1, name: name1, age: age1, networth: networth1, nickname: null},
         {
@@ -610,8 +607,10 @@ export function queriesTests() {
     });
 
     it('Create fts5 virtual table', async () => {
-      db.execute('CREATE VIRTUAL TABLE fts5_table USING fts5(name, content);');
-      db.execute('INSERT INTO fts5_table (name, content) VALUES(?, ?)', [
+      await db.execute(
+        'CREATE VIRTUAL TABLE fts5_table USING fts5(name, content);',
+      );
+      await db.execute('INSERT INTO fts5_table (name, content) VALUES(?, ?)', [
         'test',
         'test content',
       ]);

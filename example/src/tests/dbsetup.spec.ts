@@ -40,8 +40,8 @@ export function dbSetupTests() {
         encryptionKey: 'test',
       });
 
-      inMemoryDb.execute('DROP TABLE IF EXISTS User;');
-      inMemoryDb.execute(
+      await inMemoryDb.execute('DROP TABLE IF EXISTS User;');
+      await inMemoryDb.execute(
         'CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL) STRICT;',
       );
 
@@ -102,6 +102,7 @@ export function dbSetupTests() {
 
       expect(copied).to.equal(true);
     });
+
     it('Moves assets database with path', async () => {
       const copied = await moveAssetsDatabase({
         filename: 'sample2.sqlite',
@@ -110,6 +111,7 @@ export function dbSetupTests() {
 
       expect(copied).to.equal(true);
     });
+
     it('Moves assets database with path and overwrite', async () => {
       const copied = await moveAssetsDatabase({
         filename: 'sample2.sqlite',
@@ -138,7 +140,7 @@ export function dbSetupTests() {
           encryptionKey: 'test',
         });
 
-        db.execute('select 1;');
+        await db.execute('select 1;');
 
         db.close();
       }

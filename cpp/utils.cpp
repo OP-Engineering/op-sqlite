@@ -170,16 +170,15 @@ jsi::Value create_js_rows(jsi::Runtime &rt, BridgeResult status) {
     res.setProperty(rt, "insertId", jsi::Value(status.insertId));
   }
 
-  size_t rowCount = status.rows.size();
-  auto rows = jsi::Array(rt, rowCount);
+  size_t row_count = status.rows.size();
+  auto rows = jsi::Array(rt, row_count);
 
-  if (rowCount > 0) {
-
-    auto row = jsi::Array(rt, status.column_names.size());
-    for (int i = 0; i < rowCount; i++) {
+  if (row_count > 0) {
+    for (int i = 0; i < row_count; i++) {
+      auto row = jsi::Array(rt, status.column_names.size());
       std::vector<JSVariant> native_row = status.rows[i];
       for (int j = 0; j < native_row.size(); j++) {
-        auto value = toJSI(rt, status.rows[i][j]);
+        auto value = toJSI(rt, native_row[j]);
         row.setValueAtIndex(rt, j, value);
       }
       rows.setValueAtIndex(rt, i, std::move(row));

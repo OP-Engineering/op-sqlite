@@ -38,11 +38,11 @@ export default function App() {
   useEffect(() => {
     setResults([]);
     runTests(
-      // dbSetupTests,
+      dbSetupTests,
       queriesTests,
-      // blobTests,
-      // registerHooksTests,
-      // preparedStatementsTests,
+      blobTests,
+      registerHooksTests,
+      preparedStatementsTests,
       // constantsTests,
       // reactiveTests,
     ).then(setResults);
@@ -85,7 +85,7 @@ export default function App() {
     const moved = await moveAssetsDatabase({filename: 'sample.sqlite'});
     console.log('moved', moved);
     const db = open({name: 'sample.sqlite'});
-    const users = db.execute('SELECT * FROM User');
+    const users = await db.execute('SELECT * FROM User');
     console.log('users', users.rows?._array);
   };
 
