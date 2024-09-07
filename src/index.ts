@@ -1,4 +1,3 @@
-// import NativeOPSQLite from './NativeOPSQLite';
 import { NativeModules } from 'react-native';
 
 declare global {
