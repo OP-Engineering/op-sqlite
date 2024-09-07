@@ -2,28 +2,42 @@
   "name": "@op-engineering/op-sqlite",
   "version": "7.1.0",
   "description": "Next generation SQLite for React Native",
-  "main": "lib/commonjs/index",
-  "module": "lib/module/index",
-  "types": "lib/typescript/src/index.d.ts",
-  "react-native": "src/index",
-  "source": "src/index",
+  "source": "./src/index.ts",
+  "main": "./lib/commonjs/index.js",
+  "module": "./lib/module/index.js",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./lib/typescript/module/src/index.d.ts",
+        "default": "./lib/module/index.js"
+      },
+      "require": {
+        "types": "./lib/typescript/commonjs/src/index.d.ts",
+        "default": "./lib/commonjs/index.js"
+      }
+    }
+  },
   "files": [
     "src",
     "lib",
     "android",
     "ios",
     "cpp",
-    "op-sqlite.podspec",
-    "crsqlite.xcframework",
-    "!lib/typescript/example",
-    "!android/build",
-    "!android/.cxx",
+    "*.podspec",
     "!ios/build",
+    "!android/build",
+    "!android/gradle",
+    "!android/gradlew",
+    "!android/gradlew.bat",
+    "!android/local.properties",
+    "!android/.cxx",
     "!**/__tests__",
     "!**/__fixtures__",
-    "!**/__mocks__"
+    "!**/__mocks__",
+    "!**/.*"
   ],
   "scripts": {
+    "example": "yarn workspace op_sqlite_example",
     "typecheck": "tsc --noEmit",
     "prepare": "bob build",
     "pods": "cd example && yarn pods",
@@ -32,7 +46,8 @@
   "keywords": [
     "react-native",
     "ios",
-    "android"
+    "android",
+    "sqlite"
   ],
   "repository": "https://github.com/OP-Engineering/op-sqlite",
   "author": "Oscar Franco <ospfranco@protonmail.com> (https://github.com/ospfranco)",
@@ -49,13 +64,13 @@
     "lefthook": "^1.5.5",
     "react": "18.2.0",
     "react-native": "0.74.0",
-    "react-native-builder-bob": "^0.23.2",
+    "react-native-builder-bob": "^0.30.0",
     "turbo": "^1.12.4",
     "typescript": "5.0.4"
   },
   "peerDependencies": {
     "react": "*",
-    "react-native": ">0.73.0"
+    "react-native": "*"
   },
   "workspaces": [
     "example"
@@ -71,15 +86,26 @@
     "source": "src",
     "output": "lib",
     "targets": [
-      "commonjs",
-      "module",
+      [
+        "commonjs",
+        {
+          "esm": true
+        }
+      ],
+      [
+        "module",
+        {
+          "esm": true
+        }
+      ],
       [
         "typescript",
         {
-          "project": "tsconfig.build.json"
+          "project": "tsconfig.build.json",
+          "esm": true
         }
       ]
     ]
   },
-  "packageManager": "yarn@4.3.1"
+  "packageManager": "yarn@4.4.1"
 }

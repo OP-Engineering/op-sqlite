@@ -103,8 +103,7 @@ BridgeResult opsqlite_close(std::string const &dbName) {
   sqlite3 *db = dbMap[dbName];
 
 #ifdef OP_SQLITE_USE_CRSQLITE
-  opsqlite_execute(dbName, "select crsql_finalize();", nullptr, nullptr,
-                   nullptr);
+  opsqlite_execute(dbName, "select crsql_finalize();", nullptr);
 #endif
 
   sqlite3_close_v2(db);
