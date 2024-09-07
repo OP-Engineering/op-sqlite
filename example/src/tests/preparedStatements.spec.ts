@@ -43,10 +43,10 @@ export function preparedStatementsTests() {
   describe('PreparedStatements', () => {
     it('Creates a prepared statement and executes a prepared statement', async () => {
       const statement = db.prepareStatement('SELECT * FROM User;');
-      let results = statement.execute();
+      let results = await statement.execute();
 
       expect(results.rows!._array.length).to.equal(3);
-      results = statement.execute();
+      results = await statement.execute();
 
       expect(results.rows!._array.length).to.equal(3);
     });
@@ -55,11 +55,11 @@ export function preparedStatementsTests() {
       const statement = db.prepareStatement('SELECT * FROM User WHERE id=?;');
       statement.bind([1]);
 
-      let results = statement.execute();
+      let results = await statement.execute();
       expect(results.rows!._array[0].name === 'Oscar');
 
       statement.bind([2]);
-      results = statement.execute();
+      results = await statement.execute();
       expect(results.rows!._array[0].name === 'Pablo');
     });
 
@@ -68,10 +68,10 @@ export function preparedStatementsTests() {
         'INSERT INTO "User" (id, name) VALUES(?,?);',
       );
       statement.bind([4, 'Juan']);
-      statement.execute();
+      await statement.execute();
 
       statement.bind([5, 'Pedro']);
-      statement.execute();
+      await statement.execute();
     });
   });
 }

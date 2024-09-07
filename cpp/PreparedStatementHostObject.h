@@ -2,24 +2,27 @@
 
 #include <jsi/jsi.h>
 #include <memory>
+#include <ReactCommon/CallInvoker.h>
 #ifdef OP_SQLITE_USE_LIBSQL
 #include "libsql.h"
 #else
 #include <sqlite3.h>
 #endif
 #include <string>
+#include "ThreadPool.h"
 
 namespace opsqlite {
 namespace jsi = facebook::jsi;
+namespace react = facebook::react;
 
 class PreparedStatementHostObject : public jsi::HostObject {
 public:
 #ifdef OP_SQLITE_USE_LIBSQL
-  PreparedStatementHostObject(std::string name, libsql_stmt_t stmt)
-      : _name(name), _stmt(stmt){};
+  PreparedStatementHostObject(std::string name, libsql_stmt_t stmt, std::shared_ptr<react::CallInvoker> js_call_invoker, std::shared_ptr<ThreadPool> thread_pool)
+      : _name(name), _stmt(stmt), _js_call_invoker(js_call_invoker), _thread_pool(thread_pool){};
 #else
-  PreparedStatementHostObject(std::string name, sqlite3_stmt *stmt)
-      : _name(name), _stmt(stmt){};
+  PreparedStatementHostObject(std::string name, sqlite3_stmt *stmt, std::shared_ptr<react::CallInvoker> js_call_invoker, std::shared_ptr<ThreadPool> thread_pool)
+      : _name(name), _stmt(stmt), _js_call_invoker(js_call_invoker), _thread_pool(thread_pool){};
 #endif
   virtual ~PreparedStatementHostObject();
 
@@ -28,6 +31,8 @@ public:
   jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID);
 
 private:
+    std::shared_ptr<react::CallInvoker> _js_call_invoker;
+    std::shared_ptr<ThreadPool> _thread_pool;
   std::string _name;
 #ifdef OP_SQLITE_USE_LIBSQL
   libsql_stmt_t _stmt;
