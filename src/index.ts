@@ -142,7 +142,7 @@ export interface PendingTransaction {
 
 export type PreparedStatementObj = {
   bind: (params: any[]) => void;
-  execute: () => QueryResult;
+  execute: () => Promise<QueryResult>;
 };
 
 export type DB = {
@@ -341,8 +341,8 @@ function enhanceDB(db: DB, options: any): DB {
 
           stmt.bind(sanitizedParams);
         },
-        execute: () => {
-          const res = stmt.execute();
+        execute: async () => {
+          const res = await stmt.execute();
           enhanceQueryResult(res);
           return res;
         },
@@ -453,23 +453,6 @@ function enhanceDB(db: DB, options: any): DB {
 
   return enhancedDb;
 }
-
-export const openSync = (options: {
-  url: string;
-  authToken: string;
-  name: string;
-  location?: string;
-  syncInterval: number;
-}): DB => {
-  if (!isLibsql()) {
-    throw new Error('This function is only available for libsql');
-  }
-
-  const db = OPSQLite.openSync(options);
-  const enhancedDb = enhanceDB(db, options);
-
-  return enhancedDb;
-};
 
 export const openRemote = (options: { url: string; authToken: string }): DB => {
   if (!isLibsql()) {

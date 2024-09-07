@@ -472,7 +472,7 @@ BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
             row.push_back(JSVariant(nullptr));
             break;
           }
-            
+
           current_column++;
         }
 
