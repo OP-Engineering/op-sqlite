@@ -159,43 +159,42 @@ std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt, jsi::Value const &xs) {
 }
 
 jsi::Value create_js_rows(jsi::Runtime &rt, BridgeResult status) {
-    if (status.type == SQLiteError) {
-      throw std::invalid_argument(status.message);
-    }
+  if (status.type == SQLiteError) {
+    throw std::invalid_argument(status.message);
+  }
 
-    jsi::Object res = jsi::Object(rt);
+  jsi::Object res = jsi::Object(rt);
 
-    res.setProperty(rt, "rowsAffected", status.affectedRows);
-    if (status.affectedRows > 0 && status.insertId != 0) {
-      res.setProperty(rt, "insertId", jsi::Value(status.insertId));
-    }
+  res.setProperty(rt, "rowsAffected", status.affectedRows);
+  if (status.affectedRows > 0 && status.insertId != 0) {
+    res.setProperty(rt, "insertId", jsi::Value(status.insertId));
+  }
 
-    size_t rowCount = status.rows.size();
-    auto rows = jsi::Array(rt, rowCount);
+  size_t rowCount = status.rows.size();
+  auto rows = jsi::Array(rt, rowCount);
 
-    if (rowCount > 0) {
-        
-        auto row = jsi::Array(rt, status.column_names.size());
-      for (int i = 0; i < rowCount; i++) {
-          std::vector<JSVariant> native_row = status.rows[i];
-          for (int j = 0; j < native_row.size(); j++) {
-              auto value = toJSI(rt, status.rows[i][j]);
-              row.setValueAtIndex(rt, j, value);
-          }
-          rows.setValueAtIndex(rt, i, std::move(row));
+  if (rowCount > 0) {
+
+    auto row = jsi::Array(rt, status.column_names.size());
+    for (int i = 0; i < rowCount; i++) {
+      std::vector<JSVariant> native_row = status.rows[i];
+      for (int j = 0; j < native_row.size(); j++) {
+        auto value = toJSI(rt, status.rows[i][j]);
+        row.setValueAtIndex(rt, j, value);
       }
+      rows.setValueAtIndex(rt, i, std::move(row));
     }
-    res.setProperty(rt, "rawRows", std::move(rows));
+  }
+  res.setProperty(rt, "rawRows", std::move(rows));
 
-    size_t column_count = status.column_names.size();
-    auto column_array = jsi::Array(rt, column_count);
-    for (int i = 0; i < column_count; i++) {
-      auto column = status.column_names.at(i);
-      column_array.setValueAtIndex(
-          rt, i, toJSI(rt, column));
-    }
-    res.setProperty(rt, "columnNames", std::move(column_array));
-    return res;
+  size_t column_count = status.column_names.size();
+  auto column_array = jsi::Array(rt, column_count);
+  for (int i = 0; i < column_count; i++) {
+    auto column = status.column_names.at(i);
+    column_array.setValueAtIndex(rt, i, toJSI(rt, column));
+  }
+  res.setProperty(rt, "columnNames", std::move(column_array));
+  return res;
 }
 
 jsi::Value
@@ -309,8 +308,7 @@ BatchResult importSQLFile(std::string dbName, std::string fileLocation) {
       opsqlite_execute(dbName, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
       while (std::getline(sqFile, line, '\n')) {
         if (!line.empty()) {
-          BridgeResult result =
-              opsqlite_execute(dbName, line, nullptr);
+          BridgeResult result = opsqlite_execute(dbName, line, nullptr);
           if (result.type == SQLiteError) {
             opsqlite_execute(dbName, "ROLLBACK", nullptr);
             sqFile.close();
