@@ -43,8 +43,8 @@ export default function App() {
       blobTests,
       registerHooksTests,
       preparedStatementsTests,
-      // constantsTests,
-      // reactiveTests,
+      constantsTests,
+      reactiveTests,
     ).then(setResults);
   }, []);
 
