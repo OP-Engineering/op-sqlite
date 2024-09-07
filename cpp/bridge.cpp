@@ -376,7 +376,7 @@ BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
   const char *remainingStatement = nullptr;
 
   bool isFailed = false;
-  int result, i, count, column_type;
+  int step_result, current_column, column_count, column_type;
   std::string column_name, column_declared_type;
   std::vector<std::string> column_names;
   std::vector<std::vector<JSVariant>> rows;
@@ -401,21 +401,25 @@ BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
       opsqlite_bind_statement(statement, params);
     }
 
-    bool isConsuming = true;
+    column_count = sqlite3_column_count(statement);
+    bool is_consuming = true;
+    // Do a first pass to get the column names
+    for (int i = 0; i < column_count; i++) {
+      column_name = sqlite3_column_name(statement, i);
+      column_names.push_back(column_name);
+    }
 
-    while (isConsuming) {
-      result = sqlite3_step(statement);
+    while (is_consuming) {
+      step_result = sqlite3_step(statement);
 
-      switch (result) {
+      switch (step_result) {
       case SQLITE_ROW:
-        i = 0;
+        current_column = 0;
         row = std::vector<JSVariant>();
-        count = sqlite3_column_count(statement);
+        column_count = sqlite3_column_count(statement);
 
-        while (i < count) {
-          column_type = sqlite3_column_type(statement, i);
-          column_name = sqlite3_column_name(statement, i);
-          column_names.push_back(column_name);
+        while (current_column < column_count) {
+          column_type = sqlite3_column_type(statement, current_column);
 
           switch (column_type) {
 
@@ -423,37 +427,37 @@ BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
             /**
              * It's not possible to send a int64_t in a jsi::Value because JS
              * cannot represent the whole number range. Instead, we're sending a
-             * double, which can represent all integers up to 53 bits long,
-             * which is more than what was there before (a 32-bit int).
+             * double, which can represent all integers up to 53 bits long
              *
              * See
              * https://github.com/ospfranco/react-native-quick-sqlite/issues/16
              * for more context.
              */
-            double column_value = sqlite3_column_double(statement, i);
+            double column_value =
+                sqlite3_column_double(statement, current_column);
             row.push_back(JSVariant(column_value));
             break;
           }
 
           case SQLITE_FLOAT: {
-            double column_value = sqlite3_column_double(statement, i);
+            double column_value =
+                sqlite3_column_double(statement, current_column);
             row.push_back(JSVariant(column_value));
             break;
           }
 
           case SQLITE_TEXT: {
             const char *column_value = reinterpret_cast<const char *>(
-                sqlite3_column_text(statement, i));
-            int byteLen = sqlite3_column_bytes(statement, i);
+                sqlite3_column_text(statement, current_column));
+            int byteLen = sqlite3_column_bytes(statement, current_column);
             // Specify length too; in case string contains NULL in the middle
-            // (which SQLite supports!)
             row.push_back(JSVariant(std::string(column_value, byteLen)));
             break;
           }
 
           case SQLITE_BLOB: {
-            int blob_size = sqlite3_column_bytes(statement, i);
-            const void *blob = sqlite3_column_blob(statement, i);
+            int blob_size = sqlite3_column_bytes(statement, current_column);
+            const void *blob = sqlite3_column_blob(statement, current_column);
             uint8_t *data = new uint8_t[blob_size];
             memcpy(data, blob, blob_size);
             row.push_back(
@@ -468,19 +472,20 @@ BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
             row.push_back(JSVariant(nullptr));
             break;
           }
-          i++;
+            
+          current_column++;
         }
 
         rows.push_back(row);
         break;
 
       case SQLITE_DONE:
-        isConsuming = false;
+        is_consuming = false;
         break;
 
       default:
         isFailed = true;
-        isConsuming = false;
+        is_consuming = false;
       }
     }
 

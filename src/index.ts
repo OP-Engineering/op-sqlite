@@ -301,17 +301,17 @@ function enhanceDB(db: DB, options: any): DB {
 
         return p;
       });
-      console.log('🟧');
+
       let intermediateResult = await db.execute(query, sanitizedParams);
-      console.log('🟦');
-      console.log('query', query);
-      console.log('intermediate result', intermediateResult);
+
       let rows: any[] = [];
       for (let i = 0; i < (intermediateResult.rawRows?.length ?? 0); i++) {
         let row: any = {};
         for (let j = 0; j < intermediateResult.columnNames!.length ?? 0; j++) {
           let columnName = intermediateResult.columnNames![j]!;
-          row[columnName] = intermediateResult.rawRows![i][j];
+          let value = intermediateResult.rawRows![i][j];
+
+          row[columnName] = value;
         }
         rows.push(row);
       }
@@ -324,7 +324,6 @@ function enhanceDB(db: DB, options: any): DB {
           item: (idx: number) => rows[idx],
         },
       };
-      console.log('returning', res);
       return res;
     },
     prepareStatement: (query: string) => {
