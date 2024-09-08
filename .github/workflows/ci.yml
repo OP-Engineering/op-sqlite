@@ -271,7 +271,7 @@ jobs:
         run: |
           yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}"
 
-  build-android-sqlcipher:
+  test-android-sqlcipher:
     runs-on: ubuntu-latest
     env:
       TURBO_CACHE_DIR: .turbo/android
@@ -344,7 +344,7 @@ jobs:
             adb shell input keyevent 82
             ./scripts/test-android.sh
 
-  build-android-libsql:
+  test-android-libsql:
     runs-on: ubuntu-latest
     env:
       TURBO_CACHE_DIR: .turbo/android

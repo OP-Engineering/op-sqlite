@@ -74,8 +74,7 @@ BridgeResult opsqlite_open(std::string const &dbName,
   dbMap[dbName] = db;
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
-  opsqlite_execute(dbName, "PRAGMA key = '" + encryptionKey + "'", nullptr,
-                   nullptr, nullptr);
+  opsqlite_execute(dbName, "PRAGMA key = '" + encryptionKey + "'", nullptr);
 #endif
 
 #ifdef OP_SQLITE_USE_CRSQLITE
