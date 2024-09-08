@@ -438,7 +438,7 @@ export function queriesTests() {
           'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
           [id, name, age, networth],
         );
-        tx.rollback();
+        await tx.rollback();
         const res = await db.execute('SELECT * FROM User');
         expect(res.rows?._array).to.eql([]);
       });
