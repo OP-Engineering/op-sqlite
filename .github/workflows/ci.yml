@@ -141,7 +141,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
-          script: ./scripts test-android.sh
+          script: ./scripts/test-android.sh
 
       # - name: Build example for Android
       #   env:
