@@ -16,7 +16,7 @@
       ],
       "outputs": []
     },
-    "android": {
+    "run:android:release": {
       "inputs": [
         "package.json",
         "android",
