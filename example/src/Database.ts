@@ -44,7 +44,7 @@ export async function createLargeDB() {
     ]);
   }
 
-  await largeDb.executeBatchAsync(insertions);
+  await largeDb.executeBatch(insertions);
 
   largeDb.close();
 }
@@ -52,7 +52,7 @@ export async function createLargeDB() {
 export async function querySingleRecordOnLargeDB() {
   let largeDb = open(DB_CONFIG);
 
-  await largeDb.executeAsync('SELECT * FROM "Test" LIMIT 1;');
+  await largeDb.execute('SELECT * FROM "Test" LIMIT 1;');
 }
 
 export async function queryLargeDB() {
@@ -79,7 +79,7 @@ export async function queryLargeDB() {
     global.gc();
 
     // let start = performance.now();
-    await largeDb.executeAsync('SELECT * FROM Test;');
+    await largeDb.execute('SELECT * FROM Test;');
     // let end = performance.now();
     // times.loadFromDb.push(end - start);
 
@@ -93,7 +93,7 @@ export async function queryLargeDB() {
     // end = performance.now();
 
     // start = performance.now();
-    await largeDb.executeRawAsync('SELECT * FROM Test;');
+    await largeDb.executeRaw('SELECT * FROM Test;');
     // end = performance.now();
     // times.rawExecution.push(end - start);
 
