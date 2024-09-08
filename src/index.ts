@@ -418,13 +418,13 @@ function enhanceDB(db: DB, options: any): DB {
           });
 
           if (!isFinalized) {
-            commit();
+            await commit();
           }
         } catch (executionError) {
-          console.warn('transaction error', executionError);
+          // console.warn('transaction error', executionError);
           if (!isFinalized) {
             try {
-              rollback();
+              await rollback();
             } catch (rollbackError) {
               throw rollbackError;
             }

@@ -4,7 +4,7 @@ let results: any[] = [];
 const server = new BridgeServer('http_service', true);
 
 server.get('/ping', async (_req, _res) => {
-  console.log("🟦 🟦🟦🟦🟦🟦🟦 🟦 Received request for '/ping'");
+  // console.log("🟦 🟦🟦🟦🟦🟦🟦 🟦 Received request for '/ping'");
   return {message: 'pong'};
 });
 

@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-console.log('Current working directory:', process.cwd());
+// console.log('Current working directory:', process.cwd());
 
 // Read the package.json file
 const packageJson = JSON.parse(fs.readFileSync('./example/package.json'));

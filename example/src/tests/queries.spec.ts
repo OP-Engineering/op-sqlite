@@ -151,7 +151,7 @@ export function queriesTests() {
 
       const countRes = await db.execute('SELECT COUNT(*) as count FROM User');
 
-      console.log(countRes);
+      // console.log(countRes);
 
       // expect(countRes.metadata?.[0]?.type).to.equal('UNKNOWN');
       expect(countRes.rows?._array.length).to.equal(1);
@@ -286,7 +286,7 @@ export function queriesTests() {
       });
 
       const res = await db.execute('SELECT * FROM User');
-      console.log(res);
+      // console.log(res);
       expect(res.rows?._array).to.eql([
         {
           id,
@@ -404,7 +404,7 @@ export function queriesTests() {
             [id, name, age, networth],
           );
         } catch (e) {
-          tx.rollback();
+          await tx.rollback();
         }
       });
 
@@ -519,7 +519,7 @@ export function queriesTests() {
       await db.executeBatch(commands);
 
       const res = await db.execute('SELECT * FROM User');
-      console.log(res);
+      // console.log(res);
       expect(res.rows?._array).to.eql([
         {id: id1, name: name1, age: age1, networth: networth1, nickname: null},
         {

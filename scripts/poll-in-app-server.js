@@ -19,7 +19,7 @@ async function pollInAppServer() {
           console.log('🟢🟢🟢🟢🟢 All tests passed!');
           process.exit(0);
         } else {
-          console.log('Some tests failed');
+          console.log('🟥🟥🟥🟥🟥 Some tests failed');
           process.exit(1);
         }
       }
