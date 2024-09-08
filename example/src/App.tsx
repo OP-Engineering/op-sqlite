@@ -32,7 +32,7 @@ export default function App() {
 
     const server = new BridgeServer('http_service', true);
 
-    server.get('/test_results', async (req, res) => {
+    server.get('/test_results', async (_req, _res) => {
       return {results};
     });
 
