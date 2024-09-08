@@ -8,16 +8,7 @@ server.get('/ping', async (_req, _res) => {
   return {message: 'pong'};
 });
 
-server.get('/results', async (req, _res) => {
-  // console.log("🟦 🟦🟦🟦🟦🟦🟦 🟦 Received request for '/test_results'");
-  // console.log(req.type);
-  // console.log(req.data);
-  // console.log(req.url);
-  // if (results.length > 0) {
-  //   return {results};
-  // } else {
-  //   return {};
-  // }
+server.get('/results', async (_req, _res) => {
   return {results};
 });
 
