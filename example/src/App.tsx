@@ -1,18 +1,17 @@
 import clsx from 'clsx';
 import {useEffect, useState} from 'react';
 import {SafeAreaView, ScrollView, Text, View} from 'react-native';
-import {BridgeServer} from 'react-native-http-bridge-refurbished';
 import 'reflect-metadata';
 import {constantsTests} from './tests/constants.spec';
 import {registerHooksTests} from './tests/hooks.spec';
 import {blobTests, dbSetupTests, queriesTests, runTests} from './tests/index';
 import {preparedStatementsTests} from './tests/preparedStatements.spec';
 import {reactiveTests} from './tests/reactive.spec';
+import {setServerResults, startServer, stopServer} from './server';
 
 export default function App() {
   const [results, setResults] = useState<any>([]);
   useEffect(() => {
-    setResults([]);
     runTests(
       dbSetupTests,
       queriesTests,
@@ -21,18 +20,15 @@ export default function App() {
       preparedStatementsTests,
       constantsTests,
       reactiveTests,
-    ).then(setResults);
-
-    const server = new BridgeServer('http_service', true);
-
-    server.get('/test_results', async (_req, _res) => {
-      return {results};
+    ).then(results => {
+      setServerResults(results as any);
+      setResults(results);
     });
 
-    server.listen(10424);
+    startServer();
 
     return () => {
-      server.stop();
+      stopServer();
     };
   }, []);
 
