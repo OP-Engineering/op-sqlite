@@ -36,7 +36,7 @@ export default function App() {
       return {results};
     });
 
-    server.listen(3000);
+    server.listen(10424);
 
     return () => {
       server.stop();

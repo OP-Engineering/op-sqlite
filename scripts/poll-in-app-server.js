@@ -8,7 +8,7 @@ async function pollInAppServer() {
   while (Date.now() - startTime < maxDuration) {
     try {
       const response = await makeHttpRequest(
-        'http://localhost:3000/test_results'
+        'http://localhost:10424/test_results'
       );
       if (response !== null) {
         let parsed_response = JSON.parse(response);
