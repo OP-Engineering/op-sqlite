@@ -21,6 +21,7 @@
     "nativewind": "^2.0.11",
     "react": "18.2.0",
     "react-native": "0.74.0",
+    "react-native-http-bridge-refurbished": "1.2.9",
     "react-native-restart": "^0.0.27",
     "reflect-metadata": "^0.1.13",
     "stream-browserify": "^3.0.0",
