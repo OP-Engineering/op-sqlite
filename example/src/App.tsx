@@ -1,5 +1,4 @@
 import clsx from 'clsx';
-import {styled} from 'nativewind';
 import {useEffect, useState} from 'react';
 import {SafeAreaView, ScrollView, Text, View} from 'react-native';
 import {BridgeServer} from 'react-native-http-bridge-refurbished';
@@ -9,12 +8,6 @@ import {registerHooksTests} from './tests/hooks.spec';
 import {blobTests, dbSetupTests, queriesTests, runTests} from './tests/index';
 import {preparedStatementsTests} from './tests/preparedStatements.spec';
 import {reactiveTests} from './tests/reactive.spec';
-
-const StyledScrollView = styled(ScrollView, {
-  props: {
-    contentContainerStyle: true,
-  },
-});
 
 export default function App() {
   const [results, setResults] = useState<any>([]);
@@ -58,7 +51,7 @@ export default function App() {
 
   return (
     <SafeAreaView className="flex-1 bg-neutral-900">
-      <StyledScrollView>
+      <ScrollView>
         <Text
           className={clsx('font-bold flex-1 text-white p-2 mt-4', {
             'bg-green-500': allTestsPassed,
@@ -108,7 +101,7 @@ export default function App() {
               </View>
             );
           })}
-      </StyledScrollView>
+      </ScrollView>
     </SafeAreaView>
   );
 }
