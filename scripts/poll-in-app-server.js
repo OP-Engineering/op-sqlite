@@ -7,9 +7,8 @@ async function pollInAppServer() {
 
   while (Date.now() - startTime < maxDuration) {
     try {
-      const response = await makeHttpRequest(
-        'http://127.0.0.1:10424/test_results'
-      );
+      const response = await makeHttpRequest('http://127.0.0.1:9000/results');
+
       if (response !== null) {
         let parsed_response = JSON.parse(response);
         const allTestsPassed = parsed_response.results.reduce((acc, r) => {
