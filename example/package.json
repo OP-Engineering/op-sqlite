@@ -5,9 +5,12 @@
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios --scheme='debug' --simulator='iPhone 15 Pro'",
+    "run:ios:unused": "xcodebuild -workspace ios/OPSQLiteExample.xcworkspace -scheme release -configuration Release -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 15 Pro' clean build",
+    "run:ios": "react-native run-ios --scheme='release' --simulator='iPhone 15 Pro' --no-packager",
     "start": "react-native start",
     "pods": "cd ios && bundle exec pod install",
     "pods:nuke": "cd ios && rm -rf Pods && rm -rf Podfile.lock && bundle exec pod install",
+    "run:android:release": "cd android && ./gradlew assembleRelease && adb install -r app/build/outputs/apk/release/app-release.apk && adb shell am start -n com.op.sqlite.example/.MainActivity",
     "build:android": "cd android && ./gradlew assembleDebug --no-daemon --console=plain -PreactNativeArchitectures=arm64-v8a",
     "build:ios": "cd ios && xcodebuild -workspace OPSQLiteExample.xcworkspace -scheme debug -configuration Debug -sdk iphonesimulator CC=clang CPLUSPLUS=clang++ LD=clang LDPLUSPLUS=clang++ GCC_OPTIMIZATION_LEVEL=0 GCC_PRECOMPILE_PREFIX_HEADER=YES ASSETCATALOG_COMPILER_OPTIMIZATION=time DEBUG_INFORMATION_FORMAT=dwarf COMPILER_INDEX_STORE_ENABLE=NO"
   },
@@ -21,6 +24,7 @@
     "nativewind": "^2.0.11",
     "react": "18.2.0",
     "react-native": "0.74.0",
+    "react-native-http-bridge-refurbished": "1.2.9",
     "react-native-restart": "^0.0.27",
     "reflect-metadata": "^0.1.13",
     "stream-browserify": "^3.0.0",

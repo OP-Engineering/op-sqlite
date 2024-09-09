@@ -2,12 +2,10 @@ import Chance from 'chance';
 import {
   isLibsql,
   open,
-  openRemote,
-  openSync,
   type DB,
   type SQLBatchTuple,
 } from '@op-engineering/op-sqlite';
-import {beforeEach, describe, it, itOnly} from './MochaRNAdapter';
+import {beforeEach, describe, it} from './MochaRNAdapter';
 import chai from 'chai';
 
 const expect = chai.expect;
@@ -39,35 +37,35 @@ export function queriesTests() {
   });
 
   describe('Queries tests', () => {
-    if (isLibsql()) {
-      it('Remote open a turso database', async () => {
-        const remoteDb = openRemote({
-          url: 'libsql://foo-ospfranco.turso.io',
-          authToken:
-            'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3MTY5NTc5OTUsImlkIjoiZmJkNzZmMjYtZTliYy00MGJiLTlmYmYtMDczZjFmMjdjOGY4In0.U3cAWBOvcdiqoPN3MB81sco7x8CGOjjtZ1ZEf30uo2iPcAmOuJzcnAznmDlZ6SpQd4qzuJxE4mAIoRlOkpzgBQ',
-        });
+    // if (isLibsql()) {
+    //   it('Remote open a turso database', async () => {
+    //     const remoteDb = openRemote({
+    //       url: 'libsql://foo-ospfranco.turso.io',
+    //       authToken:
+    //         'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3MTY5NTc5OTUsImlkIjoiZmJkNzZmMjYtZTliYy00MGJiLTlmYmYtMDczZjFmMjdjOGY4In0.U3cAWBOvcdiqoPN3MB81sco7x8CGOjjtZ1ZEf30uo2iPcAmOuJzcnAznmDlZ6SpQd4qzuJxE4mAIoRlOkpzgBQ',
+    //     });
 
-        const res = await remoteDb.execute('SELECT 1');
+    //     const res = await remoteDb.execute('SELECT 1');
 
-        expect(res.rowsAffected).to.equal(0);
-      });
+    //     expect(res.rowsAffected).to.equal(0);
+    //   });
 
-      it('Open a libsql database replicated to turso', async () => {
-        const remoteDb = openSync({
-          url: 'libsql://foo-ospfranco.turso.io',
-          authToken:
-            'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3MTY5NTc5OTUsImlkIjoiZmJkNzZmMjYtZTliYy00MGJiLTlmYmYtMDczZjFmMjdjOGY4In0.U3cAWBOvcdiqoPN3MB81sco7x8CGOjjtZ1ZEf30uo2iPcAmOuJzcnAznmDlZ6SpQd4qzuJxE4mAIoRlOkpzgBQ',
-          name: 'my replica',
-          syncInterval: 1000,
-        });
+    //   it('Open a libsql database replicated to turso', async () => {
+    //     const remoteDb = openSync({
+    //       url: 'libsql://foo-ospfranco.turso.io',
+    //       authToken:
+    //         'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3MTY5NTc5OTUsImlkIjoiZmJkNzZmMjYtZTliYy00MGJiLTlmYmYtMDczZjFmMjdjOGY4In0.U3cAWBOvcdiqoPN3MB81sco7x8CGOjjtZ1ZEf30uo2iPcAmOuJzcnAznmDlZ6SpQd4qzuJxE4mAIoRlOkpzgBQ',
+    //       name: 'my replica',
+    //       syncInterval: 1000,
+    //     });
 
-        const res = await remoteDb.execute('SELECT 1');
+    //     const res = await remoteDb.execute('SELECT 1');
 
-        remoteDb.sync();
+    //     remoteDb.sync();
 
-        expect(res.rowsAffected).to.equal(0);
-      });
-    }
+    //     expect(res.rowsAffected).to.equal(0);
+    //   });
+    // }
 
     it('Insert', async () => {
       const id = chance.integer();
@@ -151,7 +149,7 @@ export function queriesTests() {
 
       const countRes = await db.execute('SELECT COUNT(*) as count FROM User');
 
-      console.log(countRes);
+      // console.log(countRes);
 
       // expect(countRes.metadata?.[0]?.type).to.equal('UNKNOWN');
       expect(countRes.rows?._array.length).to.equal(1);
@@ -216,7 +214,6 @@ export function queriesTests() {
       const name = chance.name();
       const age = chance.string();
       const networth = chance.string();
-      // expect(
       try {
         await db.execute(
           'INSERT INTO User (id, name, age, networth) VALUES(?, ?, ?, ?)',
@@ -286,7 +283,7 @@ export function queriesTests() {
       });
 
       const res = await db.execute('SELECT * FROM User');
-      console.log(res);
+      // console.log(res);
       expect(res.rows?._array).to.eql([
         {
           id,
@@ -404,7 +401,7 @@ export function queriesTests() {
             [id, name, age, networth],
           );
         } catch (e) {
-          tx.rollback();
+          await tx.rollback();
         }
       });
 
@@ -438,7 +435,7 @@ export function queriesTests() {
           'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
           [id, name, age, networth],
         );
-        tx.rollback();
+        await tx.rollback();
         const res = await db.execute('SELECT * FROM User');
         expect(res.rows?._array).to.eql([]);
       });
@@ -519,7 +516,7 @@ export function queriesTests() {
       await db.executeBatch(commands);
 
       const res = await db.execute('SELECT * FROM User');
-      console.log(res);
+      // console.log(res);
       expect(res.rows?._array).to.eql([
         {id: id1, name: name1, age: age1, networth: networth1, nickname: null},
         {

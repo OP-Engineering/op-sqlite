@@ -14,7 +14,67 @@ jobs:
       - name: Typecheck files
         run: yarn typecheck
 
-  build-android:
+  # build-android:
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     TURBO_CACHE_DIR: .turbo/android
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+
+  #     - name: Turn off addons
+  #       run: |
+  #         node ./scripts/turnOffEverything.js
+
+  #     - name: Setup
+  #       uses: ./.github/actions/setup
+
+  #     - name: Cache turborepo for Android
+  #       uses: actions/cache@v3
+  #       with:
+  #         path: ${{ env.TURBO_CACHE_DIR }}
+  #         key: ${{ runner.os }}-turborepo-android-${{ hashFiles('yarn.lock') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-turborepo-android-
+
+  #     - name: Check turborepo cache for Android
+  #       run: |
+  #         TURBO_CACHE_STATUS=$(node -p "($(yarn turbo run run:android:release --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)).tasks.find(t => t.task === 'run:android:release').cache.status")
+
+  #         if [[ $TURBO_CACHE_STATUS == "HIT" ]]; then
+  #           echo "turbo_cache_hit=1" >> $GITHUB_ENV
+  #         fi
+
+  #     - name: Install JDK
+  #       if: env.turbo_cache_hit != 1
+  #       uses: actions/setup-java@v3
+  #       with:
+  #         distribution: 'zulu'
+  #         java-version: '17'
+
+  #     - name: Finalize Android SDK
+  #       if: env.turbo_cache_hit != 1
+  #       run: |
+  #         /bin/bash -c "yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null"
+
+  #     - name: Cache Gradle
+  #       if: env.turbo_cache_hit != 1
+  #       uses: actions/cache@v3
+  #       with:
+  #         path: |
+  #           ~/.gradle/wrapper
+  #           ~/.gradle/caches
+  #         key: ${{ runner.os }}-gradle-${{ hashFiles('example/android/gradle/wrapper/gradle-wrapper.properties') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-gradle-
+
+  #     - name: Build example for Android
+  #       env:
+  #         JAVA_OPTS: '-XX:MaxHeapSize=6g'
+  #       run: |
+  #         yarn turbo run run:android:release --cache-dir="${{ env.TURBO_CACHE_DIR }}"
+
+  test-android:
     runs-on: ubuntu-latest
     env:
       TURBO_CACHE_DIR: .turbo/android
@@ -39,7 +99,7 @@ jobs:
 
       - name: Check turborepo cache for Android
         run: |
-          TURBO_CACHE_STATUS=$(node -p "($(yarn turbo run build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)).tasks.find(t => t.task === 'build:android').cache.status")
+          TURBO_CACHE_STATUS=$(node -p "($(yarn turbo run run:android:release --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)).tasks.find(t => t.task === 'run:android:release').cache.status")
 
           if [[ $TURBO_CACHE_STATUS == "HIT" ]]; then
             echo "turbo_cache_hit=1" >> $GITHUB_ENV
@@ -68,13 +128,32 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Build example for Android
-        env:
-          JAVA_OPTS: '-XX:MaxHeapSize=6g'
+      - name: Enable KVM
         run: |
-          yarn turbo run build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}"
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
 
-  build-ios:
+      - name: Give execute permissions to script
+        run: chmod +x ./scripts/test-android.sh
+
+      - name: run tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          emulator-options: -no-window -no-boot-anim -no-audio -no-snapshot-load
+          script: |
+            adb wait-for-device
+            adb shell input keyevent 82
+            ./scripts/test-android.sh
+
+      # - name: Build example for Android
+      #   env:
+      #     JAVA_OPTS: '-XX:MaxHeapSize=6g'
+      #   run: |
+      #     yarn turbo run android --cache-dir="${{ env.TURBO_CACHE_DIR }}"
+
+  test-ios:
     runs-on: macos-latest
     env:
       TURBO_CACHE_DIR: .turbo/ios
@@ -104,7 +183,7 @@ jobs:
 
       - name: Check turborepo cache for iOS
         run: |
-          TURBO_CACHE_STATUS=$(node -p "($(yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)).tasks.find(t => t.task === 'build:ios').cache.status")
+          TURBO_CACHE_STATUS=$(node -p "($(yarn turbo run run:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)).tasks.find(t => t.task === 'run:ios').cache.status")
 
           if [[ $TURBO_CACHE_STATUS == "HIT" ]]; then
             echo "turbo_cache_hit=1" >> $GITHUB_ENV
@@ -129,11 +208,15 @@ jobs:
         env:
           NO_FLIPPER: 1
 
-      - name: Build example for iOS
-        run: |
-          yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}"
+      # - name: Build example for iOS
+      #   run: |
+      #     yarn turbo run run:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}"
 
-  build-ios-sqlcipher:
+      - name: run tests
+        run: |
+          ./scripts/test-ios.sh
+
+  test-ios-sqlcipher:
     runs-on: macos-latest
     env:
       TURBO_CACHE_DIR: .turbo/ios
@@ -163,7 +246,7 @@ jobs:
 
       - name: Check turborepo cache for iOS
         run: |
-          TURBO_CACHE_STATUS=$(node -p "($(yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)).tasks.find(t => t.task === 'build:ios').cache.status")
+          TURBO_CACHE_STATUS=$(node -p "($(yarn turbo run run:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)).tasks.find(t => t.task === 'run:ios').cache.status")
 
           if [[ $TURBO_CACHE_STATUS == "HIT" ]]; then
             echo "turbo_cache_hit=1" >> $GITHUB_ENV
@@ -188,11 +271,78 @@ jobs:
         env:
           NO_FLIPPER: 1
 
-      - name: Build example for iOS
-        run: |
-          yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}"
+      # - name: Build example for iOS
+      #   run: |
+      #     yarn turbo run run:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}"
 
-  build-android-sqlcipher:
+      - name: run tests
+        run: |
+          ./scripts/test-ios.sh
+
+  test-ios-libsql:
+    runs-on: macos-latest
+    env:
+      TURBO_CACHE_DIR: .turbo/ios
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Turn on SQLCipher
+        run: |
+          node ./scripts/turnOnLibsql.js
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: install bundler dependencies
+        run: |
+          cd example
+          bundle install
+
+      - name: Cache turborepo for iOS
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.TURBO_CACHE_DIR }}
+          key: ${{ runner.os }}-turborepo-ios-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-turborepo-ios-
+
+      - name: Check turborepo cache for iOS
+        run: |
+          TURBO_CACHE_STATUS=$(node -p "($(yarn turbo run run:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)).tasks.find(t => t.task === 'run:ios').cache.status")
+
+          if [[ $TURBO_CACHE_STATUS == "HIT" ]]; then
+            echo "turbo_cache_hit=1" >> $GITHUB_ENV
+          fi
+
+      - name: Cache cocoapods
+        if: env.turbo_cache_hit != 1
+        id: cocoapods-cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/ios/Pods
+          key: ${{ runner.os }}-cocoapods-${{ hashFiles('example/ios/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cocoapods-
+
+      - name: Install cocoapods
+        # if: env.turbo_cache_hit != 1 && steps.cocoapods-cache.outputs.cache-hit != 'true'
+        run: |
+          cd example/ios
+          bundle exec pod install
+        env:
+          NO_FLIPPER: 1
+
+      # - name: Build example for iOS
+      #   run: |
+      #     yarn turbo run run:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}"
+
+      - name: run tests
+        run: |
+          ./scripts/test-ios.sh
+
+  test-android-sqlcipher:
     runs-on: ubuntu-latest
     env:
       TURBO_CACHE_DIR: .turbo/android
@@ -217,7 +367,7 @@ jobs:
 
       - name: Check turborepo cache for Android
         run: |
-          TURBO_CACHE_STATUS=$(node -p "($(yarn turbo run build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)).tasks.find(t => t.task === 'build:android').cache.status")
+          TURBO_CACHE_STATUS=$(node -p "($(yarn turbo run run:android:release --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)).tasks.find(t => t.task === 'run:android:release').cache.status")
 
           if [[ $TURBO_CACHE_STATUS == "HIT" ]]; then
             echo "turbo_cache_hit=1" >> $GITHUB_ENV
@@ -246,13 +396,26 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Build example for Android
-        env:
-          JAVA_OPTS: '-XX:MaxHeapSize=6g'
+      - name: Enable KVM
         run: |
-          yarn turbo run build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}"
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
 
-  build-android-libsql:
+      - name: Give execute permissions to script
+        run: chmod +x ./scripts/test-android.sh
+
+      - name: run tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          emulator-options: -no-window -no-boot-anim -no-audio -no-snapshot-load
+          script: |
+            adb wait-for-device
+            adb shell input keyevent 82
+            ./scripts/test-android.sh
+
+  test-android-libsql:
     runs-on: ubuntu-latest
     env:
       TURBO_CACHE_DIR: .turbo/android
@@ -277,7 +440,7 @@ jobs:
 
       - name: Check turborepo cache for Android
         run: |
-          TURBO_CACHE_STATUS=$(node -p "($(yarn turbo run build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)).tasks.find(t => t.task === 'build:android').cache.status")
+          TURBO_CACHE_STATUS=$(node -p "($(yarn turbo run run:android:release --cache-dir="${{ env.TURBO_CACHE_DIR }}" --dry=json)).tasks.find(t => t.task === 'run:android:release').cache.status")
 
           if [[ $TURBO_CACHE_STATUS == "HIT" ]]; then
             echo "turbo_cache_hit=1" >> $GITHUB_ENV
@@ -306,8 +469,21 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Build example for Android
-        env:
-          JAVA_OPTS: '-XX:MaxHeapSize=6g'
+      - name: Enable KVM
         run: |
-          yarn turbo run build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}"
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Give execute permissions to script
+        run: chmod +x ./scripts/test-android.sh
+
+      - name: run tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          emulator-options: -no-window -no-boot-anim -no-audio -no-snapshot-load
+          script: |
+            adb wait-for-device
+            adb shell input keyevent 82
+            ./scripts/test-android.sh

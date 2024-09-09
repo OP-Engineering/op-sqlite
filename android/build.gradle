@@ -215,3 +215,11 @@ tasks.whenTaskAdded { task ->
     }
   }
 }
+
+if (isNewArchitectureEnabled()) {
+  react {
+    jsRootDir = file("../src/")
+    libraryName = "opsqlite"
+    codegenJavaPackageName = "com.op.sqlite.example"
+  }
+}

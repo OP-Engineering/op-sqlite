@@ -10366,6 +10366,7 @@ __metadata:
     react: "npm:18.2.0"
     react-native: "npm:0.74.0"
     react-native-builder-bob: "npm:^0.30.0"
+    react-native-http-bridge-refurbished: "npm:1.2.9"
     react-native-restart: "npm:^0.0.27"
     react-test-renderer: "npm:18.2.0"
     reflect-metadata: "npm:^0.1.13"
@@ -11023,6 +11024,17 @@ __metadata:
   bin:
     bob: bin/bob
   checksum: 10c0/ad4c3dd07a845980175f1a8875d11388560b02fb6567a62bdd6928ff792b44622f7105b212a0b13f0e51d628c2f6a5a635771d92add9a65d4983d9fcbdf2a0c1
+  languageName: node
+  linkType: hard
+
+"react-native-http-bridge-refurbished@npm:1.2.9":
+  version: 1.2.9
+  resolution: "react-native-http-bridge-refurbished@npm:1.2.9"
+  dependencies:
+    react: "npm:18.2.0"
+  peerDependencies:
+    react-native: ">=0.72"
+  checksum: 10c0/50d77f2991a2ff7d38a17b59f1f9943f9637be9abd68ba34cc4fe744bcaa7a69e00e728b74bd5905b84fdc870b701388c85c7f27a9aaff17606521df362c8dbf
   languageName: node
   linkType: hard
 
