@@ -540,6 +540,12 @@ BridgeResult opsqlite_libsql_execute(std::string const &name,
           .column_names = std::move(column_names)};
 }
 
+BridgeResult opsqlite_libsql_execute_with_host_objects(std::string const &name,
+                                     std::string const &query,
+                                     const std::vector<JSVariant> *params) {
+
+}
+
 /// Executes returning data in raw arrays, a small performance optimization
 /// for certain use cases
 BridgeResult

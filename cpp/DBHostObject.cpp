@@ -862,32 +862,32 @@ jsi::Value DBHostObject::get(jsi::Runtime &rt,
   }
 #ifdef OP_SQLITE_USE_LIBSQL
   if (name == "loadFile") {
-    return HOSTFN("loadFile", 0) {
+    return HOSTFN("loadFile") {
       throw std::runtime_error("[op-sqlite] Load file not implemented");
     });
   }
   if (name == "updateHook") {
-    return HOSTFN("updateHook", 0) {
+    return HOSTFN("updateHook") {
       throw std::runtime_error("[op-sqlite] Hooks not supported in libsql");
     });
   }
   if (name == "commitHook") {
-    return HOSTFN("commitHook", 0) {
+    return HOSTFN("commitHook") {
       throw std::runtime_error("[op-sqlite] Hooks not supported in libsql");
     });
   }
   if (name == "rollbackHook") {
-    return HOSTFN("rollbackHook", 0) {
+    return HOSTFN("rollbackHook") {
       throw std::runtime_error("[op-sqlite] Hooks not supported in libsql");
     });
   }
   if (name == "loadExtension") {
-    return HOSTFN("loadExtension", 0) {
+    return HOSTFN("loadExtension") {
       throw std::runtime_error("[op-sqlite] Hooks not supported in libsql");
     });
   }
   if (name == "reactiveExecute") {
-    return HOSTFN("reactiveExecute", 0) {
+    return HOSTFN("reactiveExecute") {
       throw std::runtime_error("[op-sqlite] Hooks not supported in libsql");
     });
   }
