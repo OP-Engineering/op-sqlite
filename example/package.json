@@ -5,7 +5,7 @@
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios --scheme='debug' --simulator='iPhone 15 Pro'",
-    "run:ios": "react-native run-ios --scheme='debug'",
+    "run:ios": "react-native run-ios --scheme='release'",
     "start": "react-native start",
     "pods": "cd ios && bundle exec pod install",
     "pods:nuke": "cd ios && rm -rf Pods && rm -rf Podfile.lock && bundle exec pod install",
