@@ -542,7 +542,133 @@ BridgeResult opsqlite_libsql_execute(std::string const &name,
 
 BridgeResult opsqlite_libsql_execute_with_host_objects(std::string const &name,
                                      std::string const &query,
-                                     const std::vector<JSVariant> *params) {
+                                     const std::vector<JSVariant> *params, std::vector<DumbHostObject> *results,
+    std::shared_ptr<std::vector<SmartHostObject>> metadatas) {
+
+    check_db_open(name);
+
+    libsql_connection_t c = db_map[name].c;
+    libsql_rows_t rows;
+    libsql_row_t row;
+    libsql_stmt_t stmt;
+    int status = 0;
+    const char *err = NULL;
+
+    status = libsql_prepare(c, query.c_str(), &stmt, &err);
+
+    if (status != 0) {
+        return {.type = SQLiteError, .message = err};
+    }
+
+    if (params != nullptr && params->size() > 0) {
+        opsqlite_libsql_bind_statement(stmt, params);
+    }
+
+    status = libsql_query_stmt(stmt, &rows, &err);
+
+    if (status != 0) {
+        return {.type = SQLiteError, .message = err};
+    }
+
+    bool metadata_set = false;
+
+    int num_cols = libsql_column_count(rows);
+    while ((status = libsql_next_row(rows, &row, &err)) == 0) {
+
+        if (!err && !row) {
+            break;
+        }
+
+        DumbHostObject row_host_object = DumbHostObject(metadatas);
+
+        for (int col = 0; col < num_cols; col++) {
+            int type;
+
+            libsql_column_type(rows, row, col, &type, &err);
+
+            switch (type) {
+                case LIBSQL_INT:
+                    long long int_value;
+                    status = libsql_get_int(row, col, &int_value, &err);
+                    row_host_object.values.push_back(JSVariant(int_value));
+                    break;
+
+                case LIBSQL_FLOAT:
+                    double float_value;
+                    status = libsql_get_float(row, col, &float_value, &err);
+                    row_host_object.values.push_back(JSVariant(float_value));
+                    break;
+
+                case LIBSQL_TEXT:
+                    const char *text_value;
+                    status = libsql_get_string(row, col, &text_value, &err);
+                    row_host_object.values.push_back(JSVariant(text_value));
+                    break;
+
+                case LIBSQL_BLOB: {
+                    blob value_blob;
+                    libsql_get_blob(row, col, &value_blob, &err);
+                    uint8_t *data = new uint8_t[value_blob.len];
+                    // You cannot share raw memory between native and JS
+                    // always copy the data
+                    memcpy(data, value_blob.ptr, value_blob.len);
+                    libsql_free_blob(value_blob);
+                    row_host_object.values.push_back(JSVariant(
+                            ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+                                    .size = static_cast<size_t>(value_blob.len)}));
+                    break;
+                }
+
+                case LIBSQL_NULL:
+                    // intentional fall-through
+                default:
+                    row_host_object.values.push_back(JSVariant(nullptr));
+                    break;
+            }
+
+            if (status != 0) {
+                fprintf(stderr, "%s\n", err);
+                throw std::runtime_error("libsql error");
+            }
+
+            // On the first interation through the columns, set the metadata
+            if (!metadata_set && metadatas != nullptr) {
+                const char *col_name;
+                status = libsql_column_name(rows, col, &col_name, &err);
+
+                auto metadata = SmartHostObject();
+                metadata.fields.push_back(std::make_pair("name", col_name));
+                metadata.fields.push_back(std::make_pair("index", col));
+                metadata.fields.push_back(std::make_pair("type", "UNKNOWN"));
+                //                  metadata.fields.push_back(
+                //                      std::make_pair("type", type == -1 ? "UNKNOWN" :
+                //                      type));
+
+                metadatas->push_back(metadata);
+            }
+        }
+
+        if (results != nullptr) {
+            results->push_back(row_host_object);
+        }
+
+        metadata_set = true;
+        err = NULL;
+    }
+
+    if (status != 0) {
+        fprintf(stderr, "%s\n", err);
+    }
+
+    libsql_free_rows(rows);
+    libsql_free_stmt(stmt);
+
+    int changes = libsql_changes(c);
+    long long insert_row_id = libsql_last_insert_rowid(c);
+
+    return {.type = SQLiteOk,
+            .affectedRows = changes,
+            .insertId = static_cast<double>(insert_row_id)};
 
 }
 
