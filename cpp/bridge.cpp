@@ -434,7 +434,7 @@ BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
              */
             double column_value =
                 sqlite3_column_double(statement, current_column);
-            row.push_back(JSVariant(column_value));
+            row.emplace_back(column_value);
             break;
           }
 

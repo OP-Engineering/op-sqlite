@@ -57,8 +57,12 @@ BridgeResult opsqlite_libsql_sync(std::string const &name);
 
 BridgeResult opsqlite_libsql_execute(
     std::string const &name, std::string const &query,
-    const std::vector<JSVariant> *params, std::vector<DumbHostObject> *results,
-    std::shared_ptr<std::vector<SmartHostObject>> metadatas);
+    const std::vector<JSVariant> *params);
+
+    BridgeResult opsqlite_libsql_execute_with_host_objects(
+            std::string const &name, std::string const &query,
+            const std::vector<JSVariant> *params, std::vector<DumbHostObject> *results,
+            std::shared_ptr<std::vector<SmartHostObject>> metadatas);
 
 BridgeResult
 opsqlite_libsql_execute_raw(std::string const &dbName, std::string const &query,

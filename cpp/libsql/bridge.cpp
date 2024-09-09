@@ -54,16 +54,14 @@ BridgeResult opsqlite_libsql_open_sync(std::string const &name,
   libsql_connection_t c;
   const char *err = NULL;
 
-    libsql_config config = {
-        .db_path = path.c_str(),
-        .primary_url = url.c_str(),
-        .auth_token = auth_token.c_str(),
-        .read_your_writes = '1',
-        .encryption_key = nullptr,
-        .sync_interval = sync_interval,
-        .with_webpki = '1'
-    };
-    status = libsql_open_sync_with_config(config, &db, &err);
+  libsql_config config = {.db_path = path.c_str(),
+                          .primary_url = url.c_str(),
+                          .auth_token = auth_token.c_str(),
+                          .read_your_writes = '1',
+                          .encryption_key = nullptr,
+                          .sync_interval = sync_interval,
+                          .with_webpki = '1'};
+  status = libsql_open_sync_with_config(config, &db, &err);
   if (status != 0) {
     return {.type = SQLiteError, .message = err};
   }
@@ -105,7 +103,8 @@ BridgeResult opsqlite_libsql_open(std::string const &name,
   const char *errMsg;
   const char *crsqliteEntryPoint = "sqlite3_crsqlite_init";
 
-  status = libsql_load_extension(c, crsqlitePath.c_str(), crsqliteEntryPoint, &errMsg);
+  status = libsql_load_extension(c, crsqlitePath.c_str(), crsqliteEntryPoint,
+                                 &errMsg);
 
   if (status != 0) {
     return {.type = SQLiteError, .message = errMsg};
@@ -124,7 +123,7 @@ BridgeResult opsqlite_libsql_open_remote(std::string const &url,
   int status = 0;
   libsql_database_t db;
   libsql_connection_t c;
-  const char *err = NULL;
+  const char *err = nullptr;
 
   status = libsql_open_remote_with_webpki(url.c_str(), auth_token.c_str(), &db,
                                           &err);
@@ -177,7 +176,7 @@ BridgeResult opsqlite_libsql_attach(std::string const &mainDBName,
   std::string statement = "ATTACH DATABASE '" + dbPath + "' AS " + alias;
 
   BridgeResult result =
-      opsqlite_libsql_execute(mainDBName, statement, nullptr, nullptr, nullptr);
+      opsqlite_libsql_execute(mainDBName, statement, nullptr);
 
   if (result.type == SQLiteError) {
     return {
@@ -195,7 +194,7 @@ BridgeResult opsqlite_libsql_detach(std::string const &mainDBName,
                                     std::string const &alias) {
   std::string statement = "DETACH DATABASE " + alias;
   BridgeResult result =
-      opsqlite_libsql_execute(mainDBName, statement, nullptr, nullptr, nullptr);
+      opsqlite_libsql_execute(mainDBName, statement, nullptr);
   if (result.type == SQLiteError) {
     return BridgeResult{
         .type = SQLiteError,
@@ -287,11 +286,7 @@ BridgeResult opsqlite_libsql_execute_prepared_statement(
   libsql_row_t row;
 
   int status = 0;
-  const char *err = NULL;
-
-  if (status != 0) {
-    return {.type = SQLiteError, .message = err};
-  }
+  const char *err = nullptr;
 
   status = libsql_query_stmt(stmt, &rows, &err);
 
@@ -420,14 +415,15 @@ libsql_stmt_t opsqlite_libsql_prepare_statement(std::string const &name,
   return stmt;
 }
 
-/// Base execution function, returns HostObjects to the JS environment
-BridgeResult opsqlite_libsql_execute(
-    std::string const &name, std::string const &query,
-    const std::vector<JSVariant> *params, std::vector<DumbHostObject> *results,
-    std::shared_ptr<std::vector<SmartHostObject>> metadatas) {
+BridgeResult opsqlite_libsql_execute(std::string const &name,
+                                     std::string const &query,
+                                     const std::vector<JSVariant> *params) {
 
   check_db_open(name);
 
+  std::vector<std::string> column_names;
+  std::vector<std::vector<JSVariant>> out_rows;
+  std::vector<JSVariant> out_row;
   libsql_connection_t c = db_map[name].c;
   libsql_rows_t rows;
   libsql_row_t row;
@@ -441,7 +437,7 @@ BridgeResult opsqlite_libsql_execute(
     return {.type = SQLiteError, .message = err};
   }
 
-  if (params != nullptr && params->size() > 0) {
+  if (params != nullptr && !params->empty()) {
     opsqlite_libsql_bind_statement(stmt, params);
   }
 
@@ -451,105 +447,97 @@ BridgeResult opsqlite_libsql_execute(
     return {.type = SQLiteError, .message = err};
   }
 
-  bool metadata_set = false;
+  // Get the column names on the first pass
+  int column_count = libsql_column_count(rows);
+  const char *col_name;
 
-  int num_cols = libsql_column_count(rows);
-  while ((status = libsql_next_row(rows, &row, &err)) == 0) {
+  for (int i = 0; i < column_count; i++) {
+    status = libsql_column_name(rows, i, &col_name, &err);
+    column_names.emplace_back(col_name);
+  }
+
+  long long int_value;
+  double float_value;
+  const char *text_value;
+  blob blob_value;
+
+  status = libsql_next_row(rows, &row, &err);
+  while (status == 0) {
+    out_row = std::vector<JSVariant>();
 
     if (!err && !row) {
       break;
     }
 
-    DumbHostObject row_host_object = DumbHostObject(metadatas);
-
-    for (int col = 0; col < num_cols; col++) {
+    for (int col = 0; col < column_count; col++) {
       int type;
 
       libsql_column_type(rows, row, col, &type, &err);
 
       switch (type) {
       case LIBSQL_INT:
-        long long int_value;
         status = libsql_get_int(row, col, &int_value, &err);
-        row_host_object.values.push_back(JSVariant(int_value));
+        out_row.emplace_back(int_value);
         break;
 
       case LIBSQL_FLOAT:
-        double float_value;
         status = libsql_get_float(row, col, &float_value, &err);
-        row_host_object.values.push_back(JSVariant(float_value));
+        out_row.emplace_back(float_value);
         break;
 
       case LIBSQL_TEXT:
-        const char *text_value;
+
         status = libsql_get_string(row, col, &text_value, &err);
-        row_host_object.values.push_back(JSVariant(text_value));
+        out_row.emplace_back(text_value);
         break;
 
       case LIBSQL_BLOB: {
-        blob value_blob;
-        libsql_get_blob(row, col, &value_blob, &err);
-        uint8_t *data = new uint8_t[value_blob.len];
+        libsql_get_blob(row, col, &blob_value, &err);
+        auto data = new uint8_t[blob_value.len];
         // You cannot share raw memory between native and JS
         // always copy the data
-        memcpy(data, value_blob.ptr, value_blob.len);
-        libsql_free_blob(value_blob);
-        row_host_object.values.push_back(JSVariant(
+        memcpy(data, blob_value.ptr, blob_value.len);
+        libsql_free_blob(blob_value);
+        out_row.emplace_back(
             ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
-                        .size = static_cast<size_t>(value_blob.len)}));
+                        .size = static_cast<size_t>(blob_value.len)});
         break;
       }
 
       case LIBSQL_NULL:
         // intentional fall-through
       default:
-        row_host_object.values.push_back(JSVariant(nullptr));
+        out_row.emplace_back(nullptr);
         break;
       }
 
       if (status != 0) {
         fprintf(stderr, "%s\n", err);
-        throw std::runtime_error("libsql error");
-      }
-
-      // On the first interation through the columns, set the metadata
-      if (!metadata_set && metadatas != nullptr) {
-        const char *col_name;
-        status = libsql_column_name(rows, col, &col_name, &err);
-
-        auto metadata = SmartHostObject();
-        metadata.fields.push_back(std::make_pair("name", col_name));
-        metadata.fields.push_back(std::make_pair("index", col));
-        metadata.fields.push_back(std::make_pair("type", "UNKNOWN"));
-        //                  metadata.fields.push_back(
-        //                      std::make_pair("type", type == -1 ? "UNKNOWN" :
-        //                      type));
-
-        metadatas->push_back(metadata);
+        throw std::runtime_error(err);
       }
     }
 
-    if (results != nullptr) {
-      results->push_back(row_host_object);
-    }
-
-    metadata_set = true;
-    err = NULL;
+    out_rows.emplace_back(out_row);
+    err = nullptr;
+    status = libsql_next_row(rows, &row, &err);
   }
 
   if (status != 0) {
     fprintf(stderr, "%s\n", err);
+    throw std::runtime_error(err);
   }
 
   libsql_free_rows(rows);
   libsql_free_stmt(stmt);
 
-  int changes = libsql_changes(c);
+  unsigned long long changes = libsql_changes(c);
   long long insert_row_id = libsql_last_insert_rowid(c);
 
   return {.type = SQLiteOk,
-          .affectedRows = changes,
-          .insertId = static_cast<double>(insert_row_id)};
+          .affectedRows = static_cast<int>(changes),
+          .insertId = static_cast<double>(insert_row_id),
+          .rows = std::move(out_rows),
+          .column_names = std::move(column_names)};
 }
 
 /// Executes returning data in raw arrays, a small performance optimization
@@ -679,16 +667,15 @@ opsqlite_libsql_execute_batch(std::string const &name,
 
   try {
     int affectedRows = 0;
-    opsqlite_libsql_execute(name, "BEGIN EXCLUSIVE TRANSACTION", nullptr,
-                            nullptr, nullptr);
+    opsqlite_libsql_execute(name, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
     for (int i = 0; i < commandCount; i++) {
       auto command = commands->at(i);
       // We do not provide a datastructure to receive query data because we
       // don't need/want to handle this results in a batch execution
       auto result = opsqlite_libsql_execute(
-          name, command.sql, command.params.get(), nullptr, nullptr);
+          name, command.sql, command.params.get());
       if (result.type == SQLiteError) {
-        opsqlite_libsql_execute(name, "ROLLBACK", nullptr, nullptr, nullptr);
+        opsqlite_libsql_execute(name, "ROLLBACK", nullptr);
         return BatchResult{
             .type = SQLiteError,
             .message = result.message,
@@ -697,14 +684,14 @@ opsqlite_libsql_execute_batch(std::string const &name,
         affectedRows += result.affectedRows;
       }
     }
-    opsqlite_libsql_execute(name, "COMMIT", nullptr, nullptr, nullptr);
+    opsqlite_libsql_execute(name, "COMMIT", nullptr);
     return BatchResult{
         .type = SQLiteOk,
         .affectedRows = affectedRows,
         .commands = static_cast<int>(commandCount),
     };
   } catch (std::exception &exc) {
-    opsqlite_libsql_execute(name, "ROLLBACK", nullptr, nullptr, nullptr);
+    opsqlite_libsql_execute(name, "ROLLBACK", nullptr);
     return BatchResult{
         .type = SQLiteError,
         .message = exc.what(),
