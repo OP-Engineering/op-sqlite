@@ -50,9 +50,9 @@ BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
 BridgeResult opsqlite_execute_host_objects(
     std::string const &dbName, std::string const &query,
     const std::vector<JSVariant> *params, std::vector<DumbHostObject> *results,
-    std::shared_ptr<std::vector<SmartHostObject>> metadatas);
+    std::shared_ptr<std::vector<SmartHostObject>>& metadatas);
 
-BatchResult opsqlite_execute_batch(std::string dbName,
+BatchResult opsqlite_execute_batch(std::string &name,
                                    std::vector<BatchArguments> *commands);
 
 BridgeResult opsqlite_execute_raw(std::string const &dbName,
@@ -81,7 +81,7 @@ void opsqlite_bind_statement(sqlite3_stmt *statement,
 BridgeResult opsqlite_execute_prepared_statement(
     std::string const &dbName, sqlite3_stmt *statement,
     std::vector<DumbHostObject> *results,
-    std::shared_ptr<std::vector<SmartHostObject>> metadatas);
+    std::shared_ptr<std::vector<SmartHostObject>> &metadatas);
 
 BridgeResult opsqlite_load_extension(std::string const &db_name,
                                      std::string &path,
