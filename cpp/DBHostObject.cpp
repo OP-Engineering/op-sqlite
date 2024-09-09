@@ -381,8 +381,7 @@ void DBHostObject::create_jsi_functions() {
         try {
 
 #ifdef OP_SQLITE_USE_LIBSQL
-          auto status = opsqlite_libsql_execute(db_name, query, &params,
-                                                &results, metadata);
+          auto status = opsqlite_libsql_execute(db_name, query, &params);
 #else
           auto status = opsqlite_execute(db_name, query, &params);
 #endif
@@ -446,7 +445,7 @@ void DBHostObject::create_jsi_functions() {
           std::shared_ptr<std::vector<SmartHostObject>> metadata =
               std::make_shared<std::vector<SmartHostObject>>();
 #ifdef OP_SQLITE_USE_LIBSQL
-          auto status = opsqlite_libsql_execute(db_name, query, &params,
+          auto status = opsqlite_libsql_execute_with_host_objects(db_name, query, &params,
                                                 &results, metadata);
 #else
           auto status = opsqlite_execute_host_objects(db_name, query, &params,
