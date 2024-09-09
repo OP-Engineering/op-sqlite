@@ -409,6 +409,7 @@ void DBHostObject::create_jsi_functions() {
                     << std::endl;
           invoker->invokeAsync([&rt, exc = std::move(exc), reject] {
             auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto what = exc.what();
             auto error = errorCtr.callAsConstructor(
                 rt, jsi::String::createFromAscii(rt, exc.what()));
             reject->asObject(rt).asFunction(rt).call(rt, error);
