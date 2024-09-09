@@ -153,7 +153,7 @@ jobs:
       #   run: |
       #     yarn turbo run android --cache-dir="${{ env.TURBO_CACHE_DIR }}"
 
-  build-ios:
+  test-ios:
     runs-on: macos-latest
     env:
       TURBO_CACHE_DIR: .turbo/ios
@@ -208,9 +208,13 @@ jobs:
         env:
           NO_FLIPPER: 1
 
-      - name: Build example for iOS
+      # - name: Build example for iOS
+      #   run: |
+      #     yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}"
+
+      - name: run tests
         run: |
-          yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}"
+          ./scripts/test-ios.sh
 
   build-ios-sqlcipher:
     runs-on: macos-latest
