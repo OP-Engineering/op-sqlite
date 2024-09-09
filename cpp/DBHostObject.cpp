@@ -381,8 +381,7 @@ void DBHostObject::create_jsi_functions() {
         try {
 
 #ifdef OP_SQLITE_USE_LIBSQL
-          auto status = opsqlite_libsql_execute(db_name, query, &params,
-                                                &results, metadata);
+          auto status = opsqlite_libsql_execute(db_name, query, &params);
 #else
           auto status = opsqlite_execute(db_name, query, &params);
 #endif
@@ -410,6 +409,7 @@ void DBHostObject::create_jsi_functions() {
                     << std::endl;
           invoker->invokeAsync([&rt, exc = std::move(exc), reject] {
             auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto what = exc.what();
             auto error = errorCtr.callAsConstructor(
                 rt, jsi::String::createFromAscii(rt, exc.what()));
             reject->asObject(rt).asFunction(rt).call(rt, error);
@@ -446,8 +446,8 @@ void DBHostObject::create_jsi_functions() {
           std::shared_ptr<std::vector<SmartHostObject>> metadata =
               std::make_shared<std::vector<SmartHostObject>>();
 #ifdef OP_SQLITE_USE_LIBSQL
-          auto status = opsqlite_libsql_execute(db_name, query, &params,
-                                                &results, metadata);
+          auto status = opsqlite_libsql_execute_with_host_objects(
+              db_name, query, &params, &results, metadata);
 #else
           auto status = opsqlite_execute_host_objects(db_name, query, &params,
                                                       &results, metadata);
@@ -863,32 +863,32 @@ jsi::Value DBHostObject::get(jsi::Runtime &rt,
   }
 #ifdef OP_SQLITE_USE_LIBSQL
   if (name == "loadFile") {
-    return HOSTFN("loadFile", 0) {
+    return HOSTFN("loadFile") {
       throw std::runtime_error("[op-sqlite] Load file not implemented");
     });
   }
   if (name == "updateHook") {
-    return HOSTFN("updateHook", 0) {
+    return HOSTFN("updateHook") {
       throw std::runtime_error("[op-sqlite] Hooks not supported in libsql");
     });
   }
   if (name == "commitHook") {
-    return HOSTFN("commitHook", 0) {
+    return HOSTFN("commitHook") {
       throw std::runtime_error("[op-sqlite] Hooks not supported in libsql");
     });
   }
   if (name == "rollbackHook") {
-    return HOSTFN("rollbackHook", 0) {
+    return HOSTFN("rollbackHook") {
       throw std::runtime_error("[op-sqlite] Hooks not supported in libsql");
     });
   }
   if (name == "loadExtension") {
-    return HOSTFN("loadExtension", 0) {
+    return HOSTFN("loadExtension") {
       throw std::runtime_error("[op-sqlite] Hooks not supported in libsql");
     });
   }
   if (name == "reactiveExecute") {
-    return HOSTFN("reactiveExecute", 0) {
+    return HOSTFN("reactiveExecute") {
       throw std::runtime_error("[op-sqlite] Hooks not supported in libsql");
     });
   }

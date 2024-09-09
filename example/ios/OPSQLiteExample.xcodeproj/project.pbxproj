@@ -26,11 +26,9 @@
 		19F6CBCC0A4E27FBF8BF4A61 /* libPods-OPSQLiteExample-OPSQLiteExampleTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-OPSQLiteExample-OPSQLiteExampleTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B4392A12AC88292D35C810B /* Pods-OPSQLiteExample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OPSQLiteExample.debug.xcconfig"; path = "Target Support Files/Pods-OPSQLiteExample/Pods-OPSQLiteExample.debug.xcconfig"; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-OPSQLiteExample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OPSQLiteExample.release.xcconfig"; path = "Target Support Files/Pods-OPSQLiteExample/Pods-OPSQLiteExample.release.xcconfig"; sourceTree = "<group>"; };
-		5B7EB9410499542E8C5724F5 /* Pods-OPSQLiteExample-OPSQLiteExampleTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OPSQLiteExample-OPSQLiteExampleTests.debug.xcconfig"; path = "Target Support Files/Pods-OPSQLiteExample-OPSQLiteExampleTests/Pods-OPSQLiteExample-OPSQLiteExampleTests.debug.xcconfig"; sourceTree = "<group>"; };
 		6EE3066EB7AAB7E17B1CAB50 /* libPods-OPSQLiteExample.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-OPSQLiteExample.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = OPSQLiteExample/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		89C6BE57DB24E9ADA2F236DE /* Pods-OPSQLiteExample-OPSQLiteExampleTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OPSQLiteExample-OPSQLiteExampleTests.release.xcconfig"; path = "Target Support Files/Pods-OPSQLiteExample-OPSQLiteExampleTests/Pods-OPSQLiteExample-OPSQLiteExampleTests.release.xcconfig"; sourceTree = "<group>"; };
-		9218E48CFB1F478CAC374D68 /* sample2.sqlite */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = sample2.sqlite; path = ../assets/sqlite/sample2.sqlite; sourceTree = "<group>"; };
+		9218E48CFB1F478CAC374D68 /* sample2.sqlite */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sample2.sqlite; path = ../assets/sqlite/sample2.sqlite; sourceTree = "<group>"; };
 		96FD9FD0FC4F4540AC7A9CE6 /* sample.sqlite */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = sample.sqlite; path = ../assets/sample.sqlite; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -114,8 +112,6 @@
 			children = (
 				3B4392A12AC88292D35C810B /* Pods-OPSQLiteExample.debug.xcconfig */,
 				5709B34CF0A7D63546082F79 /* Pods-OPSQLiteExample.release.xcconfig */,
-				5B7EB9410499542E8C5724F5 /* Pods-OPSQLiteExample-OPSQLiteExampleTests.debug.xcconfig */,
-				89C6BE57DB24E9ADA2F236DE /* Pods-OPSQLiteExample-OPSQLiteExampleTests.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -279,7 +275,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "export RCT_METRO_PORT=\"${RCT_METRO_PORT:=8081}\"\necho \"export RCT_METRO_PORT=${RCT_METRO_PORT}\" > \"${SRCROOT}/../node_modules/react-native/scripts/.packager.env\"\nif [ -z \"${RCT_NO_LAUNCH_PACKAGER+xxx}\" ] ; then\n  if nc -w 5 -z localhost ${RCT_METRO_PORT} ; then\n    if ! curl -s \"http://localhost:${RCT_METRO_PORT}/status\" | grep -q \"packager-status:running\" ; then\n      echo \"Port ${RCT_METRO_PORT} already in use, packager is either not running or not running correctly\"\n      exit 2\n    fi\n  else\n    open \"$SRCROOT/../node_modules/react-native/scripts/launchPackager.command\" || echo \"Can't start packager automatically\"\n  fi\nfi\n";
+			shellScript = "export RCT_METRO_PORT=\"${RCT_METRO_PORT:=8081}\"\necho \"export RCT_METRO_PORT=${RCT_METRO_PORT}\" > \"${SRCROOT}/../node_modules/react-native/scripts/.packager.env\"\n\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -438,10 +434,7 @@
 				);
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_CFLAGS = "$(inherited)  ";
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(OTHER_CFLAGS)",
 					"-DFOLLY_NO_CONFIG",
@@ -527,10 +520,7 @@
 					"\"$(inherited)\"",
 				);
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_CFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_CFLAGS = "$(inherited)  ";
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(OTHER_CFLAGS)",
 					"-DFOLLY_NO_CONFIG",

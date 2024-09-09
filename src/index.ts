@@ -418,13 +418,13 @@ function enhanceDB(db: DB, options: any): DB {
           });
 
           if (!isFinalized) {
-            commit();
+            await commit();
           }
         } catch (executionError) {
-          console.warn('transaction error', executionError);
+          // console.warn('transaction error', executionError);
           if (!isFinalized) {
             try {
-              rollback();
+              await rollback();
             } catch (rollbackError) {
               throw rollbackError;
             }
@@ -453,6 +453,23 @@ function enhanceDB(db: DB, options: any): DB {
 
   return enhancedDb;
 }
+
+export const openSync = (options: {
+  url: string;
+  authToken: string;
+  name: string;
+  location?: string;
+  syncInterval?: number;
+}): DB => {
+  if (!isLibsql()) {
+    throw new Error('This function is only available for libsql');
+  }
+
+  const db = OPSQLite.openSync(options);
+  const enhancedDb = enhanceDB(db, options);
+
+  return enhancedDb;
+};
 
 export const openRemote = (options: { url: string; authToken: string }): DB => {
   if (!isLibsql()) {
