@@ -85,6 +85,38 @@ export function queriesTests() {
       expect(res.rows?.item).to.be.a('function');
     });
 
+    it('Insert and query with host objects', async () => {
+      const id = chance.integer();
+      const name = chance.name();
+      const age = chance.integer();
+      const networth = chance.floating();
+      const res = await db.executeWithHostObjects(
+        'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+        [id, name, age, networth],
+      );
+
+      expect(res.rowsAffected).to.equal(1);
+      expect(res.insertId).to.equal(1);
+      // expect(res.metadata).to.eql([]);
+      expect(res.rows?._array).to.eql([]);
+      expect(res.rows?.length).to.equal(0);
+      expect(res.rows?.item).to.be.a('function');
+
+      const queryRes = await db.executeWithHostObjects('SELECT * FROM User');
+
+      expect(queryRes.rowsAffected).to.equal(1);
+      expect(queryRes.insertId).to.equal(1);
+      expect(queryRes.rows?._array).to.eql([
+        {
+          id,
+          name,
+          age,
+          networth,
+          nickname: null,
+        },
+      ]);
+    });
+
     it('Query without params', async () => {
       const id = chance.integer();
       const name = chance.name();
