@@ -33,6 +33,7 @@ def useCRSQLite = false
 def performanceMode = "0"
 def sqliteFlags = ""
 def enableFTS5 = false
+def useSqliteVec = false
 
 def packageJsonFile = new File("$rootDir/../package.json")
 def packageJson = new JsonSlurper().parseText(packageJsonFile.text)
@@ -41,6 +42,7 @@ def opsqliteConfig = packageJson["op-sqlite"]
 if(opsqliteConfig) {
   useSQLCipher = opsqliteConfig["sqlcipher"]
   useCRSQLite = opsqliteConfig["crsqlite"]
+  useSqliteVec = opsqliteConfig["sqliteVec"]
   performanceMode = opsqliteConfig["performanceMode"] ? opsqliteConfig["performanceMode"] : ""
   sqliteFlags = opsqliteConfig["sqliteFlags"] ? opsqliteConfig["sqliteFlags"] : ""
   enableFTS5 = opsqliteConfig["fts5"]
@@ -69,6 +71,10 @@ if(performanceMode == "2") {
 
 if(enableFTS5) {
   println "[OP-SQLITE] FTS5 enabled! 🔎"
+}
+
+if(useSqliteVec) {
+    println "[OP-SQLITE] Sqlite Vec enabled! ↗️"
 }
 
 if (isNewArchitectureEnabled()) {
@@ -138,6 +144,10 @@ android {
             if(enableFTS5) {
               cFlags += ["-DSQLITE_ENABLE_FTS4=1", "-DSQLITE_ENABLE_FTS3_PARENTHESIS=1", "-DSQLITE_ENABLE_FTS5=1"]
             }
+            if(useSqliteVec) {
+              cFlags += "-DOP_SQLITE_USE_SQLITE_VEC=1"
+              cppFlags += "-DOP_SQLITE_USE_SQLITE_VEC=1"
+            }
 
             cppFlags "-O2", "-fexceptions", "-frtti", "-std=c++1y", "-DONANDROID"
             abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
@@ -145,7 +155,8 @@ android {
               "-DSQLITE_FLAGS='$sqliteFlags'",
               "-DUSE_SQLCIPHER=${useSQLCipher ? 1 : 0}",
               "-DUSE_CRSQLITE=${useCRSQLite ? 1 : 0}",
-              "-DUSE_LIBSQL=${useLibsql ? 1 : 0}"
+              "-DUSE_LIBSQL=${useLibsql ? 1 : 0}",
+              "-DUSE_SQLITE_VEC=${useSqliteVec ? 1 : 0}"
             abiFilters (*reactNativeArchitectures())
         }
     }

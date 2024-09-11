@@ -55,6 +55,12 @@ if (USE_CRSQLITE)
   )
 endif()
 
+if (USE_SQLITE_VEC)
+  add_definitions(
+    -DOP_SQLITE_USE_SQLITE_VEC=1
+  )
+endif()
+
 set_target_properties(
   ${PACKAGE_NAME} PROPERTIES
   CXX_STANDARD 20
