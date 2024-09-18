@@ -68,6 +68,6 @@
     "iosSqlite": false,
     "fts5": true,
     "libsql": false,
-    "sqliteVec": false
+    "sqliteVec": true
   }
 }
