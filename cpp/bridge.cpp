@@ -24,7 +24,8 @@ std::unordered_map<std::string, RollbackCallback> rollbackCallbackMap =
 
 inline void check_db_open(std::string const &db_name) {
   if (dbMap.count(db_name) == 0) {
-    throw std::runtime_error("[OP-SQLite] DB is not open");
+    throw std::runtime_error("[OP-SQLite] Database: " + db_name +
+                             " is not open");
   }
 }
 
@@ -55,12 +56,17 @@ BridgeResult opsqlite_open(std::string const &dbName,
                            std::string const &sqlite_vec_path,
                            std::string const &encryptionKey) {
 #else
-BridgeResult opsqlite_open(std::string const &dbName,
+BridgeResult opsqlite_open(std::string const &name,
                            std::string const &last_path,
                            std::string const &crsqlite_path,
                            std::string const &sqlite_vec_path) {
+
+  if (dbMap.count(name) != 0) {
+    throw std::runtime_error(
+        "You can only have one JS connection per database");
+  }
 #endif
-  std::string dbPath = opsqlite_get_db_path(dbName, last_path);
+  std::string dbPath = opsqlite_get_db_path(name, last_path);
 
   int sqlOpenFlags =
       SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
@@ -73,7 +79,7 @@ BridgeResult opsqlite_open(std::string const &dbName,
     return {.type = SQLiteError, .message = sqlite3_errmsg(db)};
   }
 
-  dbMap[dbName] = db;
+  dbMap[name] = db;
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
   opsqlite_execute(dbName, "PRAGMA key = '" + encryptionKey + "'", nullptr);
@@ -91,8 +97,6 @@ BridgeResult opsqlite_open(std::string const &dbName,
 
   if (errMsg != nullptr) {
     return {.type = SQLiteError, .message = errMsg};
-  } else {
-    LOGI("Loaded CRSQlite successfully");
   }
 #endif
 
@@ -103,8 +107,6 @@ BridgeResult opsqlite_open(std::string const &dbName,
 
   if (errMsg != nullptr) {
     return {.type = SQLiteError, .message = errMsg};
-  } else {
-    LOGI("Loaded sqlite-vec successfully");
   }
 
 #endif
