@@ -9,7 +9,7 @@ const chance = new Chance();
 let db: DB;
 
 export function reactiveTests() {
-  beforeEach(() => {
+  beforeEach(async () => {
     try {
       if (db) {
         db.close();
@@ -21,8 +21,8 @@ export function reactiveTests() {
         encryptionKey: 'test',
       });
 
-      db.execute('DROP TABLE IF EXISTS User;');
-      db.execute(
+      await db.execute('DROP TABLE IF EXISTS User;');
+      await db.execute(
         'CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL, nickname TEXT) STRICT;',
       );
     } catch (e) {

@@ -52,7 +52,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
   _sqlite_vec_path = std::string(sqlite_vec_path);
   _invoker = invoker;
 
-  auto open = HOSTFN("open", 1) {
+  auto open = HOSTFN("open") {
     jsi::Object options = args[0].asObject(rt);
     std::string name = options.getProperty(rt, "name").asString(rt).utf8(rt);
     std::string path = std::string(_base_path);
@@ -91,7 +91,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
     return jsi::Object::createFromHostObject(rt, db);
   });
 
-  auto is_sqlcipher = HOSTFN("isSQLCipher", 0) {
+  auto is_sqlcipher = HOSTFN("isSQLCipher") {
 #ifdef OP_SQLITE_USE_SQLCIPHER
     return true;
 #else
@@ -99,7 +99,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
 #endif
   });
 
-  auto is_libsql = HOSTFN("isLibsql", 0) {
+  auto is_libsql = HOSTFN("isLibsql") {
 #ifdef OP_SQLITE_USE_LIBSQL
     return true;
 #else
@@ -108,7 +108,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
   });
 
 #ifdef OP_SQLITE_USE_LIBSQL
-  auto open_remote = HOSTFN("openRemote", 1) {
+  auto open_remote = HOSTFN("openRemote") {
     jsi::Object options = args[0].asObject(rt);
     std::string url = options.getProperty(rt, "url").asString(rt).utf8(rt);
     std::string auth_token =
@@ -119,7 +119,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
     return jsi::Object::createFromHostObject(rt, db);
   });
 
-  auto open_sync = HOSTFN("openSync", 1) {
+  auto open_sync = HOSTFN("openSync") {
     jsi::Object options = args[0].asObject(rt);
     std::string name = options.getProperty(rt, "name").asString(rt).utf8(rt);
     std::string path = std::string(_base_path);

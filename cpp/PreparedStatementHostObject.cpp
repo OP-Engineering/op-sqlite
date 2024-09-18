@@ -23,7 +23,7 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
   auto name = propNameID.utf8(rt);
 
   if (name == "bind") {
-    return HOSTFN("bind", 1) {
+    return HOSTFN("bind") {
       if (_stmt == nullptr) {
         throw std::runtime_error("statement has been freed");
       }
@@ -41,28 +41,53 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
   }
 
   if (name == "execute") {
-    return HOSTFN("execute", 1) {
+    return HOSTFN("execute") {
       if (_stmt == nullptr) {
         throw std::runtime_error("statement has been freed");
       }
 
-      std::vector<DumbHostObject> results;
-      std::shared_ptr<std::vector<SmartHostObject>> metadata =
-          std::make_shared<std::vector<SmartHostObject>>();
+      auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
+        auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor") {
+        auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
+        auto reject = std::make_shared<jsi::Value>(rt, args[1]);
+
+        auto task = [&rt, this, resolve, reject,
+                     invoker = this->_js_call_invoker]() {
+          std::vector<DumbHostObject> results;
+          std::shared_ptr<std::vector<SmartHostObject>> metadata =
+              std::make_shared<std::vector<SmartHostObject>>();
 #ifdef OP_SQLITE_USE_LIBSQL
-      auto status = opsqlite_libsql_execute_prepared_statement(
-          _name, _stmt, &results, metadata);
+          auto status = opsqlite_libsql_execute_prepared_statement(
+              _name, _stmt, &results, metadata);
 #else
-      auto status =
-          opsqlite_execute_prepared_statement(_name, _stmt, &results, metadata);
+          auto status = opsqlite_execute_prepared_statement(_name, _stmt,
+                                                            &results, metadata);
 #endif
+          invoker->invokeAsync(
+              [&rt, status = std::move(status),
+               results = std::make_shared<std::vector<DumbHostObject>>(results),
+               metadata, resolve, reject] {
+                if (status.type == SQLiteOk) {
+                  auto jsiResult =
+                      createResult(rt, status, results.get(), metadata);
+                  resolve->asObject(rt).asFunction(rt).call(
+                      rt, std::move(jsiResult));
+                } else {
+                  auto errorCtr =
+                      rt.global().getPropertyAsFunction(rt, "Error");
+                  auto error = errorCtr.callAsConstructor(
+                      rt, jsi::String::createFromUtf8(rt, status.message));
+                  reject->asObject(rt).asFunction(rt).call(rt, error);
+                }
+              });
+        };
 
-      if (status.type == SQLiteError) {
-        throw std::runtime_error(status.message);
-      }
+        _thread_pool->queueWork(task);
 
-      auto jsiResult = createResult(rt, status, &results, metadata);
-      return jsiResult;
+        return {};
+          }));
+
+        return promise;
     });
   }
 

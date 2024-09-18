@@ -15,7 +15,7 @@ const chance = new Chance();
 let db: DB;
 
 export function registerHooksTests() {
-  beforeEach(() => {
+  beforeEach(async () => {
     try {
       if (db) {
         db.close();
@@ -24,8 +24,8 @@ export function registerHooksTests() {
 
       db = open(DB_CONFIG);
 
-      db.execute('DROP TABLE IF EXISTS User;');
-      db.execute(
+      await db.execute('DROP TABLE IF EXISTS User;');
+      await db.execute(
         'CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL) STRICT;',
       );
     } catch (e) {
@@ -55,7 +55,7 @@ export function registerHooksTests() {
       const name = chance.name();
       const age = chance.integer();
       const networth = chance.floating();
-      db.execute(
+      await db.execute(
         'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
         [id, name, age, networth],
       );
@@ -75,14 +75,14 @@ export function registerHooksTests() {
       const name = chance.name();
       const age = chance.integer();
       const networth = chance.floating();
-      db.execute(
+      await db.execute(
         'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
         [id, name, age, networth],
       );
 
       db.updateHook(null);
 
-      db.execute(
+      await db.execute(
         'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
         [id + 1, name, age, networth],
       );
@@ -107,7 +107,7 @@ export function registerHooksTests() {
       const age = chance.integer();
       const networth = chance.floating();
       await db.transaction(async tx => {
-        tx.execute(
+        await tx.execute(
           'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
           [id, name, age, networth],
         );
@@ -127,7 +127,7 @@ export function registerHooksTests() {
       const age = chance.integer();
       const networth = chance.floating();
       await db.transaction(async tx => {
-        tx.execute(
+        await tx.execute(
           'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
           [id, name, age, networth],
         );
@@ -136,7 +136,7 @@ export function registerHooksTests() {
       db.commitHook(null);
 
       await db.transaction(async tx => {
-        tx.execute(
+        await tx.execute(
           'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
           [id + 1, name, age, networth],
         );
