@@ -7,7 +7,7 @@ let expect = chai.expect;
 let db: DB;
 
 export function blobTests() {
-  beforeEach(() => {
+  beforeEach(async () => {
     try {
       if (db) {
         db.close();
@@ -19,8 +19,8 @@ export function blobTests() {
         encryptionKey: 'test',
       });
 
-      db.execute('DROP TABLE IF EXISTS BlobTable;');
-      db.execute(
+      await db.execute('DROP TABLE IF EXISTS BlobTable;');
+      await db.execute(
         'CREATE TABLE BlobTable ( id INT PRIMARY KEY, content BLOB) STRICT;',
       );
     } catch (e) {
@@ -33,12 +33,12 @@ export function blobTests() {
       const uint8 = new Uint8Array(2);
       uint8[0] = 42;
 
-      db.execute(`INSERT OR REPLACE INTO BlobTable VALUES (?, ?);`, [
+      await db.execute(`INSERT OR REPLACE INTO BlobTable VALUES (?, ?);`, [
         1,
         uint8.buffer,
       ]);
 
-      const result = db.execute('SELECT content FROM BlobTable');
+      const result = await db.execute('SELECT content FROM BlobTable');
 
       const finalUint8 = new Uint8Array(result.rows!._array[0].content);
       expect(finalUint8[0]).to.equal(42);
@@ -48,9 +48,12 @@ export function blobTests() {
       const uint8 = new Uint8Array(2);
       uint8[0] = 42;
 
-      db.execute(`INSERT OR REPLACE INTO BlobTable VALUES (?, ?);`, [1, uint8]);
+      await db.execute(`INSERT OR REPLACE INTO BlobTable VALUES (?, ?);`, [
+        1,
+        uint8,
+      ]);
 
-      const result = db.execute('SELECT content FROM BlobTable');
+      const result = await db.execute('SELECT content FROM BlobTable');
 
       const finalUint8 = new Uint8Array(result.rows!._array[0].content);
       expect(finalUint8[0]).to.equal(42);
@@ -60,9 +63,12 @@ export function blobTests() {
       const uint8 = new Uint16Array(2);
       uint8[0] = 42;
 
-      db.execute(`INSERT OR REPLACE INTO BlobTable VALUES (?, ?);`, [1, uint8]);
+      await db.execute(`INSERT OR REPLACE INTO BlobTable VALUES (?, ?);`, [
+        1,
+        uint8,
+      ]);
 
-      const result = db.execute('SELECT content FROM BlobTable');
+      const result = await db.execute('SELECT content FROM BlobTable');
 
       const finalUint8 = new Uint8Array(result.rows!._array[0].content);
       expect(finalUint8[0]).to.equal(42);
@@ -77,9 +83,9 @@ export function blobTests() {
       );
       statement.bind([1, uint8]);
 
-      statement.execute();
+      await statement.execute();
 
-      const result = db.execute('SELECT content FROM BlobTable');
+      const result = await db.execute('SELECT content FROM BlobTable');
 
       const finalUint8 = new Uint8Array(result.rows!._array[0].content);
       expect(finalUint8[0]).to.equal(46);
@@ -94,9 +100,9 @@ export function blobTests() {
       );
       statement.bind([1, uint8.buffer]);
 
-      statement.execute();
+      await statement.execute();
 
-      const result = db.execute('SELECT content FROM BlobTable');
+      const result = await db.execute('SELECT content FROM BlobTable');
 
       const finalUint8 = new Uint8Array(result.rows!._array[0].content);
       expect(finalUint8[0]).to.equal(52);

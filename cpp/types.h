@@ -4,22 +4,7 @@
 #include <memory>
 #include <string>
 #include <variant>
-
-enum ResultType { SQLiteOk, SQLiteError };
-
-struct BridgeResult {
-  ResultType type;
-  std::string message;
-  int affectedRows;
-  double insertId;
-};
-
-struct BatchResult {
-  ResultType type;
-  std::string message;
-  int affectedRows;
-  int commands;
-};
+#include <vector>
 
 struct ArrayBuffer {
   std::shared_ptr<uint8_t> data;
@@ -28,6 +13,24 @@ struct ArrayBuffer {
 
 using JSVariant = std::variant<nullptr_t, bool, int, double, long, long long,
                                std::string, ArrayBuffer>;
+
+enum ResultType { SQLiteOk, SQLiteError };
+
+struct BridgeResult {
+  ResultType type;
+  std::string message;
+  int affectedRows;
+  double insertId;
+  std::vector<std::vector<JSVariant>> rows;
+  std::vector<std::string> column_names;
+};
+
+struct BatchResult {
+  ResultType type;
+  std::string message;
+  int affectedRows;
+  int commands;
+};
 
 struct BatchArguments {
   std::string sql;

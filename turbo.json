@@ -1,7 +1,7 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "pipeline": {
-    "build:android": {
+    "run:android:release": {
       "inputs": [
         "package.json",
         "android",
@@ -16,7 +16,7 @@
       ],
       "outputs": []
     },
-    "build:ios": {
+    "run:ios": {
       "inputs": [
         "package.json",
         "*.podspec",

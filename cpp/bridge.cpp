@@ -24,7 +24,8 @@ std::unordered_map<std::string, RollbackCallback> rollbackCallbackMap =
 
 inline void check_db_open(std::string const &db_name) {
   if (dbMap.count(db_name) == 0) {
-    throw std::runtime_error("[OP-SQLite] DB is not open");
+    throw std::runtime_error("[OP-SQLite] Database: " + db_name +
+                             " is not open");
   }
 }
 
@@ -49,18 +50,23 @@ std::string opsqlite_get_db_path(std::string const &db_name,
 }
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
-BridgeResult opsqlite_open(std::string const &dbName,
+BridgeResult opsqlite_open(std::string const &name,
                            std::string const &last_path,
                            std::string const &crsqlite_path,
                            std::string const &sqlite_vec_path,
                            std::string const &encryptionKey) {
 #else
-BridgeResult opsqlite_open(std::string const &dbName,
+BridgeResult opsqlite_open(std::string const &name,
                            std::string const &last_path,
                            std::string const &crsqlite_path,
                            std::string const &sqlite_vec_path) {
+
+  if (dbMap.count(name) != 0) {
+    throw std::runtime_error(
+        "You can only have one JS connection per database");
+  }
 #endif
-  std::string dbPath = opsqlite_get_db_path(dbName, last_path);
+  std::string dbPath = opsqlite_get_db_path(name, last_path);
 
   int sqlOpenFlags =
       SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
@@ -73,11 +79,10 @@ BridgeResult opsqlite_open(std::string const &dbName,
     return {.type = SQLiteError, .message = sqlite3_errmsg(db)};
   }
 
-  dbMap[dbName] = db;
+  dbMap[name] = db;
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
-  opsqlite_execute(dbName, "PRAGMA key = '" + encryptionKey + "'", nullptr,
-                   nullptr, nullptr);
+  opsqlite_execute(name, "PRAGMA key = '" + encryptionKey + "'", nullptr);
 #endif
 
   sqlite3_enable_load_extension(db, 1);
@@ -92,8 +97,6 @@ BridgeResult opsqlite_open(std::string const &dbName,
 
   if (errMsg != nullptr) {
     return {.type = SQLiteError, .message = errMsg};
-  } else {
-    LOGI("Loaded CRSQlite successfully");
   }
 #endif
 
@@ -104,8 +107,6 @@ BridgeResult opsqlite_open(std::string const &dbName,
 
   if (errMsg != nullptr) {
     return {.type = SQLiteError, .message = errMsg};
-  } else {
-    LOGI("Loaded sqlite-vec successfully");
   }
 
 #endif
@@ -113,20 +114,19 @@ BridgeResult opsqlite_open(std::string const &dbName,
   return {.type = SQLiteOk, .affectedRows = 0};
 }
 
-BridgeResult opsqlite_close(std::string const &dbName) {
+BridgeResult opsqlite_close(std::string const &name) {
 
-  check_db_open(dbName);
+  check_db_open(name);
 
-  sqlite3 *db = dbMap[dbName];
+  sqlite3 *db = dbMap[name];
 
 #ifdef OP_SQLITE_USE_CRSQLITE
-  opsqlite_execute(dbName, "select crsql_finalize();", nullptr, nullptr,
-                   nullptr);
+  opsqlite_execute(name, "select crsql_finalize();", nullptr);
 #endif
 
   sqlite3_close_v2(db);
 
-  dbMap.erase(dbName);
+  dbMap.erase(name);
 
   return BridgeResult{
       .type = SQLiteOk,
@@ -140,8 +140,7 @@ BridgeResult opsqlite_attach(std::string const &mainDBName,
   std::string dbPath = opsqlite_get_db_path(databaseToAttach, docPath);
   std::string statement = "ATTACH DATABASE '" + dbPath + "' AS " + alias;
 
-  BridgeResult result =
-      opsqlite_execute(mainDBName, statement, nullptr, nullptr, nullptr);
+  BridgeResult result = opsqlite_execute(mainDBName, statement, nullptr);
 
   if (result.type == SQLiteError) {
     return {
@@ -158,8 +157,7 @@ BridgeResult opsqlite_attach(std::string const &mainDBName,
 BridgeResult opsqlite_detach(std::string const &mainDBName,
                              std::string const &alias) {
   std::string statement = "DETACH DATABASE " + alias;
-  BridgeResult result =
-      opsqlite_execute(mainDBName, statement, nullptr, nullptr, nullptr);
+  BridgeResult result = opsqlite_execute(mainDBName, statement, nullptr);
   if (result.type == SQLiteError) {
     return BridgeResult{
         .type = SQLiteError,
@@ -206,22 +204,22 @@ inline void opsqlite_bind_statement(sqlite3_stmt *statement,
     int sqIndex = ii + 1;
     JSVariant value = values->at(ii);
 
-    if (std::holds_alternative<bool>(value)) {
-      sqlite3_bind_int(statement, sqIndex, std::get<bool>(value));
-    } else if (std::holds_alternative<int>(value)) {
+    if (std::holds_alternative<bool>(value) ||
+        std::holds_alternative<int>(value)) {
       sqlite3_bind_int(statement, sqIndex, std::get<int>(value));
     } else if (std::holds_alternative<long long>(value)) {
-      sqlite3_bind_double(statement, sqIndex, std::get<long long>(value));
+      sqlite3_bind_double(statement, sqIndex,
+                          static_cast<double>(std::get<long long>(value)));
     } else if (std::holds_alternative<double>(value)) {
       sqlite3_bind_double(statement, sqIndex, std::get<double>(value));
     } else if (std::holds_alternative<std::string>(value)) {
       std::string str = std::get<std::string>(value);
-      sqlite3_bind_text(statement, sqIndex, str.c_str(), str.length(),
-                        SQLITE_TRANSIENT);
+      sqlite3_bind_text(statement, sqIndex, str.c_str(),
+                        static_cast<int>(str.length()), SQLITE_TRANSIENT);
     } else if (std::holds_alternative<ArrayBuffer>(value)) {
       ArrayBuffer buffer = std::get<ArrayBuffer>(value);
-      sqlite3_bind_blob(statement, sqIndex, buffer.data.get(), buffer.size,
-                        SQLITE_TRANSIENT);
+      sqlite3_bind_blob(statement, sqIndex, buffer.data.get(),
+                        static_cast<int>(buffer.size), SQLITE_TRANSIENT);
     } else {
       sqlite3_bind_null(statement, sqIndex);
     }
@@ -231,7 +229,7 @@ inline void opsqlite_bind_statement(sqlite3_stmt *statement,
 BridgeResult opsqlite_execute_prepared_statement(
     std::string const &dbName, sqlite3_stmt *statement,
     std::vector<DumbHostObject> *results,
-    std::shared_ptr<std::vector<SmartHostObject>> metadatas) {
+    std::shared_ptr<std::vector<SmartHostObject>> &metadatas) {
 
   check_db_open(dbName);
 
@@ -244,8 +242,6 @@ BridgeResult opsqlite_execute_prepared_statement(
 
   int result = SQLITE_OK;
 
-  isConsuming = true;
-
   int i, count, column_type;
   std::string column_name, column_declared_type;
 
@@ -254,7 +250,7 @@ BridgeResult opsqlite_execute_prepared_statement(
 
     switch (result) {
     case SQLITE_ROW: {
-      if (results == NULL) {
+      if (results == nullptr) {
         break;
       }
 
@@ -273,13 +269,13 @@ BridgeResult opsqlite_execute_prepared_statement(
            * only represent Integers up to 53 bits
            */
           double column_value = sqlite3_column_double(statement, i);
-          row.values.push_back(JSVariant(column_value));
+          row.values.emplace_back(column_value);
           break;
         }
 
         case SQLITE_FLOAT: {
           double column_value = sqlite3_column_double(statement, i);
-          row.values.push_back(JSVariant(column_value));
+          row.values.emplace_back(column_value);
           break;
         }
 
@@ -288,20 +284,20 @@ BridgeResult opsqlite_execute_prepared_statement(
               reinterpret_cast<const char *>(sqlite3_column_text(statement, i));
           int byteLen = sqlite3_column_bytes(statement, i);
           // Specify length too; in case string contains NULL in the middle
-          row.values.push_back(JSVariant(std::string(column_value, byteLen)));
+          row.values.emplace_back(std::string(column_value, byteLen));
           break;
         }
 
         case SQLITE_BLOB: {
           int blob_size = sqlite3_column_bytes(statement, i);
           const void *blob = sqlite3_column_blob(statement, i);
-          uint8_t *data = new uint8_t[blob_size];
+          auto *data = new uint8_t[blob_size];
           // You cannot share raw memory between native and JS
           // always copy the data
           memcpy(data, blob, blob_size);
-          row.values.push_back(
-              JSVariant(ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
-                                    .size = static_cast<size_t>(blob_size)}));
+          row.values.emplace_back(
+              ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+                          .size = static_cast<size_t>(blob_size)});
           break;
         }
 
@@ -309,14 +305,16 @@ BridgeResult opsqlite_execute_prepared_statement(
           // Intentionally left blank
 
         default:
-          row.values.push_back(JSVariant(nullptr));
+          row.values.emplace_back(nullptr);
           break;
         }
         i++;
       }
+
       if (results != nullptr) {
         results->push_back(row);
       }
+
       break;
     }
 
@@ -329,10 +327,10 @@ BridgeResult opsqlite_execute_prepared_statement(
           column_name = sqlite3_column_name(statement, i);
           const char *type = sqlite3_column_decltype(statement, i);
           auto metadata = SmartHostObject();
-          metadata.fields.push_back(std::make_pair("name", column_name));
-          metadata.fields.push_back(std::make_pair("index", i));
-          metadata.fields.push_back(
-              std::make_pair("type", type == NULL ? "UNKNOWN" : type));
+          metadata.fields.emplace_back("name", column_name);
+          metadata.fields.emplace_back("index", i);
+          metadata.fields.emplace_back("type",
+                                       type == nullptr ? "UNKNOWN" : type);
 
           metadatas->push_back(metadata);
           i++;
@@ -374,7 +372,8 @@ sqlite3_stmt *opsqlite_prepare_statement(std::string const &dbName,
 
   const char *queryStr = query.c_str();
 
-  int statementStatus = sqlite3_prepare_v2(db, queryStr, -1, &statement, NULL);
+  int statementStatus =
+      sqlite3_prepare_v2(db, queryStr, -1, &statement, nullptr);
 
   if (statementStatus == SQLITE_ERROR) {
     const char *message = sqlite3_errmsg(db);
@@ -385,12 +384,144 @@ sqlite3_stmt *opsqlite_prepare_statement(std::string const &dbName,
   return statement;
 }
 
+BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
+                              const std::vector<JSVariant> *params) {
+  check_db_open(name);
+
+  sqlite3 *db = dbMap[name];
+
+  sqlite3_stmt *statement;
+  const char *errorMessage;
+  const char *remainingStatement = nullptr;
+
+  bool isFailed = false;
+  int step_result, current_column, column_count, column_type;
+  std::string column_name, column_declared_type;
+  std::vector<std::string> column_names;
+  std::vector<std::vector<JSVariant>> rows;
+  std::vector<JSVariant> row;
+
+  do {
+    const char *queryStr =
+        remainingStatement == nullptr ? query.c_str() : remainingStatement;
+
+    int statementStatus =
+        sqlite3_prepare_v2(db, queryStr, -1, &statement, &remainingStatement);
+
+    if (statementStatus != SQLITE_OK) {
+      errorMessage = sqlite3_errmsg(db);
+      return {.type = SQLiteError,
+              .message =
+                  "[op-sqlite] SQL prepare error: " + std::string(errorMessage),
+              .affectedRows = 0};
+    }
+
+    if (params != nullptr && !params->empty()) {
+      opsqlite_bind_statement(statement, params);
+    }
+
+    column_count = sqlite3_column_count(statement);
+    bool is_consuming = true;
+    // Do a first pass to get the column names
+    for (int i = 0; i < column_count; i++) {
+      column_name = sqlite3_column_name(statement, i);
+      column_names.push_back(column_name);
+    }
+
+    double double_value;
+    const char *string_value;
+    while (is_consuming) {
+      step_result = sqlite3_step(statement);
+
+      switch (step_result) {
+      case SQLITE_ROW:
+        current_column = 0;
+        row = std::vector<JSVariant>();
+        column_count = sqlite3_column_count(statement);
+
+        while (current_column < column_count) {
+          column_type = sqlite3_column_type(statement, current_column);
+
+          switch (column_type) {
+
+          case SQLITE_INTEGER:
+            // intentional fallthrough
+          case SQLITE_FLOAT: {
+            double_value = sqlite3_column_double(statement, current_column);
+            row.emplace_back(double_value);
+            break;
+          }
+
+          case SQLITE_TEXT: {
+            string_value = reinterpret_cast<const char *>(
+                sqlite3_column_text(statement, current_column));
+            int byteLen = sqlite3_column_bytes(statement, current_column);
+            // Specify length too; in case string contains NULL in the middle
+            row.emplace_back(std::string(string_value, byteLen));
+            break;
+          }
+
+          case SQLITE_BLOB: {
+            int blob_size = sqlite3_column_bytes(statement, current_column);
+            const void *blob = sqlite3_column_blob(statement, current_column);
+            auto *data = new uint8_t[blob_size];
+            memcpy(data, blob, blob_size);
+            row.emplace_back(
+                ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+                            .size = static_cast<size_t>(blob_size)});
+            break;
+          }
+
+          case SQLITE_NULL:
+            // Intentionally left blank to switch to default case
+          default:
+            row.emplace_back(nullptr);
+            break;
+          }
+
+          current_column++;
+        }
+
+        rows.push_back(row);
+        break;
+
+      case SQLITE_DONE:
+        is_consuming = false;
+        break;
+
+      default:
+        isFailed = true;
+        is_consuming = false;
+      }
+    }
+
+    sqlite3_finalize(statement);
+  } while (remainingStatement != nullptr &&
+           strcmp(remainingStatement, "") != 0 && !isFailed);
+
+  if (isFailed) {
+    const char *message = sqlite3_errmsg(db);
+    return {.type = SQLiteError,
+            .message =
+                "[op-sqlite] SQL execution error: " + std::string(message),
+            .affectedRows = 0,
+            .insertId = 0};
+  }
+
+  int changedRowCount = sqlite3_changes(db);
+  long long latestInsertRowId = sqlite3_last_insert_rowid(db);
+  return {.type = SQLiteOk,
+          .affectedRows = changedRowCount,
+          .insertId = static_cast<double>(latestInsertRowId),
+          .rows = std::move(rows),
+          .column_names = std::move(column_names)};
+}
+
 /// Base execution function, returns HostObjects to the JS environment
-BridgeResult
-opsqlite_execute(std::string const &dbName, std::string const &query,
-                 const std::vector<JSVariant> *params,
-                 std::vector<DumbHostObject> *results,
-                 std::shared_ptr<std::vector<SmartHostObject>> metadatas) {
+BridgeResult opsqlite_execute_host_objects(
+    std::string const &dbName, std::string const &query,
+    const std::vector<JSVariant> *params, std::vector<DumbHostObject> *results,
+    std::shared_ptr<std::vector<SmartHostObject>> &metadatas) {
 
   check_db_open(dbName);
 
@@ -423,15 +554,13 @@ opsqlite_execute(std::string const &dbName, std::string const &query,
 
     // The statement did not fail to parse but there is nothing to do, just
     // skip to the end
-    if (statement == NULL) {
+    if (statement == nullptr) {
       continue;
     }
 
-    if (params != nullptr && params->size() > 0) {
+    if (params != nullptr && !params->empty()) {
       opsqlite_bind_statement(statement, params);
     }
-
-    isConsuming = true;
 
     int i, count, column_type;
     std::string column_name, column_declared_type;
@@ -441,7 +570,7 @@ opsqlite_execute(std::string const &dbName, std::string const &query,
 
       switch (result) {
       case SQLITE_ROW: {
-        if (results == NULL) {
+        if (results == nullptr) {
           break;
         }
 
@@ -460,13 +589,13 @@ opsqlite_execute(std::string const &dbName, std::string const &query,
              * only represent Integers up to 53 bits
              */
             double column_value = sqlite3_column_double(statement, i);
-            row.values.push_back(JSVariant(column_value));
+            row.values.emplace_back(column_value);
             break;
           }
 
           case SQLITE_FLOAT: {
             double column_value = sqlite3_column_double(statement, i);
-            row.values.push_back(JSVariant(column_value));
+            row.values.emplace_back(column_value);
             break;
           }
 
@@ -475,20 +604,20 @@ opsqlite_execute(std::string const &dbName, std::string const &query,
                 sqlite3_column_text(statement, i));
             int byteLen = sqlite3_column_bytes(statement, i);
             // Specify length too; in case string contains NULL in the middle
-            row.values.push_back(JSVariant(std::string(column_value, byteLen)));
+            row.values.emplace_back(std::string(column_value, byteLen));
             break;
           }
 
           case SQLITE_BLOB: {
             int blob_size = sqlite3_column_bytes(statement, i);
             const void *blob = sqlite3_column_blob(statement, i);
-            uint8_t *data = new uint8_t[blob_size];
+            auto *data = new uint8_t[blob_size];
             // You cannot share raw memory between native and JS
             // always copy the data
             memcpy(data, blob, blob_size);
-            row.values.push_back(
-                JSVariant(ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
-                                      .size = static_cast<size_t>(blob_size)}));
+            row.values.emplace_back(
+                ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+                            .size = static_cast<size_t>(blob_size)});
             break;
           }
 
@@ -496,7 +625,7 @@ opsqlite_execute(std::string const &dbName, std::string const &query,
             // Intentionally left blank
 
           default:
-            row.values.push_back(JSVariant(nullptr));
+            row.values.emplace_back(nullptr);
             break;
           }
           i++;
@@ -516,10 +645,10 @@ opsqlite_execute(std::string const &dbName, std::string const &query,
             column_name = sqlite3_column_name(statement, i);
             const char *type = sqlite3_column_decltype(statement, i);
             auto metadata = SmartHostObject();
-            metadata.fields.push_back(std::make_pair("name", column_name));
-            metadata.fields.push_back(std::make_pair("index", i));
-            metadata.fields.push_back(
-                std::make_pair("type", type == NULL ? "UNKNOWN" : type));
+            metadata.fields.emplace_back("name", column_name);
+            metadata.fields.emplace_back("index", i);
+            metadata.fields.emplace_back("type",
+                                         type == nullptr ? "UNKNOWN" : type);
 
             metadatas->push_back(metadata);
             i++;
@@ -536,8 +665,8 @@ opsqlite_execute(std::string const &dbName, std::string const &query,
     }
 
     sqlite3_finalize(statement);
-  } while (remainingStatement != NULL && strcmp(remainingStatement, "") != 0 &&
-           !isFailed);
+  } while (remainingStatement != nullptr &&
+           strcmp(remainingStatement, "") != 0 && !isFailed);
 
   if (isFailed) {
 
@@ -594,15 +723,13 @@ opsqlite_execute_raw(std::string const &dbName, std::string const &query,
 
     // The statement did not fail to parse but there is nothing to do, just
     // skip to the end
-    if (statement == NULL) {
+    if (statement == nullptr) {
       continue;
     }
 
-    if (params != nullptr && params->size() > 0) {
+    if (params != nullptr && !params->empty()) {
       opsqlite_bind_statement(statement, params);
     }
-
-    isConsuming = true;
 
     int i, count, column_type;
     std::string column_name, column_declared_type;
@@ -632,13 +759,13 @@ opsqlite_execute_raw(std::string const &dbName, std::string const &query,
              * only represent Integers up to 53 bits
              */
             double column_value = sqlite3_column_double(statement, i);
-            row.push_back(JSVariant(column_value));
+            row.emplace_back(column_value);
             break;
           }
 
           case SQLITE_FLOAT: {
             double column_value = sqlite3_column_double(statement, i);
-            row.push_back(JSVariant(column_value));
+            row.emplace_back(column_value);
             break;
           }
 
@@ -647,27 +774,25 @@ opsqlite_execute_raw(std::string const &dbName, std::string const &query,
                 sqlite3_column_text(statement, i));
             int byteLen = sqlite3_column_bytes(statement, i);
             // Specify length too; in case string contains NULL in the middle
-            row.push_back(JSVariant(std::string(column_value, byteLen)));
+            row.emplace_back(std::string(column_value, byteLen));
             break;
           }
 
           case SQLITE_BLOB: {
             int blob_size = sqlite3_column_bytes(statement, i);
             const void *blob = sqlite3_column_blob(statement, i);
-            uint8_t *data = new uint8_t[blob_size];
+            auto *data = new uint8_t[blob_size];
             memcpy(data, blob, blob_size);
-            row.push_back(
-                JSVariant(ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
-                                      .size = static_cast<size_t>(blob_size)}));
+            row.emplace_back(
+                ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+                            .size = static_cast<size_t>(blob_size)});
             break;
           }
 
           case SQLITE_NULL:
-            row.push_back(JSVariant(nullptr));
-            break;
-
+            // intentional fallthrough
           default:
-            row.push_back(JSVariant(nullptr));
+            row.emplace_back(nullptr);
             break;
           }
           i++;
@@ -690,8 +815,8 @@ opsqlite_execute_raw(std::string const &dbName, std::string const &query,
     }
 
     sqlite3_finalize(statement);
-  } while (remainingStatement != NULL && strcmp(remainingStatement, "") != 0 &&
-           !isFailed);
+  } while (remainingStatement != nullptr &&
+           strcmp(remainingStatement, "") != 0 && !isFailed);
 
   if (isFailed) {
 
@@ -773,7 +898,7 @@ BridgeResult opsqlite_deregister_update_hook(std::string const &dbName) {
   sqlite3 *db = dbMap[dbName];
   updateCallbackMap.erase(dbName);
 
-  sqlite3_update_hook(db, NULL, NULL);
+  sqlite3_update_hook(db, nullptr, nullptr);
 
   return {SQLiteOk};
 }
@@ -811,7 +936,7 @@ BridgeResult opsqlite_deregister_commit_hook(std::string const &dbName) {
 
   sqlite3 *db = dbMap[dbName];
   commitCallbackMap.erase(dbName);
-  sqlite3_commit_hook(db, NULL, NULL);
+  sqlite3_commit_hook(db, nullptr, nullptr);
 
   return {SQLiteOk};
 }
@@ -848,7 +973,7 @@ BridgeResult opsqlite_deregister_rollback_hook(std::string const &dbName) {
   sqlite3 *db = dbMap[dbName];
   rollbackCallbackMap.erase(dbName);
 
-  sqlite3_rollback_hook(db, NULL, NULL);
+  sqlite3_rollback_hook(db, nullptr, nullptr);
 
   return {SQLiteOk};
 }
@@ -884,7 +1009,7 @@ BridgeResult opsqlite_load_extension(std::string const &db_name,
 #endif
 }
 
-BatchResult opsqlite_execute_batch(std::string dbName,
+BatchResult opsqlite_execute_batch(std::string &name,
                                    std::vector<BatchArguments> *commands) {
   size_t commandCount = commands->size();
   if (commandCount <= 0) {
@@ -896,16 +1021,14 @@ BatchResult opsqlite_execute_batch(std::string dbName,
 
   try {
     int affectedRows = 0;
-    opsqlite_execute(dbName, "BEGIN EXCLUSIVE TRANSACTION", nullptr, nullptr,
-                     nullptr);
+    opsqlite_execute(name, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
     for (int i = 0; i < commandCount; i++) {
       auto command = commands->at(i);
       // We do not provide a datastructure to receive query data because we
       // don't need/want to handle this results in a batch execution
-      auto result = opsqlite_execute(dbName, command.sql, command.params.get(),
-                                     nullptr, nullptr);
+      auto result = opsqlite_execute(name, command.sql, command.params.get());
       if (result.type == SQLiteError) {
-        opsqlite_execute(dbName, "ROLLBACK", nullptr, nullptr, nullptr);
+        opsqlite_execute(name, "ROLLBACK", nullptr);
         return BatchResult{
             .type = SQLiteError,
             .message = result.message,
@@ -914,14 +1037,14 @@ BatchResult opsqlite_execute_batch(std::string dbName,
         affectedRows += result.affectedRows;
       }
     }
-    opsqlite_execute(dbName, "COMMIT", nullptr, nullptr, nullptr);
+    opsqlite_execute(name, "COMMIT", nullptr);
     return BatchResult{
         .type = SQLiteOk,
         .affectedRows = affectedRows,
         .commands = static_cast<int>(commandCount),
     };
   } catch (std::exception &exc) {
-    opsqlite_execute(dbName, "ROLLBACK", nullptr, nullptr, nullptr);
+    opsqlite_execute(name, "ROLLBACK", nullptr);
     return BatchResult{
         .type = SQLiteError,
         .message = exc.what(),

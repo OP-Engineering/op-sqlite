@@ -7,7 +7,7 @@ let expect = chai.expect;
 let db: DB;
 
 export function preparedStatementsTests() {
-  beforeEach(() => {
+  beforeEach(async () => {
     try {
       if (db) {
         db.close();
@@ -19,11 +19,22 @@ export function preparedStatementsTests() {
         encryptionKey: 'test',
       });
 
-      db.execute('DROP TABLE IF EXISTS User;');
-      db.execute('CREATE TABLE User ( id INT PRIMARY KEY, name TEXT) STRICT;');
-      db.execute('INSERT INTO "User" (id, name) VALUES(?,?)', [1, 'Oscar']);
-      db.execute('INSERT INTO "User" (id, name) VALUES(?,?)', [2, 'Pablo']);
-      db.execute('INSERT INTO "User" (id, name) VALUES(?,?)', [3, 'Carlos']);
+      await db.execute('DROP TABLE IF EXISTS User;');
+      await db.execute(
+        'CREATE TABLE User ( id INT PRIMARY KEY, name TEXT) STRICT;',
+      );
+      await db.execute('INSERT INTO "User" (id, name) VALUES(?,?)', [
+        1,
+        'Oscar',
+      ]);
+      await db.execute('INSERT INTO "User" (id, name) VALUES(?,?)', [
+        2,
+        'Pablo',
+      ]);
+      await db.execute('INSERT INTO "User" (id, name) VALUES(?,?)', [
+        3,
+        'Carlos',
+      ]);
     } catch (e) {
       console.warn('error on before each', e);
     }
@@ -32,10 +43,10 @@ export function preparedStatementsTests() {
   describe('PreparedStatements', () => {
     it('Creates a prepared statement and executes a prepared statement', async () => {
       const statement = db.prepareStatement('SELECT * FROM User;');
-      let results = statement.execute();
+      let results = await statement.execute();
 
       expect(results.rows!._array.length).to.equal(3);
-      results = statement.execute();
+      results = await statement.execute();
 
       expect(results.rows!._array.length).to.equal(3);
     });
@@ -44,11 +55,11 @@ export function preparedStatementsTests() {
       const statement = db.prepareStatement('SELECT * FROM User WHERE id=?;');
       statement.bind([1]);
 
-      let results = statement.execute();
+      let results = await statement.execute();
       expect(results.rows!._array[0].name === 'Oscar');
 
       statement.bind([2]);
-      results = statement.execute();
+      results = await statement.execute();
       expect(results.rows!._array[0].name === 'Pablo');
     });
 
@@ -57,10 +68,10 @@ export function preparedStatementsTests() {
         'INSERT INTO "User" (id, name) VALUES(?,?);',
       );
       statement.bind([4, 'Juan']);
-      statement.execute();
+      await statement.execute();
 
       statement.bind([5, 'Pedro']);
-      statement.execute();
+      await statement.execute();
     });
   });
 }
