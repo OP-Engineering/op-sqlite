@@ -33,7 +33,7 @@ BridgeResult opsqlite_open(std::string const &name, std::string const &path,
                            std::string const &sqlite_vec_path);
 #endif
 
-BridgeResult opsqlite_close(std::string const &dbName);
+BridgeResult opsqlite_close(std::string const &name);
 
 BridgeResult opsqlite_remove(std::string const &dbName,
                              std::string const &docPath);

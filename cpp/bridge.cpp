@@ -82,7 +82,7 @@ BridgeResult opsqlite_open(std::string const &name,
   dbMap[name] = db;
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
-  opsqlite_execute(dbName, "PRAGMA key = '" + encryptionKey + "'", nullptr);
+  opsqlite_execute(name, "PRAGMA key = '" + encryptionKey + "'", nullptr);
 #endif
 
   sqlite3_enable_load_extension(db, 1);
@@ -114,19 +114,19 @@ BridgeResult opsqlite_open(std::string const &name,
   return {.type = SQLiteOk, .affectedRows = 0};
 }
 
-BridgeResult opsqlite_close(std::string const &dbName) {
+BridgeResult opsqlite_close(std::string const &name) {
 
-  check_db_open(dbName);
+  check_db_open(name);
 
-  sqlite3 *db = dbMap[dbName];
+  sqlite3 *db = dbMap[name];
 
 #ifdef OP_SQLITE_USE_CRSQLITE
-  opsqlite_execute(dbName, "select crsql_finalize();", nullptr);
+  opsqlite_execute(name, "select crsql_finalize();", nullptr);
 #endif
 
   sqlite3_close_v2(db);
 
-  dbMap.erase(dbName);
+  dbMap.erase(name);
 
   return BridgeResult{
       .type = SQLiteOk,
