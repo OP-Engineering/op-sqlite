@@ -50,7 +50,7 @@ std::string opsqlite_get_db_path(std::string const &db_name,
 }
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
-BridgeResult opsqlite_open(std::string const &dbName,
+BridgeResult opsqlite_open(std::string const &name,
                            std::string const &last_path,
                            std::string const &crsqlite_path,
                            std::string const &sqlite_vec_path,
