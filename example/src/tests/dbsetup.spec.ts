@@ -162,5 +162,19 @@ export function dbSetupTests() {
         db.close();
       }
     });
+
+    it('Closes connections correctly', async () => {
+      try {
+        let db1 = open({
+          name: 'closeTest.sqlite',
+        });
+        expect(db1).to.exist;
+        open({
+          name: 'closeTest.sqlite',
+        });
+      } catch (e) {
+        expect(e).to.exist;
+      }
+    });
   });
 }

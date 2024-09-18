@@ -348,10 +348,11 @@ void DBHostObject::create_jsi_functions() {
           });
 
         } catch (std::exception &exc) {
-          invoker->invokeAsync([&rt, exc = std::move(exc), reject] {
+          auto what = exc.what();
+          invoker->invokeAsync([&rt, what = std::move(what), reject] {
             auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
             auto error = errorCtr.callAsConstructor(
-                rt, jsi::String::createFromAscii(rt, exc.what()));
+                rt, jsi::String::createFromAscii(rt, what));
             reject->asObject(rt).asFunction(rt).call(rt, error);
           });
         }
@@ -407,13 +408,12 @@ void DBHostObject::create_jsi_functions() {
           });
 
         } catch (std::exception &exc) {
-          std::cout << "Exception executing function" << exc.what()
-                    << std::endl;
-          invoker->invokeAsync([&rt, exc = std::move(exc), reject] {
+          auto what = exc.what();
+          invoker->invokeAsync([&rt, what = std::move(what), reject] {
             auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-            auto what = exc.what();
+
             auto error = errorCtr.callAsConstructor(
-                rt, jsi::String::createFromAscii(rt, exc.what()));
+                rt, jsi::String::createFromAscii(rt, what));
             reject->asObject(rt).asFunction(rt).call(rt, error);
           });
         }
@@ -478,10 +478,11 @@ void DBHostObject::create_jsi_functions() {
               });
 
         } catch (std::exception &exc) {
-          invoker->invokeAsync([&rt, exc = std::move(exc), reject] {
+          auto what = exc.what();
+          invoker->invokeAsync([&rt, what = std::move(what), reject] {
             auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
             auto error = errorCtr.callAsConstructor(
-                rt, jsi::String::createFromAscii(rt, exc.what()));
+                rt, jsi::String::createFromAscii(rt, what));
             reject->asObject(rt).asFunction(rt).call(rt, error);
           });
         }
@@ -547,8 +548,13 @@ void DBHostObject::create_jsi_functions() {
             }
           });
         } catch (std::exception &exc) {
-          jsCallInvoker->invokeAsync(
-              [&rt, reject, &exc] { throw jsi::JSError(rt, exc.what()); });
+          auto what = exc.what();
+          jsCallInvoker->invokeAsync([&rt, what = std::move(what), reject] {
+            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto error = errorCtr.callAsConstructor(
+                rt, jsi::String::createFromAscii(rt, what));
+            reject->asObject(rt).asFunction(rt).call(rt, error);
+          });
         }
       };
       thread_pool->queueWork(task);
@@ -603,8 +609,13 @@ void DBHostObject::create_jsi_functions() {
             }
           });
         } catch (std::exception &exc) {
-          jsCallInvoker->invokeAsync(
-              [&rt, err = exc.what(), reject] { throw jsi::JSError(rt, err); });
+          auto what = exc.what();
+          jsCallInvoker->invokeAsync([&rt, what = std::move(what), reject] {
+            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto error = errorCtr.callAsConstructor(
+                rt, jsi::String::createFromAscii(rt, what));
+            reject->asObject(rt).asFunction(rt).call(rt, error);
+          });
         }
       };
       thread_pool->queueWork(task);
