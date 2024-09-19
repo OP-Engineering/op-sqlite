@@ -29,7 +29,7 @@ export function queriesTests() {
       await db.execute('DROP TABLE IF EXISTS T1;');
       await db.execute('DROP TABLE IF EXISTS T2;');
       await db.execute(
-        'CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL, nickname TEXT) STRICT;',
+        'CREATE TABLE User (id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL, nickname TEXT) STRICT;',
       );
     } catch (e) {
       console.error('error on before each', e);
@@ -83,6 +83,11 @@ export function queriesTests() {
       expect(res.rows?._array).to.eql([]);
       expect(res.rows?.length).to.equal(0);
       expect(res.rows?.item).to.be.a('function');
+    });
+
+    it('Casts booleans to ints correctly', async () => {
+      await db.execute(`SELECT ?`, [1]);
+      await db.execute(`SELECT ?`, [true]);
     });
 
     it('Insert and query with host objects', async () => {
