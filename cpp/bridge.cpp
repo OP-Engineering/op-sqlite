@@ -204,8 +204,10 @@ inline void opsqlite_bind_statement(sqlite3_stmt *statement,
     int sqIndex = ii + 1;
     JSVariant value = values->at(ii);
 
-    if (std::holds_alternative<bool>(value) ||
-        std::holds_alternative<int>(value)) {
+    if (std::holds_alternative<bool>(value)) {
+      sqlite3_bind_int(statement, sqIndex,
+                       static_cast<int>(std::get<bool>(value)));
+    } else if (std::holds_alternative<int>(value)) {
       sqlite3_bind_int(statement, sqIndex, std::get<int>(value));
     } else if (std::holds_alternative<long long>(value)) {
       sqlite3_bind_double(statement, sqIndex,
