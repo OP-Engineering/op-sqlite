@@ -10,7 +10,7 @@ PODS:
   - hermes-engine (0.74.0):
     - hermes-engine/Pre-built (= 0.74.0)
   - hermes-engine/Pre-built (0.74.0)
-  - op-sqlite (8.0.0):
+  - op-sqlite (8.0.2):
     - React
     - React-callinvoker
     - React-Core
@@ -1369,7 +1369,7 @@ SPEC CHECKSUMS:
   GCDWebServer: 2c156a56c8226e2d5c0c3f208a3621ccffbe3ce4
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
   hermes-engine: 6eae7edb2f563ee41d7c1f91f4f2e57c26d8a5c3
-  op-sqlite: d34b2d2f64871a4a626b45af824ef8f6a10cd3d6
+  op-sqlite: 63af78e9033946d98491201c2c21229891a03b64
   RCT-Folly: 045d6ecaa59d826c5736dfba0b2f4083ff8d79df
   RCTDeprecation: 3ca8b6c36bfb302e1895b72cfe7db0de0c92cd47
   RCTRequired: 9fc183af555fd0c89a366c34c1ae70b7e03b1dc5

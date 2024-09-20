@@ -393,24 +393,23 @@ BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
   sqlite3 *db = dbMap[name];
 
   sqlite3_stmt *statement;
-  const char *errorMessage;
+  const char *errorMessage = nullptr;
   const char *remainingStatement = nullptr;
-
-  bool isFailed = false;
-  int step_result, current_column, column_count, column_type;
+  bool has_failed = false;
+  int status, current_column, column_count, column_type;
   std::string column_name, column_declared_type;
   std::vector<std::string> column_names;
   std::vector<std::vector<JSVariant>> rows;
   std::vector<JSVariant> row;
 
   do {
-    const char *queryStr =
+    const char *query_str =
         remainingStatement == nullptr ? query.c_str() : remainingStatement;
 
-    int statementStatus =
-        sqlite3_prepare_v2(db, queryStr, -1, &statement, &remainingStatement);
+    status =
+        sqlite3_prepare_v2(db, query_str, -1, &statement, &remainingStatement);
 
-    if (statementStatus != SQLITE_OK) {
+    if (status != SQLITE_OK) {
       errorMessage = sqlite3_errmsg(db);
       return {.type = SQLiteError,
               .message =
@@ -418,24 +417,31 @@ BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
               .affectedRows = 0};
     }
 
+    // The statement did not fail to parse but there is nothing to do, just
+    // skip to the end
+    if (statement == nullptr) {
+      continue;
+    }
+
     if (params != nullptr && !params->empty()) {
       opsqlite_bind_statement(statement, params);
     }
 
     column_count = sqlite3_column_count(statement);
-    bool is_consuming = true;
+    bool is_consuming_rows = true;
+    double double_value;
+    const char *string_value;
+
     // Do a first pass to get the column names
     for (int i = 0; i < column_count; i++) {
       column_name = sqlite3_column_name(statement, i);
       column_names.push_back(column_name);
     }
 
-    double double_value;
-    const char *string_value;
-    while (is_consuming) {
-      step_result = sqlite3_step(statement);
+    while (is_consuming_rows) {
+      status = sqlite3_step(statement);
 
-      switch (step_result) {
+      switch (status) {
       case SQLITE_ROW:
         current_column = 0;
         row = std::vector<JSVariant>();
@@ -488,20 +494,20 @@ BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
         break;
 
       case SQLITE_DONE:
-        is_consuming = false;
+        is_consuming_rows = false;
         break;
 
       default:
-        isFailed = true;
-        is_consuming = false;
+        has_failed = true;
+        is_consuming_rows = false;
       }
     }
 
     sqlite3_finalize(statement);
   } while (remainingStatement != nullptr &&
-           strcmp(remainingStatement, "") != 0 && !isFailed);
+           strcmp(remainingStatement, "") != 0 && !has_failed);
 
-  if (isFailed) {
+  if (has_failed) {
     const char *message = sqlite3_errmsg(db);
     return {.type = SQLiteError,
             .message =

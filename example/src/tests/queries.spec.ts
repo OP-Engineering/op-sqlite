@@ -654,5 +654,12 @@ export function queriesTests() {
         {name: 'test', content: 'test content'},
       ]);
     });
+
+    it('Various queries', async () => {
+      await db.execute('SELECT 1 ');
+      await db.execute('SELECT 1       ');
+      await db.execute('SELECT 1; ', []);
+      await db.execute('SELECT ?; ', [1]);
+    });
   });
 }
