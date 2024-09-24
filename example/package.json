@@ -26,6 +26,7 @@
     "react-native": "0.74.0",
     "react-native-http-bridge-refurbished": "1.2.9",
     "react-native-restart": "^0.0.27",
+    "react-native-share": "^11.0.3",
     "reflect-metadata": "^0.1.13",
     "stream-browserify": "^3.0.0",
     "util": "^0.12.5"
