@@ -1,8 +1,9 @@
 import 'mocha';
 import type * as MochaTypes from 'mocha';
 
-export const rootSuite = new Mocha.Suite('') as MochaTypes.Suite;
+export let rootSuite = new Mocha.Suite('') as MochaTypes.Suite;
 rootSuite.timeout(10 * 1000);
+// rootSuite.timeout(60 * 60 * 1000);
 
 let mochaContext = rootSuite;
 let only = false;
@@ -10,6 +11,7 @@ let only = false;
 export const clearTests = () => {
   rootSuite.suites = [];
   rootSuite.tests = [];
+  rootSuite = new Mocha.Suite('') as MochaTypes.Suite;
   mochaContext = rootSuite;
   only = false;
 };
@@ -49,6 +51,14 @@ export const beforeEach = (f: () => void): void => {
   mochaContext.beforeEach(f);
 };
 
+export const afterEach = (f: () => void): void => {
+  mochaContext.afterEach(f);
+};
+
 export const beforeAll = (f: any) => {
   mochaContext.beforeAll(f);
+};
+
+export const afterAll = (f: any) => {
+  mochaContext.afterAll(f);
 };

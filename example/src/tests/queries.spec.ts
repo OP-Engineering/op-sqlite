@@ -5,21 +5,17 @@ import {
   type DB,
   type SQLBatchTuple,
 } from '@op-engineering/op-sqlite';
-import {beforeEach, describe, it} from './MochaRNAdapter';
+import {afterEach, beforeEach, describe, it} from './MochaRNAdapter';
 import chai from 'chai';
 
 const expect = chai.expect;
 const chance = new Chance();
-let db: DB;
 
 export function queriesTests() {
+  let db: DB;
+
   beforeEach(async () => {
     try {
-      if (db) {
-        db.close();
-        db.delete();
-      }
-
       db = open({
         name: 'queries.sqlite',
         encryptionKey: 'test',
@@ -32,7 +28,16 @@ export function queriesTests() {
         'CREATE TABLE User (id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL, nickname TEXT) STRICT;',
       );
     } catch (e) {
-      console.error('error on before each', e);
+      console.error('🟥 Before each error!', e);
+    }
+  });
+
+  afterEach(() => {
+    if (db) {
+      db.close();
+      db.delete();
+      // @ts-ignore
+      db = null;
     }
   });
 
