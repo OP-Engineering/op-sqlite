@@ -1,6 +1,6 @@
 import {type DB, open} from '@op-engineering/op-sqlite';
 import chai from 'chai';
-import {beforeEach, describe, it} from './MochaRNAdapter';
+import {afterAll, beforeEach, describe, it} from './MochaRNAdapter';
 
 let expect = chai.expect;
 
@@ -25,6 +25,15 @@ export function blobTests() {
       );
     } catch (e) {
       console.warn('error on before each', e);
+    }
+  });
+
+  afterAll(() => {
+    if (db) {
+      db.close();
+      db.delete();
+      // @ts-ignore
+      db = null;
     }
   });
 

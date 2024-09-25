@@ -2,7 +2,7 @@ import Chance from 'chance';
 
 import {type DB, open, isLibsql} from '@op-engineering/op-sqlite';
 import chai from 'chai';
-import {describe, it, beforeEach} from './MochaRNAdapter';
+import {describe, it, beforeEach, afterAll} from './MochaRNAdapter';
 import {sleep} from './utils';
 
 const expect = chai.expect;
@@ -30,6 +30,15 @@ export function registerHooksTests() {
       );
     } catch (e) {
       console.warn('error on before each', e);
+    }
+  });
+
+  afterAll(() => {
+    if (db) {
+      db.close();
+      db.delete();
+      // @ts-ignore
+      db = null;
     }
   });
 

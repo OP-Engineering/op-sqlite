@@ -1,6 +1,6 @@
 import {isLibsql, open, type DB} from '@op-engineering/op-sqlite';
 import chai from 'chai';
-import {beforeEach, describe, it} from './MochaRNAdapter';
+import {afterAll, beforeEach, describe, it} from './MochaRNAdapter';
 import {sleep} from './utils';
 import Chance from 'chance';
 
@@ -27,6 +27,15 @@ export function reactiveTests() {
       );
     } catch (e) {
       console.error('error on before each', e);
+    }
+  });
+
+  afterAll(() => {
+    if (db) {
+      db.close();
+      db.delete();
+      // @ts-ignore
+      db = null;
     }
   });
 

@@ -91,6 +91,9 @@ export function dbSetupTests() {
       } catch (e) {
         // TODO load a sample extension
         expect(e).to.exist;
+      } finally {
+        db.close();
+        db.delete();
       }
     });
 
@@ -100,6 +103,7 @@ export function dbSetupTests() {
         encryptionKey: 'test',
       });
 
+      db.close();
       db.delete();
     });
 
