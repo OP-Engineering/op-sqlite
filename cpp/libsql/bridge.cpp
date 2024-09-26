@@ -253,8 +253,10 @@ void opsqlite_libsql_bind_statement(libsql_stmt_t statement,
     JSVariant value = values->at(ii);
     int status;
 
-    if (std::holds_alternative<bool>(value) ||
-        std::holds_alternative<int>(value)) {
+    if (std::holds_alternative<bool>(value)) {
+      status = libsql_bind_int(statement, index,
+                       static_cast<int>(std::get<bool>(value)), &err);
+    } else if (std::holds_alternative<int>(value)) {
       status = libsql_bind_int(statement, index, std::get<int>(value), &err);
     } else if (std::holds_alternative<long long>(value)) {
       status =
@@ -494,7 +496,6 @@ BridgeResult opsqlite_libsql_execute(std::string const &name,
         break;
 
       case LIBSQL_TEXT:
-
         status = libsql_get_string(row, col, &text_value, &err);
         out_row.emplace_back(text_value);
         break;
