@@ -7,37 +7,36 @@ let expect = chai.expect;
 let db: DB;
 
 export function blobTests() {
-  beforeEach(async () => {
-    try {
+  describe('Blobs', () => {
+    beforeEach(async () => {
+      try {
+        if (db) {
+          db.close();
+          db.delete();
+        }
+
+        db = open({
+          name: 'blobs',
+          encryptionKey: 'test',
+        });
+
+        await db.execute('DROP TABLE IF EXISTS BlobTable;');
+        await db.execute(
+          'CREATE TABLE BlobTable ( id INT PRIMARY KEY, content BLOB) STRICT;',
+        );
+      } catch (e) {
+        console.warn('error on before each', e);
+      }
+    });
+
+    afterAll(() => {
       if (db) {
         db.close();
         db.delete();
+        // @ts-ignore
+        db = null;
       }
-
-      db = open({
-        name: 'blobs',
-        encryptionKey: 'test',
-      });
-
-      await db.execute('DROP TABLE IF EXISTS BlobTable;');
-      await db.execute(
-        'CREATE TABLE BlobTable ( id INT PRIMARY KEY, content BLOB) STRICT;',
-      );
-    } catch (e) {
-      console.warn('error on before each', e);
-    }
-  });
-
-  afterAll(() => {
-    if (db) {
-      db.close();
-      db.delete();
-      // @ts-ignore
-      db = null;
-    }
-  });
-
-  describe('Blobs', () => {
+    });
     it('ArrayBuffer', async () => {
       const uint8 = new Uint8Array(2);
       uint8[0] = 42;
@@ -49,7 +48,7 @@ export function blobTests() {
 
       const result = await db.execute('SELECT content FROM BlobTable');
 
-      const finalUint8 = new Uint8Array(result.rows!._array[0].content);
+      const finalUint8 = new Uint8Array(result.rows?.[0].content);
       expect(finalUint8[0]).to.equal(42);
     });
 
@@ -64,7 +63,7 @@ export function blobTests() {
 
       const result = await db.execute('SELECT content FROM BlobTable');
 
-      const finalUint8 = new Uint8Array(result.rows!._array[0].content);
+      const finalUint8 = new Uint8Array(result.rows?.[0].content);
       expect(finalUint8[0]).to.equal(42);
     });
 
@@ -79,7 +78,7 @@ export function blobTests() {
 
       const result = await db.execute('SELECT content FROM BlobTable');
 
-      const finalUint8 = new Uint8Array(result.rows!._array[0].content);
+      const finalUint8 = new Uint8Array(result.rows?.[0].content);
       expect(finalUint8[0]).to.equal(42);
     });
 
@@ -96,7 +95,7 @@ export function blobTests() {
 
       const result = await db.execute('SELECT content FROM BlobTable');
 
-      const finalUint8 = new Uint8Array(result.rows!._array[0].content);
+      const finalUint8 = new Uint8Array(result.rows?.[0].content);
       expect(finalUint8[0]).to.equal(46);
     });
 
@@ -113,7 +112,7 @@ export function blobTests() {
 
       const result = await db.execute('SELECT content FROM BlobTable');
 
-      const finalUint8 = new Uint8Array(result.rows!._array[0].content);
+      const finalUint8 = new Uint8Array(result.rows?.[0].content);
       expect(finalUint8[0]).to.equal(52);
     });
   });
