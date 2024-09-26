@@ -51,6 +51,7 @@ export async function runTests(...registrators: Array<() => void>) {
     registrators.forEach(register => {
       register();
     });
+
     runner.run();
   });
   return promise;
