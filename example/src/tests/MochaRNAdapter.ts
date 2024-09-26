@@ -1,18 +1,18 @@
 import 'mocha';
 import type * as MochaTypes from 'mocha';
 
-export let rootSuite = new Mocha.Suite('') as MochaTypes.Suite;
-rootSuite.timeout(10 * 1000);
-// rootSuite.timeout(60 * 60 * 1000);
+const TIMEOUT = 10 * 1000;
 
-let mochaContext = rootSuite;
+export const rootSuite = new Mocha.Suite('') as MochaTypes.Suite;
+rootSuite.timeout(TIMEOUT);
+let suite = new Mocha.Suite('') as MochaTypes.Suite;
 let only = false;
 
 export const clearTests = () => {
+  suite.suites = [];
+  suite.tests = [];
   rootSuite.suites = [];
   rootSuite.tests = [];
-  rootSuite = new Mocha.Suite('') as MochaTypes.Suite;
-  mochaContext = rootSuite;
   only = false;
 };
 
@@ -22,7 +22,7 @@ export const it = (
 ): void => {
   if (!only) {
     const test = new Mocha.Test(name, f);
-    mochaContext.addTest(test);
+    suite.addTest(test);
   }
 };
 
@@ -32,33 +32,29 @@ export const itOnly = (
 ): void => {
   clearTests();
   const test = new Mocha.Test(name, f);
-  mochaContext.addTest(test);
+  suite.addTest(test);
+  rootSuite.addSuite(suite);
   only = true;
 };
 
 export const describe = (name: string, f: () => void): void => {
-  const prevMochaContext = mochaContext;
-  mochaContext = new Mocha.Suite(
-    name,
-    prevMochaContext.ctx,
-  ) as MochaTypes.Suite;
-  prevMochaContext.addSuite(mochaContext);
+  suite = new Mocha.Suite(name) as MochaTypes.Suite;
+  rootSuite.addSuite(suite);
   f();
-  mochaContext = prevMochaContext;
 };
 
 export const beforeEach = (f: () => void): void => {
-  mochaContext.beforeEach(f);
+  suite.beforeEach(f);
 };
 
 export const afterEach = (f: () => void): void => {
-  mochaContext.afterEach(f);
+  suite.afterEach(f);
 };
 
 export const beforeAll = (f: any) => {
-  mochaContext.beforeAll(f);
+  suite.beforeAll(f);
 };
 
 export const afterAll = (f: any) => {
-  mochaContext.afterAll(f);
+  suite.afterAll(f);
 };

@@ -45,7 +45,7 @@ export function dbSetupTests() {
 
       const res = await db.execute('select sqlite_version();');
 
-      expect(res.rows?._array[0]['sqlite_version()']).to.equal(expectedVersion);
+      expect(res.rows?.[0]['sqlite_version()']).to.equal(expectedVersion);
       db.close();
     });
 

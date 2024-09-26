@@ -59,21 +59,10 @@ export type QueryResult = {
   insertId?: number;
   rowsAffected: number;
   res?: any[];
-  rows?: {
-    /** Raw array with all dataset */
-    _array: any[];
-    /** The length of the dataset */
-    length: number;
-    /** A convenience function to access the index based the row object
-     * @param idx the row index
-     * @returns the row structure identified by column names
-     */
-    item: (idx: number) => any;
-  };
+  rows?: any[];
   // An array of intermediate results, just values without column names
   rawRows?: any[];
   columnNames?: string[];
-
   /**
    * Query metadata, available only for select query results
    */
@@ -213,22 +202,6 @@ const locks: Record<
   { queue: PendingTransaction[]; inProgress: boolean }
 > = {};
 
-// Enhance some host functions
-// Add 'item' function to result object to allow the sqlite-storage typeorm driver to work
-function enhanceQueryResult(result: QueryResult): void {
-  // Add 'item' function to result object to allow the sqlite-storage typeorm driver to work
-  if (result.rows == null) {
-    result.rows = {
-      _array: [],
-      length: 0,
-      item: (idx: number) => result.rows?._array[idx],
-    };
-  } else {
-    result.res = result.rows._array;
-    result.rows.item = (idx: number) => result.rows?._array[idx];
-  }
-}
-
 function enhanceDB(db: DB, options: any): DB {
   const lock = {
     queue: [] as PendingTransaction[],
@@ -287,7 +260,11 @@ function enhanceDB(db: DB, options: any): DB {
       });
 
       const result = await db.executeWithHostObjects(query, sanitizedParams);
-      enhanceQueryResult(result);
+
+      // Fix this on the native side
+      // @ts-ignore
+      result.rows = result.rows?._array ?? [];
+
       return result;
     },
     execute: async (
@@ -318,12 +295,11 @@ function enhanceDB(db: DB, options: any): DB {
 
       let res = {
         ...intermediateResult,
-        rows: {
-          _array: rows,
-          length: rows.length,
-          item: (idx: number) => rows[idx],
-        },
+        rows,
       };
+
+      delete res.rawRows;
+
       return res;
     },
     prepareStatement: (query: string) => {
@@ -343,7 +319,9 @@ function enhanceDB(db: DB, options: any): DB {
         },
         execute: async () => {
           const res = await stmt.execute();
-          enhanceQueryResult(res);
+          // TODO fix on the native side
+          // @ts-ignore
+          res.rows = res.rows?._array;
           return res;
         },
       };
@@ -359,30 +337,7 @@ function enhanceDB(db: DB, options: any): DB {
             `OP-Sqlite Error: Database: ${options.url}. Cannot execute query on finalized transaction`
           );
         }
-        let intermediateResult = await enhancedDb.execute(query, params);
-        let rows: any[] = [];
-        for (let i = 0; i < (intermediateResult.rawRows?.length ?? 0); i++) {
-          let row: any = {};
-          for (
-            let j = 0;
-            j < intermediateResult.columnNames!.length ?? 0;
-            j++
-          ) {
-            let columnName = intermediateResult.columnNames![j]!;
-            row[columnName] = intermediateResult.rawRows![i][j];
-          }
-          rows.push(row);
-        }
-
-        let res = {
-          ...intermediateResult,
-          rows: {
-            _array: rows,
-            length: 0,
-            item: (idx: number) => rows[idx],
-          },
-        };
-        return res;
+        return await enhancedDb.execute(query, params);
       };
 
       const commit = async (): Promise<QueryResult> => {

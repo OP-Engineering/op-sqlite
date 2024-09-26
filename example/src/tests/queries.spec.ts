@@ -5,7 +5,7 @@ import {
   type DB,
   type SQLBatchTuple,
 } from '@op-engineering/op-sqlite';
-import {afterEach, beforeEach, describe, it} from './MochaRNAdapter';
+import {afterEach, beforeEach, describe, it, itOnly} from './MochaRNAdapter';
 import chai from 'chai';
 
 const expect = chai.expect;
@@ -14,8 +14,8 @@ const chance = new Chance();
 export function queriesTests() {
   let db: DB;
 
-  beforeEach(async () => {
-    try {
+  describe('Queries tests', () => {
+    beforeEach(async () => {
       db = open({
         name: 'queries.sqlite',
         encryptionKey: 'test',
@@ -27,21 +27,16 @@ export function queriesTests() {
       await db.execute(
         'CREATE TABLE User (id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL, nickname TEXT) STRICT;',
       );
-    } catch (e) {
-      console.error('🟥 Before each error!', e);
-    }
-  });
+    });
 
-  afterEach(() => {
-    if (db) {
-      db.close();
-      db.delete();
-      // @ts-ignore
-      db = null;
-    }
-  });
-
-  describe('Queries tests', () => {
+    afterEach(() => {
+      if (db) {
+        db.close();
+        db.delete();
+        // @ts-ignore
+        db = null;
+      }
+    });
     // if (isLibsql()) {
     //   it('Remote open a turso database', async () => {
     //     const remoteDb = openRemote({
@@ -85,9 +80,8 @@ export function queriesTests() {
       expect(res.rowsAffected).to.equal(1);
       expect(res.insertId).to.equal(1);
       // expect(res.metadata).to.eql([]);
-      expect(res.rows?._array).to.eql([]);
+      expect(res.rows).to.eql([]);
       expect(res.rows?.length).to.equal(0);
-      expect(res.rows?.item).to.be.a('function');
     });
 
     it('Casts booleans to ints correctly', async () => {
@@ -108,15 +102,14 @@ export function queriesTests() {
       expect(res.rowsAffected).to.equal(1);
       expect(res.insertId).to.equal(1);
       // expect(res.metadata).to.eql([]);
-      expect(res.rows?._array).to.eql([]);
+      expect(res.rows).to.eql([]);
       expect(res.rows?.length).to.equal(0);
-      expect(res.rows?.item).to.be.a('function');
 
       const queryRes = await db.executeWithHostObjects('SELECT * FROM User');
 
       expect(queryRes.rowsAffected).to.equal(1);
       expect(queryRes.insertId).to.equal(1);
-      expect(queryRes.rows?._array).to.eql([
+      expect(queryRes.rows).to.eql([
         {
           id,
           name,
@@ -141,7 +134,7 @@ export function queriesTests() {
 
       expect(res.rowsAffected).to.equal(1);
       expect(res.insertId).to.equal(1);
-      expect(res.rows?._array).to.eql([
+      expect(res.rows).to.eql([
         {
           id,
           name,
@@ -166,7 +159,7 @@ export function queriesTests() {
 
       expect(res.rowsAffected).to.equal(1);
       expect(res.insertId).to.equal(1);
-      expect(res.rows?._array).to.eql([
+      expect(res.rows).to.eql([
         {
           id,
           name,
@@ -194,8 +187,8 @@ export function queriesTests() {
       // console.log(countRes);
 
       // expect(countRes.metadata?.[0]?.type).to.equal('UNKNOWN');
-      expect(countRes.rows?._array.length).to.equal(1);
-      expect(countRes.rows?.item(0).count).to.equal(1);
+      expect(countRes.rows?.length).to.equal(1);
+      expect(countRes.rows?.[0]?.count).to.equal(1);
 
       // SUM(age)
       const id2 = chance.integer();
@@ -211,7 +204,7 @@ export function queriesTests() {
       const sumRes = await db.execute('SELECT SUM(age) as sum FROM User;');
 
       // expect(sumRes.metadata?.[0]?.type).to.equal('UNKNOWN');
-      expect(sumRes.rows?.item(0).sum).to.equal(age + age2);
+      expect(sumRes.rows?.[0].sum).to.equal(age + age2);
 
       // MAX(networth), MIN(networth)
       const maxRes = await db.execute(
@@ -225,8 +218,8 @@ export function queriesTests() {
       const maxNetworth = Math.max(networth, networth2);
       const minNetworth = Math.min(networth, networth2);
 
-      expect(maxRes.rows?.item(0).max).to.equal(maxNetworth);
-      expect(minRes.rows?.item(0).min).to.equal(minNetworth);
+      expect(maxRes.rows?.[0].max).to.equal(maxNetworth);
+      expect(minRes.rows?.[0].min).to.equal(minNetworth);
     });
 
     it('Executes all the statements in a single string', async () => {
@@ -242,13 +235,13 @@ export function queriesTests() {
         "SELECT name FROM sqlite_master WHERE type='table' AND name='T1';",
       );
 
-      expect(t1name.rows?._array[0].name).to.equal('T1');
+      expect(t1name.rows?.[0].name).to.equal('T1');
 
       let t2name = await db.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='T2';",
       );
 
-      expect(t2name.rows?._array[0].name).to.equal('T2');
+      expect(t2name.rows?.[0].name).to.equal('T2');
     });
 
     it('Failed insert', async () => {
@@ -285,13 +278,12 @@ export function queriesTests() {
         expect(res.rowsAffected).to.equal(1);
         expect(res.insertId).to.equal(1);
         // expect(res.metadata).to.eql([]);
-        expect(res.rows?._array).to.eql([]);
+        expect(res.rows).to.eql([]);
         expect(res.rows?.length).to.equal(0);
-        expect(res.rows?.item).to.be.a('function');
       });
 
       const res = await db.execute('SELECT * FROM User');
-      expect(res.rows?._array).to.eql([
+      expect(res.rows).to.eql([
         {
           id,
           name,
@@ -316,17 +308,15 @@ export function queriesTests() {
 
         expect(res.rowsAffected).to.equal(1);
         expect(res.insertId).to.equal(1);
-        // expect(res.metadata).to.eql([]);
-        expect(res.rows?._array).to.eql([]);
+        expect(res.rows).to.eql([]);
         expect(res.rows?.length).to.equal(0);
-        expect(res.rows?.item).to.be.a('function');
 
         await tx.commit();
       });
 
       const res = await db.execute('SELECT * FROM User');
       // console.log(res);
-      expect(res.rows?._array).to.eql([
+      expect(res.rows).to.eql([
         {
           id,
           name,
@@ -338,8 +328,7 @@ export function queriesTests() {
     });
 
     it('Transaction, executed in order', async () => {
-      // ARRANGE: Setup for multiple transactions
-      const iterations = 10;
+      const xs = 10;
       const actual: unknown[] = [];
 
       // ARRANGE: Generate expected data
@@ -349,7 +338,7 @@ export function queriesTests() {
 
       // ACT: Start multiple transactions to upsert and select the same record
       const promises = [];
-      for (let iteration = 1; iteration <= iterations; iteration++) {
+      for (let i = 1; i <= xs; i++) {
         const promised = db.transaction(async tx => {
           // ACT: Upsert statement to create record / increment the value
           await tx.execute(
@@ -371,7 +360,7 @@ export function queriesTests() {
             [id],
           );
 
-          actual.push(results.rows?._array[0].networth);
+          actual.push(results.rows?.[0].networth);
         });
 
         promises.push(promised);
@@ -381,9 +370,10 @@ export function queriesTests() {
       await Promise.all(promises);
 
       // ASSERT: That the expected values where returned
-      const expected = Array(iterations)
+      const expected = Array(xs)
         .fill(0)
         .map((_, index) => index * 1000);
+
       expect(actual).to.eql(
         expected,
         'Each transaction should read a different value',
@@ -405,9 +395,8 @@ export function queriesTests() {
         expect(res.rowsAffected).to.equal(1);
         expect(res.insertId).to.equal(1);
         // expect(res.metadata).to.eql([]);
-        expect(res.rows?._array).to.eql([]);
+        expect(res.rows).to.eql([]);
         expect(res.rows?.length).to.equal(0);
-        expect(res.rows?.item).to.be.a('function');
 
         await tx.commit();
 
@@ -419,7 +408,7 @@ export function queriesTests() {
       });
 
       const res = await db.execute('SELECT * FROM User');
-      expect(res.rows?._array).to.eql([
+      expect(res.rows).to.eql([
         {
           id,
           name,
@@ -448,7 +437,7 @@ export function queriesTests() {
       });
 
       const res = await db.execute('SELECT * FROM User');
-      expect(res.rows?._array).to.eql([]);
+      expect(res.rows).to.eql([]);
     });
 
     it('Correctly throws', async () => {
@@ -479,7 +468,7 @@ export function queriesTests() {
         );
         await tx.rollback();
         const res = await db.execute('SELECT * FROM User');
-        expect(res.rows?._array).to.eql([]);
+        expect(res.rows).to.eql([]);
       });
     });
 
@@ -559,7 +548,7 @@ export function queriesTests() {
 
       const res = await db.execute('SELECT * FROM User');
       // console.log(res);
-      expect(res.rows?._array).to.eql([
+      expect(res.rows).to.eql([
         {id: id1, name: name1, age: age1, networth: networth1, nickname: null},
         {
           id: id2,
@@ -585,7 +574,7 @@ export function queriesTests() {
 
       expect(res.rowsAffected).to.equal(1);
       expect(res.insertId).to.equal(1);
-      expect(res.rows!._array).to.eql([
+      expect(res.rows!).to.eql([
         {
           id,
           name,
@@ -595,9 +584,9 @@ export function queriesTests() {
         },
       ]);
 
-      res.rows!._array[0].name = 'quack_changed';
+      res.rows![0].name = 'quack_changed';
 
-      expect(res.rows!._array[0].name).to.eq('quack_changed');
+      expect(res.rows![0].name).to.eq('quack_changed');
     });
 
     it('DumbHostObject allows to write new props', async () => {
@@ -614,7 +603,7 @@ export function queriesTests() {
 
       expect(res.rowsAffected).to.equal(1);
       expect(res.insertId).to.equal(1);
-      expect(res.rows!._array).to.eql([
+      expect(res.rows!).to.eql([
         {
           id,
           name,
@@ -624,9 +613,9 @@ export function queriesTests() {
         },
       ]);
 
-      res.rows!._array[0].myWeirdProp = 'quack_changed';
+      res.rows![0].myWeirdProp = 'quack_changed';
 
-      expect(res.rows!._array[0].myWeirdProp).to.eq('quack_changed');
+      expect(res.rows![0].myWeirdProp).to.eq('quack_changed');
     });
 
     it('Execute raw should return just an array of objects', async () => {
@@ -655,9 +644,7 @@ export function queriesTests() {
       ]);
 
       const res = await db.execute('SELECT * FROM fts5_table');
-      expect(res.rows?._array).to.eql([
-        {name: 'test', content: 'test content'},
-      ]);
+      expect(res.rows).to.eql([{name: 'test', content: 'test content'}]);
     });
 
     it('Various queries', async () => {
