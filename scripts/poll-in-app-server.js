@@ -21,7 +21,7 @@ async function pollInAppServer() {
         } else {
           parsed_response.results.forEach((r) => {
             if (r.type === 'incorrect') {
-              console.log(`🟥Failed: ${r}`);
+              console.log(`🟥Failed: ${JSON.stringify(r, null, 2)}`);
             }
           });
           console.log('🟥🟥🟥🟥🟥 Some tests failed');
