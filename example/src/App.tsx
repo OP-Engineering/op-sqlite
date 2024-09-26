@@ -22,8 +22,8 @@ export default function App() {
   const [results, setResults] = useState<any>([]);
   useEffect(() => {
     runTests(
-      dbSetupTests,
       queriesTests,
+      dbSetupTests,
       blobTests,
       registerHooksTests,
       preparedStatementsTests,

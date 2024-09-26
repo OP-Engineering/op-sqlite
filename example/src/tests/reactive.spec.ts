@@ -9,8 +9,8 @@ const chance = new Chance();
 let db: DB;
 
 export function reactiveTests() {
-  beforeEach(async () => {
-    try {
+  describe('Reactive queries', () => {
+    beforeEach(async () => {
       if (db) {
         db.close();
         db.delete();
@@ -25,21 +25,16 @@ export function reactiveTests() {
       await db.execute(
         'CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL, nickname TEXT) STRICT;',
       );
-    } catch (e) {
-      console.error('error on before each', e);
-    }
-  });
+    });
 
-  afterAll(() => {
-    if (db) {
-      db.close();
-      db.delete();
-      // @ts-ignore
-      db = null;
-    }
-  });
-
-  describe('Reactive queries', () => {
+    afterAll(() => {
+      if (db) {
+        db.close();
+        db.delete();
+        // @ts-ignore
+        db = null;
+      }
+    });
     // libsql does not support reactive queries
     if (isLibsql()) {
       return;

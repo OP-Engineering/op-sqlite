@@ -15,34 +15,33 @@ const chance = new Chance();
 let db: DB;
 
 export function registerHooksTests() {
-  beforeEach(async () => {
-    try {
+  describe('Hooks', () => {
+    beforeEach(async () => {
+      try {
+        if (db) {
+          db.close();
+          db.delete();
+        }
+
+        db = open(DB_CONFIG);
+
+        await db.execute('DROP TABLE IF EXISTS User;');
+        await db.execute(
+          'CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL) STRICT;',
+        );
+      } catch (e) {
+        console.warn('error on before each', e);
+      }
+    });
+
+    afterAll(() => {
       if (db) {
         db.close();
         db.delete();
+        // @ts-ignore
+        db = null;
       }
-
-      db = open(DB_CONFIG);
-
-      await db.execute('DROP TABLE IF EXISTS User;');
-      await db.execute(
-        'CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL) STRICT;',
-      );
-    } catch (e) {
-      console.warn('error on before each', e);
-    }
-  });
-
-  afterAll(() => {
-    if (db) {
-      db.close();
-      db.delete();
-      // @ts-ignore
-      db = null;
-    }
-  });
-
-  describe('Hooks', () => {
+    });
     // libsql does not support hooks
     if (isLibsql()) {
       return;
