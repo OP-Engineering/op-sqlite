@@ -17,8 +17,17 @@ import {reactiveTests} from './tests/reactive.spec';
 import {setServerResults, startServer, stopServer} from './server';
 import {open} from '@op-engineering/op-sqlite';
 import Share from 'react-native-share';
+import {createLargeDB, queryLargeDB} from './Database';
 
 export default function App() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [times, setTimes] = useState<number[]>([]);
+  const [accessingTimes, setAccessingTimes] = useState<number[]>([]);
+  const [prepareTimes, setPrepareTimes] = useState<number[]>([]);
+  const [prepareExecutionTimes, setPrepareExecutionTimes] = useState<number[]>(
+    [],
+  );
+  const [rawExecutionTimes, setRawExecutionTimes] = useState<number[]>([]);
   const [results, setResults] = useState<any>([]);
   useEffect(() => {
     runTests(
@@ -78,6 +87,28 @@ export default function App() {
     }
   };
 
+  const createLargeDb = async () => {
+    setIsLoading(true);
+    await createLargeDB();
+    setIsLoading(false);
+  };
+
+  const queryLargeDb = async () => {
+    try {
+      setIsLoading(true);
+      const times = await queryLargeDB();
+      setTimes(times.loadFromDb);
+      setAccessingTimes(times.access);
+      setPrepareTimes(times.prepare);
+      setPrepareExecutionTimes(times.preparedExecution);
+      setRawExecutionTimes(times.rawExecution);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const copyDbPathToClipboad = async () => {
     const db = await open({name: 'shareableDb.sqlite'});
     const path = db.getDbPath();
@@ -91,6 +122,57 @@ export default function App() {
       <ScrollView>
         <Button title="Share DB" onPress={shareDb} />
         <Button title="Copy DB Path" onPress={copyDbPathToClipboad} />
+        <Button title="Create 300k Record DB" onPress={createLargeDb} />
+        <Button title="Query 300k Records" onPress={queryLargeDb} />
+        {!!times.length && (
+          <Text className="text-lg text-white self-center">
+            Normal query{' '}
+            {(times.reduce((acc, t) => (acc += t), 0) / times.length).toFixed(
+              0,
+            )}{' '}
+            ms
+          </Text>
+        )}
+        {!!accessingTimes.length && (
+          <Text className="text-lg text-white self-center">
+            Read property{' '}
+            {(
+              accessingTimes.reduce((acc, t) => (acc += t), 0) /
+              accessingTimes.length
+            ).toFixed(0)}{' '}
+            ms
+          </Text>
+        )}
+        {!!prepareTimes.length && (
+          <Text className="text-lg text-white self-center">
+            Prepare statement{' '}
+            {(
+              prepareTimes.reduce((acc, t) => (acc += t), 0) /
+              prepareTimes.length
+            ).toFixed(0)}{' '}
+            ms
+          </Text>
+        )}
+        {!!prepareExecutionTimes.length && (
+          <Text className="text-lg text-white self-center">
+            Execute prepared query{' '}
+            {(
+              prepareExecutionTimes.reduce((acc, t) => (acc += t), 0) /
+              prepareExecutionTimes.length
+            ).toFixed(0)}{' '}
+            ms
+          </Text>
+        )}
+        {!!rawExecutionTimes.length && (
+          <Text className="text-lg text-white self-center">
+            Raw execution:{' '}
+            {(
+              rawExecutionTimes.reduce((acc, t) => (acc += t), 0) /
+              rawExecutionTimes.length
+            ).toFixed(0)}{' '}
+            ms
+          </Text>
+        )}
         <Text
           className={clsx('font-bold flex-1 text-white p-2 mt-4', {
             'bg-green-500': allTestsPassed,
