@@ -13,7 +13,7 @@ namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 
-jsi::Value toJSI(jsi::Runtime &rt, JSVariant value) {
+jsi::Value toJSI(jsi::Runtime &rt, const JSVariant &value) {
   if (std::holds_alternative<bool>(value)) {
     return std::get<bool>(value);
   } else if (std::holds_alternative<int>(value)) {
@@ -158,7 +158,7 @@ std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt, jsi::Value const &xs) {
   return res;
 }
 
-jsi::Value create_js_rows(jsi::Runtime &rt, BridgeResult status) {
+jsi::Value create_js_rows(jsi::Runtime &rt, const BridgeResult &status) {
   if (status.type == SQLiteError) {
     throw std::invalid_argument(status.message);
   }
@@ -181,10 +181,10 @@ jsi::Value create_js_rows(jsi::Runtime &rt, BridgeResult status) {
         auto value = toJSI(rt, native_row[j]);
         row.setValueAtIndex(rt, j, value);
       }
-      rows.setValueAtIndex(rt, i, std::move(row));
+      rows.setValueAtIndex(rt, i, row);
     }
   }
-  res.setProperty(rt, "rawRows", std::move(rows));
+  res.setProperty(rt, "rawRows", rows);
 
   size_t column_count = status.column_names.size();
   auto column_array = jsi::Array(rt, column_count);

@@ -400,8 +400,11 @@ BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
   int status, current_column, column_count, column_type;
   std::string column_name, column_declared_type;
   std::vector<std::string> column_names;
+  column_names.reserve(20);
   std::vector<std::vector<JSVariant>> rows;
+  rows.reserve(20);
   std::vector<JSVariant> row;
+  row.reserve(10);
 
   do {
     const char *query_str =
@@ -436,7 +439,7 @@ BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
     // Do a first pass to get the column names
     for (int i = 0; i < column_count; i++) {
       column_name = sqlite3_column_name(statement, i);
-      column_names.push_back(column_name);
+      column_names.emplace_back(column_name);
     }
 
     while (is_consuming_rows) {
@@ -464,9 +467,9 @@ BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
           case SQLITE_TEXT: {
             string_value = reinterpret_cast<const char *>(
                 sqlite3_column_text(statement, current_column));
-            int byteLen = sqlite3_column_bytes(statement, current_column);
+            int len = sqlite3_column_bytes(statement, current_column);
             // Specify length too; in case string contains NULL in the middle
-            row.emplace_back(std::string(string_value, byteLen));
+            row.emplace_back(std::string(string_value, len));
             break;
           }
 
