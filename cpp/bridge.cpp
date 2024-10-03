@@ -315,7 +315,7 @@ BridgeResult opsqlite_execute_prepared_statement(
       }
 
       if (results != nullptr) {
-        results->push_back(row);
+        results->emplace_back(row);
       }
 
       break;
@@ -335,7 +335,7 @@ BridgeResult opsqlite_execute_prepared_statement(
           metadata.fields.emplace_back("type",
                                        type == nullptr ? "UNKNOWN" : type);
 
-          metadatas->push_back(metadata);
+          metadatas->emplace_back(metadata);
           i++;
         }
       }
@@ -400,11 +400,9 @@ BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
   int status, current_column, column_count, column_type;
   std::string column_name, column_declared_type;
   std::vector<std::string> column_names;
-  column_names.reserve(20);
   std::vector<std::vector<JSVariant>> rows;
   rows.reserve(20);
   std::vector<JSVariant> row;
-  row.reserve(10);
 
   do {
     const char *query_str =
@@ -432,6 +430,7 @@ BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
     }
 
     column_count = sqlite3_column_count(statement);
+    column_names.reserve(column_count);
     bool is_consuming_rows = true;
     double double_value;
     const char *string_value;
@@ -449,7 +448,7 @@ BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
       case SQLITE_ROW:
         current_column = 0;
         row = std::vector<JSVariant>();
-        column_count = sqlite3_column_count(statement);
+        row.reserve(column_count);
 
         while (current_column < column_count) {
           column_type = sqlite3_column_type(statement, current_column);
@@ -494,7 +493,7 @@ BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
           current_column++;
         }
 
-        rows.push_back(row);
+        rows.emplace_back(std::move(row));
         break;
 
       case SQLITE_DONE:
