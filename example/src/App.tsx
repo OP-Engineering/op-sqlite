@@ -21,7 +21,6 @@ import {createLargeDB, queryLargeDB} from './Database';
 import RNRestart from 'react-native-restart';
 
 export default function App() {
-  const [isLoading, setIsLoading] = useState(false);
   const [times, setTimes] = useState<number[]>([]);
   const [accessingTimes, setAccessingTimes] = useState<number[]>([]);
   const [prepareTimes, setPrepareTimes] = useState<number[]>([]);
@@ -89,14 +88,11 @@ export default function App() {
   };
 
   const createLargeDb = async () => {
-    setIsLoading(true);
     await createLargeDB();
-    setIsLoading(false);
   };
 
   const queryLargeDb = async () => {
     try {
-      setIsLoading(true);
       const times = await queryLargeDB();
       setTimes(times.loadFromDb);
       setAccessingTimes(times.access);
@@ -106,7 +102,6 @@ export default function App() {
     } catch (e) {
       console.error(e);
     } finally {
-      setIsLoading(false);
     }
   };
 
