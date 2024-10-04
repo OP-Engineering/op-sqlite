@@ -18,6 +18,7 @@ import {setServerResults, startServer, stopServer} from './server';
 import {open} from '@op-engineering/op-sqlite';
 import Share from 'react-native-share';
 import {createLargeDB, queryLargeDB} from './Database';
+import RNRestart from 'react-native-restart';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(false);
@@ -117,9 +118,17 @@ export default function App() {
     Clipboard.setString(path);
   };
 
+  const queryAndReload = async () => {
+    queryLargeDB();
+    setTimeout(() => {
+      RNRestart.restart();
+    }, 200);
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-neutral-900">
       <ScrollView>
+        <Button title="Reload app middle of query" onPress={queryAndReload} />
         <Button title="Share DB" onPress={shareDb} />
         <Button title="Copy DB Path" onPress={copyDbPathToClipboad} />
         <Button title="Create 300k Record DB" onPress={createLargeDb} />

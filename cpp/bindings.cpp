@@ -24,6 +24,7 @@ std::string _crsqlite_path;
 std::string _sqlite_vec_path;
 std::shared_ptr<react::CallInvoker> _invoker;
 std::shared_ptr<ThreadPool> thread_pool = std::make_shared<ThreadPool>();
+std::vector<std::shared_ptr<DBHostObject>> dbs;
 
 // React native will try to clean the module on JS context invalidation
 // (CodePush/Hot Reload) The clearState function is called and we use this flag
@@ -31,6 +32,9 @@ std::shared_ptr<ThreadPool> thread_pool = std::make_shared<ThreadPool>();
 bool invalidated = false;
 
 void clearState() {
+  for (const auto &db : dbs) {
+    db->invalidate();
+  }
   invalidated = true;
 
 #ifdef OP_SQLITE_USE_LIBSQL
@@ -88,6 +92,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
         rt, path, invoker, thread_pool, name, path, _crsqlite_path,
         _sqlite_vec_path, encryptionKey);
+    dbs.emplace_back(db);
     return jsi::Object::createFromHostObject(rt, db);
   });
 

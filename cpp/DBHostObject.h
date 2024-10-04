@@ -51,6 +51,8 @@ public:
   jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID);
   void set(jsi::Runtime &rt, const jsi::PropNameID &name,
            const jsi::Value &value);
+  void invalidate();
+  ~DBHostObject();
 
 private:
   void auto_register_update_hook();
@@ -68,6 +70,7 @@ private:
   jsi::Runtime &rt;
   std::vector<std::shared_ptr<ReactiveQuery>> reactive_queries;
   bool is_update_hook_registered = false;
+  bool invalidated = false;
 };
 
 } // namespace opsqlite
