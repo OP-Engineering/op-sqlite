@@ -63,7 +63,7 @@ BridgeResult opsqlite_open(std::string const &name,
 
   if (dbMap.count(name) != 0) {
     throw std::runtime_error(
-        "[OP-SQLITE] Only JS connection per database is allowed, db name: " +
+        "[OP-SQLITE] Only one connection per database is allowed, db name: " +
         name);
   }
 #endif
