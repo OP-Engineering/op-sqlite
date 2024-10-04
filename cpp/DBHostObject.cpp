@@ -333,6 +333,10 @@ void DBHostObject::create_jsi_functions() {
           auto status = opsqlite_execute_raw(db_name, query, &params, &results);
 #endif
 
+          if (invalidated) {
+            return;
+          }
+
           invoker->invokeAsync([&rt, results = std::move(results),
                                 status = std::move(status), resolve, reject] {
             if (status.type == SQLiteOk) {
@@ -379,8 +383,9 @@ void DBHostObject::create_jsi_functions() {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-      auto task = [&rt, this, query = std::move(query), params = std::move(params), resolve,
-                   reject, invoker = this->jsCallInvoker]() {
+      auto task = [&rt, this, query = std::move(query),
+                   params = std::move(params), resolve, reject,
+                   invoker = this->jsCallInvoker]() {
         try {
 
 #ifdef OP_SQLITE_USE_LIBSQL
@@ -389,9 +394,9 @@ void DBHostObject::create_jsi_functions() {
           auto status = opsqlite_execute(db_name, query, &params);
 #endif
 
-          //            if (invalidated) {
-          //              return;
-          //            }
+          if (invalidated) {
+            return;
+          }
 
           invoker->invokeAsync([&rt, status = std::move(status), resolve,
                                 reject] {
@@ -455,9 +460,9 @@ void DBHostObject::create_jsi_functions() {
                                                       &results, metadata);
 #endif
 
-          //            if (invalidated) {
-          //              return;
-          //            }
+          if (invalidated) {
+            return;
+          }
 
           invoker->invokeAsync(
               [&rt,
@@ -533,6 +538,11 @@ void DBHostObject::create_jsi_functions() {
 #else
           auto batchResult = opsqlite_execute_batch(db_name, commands.get());
 #endif
+
+          if (invalidated) {
+            return;
+          }
+
           jsCallInvoker->invokeAsync([&rt, batchResult = std::move(batchResult),
                                       resolve, reject] {
             if (batchResult.type == SQLiteOk) {
@@ -933,5 +943,9 @@ void DBHostObject::set(jsi::Runtime &rt, const jsi::PropNameID &name,
                        const jsi::Value &value) {
   throw std::runtime_error("You cannot write to this object!");
 }
+
+void DBHostObject::invalidate() { invalidated = true; }
+
+DBHostObject::~DBHostObject() { invalidated = true; }
 
 } // namespace opsqlite
