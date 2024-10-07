@@ -12,10 +12,6 @@
 
 RCT_EXPORT_MODULE()
 
-- (void)setBridge:(RCTBridge *)bridge {
-  _bridge = bridge;
-}
-
 + (BOOL)requiresMainQueueSetup {
   return YES;
 }
@@ -97,10 +93,8 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
   return @true;
 }
 
-RCT_EXPORT_METHOD(moveAssetsDatabase
-                  : (NSDictionary *)args resolve
-                  : (RCTPromiseResolveBlock)resolve reject
-                  : (RCTPromiseRejectBlock)reject) {
+RCT_EXPORT_METHOD(moveAssetsDatabase : (NSDictionary *)args resolve : (
+    RCTPromiseResolveBlock)resolve reject : (RCTPromiseRejectBlock)reject) {
   NSString *documentPath = [NSSearchPathForDirectoriesInDomains(
       NSLibraryDirectory, NSUserDomainMask, true) objectAtIndex:0];
 
