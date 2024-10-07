@@ -742,8 +742,10 @@ opsqlite_execute_raw(std::string const &dbName, std::string const &query,
       opsqlite_bind_statement(statement, params);
     }
 
-    int i, count, column_type;
+    int i, column_type;
     std::string column_name, column_declared_type;
+
+    int column_count = sqlite3_column_count(statement);
 
     while (isConsuming) {
       step = sqlite3_step(statement);
@@ -755,25 +757,15 @@ opsqlite_execute_raw(std::string const &dbName, std::string const &query,
         }
 
         std::vector<JSVariant> row;
+        row.reserve(column_count);
 
         i = 0;
 
-        count = sqlite3_column_count(statement);
-
-        while (i < count) {
+        while (i < column_count) {
           column_type = sqlite3_column_type(statement, i);
 
           switch (column_type) {
-          case SQLITE_INTEGER: {
-            /**
-             * Warning this will loose precision because JS can
-             * only represent Integers up to 53 bits
-             */
-            double column_value = sqlite3_column_double(statement, i);
-            row.emplace_back(column_value);
-            break;
-          }
-
+          case SQLITE_INTEGER:
           case SQLITE_FLOAT: {
             double column_value = sqlite3_column_double(statement, i);
             row.emplace_back(column_value);
@@ -809,7 +801,7 @@ opsqlite_execute_raw(std::string const &dbName, std::string const &query,
           i++;
         }
 
-        results->push_back(row);
+          results->emplace_back(row);
 
         break;
       }
@@ -871,7 +863,7 @@ std::string operation_to_string(int operation_type) {
     return "UPDATE";
 
   default:
-    throw std::invalid_argument("Uknown SQLite operation on hook");
+    throw std::invalid_argument("Unknown SQLite operation on hook");
   }
 }
 
