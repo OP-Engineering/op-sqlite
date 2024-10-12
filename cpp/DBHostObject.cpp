@@ -29,36 +29,18 @@ void DBHostObject::auto_register_update_hook() {
   }
 
   auto hook = [this](std::string name, std::string table_name,
-                     std::string operation, int rowId) {
+                     std::string operation, int rowid) {
     if (update_hook_callback != nullptr) {
-      std::vector<JSVariant> params;
-      std::vector<DumbHostObject> results;
-      std::shared_ptr<std::vector<SmartHostObject>> metadata =
-          std::make_shared<std::vector<SmartHostObject>>();
-
-      if (operation != "DELETE") {
-        std::string query = "SELECT * FROM " + table_name +
-                            " where rowid = " + std::to_string(rowId) + ";";
-        opsqlite_execute_host_objects(name, query, &params, &results, metadata);
-      }
-
       jsCallInvoker->invokeAsync(
           [this,
-           results = std::make_shared<std::vector<DumbHostObject>>(results),
            callback = update_hook_callback, table_name,
-           operation = std::move(operation), &rowId] {
+           operation = std::move(operation), rowid] {
             auto res = jsi::Object(rt);
             res.setProperty(rt, "table",
                             jsi::String::createFromUtf8(rt, table_name));
             res.setProperty(rt, "operation",
                             jsi::String::createFromUtf8(rt, operation));
-            res.setProperty(rt, "rowId", jsi::Value(rowId));
-            if (!results->empty()) {
-              res.setProperty(
-                  rt, "row",
-                  jsi::Object::createFromHostObject(
-                      rt, std::make_shared<HostObject>(results->at(0))));
-            }
+            res.setProperty(rt, "rowId", jsi::Value(rowid));
 
             callback->asObject(rt).asFunction(rt).call(rt, res);
           });
@@ -85,7 +67,7 @@ void DBHostObject::auto_register_update_hook() {
         } else { // If ids are specified, then we should check if the rowId
                  // matches
           for (const auto &discrimator_id : discriminator.ids) {
-            if (rowId == discrimator_id) {
+            if (rowid == discrimator_id) {
               shouldFire = true;
               break;
             }
