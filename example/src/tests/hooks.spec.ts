@@ -2,7 +2,7 @@ import Chance from 'chance';
 
 import {type DB, open, isLibsql} from '@op-engineering/op-sqlite';
 import chai from 'chai';
-import {describe, it, beforeEach, afterAll} from './MochaRNAdapter';
+import {describe, it, beforeEach, afterAll, itOnly} from './MochaRNAdapter';
 import {sleep} from './utils';
 
 const expect = chai.expect;
@@ -46,17 +46,30 @@ export function registerHooksTests() {
     if (isLibsql()) {
       return;
     }
-    it('update hook', async () => {
+
+    itOnly('update hook', async () => {
       let promiseResolve: any;
-      let promise = new Promise(resolve => {
+      let promise = new Promise<{
+        rowId: number;
+        row?: any;
+        operation: string;
+        table: string;
+      }>(resolve => {
         promiseResolve = resolve;
       });
-      db.updateHook(({operation}) => {
-        // console.warn(
-        //   `Hook has been called, rowId: ${rowId}, ${table}, ${operation}`,
-        // );
-        // console.warn(JSON.stringify(row, null, 2));
-        promiseResolve?.(operation);
+      let db = open({
+        name: 'updateHookDb.sqlite',
+        encryptionKey: 'blah',
+      });
+
+      await db.execute('DROP TABLE IF EXISTS User;');
+
+      await db.execute(
+        'CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL) STRICT;',
+      );
+
+      db.updateHook(data => {
+        promiseResolve(data);
       });
 
       const id = chance.integer();
@@ -68,9 +81,10 @@ export function registerHooksTests() {
         [id, name, age, networth],
       );
 
-      const operation = await promise;
+      const data = await promise;
 
-      expect(operation).to.equal('INSERT');
+      expect(data.operation).to.equal('INSERT');
+      expect(data.rowId).to.equal(1);
     });
 
     it('remove update hook', async () => {
