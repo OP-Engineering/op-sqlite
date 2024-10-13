@@ -31,7 +31,7 @@ void DBHostObject::auto_register_update_hook() {
   auto hook = [this](std::string name, std::string table_name,
                      std::string operation, int rowid) {
     if (update_hook_callback != nullptr) {
-      jsCallInvoker->invokeAsync(
+      invoker->invokeAsync(
           [this,
            callback = update_hook_callback, table_name,
            operation = std::move(operation), rowid] {
@@ -74,36 +74,37 @@ void DBHostObject::auto_register_update_hook() {
           }
         }
       }
-
-      if (!shouldFire) {
-        continue;
-      }
-
-      std::vector<DumbHostObject> results;
-      std::shared_ptr<std::vector<SmartHostObject>> metadata =
-          std::make_shared<std::vector<SmartHostObject>>();
-
-      auto status = opsqlite_execute_prepared_statement(db_name, query->stmt,
-                                                        &results, metadata);
-
-      if (status.type == SQLiteError) {
-        jsCallInvoker->invokeAsync(
-            [this, callback = query->callback, status = std::move(status)] {
-              auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-              auto error = errorCtr.callAsConstructor(
-                  rt, jsi::String::createFromUtf8(rt, status.message));
-              callback->asObject(rt).asFunction(rt).call(rt, error);
-            });
-      } else {
-        jsCallInvoker->invokeAsync(
-            [this,
-             results = std::make_shared<std::vector<DumbHostObject>>(results),
-             callback = query->callback, metadata, status = std::move(status)] {
-              auto jsiResult =
-                  createResult(rt, status, results.get(), metadata);
-              callback->asObject(rt).asFunction(rt).call(rt, jsiResult);
-            });
-      }
+        
+      
+//      if (!shouldFire) {
+//        continue;
+//      }
+//
+//      std::vector<DumbHostObject> results;
+//      std::shared_ptr<std::vector<SmartHostObject>> metadata =
+//          std::make_shared<std::vector<SmartHostObject>>();
+//
+//      auto status = opsqlite_execute_prepared_statement(db_name, query->stmt,
+//                                                        &results, metadata);
+//
+//      if (status.type == SQLiteError) {
+//        invoker->invokeAsync(
+//            [this, callback = query->callback, status = std::move(status)] {
+//              auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+//              auto error = errorCtr.callAsConstructor(
+//                  rt, jsi::String::createFromUtf8(rt, status.message));
+//              callback->asObject(rt).asFunction(rt).call(rt, error);
+//            });
+//      } else {
+//        invoker->invokeAsync(
+//            [this,
+//             results = std::make_shared<std::vector<DumbHostObject>>(results),
+//             callback = query->callback, metadata, status = std::move(status)] {
+//              auto jsiResult =
+//                  createResult(rt, status, results.get(), metadata);
+//              callback->asObject(rt).asFunction(rt).call(rt, jsiResult);
+//            });
+//      }
     }
   };
 
@@ -115,9 +116,9 @@ void DBHostObject::auto_register_update_hook() {
 #ifdef OP_SQLITE_USE_LIBSQL
 DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &url,
                            std::string &auth_token,
-                           std::shared_ptr<react::CallInvoker> js_call_invoker,
+                           std::shared_ptr<react::CallInvoker> invoker,
                            std::shared_ptr<ThreadPool> thread_pool)
-    : db_name(url), jsCallInvoker(js_call_invoker), thread_pool(thread_pool),
+    : db_name(url), invoker(js_call_invoker), thread_pool(thread_pool),
       rt(rt) {
   BridgeResult result = opsqlite_libsql_open_remote(url, auth_token);
 
@@ -134,7 +135,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt,
                            std::string &db_name, std::string &path,
                            std::string &url, std::string &auth_token,
                            int sync_interval)
-    : db_name(db_name), jsCallInvoker(invoker), thread_pool(thread_pool),
+    : db_name(db_name), invoker(invoker), thread_pool(thread_pool),
       rt(rt) {
   BridgeResult result =
       opsqlite_libsql_open_sync(db_name, path, url, auth_token, sync_interval);
@@ -149,13 +150,13 @@ DBHostObject::DBHostObject(jsi::Runtime &rt,
 #endif
 
 DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
-                           std::shared_ptr<react::CallInvoker> jsCallInvoker,
+                           std::shared_ptr<react::CallInvoker> invoker,
                            std::shared_ptr<ThreadPool> thread_pool,
                            std::string &db_name, std::string &path,
                            std::string &crsqlite_path,
                            std::string &sqlite_vec_path,
                            std::string &encryption_key)
-    : base_path(base_path), jsCallInvoker(jsCallInvoker),
+    : base_path(base_path), invoker(invoker),
       thread_pool(thread_pool), db_name(db_name), rt(rt) {
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
@@ -304,7 +305,7 @@ void DBHostObject::create_jsi_functions() {
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
       auto task = [&rt, this, query, params = std::move(params), resolve,
-                   reject, invoker = this->jsCallInvoker]() {
+                   reject, invoker = this->invoker]() {
         try {
           std::vector<std::vector<JSVariant>> results;
 
@@ -367,7 +368,7 @@ void DBHostObject::create_jsi_functions() {
 
       auto task = [&rt, this, query = std::move(query),
                    params = std::move(params), resolve, reject,
-                   invoker = this->jsCallInvoker]() {
+                   invoker = this->invoker]() {
         try {
 
 #ifdef OP_SQLITE_USE_LIBSQL
@@ -429,7 +430,7 @@ void DBHostObject::create_jsi_functions() {
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
       auto task = [&rt, this, query, params = std::move(params), resolve,
-                   reject, invoker = this->jsCallInvoker]() {
+                   reject, invoker = this->invoker]() {
         try {
           std::vector<DumbHostObject> results;
           std::shared_ptr<std::vector<SmartHostObject>> metadata =
@@ -525,7 +526,7 @@ void DBHostObject::create_jsi_functions() {
             return;
           }
 
-          jsCallInvoker->invokeAsync([&rt, batchResult = std::move(batchResult),
+          invoker->invokeAsync([&rt, batchResult = std::move(batchResult),
                                       resolve, reject] {
             if (batchResult.type == SQLiteOk) {
               auto res = jsi::Object(rt);
@@ -541,7 +542,7 @@ void DBHostObject::create_jsi_functions() {
           });
         } catch (std::exception &exc) {
           auto what = exc.what();
-          jsCallInvoker->invokeAsync([&rt, what = std::move(what), reject] {
+          invoker->invokeAsync([&rt, what = std::move(what), reject] {
             auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
             auto error = errorCtr.callAsConstructor(
                 rt, jsi::String::createFromAscii(rt, what));
@@ -585,7 +586,7 @@ void DBHostObject::create_jsi_functions() {
         try {
           const auto result = importSQLFile(db_name, sqlFileName);
 
-          jsCallInvoker->invokeAsync([&rt, result = std::move(result), resolve,
+          invoker->invokeAsync([&rt, result = std::move(result), resolve,
                                       reject] {
             if (result.type == SQLiteOk) {
               auto res = jsi::Object(rt);
@@ -602,7 +603,7 @@ void DBHostObject::create_jsi_functions() {
           });
         } catch (std::exception &exc) {
           auto what = exc.what();
-          jsCallInvoker->invokeAsync([&rt, what = std::move(what), reject] {
+          invoker->invokeAsync([&rt, what = std::move(what), reject] {
             auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
             auto error = errorCtr.callAsConstructor(
                 rt, jsi::String::createFromAscii(rt, what));
@@ -643,7 +644,7 @@ void DBHostObject::create_jsi_functions() {
     commit_hook_callback = callback;
 
     auto hook = [&rt, this, callback](std::string dbName) {
-      jsCallInvoker->invokeAsync(
+      invoker->invokeAsync(
           [&rt, callback] { callback->asObject(rt).asFunction(rt).call(rt); });
     };
 
@@ -667,7 +668,7 @@ void DBHostObject::create_jsi_functions() {
     rollback_hook_callback = callback;
 
     auto hook = [&rt, this, callback](std::string db_name) {
-      jsCallInvoker->invokeAsync(
+      invoker->invokeAsync(
           [&rt, callback] { callback->asObject(rt).asFunction(rt).call(rt); });
     };
 
@@ -773,7 +774,7 @@ void DBHostObject::create_jsi_functions() {
 #endif
     auto preparedStatementHostObject =
         std::make_shared<PreparedStatementHostObject>(
-            db_name, statement, jsCallInvoker, thread_pool);
+            db_name, statement, invoker, thread_pool);
 
     return jsi::Object::createFromHostObject(rt, preparedStatementHostObject);
   });
