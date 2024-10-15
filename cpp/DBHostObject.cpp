@@ -9,6 +9,7 @@
 #include "macros.h"
 #include "utils.h"
 #include <iostream>
+#include <utility>
 
 namespace opsqlite {
 
@@ -17,7 +18,7 @@ namespace react = facebook::react;
 
 #ifdef OP_SQLITE_USE_LIBSQL
 void DBHostObject::flush_pending_reactive_queries() {
-    // intentionally left blank
+  // intentionally left blank
 }
 #else
 void DBHostObject::flush_pending_reactive_queries() {
@@ -124,7 +125,8 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &url,
                            std::string &auth_token,
                            std::shared_ptr<react::CallInvoker> invoker,
                            std::shared_ptr<ThreadPool> thread_pool)
-    : db_name(url), invoker(invoker), thread_pool(thread_pool), rt(rt) {
+    : db_name(url), invoker(std::move(invoker)),
+      thread_pool(std::move(thread_pool)), rt(rt) {
   BridgeResult result = opsqlite_libsql_open_remote(url, auth_token);
 
   if (result.type == SQLiteError) {
@@ -140,7 +142,8 @@ DBHostObject::DBHostObject(jsi::Runtime &rt,
                            std::string &db_name, std::string &path,
                            std::string &url, std::string &auth_token,
                            int sync_interval)
-    : db_name(db_name), invoker(invoker), thread_pool(thread_pool), rt(rt) {
+    : db_name(db_name), invoker(std::move(invoker)),
+      thread_pool(std::move(thread_pool)), rt(rt) {
   BridgeResult result =
       opsqlite_libsql_open_sync(db_name, path, url, auth_token, sync_interval);
 
@@ -160,8 +163,8 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
                            std::string &crsqlite_path,
                            std::string &sqlite_vec_path,
                            std::string &encryption_key)
-    : base_path(base_path), invoker(invoker), thread_pool(thread_pool),
-      db_name(db_name), rt(rt) {
+    : base_path(base_path), invoker(std::move(invoker)),
+      thread_pool(std::move(thread_pool)), db_name(db_name), rt(rt) {
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
   BridgeResult result = opsqlite_open(db_name, path, crsqlite_path,
@@ -273,7 +276,7 @@ void DBHostObject::create_jsi_functions() {
       if (!location.empty()) {
         if (location == ":memory:") {
           path = ":memory:";
-        } else if (location.rfind("/", 0) == 0) {
+        } else if (location.rfind('/', 0) == 0) {
           path = location;
         } else {
           path = path + "/" + location;
@@ -822,6 +825,8 @@ void DBHostObject::create_jsi_functions() {
   function_map["executeBatch"] = std::move(execute_batch);
   function_map["prepareStatement"] = std::move(prepare_statement);
   function_map["getDbPath"] = std::move(get_db_path);
+  function_map["flushPendingReactiveQueries"] =
+      std::move(flush_pending_reactive_queries_js);
 #ifdef OP_SQLITE_USE_LIBSQL
   function_map["sync"] = std::move(sync);
 #else
@@ -831,8 +836,6 @@ void DBHostObject::create_jsi_functions() {
   function_map["rollbackHook"] = std::move(rollback_hook);
   function_map["loadExtension"] = std::move(load_extension);
   function_map["reactiveExecute"] = std::move(reactive_execute);
-  function_map["flushPendingReactiveQueries"] =
-      std::move(flush_pending_reactive_queries_js);
 #endif
 }
 
