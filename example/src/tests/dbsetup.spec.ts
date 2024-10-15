@@ -14,7 +14,7 @@ import {Platform} from 'react-native';
 let expect = chai.expect;
 
 const expectedVersion = isLibsql()
-  ? '3.46.1'
+  ? '3.45.1'
   : isSQLCipher()
   ? '3.46.1'
   : '3.46.1';
