@@ -111,41 +111,6 @@ void DBHostObject::auto_register_update_hook() {
       if (shouldFire) {
         pending_reactive_queries.insert(query_ptr);
       }
-
-      //      if (!shouldFire) {
-      //        continue;
-      //      }
-      //
-      //      std::vector<DumbHostObject> results;
-      //      std::shared_ptr<std::vector<SmartHostObject>> metadata =
-      //          std::make_shared<std::vector<SmartHostObject>>();
-      //
-      //      auto status = opsqlite_execute_prepared_statement(db_name,
-      //      query->stmt,
-      //                                                        &results,
-      //                                                        metadata);
-      //
-      //      if (status.type == SQLiteError) {
-      //        invoker->invokeAsync(
-      //            [this, callback = query->callback, status =
-      //            std::move(status)] {
-      //              auto errorCtr = rt.global().getPropertyAsFunction(rt,
-      //              "Error"); auto error = errorCtr.callAsConstructor(
-      //                  rt, jsi::String::createFromUtf8(rt, status.message));
-      //              callback->asObject(rt).asFunction(rt).call(rt, error);
-      //            });
-      //      } else {
-      //        invoker->invokeAsync(
-      //            [this,
-      //             results =
-      //             std::make_shared<std::vector<DumbHostObject>>(results),
-      //             callback = query->callback, metadata, status =
-      //             std::move(status)] {
-      //              auto jsiResult =
-      //                  createResult(rt, status, results.get(), metadata);
-      //              callback->asObject(rt).asFunction(rt).call(rt, jsiResult);
-      //            });
-      //      }
     }
   };
 
@@ -159,7 +124,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &url,
                            std::string &auth_token,
                            std::shared_ptr<react::CallInvoker> invoker,
                            std::shared_ptr<ThreadPool> thread_pool)
-    : db_name(url), invoker(js_call_invoker), thread_pool(thread_pool), rt(rt) {
+    : db_name(url), invoker(invoker), thread_pool(thread_pool), rt(rt) {
   BridgeResult result = opsqlite_libsql_open_remote(url, auth_token);
 
   if (result.type == SQLiteError) {
