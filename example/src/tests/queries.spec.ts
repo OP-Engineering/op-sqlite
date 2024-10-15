@@ -396,7 +396,7 @@ export function queriesTests() {
         expect(res.insertId).to.equal(1);
         // expect(res.metadata).to.eql([]);
         expect(res.rows).to.eql([]);
-        expect(res.rows?.length).to.equal(0);
+        expect(res.rows.length).to.equal(0);
 
         await tx.commit();
 

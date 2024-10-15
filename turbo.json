@@ -10,6 +10,7 @@
         "src/*.tsx",
         "example/package.json",
         "example/android",
+        "cpp",
         "!example/android/.gradle",
         "!example/android/build",
         "!example/android/app/build"
@@ -21,6 +22,7 @@
         "package.json",
         "*.podspec",
         "ios",
+        "cpp",
         "src/*.ts",
         "src/*.tsx",
         "example/package.json",
