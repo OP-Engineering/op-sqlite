@@ -4,10 +4,10 @@
 #include "sqlite3.h"
 #include "types.h"
 #include <ReactCommon/CallInvoker.h>
-#include <any>
 #include <jsi/jsi.h>
 #include <unordered_map>
 #include <vector>
+#include <set>
 
 namespace opsqlite {
 
@@ -61,8 +61,10 @@ public:
   ~DBHostObject();
 
 private:
+    std::set<std::shared_ptr<ReactiveQuery>> pending_reactive_queries;
   void auto_register_update_hook();
   void create_jsi_functions();
+    void flush_pending_reactive_queries();
 
   std::unordered_map<std::string, jsi::Value> function_map;
   std::string base_path;

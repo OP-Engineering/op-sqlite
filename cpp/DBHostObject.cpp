@@ -16,6 +16,37 @@ namespace jsi = facebook::jsi;
 namespace react = facebook::react;
 
 #ifndef OP_SQLITE_USE_LIBSQL
+void DBHostObject::flush_pending_reactive_queries() {
+  for (const auto &query_ptr : pending_reactive_queries) {
+    auto query = query_ptr.get();
+
+    std::vector<DumbHostObject> results;
+    std::shared_ptr<std::vector<SmartHostObject>> metadata =
+        std::make_shared<std::vector<SmartHostObject>>();
+
+    auto status = opsqlite_execute_prepared_statement(db_name, query->stmt,
+                                                      &results, metadata);
+
+    if (status.type == SQLiteError) {
+      invoker->invokeAsync(
+          [this, callback = query->callback, status = std::move(status)] {
+            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto error = errorCtr.callAsConstructor(
+                rt, jsi::String::createFromUtf8(rt, status.message));
+            callback->asObject(rt).asFunction(rt).call(rt, error);
+          });
+    } else {
+      invoker->invokeAsync(
+          [this,
+           results = std::make_shared<std::vector<DumbHostObject>>(results),
+           callback = query->callback, metadata, status = std::move(status)] {
+            auto jsiResult = createResult(rt, status, results.get(), metadata);
+            callback->asObject(rt).asFunction(rt).call(rt, jsiResult);
+          });
+    }
+  }
+}
+
 void DBHostObject::auto_register_update_hook() {
   if (update_hook_callback == nullptr && reactive_queries.empty() &&
       is_update_hook_registered) {
@@ -31,19 +62,17 @@ void DBHostObject::auto_register_update_hook() {
   auto hook = [this](std::string name, std::string table_name,
                      std::string operation, int rowid) {
     if (update_hook_callback != nullptr) {
-      invoker->invokeAsync(
-          [this,
-           callback = update_hook_callback, table_name,
-           operation = std::move(operation), rowid] {
-            auto res = jsi::Object(rt);
-            res.setProperty(rt, "table",
-                            jsi::String::createFromUtf8(rt, table_name));
-            res.setProperty(rt, "operation",
-                            jsi::String::createFromUtf8(rt, operation));
-            res.setProperty(rt, "rowId", jsi::Value(rowid));
+      invoker->invokeAsync([this, callback = update_hook_callback, table_name,
+                            operation = std::move(operation), rowid] {
+        auto res = jsi::Object(rt);
+        res.setProperty(rt, "table",
+                        jsi::String::createFromUtf8(rt, table_name));
+        res.setProperty(rt, "operation",
+                        jsi::String::createFromUtf8(rt, operation));
+        res.setProperty(rt, "rowId", jsi::Value(rowid));
 
-            callback->asObject(rt).asFunction(rt).call(rt, res);
-          });
+        callback->asObject(rt).asFunction(rt).call(rt, res);
+      });
     }
 
     for (const auto &query_ptr : reactive_queries) {
@@ -55,56 +84,64 @@ void DBHostObject::auto_register_update_hook() {
       bool shouldFire = false;
 
       for (const auto &discriminator : query->discriminators) {
+        // Tables don't match then skip
         if (discriminator.table != table_name) {
           continue;
         }
-        // Table has matched
 
         // If no ids are specified, then we should fire
         if (discriminator.ids.size() == 0) {
           shouldFire = true;
           break;
-        } else { // If ids are specified, then we should check if the rowId
-                 // matches
-          for (const auto &discrimator_id : discriminator.ids) {
-            if (rowid == discrimator_id) {
-              shouldFire = true;
-              break;
-            }
+        }
+
+        // If ids are specified, then we should check if the rowId matches
+        for (const auto &discrimator_id : discriminator.ids) {
+          if (rowid == discrimator_id) {
+            shouldFire = true;
+            break;
           }
         }
       }
-        
-      
-//      if (!shouldFire) {
-//        continue;
-//      }
-//
-//      std::vector<DumbHostObject> results;
-//      std::shared_ptr<std::vector<SmartHostObject>> metadata =
-//          std::make_shared<std::vector<SmartHostObject>>();
-//
-//      auto status = opsqlite_execute_prepared_statement(db_name, query->stmt,
-//                                                        &results, metadata);
-//
-//      if (status.type == SQLiteError) {
-//        invoker->invokeAsync(
-//            [this, callback = query->callback, status = std::move(status)] {
-//              auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-//              auto error = errorCtr.callAsConstructor(
-//                  rt, jsi::String::createFromUtf8(rt, status.message));
-//              callback->asObject(rt).asFunction(rt).call(rt, error);
-//            });
-//      } else {
-//        invoker->invokeAsync(
-//            [this,
-//             results = std::make_shared<std::vector<DumbHostObject>>(results),
-//             callback = query->callback, metadata, status = std::move(status)] {
-//              auto jsiResult =
-//                  createResult(rt, status, results.get(), metadata);
-//              callback->asObject(rt).asFunction(rt).call(rt, jsiResult);
-//            });
-//      }
+
+      if (shouldFire) {
+        pending_reactive_queries.insert(query_ptr);
+      }
+
+      //      if (!shouldFire) {
+      //        continue;
+      //      }
+      //
+      //      std::vector<DumbHostObject> results;
+      //      std::shared_ptr<std::vector<SmartHostObject>> metadata =
+      //          std::make_shared<std::vector<SmartHostObject>>();
+      //
+      //      auto status = opsqlite_execute_prepared_statement(db_name,
+      //      query->stmt,
+      //                                                        &results,
+      //                                                        metadata);
+      //
+      //      if (status.type == SQLiteError) {
+      //        invoker->invokeAsync(
+      //            [this, callback = query->callback, status =
+      //            std::move(status)] {
+      //              auto errorCtr = rt.global().getPropertyAsFunction(rt,
+      //              "Error"); auto error = errorCtr.callAsConstructor(
+      //                  rt, jsi::String::createFromUtf8(rt, status.message));
+      //              callback->asObject(rt).asFunction(rt).call(rt, error);
+      //            });
+      //      } else {
+      //        invoker->invokeAsync(
+      //            [this,
+      //             results =
+      //             std::make_shared<std::vector<DumbHostObject>>(results),
+      //             callback = query->callback, metadata, status =
+      //             std::move(status)] {
+      //              auto jsiResult =
+      //                  createResult(rt, status, results.get(), metadata);
+      //              callback->asObject(rt).asFunction(rt).call(rt, jsiResult);
+      //            });
+      //      }
     }
   };
 
@@ -118,8 +155,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &url,
                            std::string &auth_token,
                            std::shared_ptr<react::CallInvoker> invoker,
                            std::shared_ptr<ThreadPool> thread_pool)
-    : db_name(url), invoker(js_call_invoker), thread_pool(thread_pool),
-      rt(rt) {
+    : db_name(url), invoker(js_call_invoker), thread_pool(thread_pool), rt(rt) {
   BridgeResult result = opsqlite_libsql_open_remote(url, auth_token);
 
   if (result.type == SQLiteError) {
@@ -135,8 +171,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt,
                            std::string &db_name, std::string &path,
                            std::string &url, std::string &auth_token,
                            int sync_interval)
-    : db_name(db_name), invoker(invoker), thread_pool(thread_pool),
-      rt(rt) {
+    : db_name(db_name), invoker(invoker), thread_pool(thread_pool), rt(rt) {
   BridgeResult result =
       opsqlite_libsql_open_sync(db_name, path, url, auth_token, sync_interval);
 
@@ -156,8 +191,8 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
                            std::string &crsqlite_path,
                            std::string &sqlite_vec_path,
                            std::string &encryption_key)
-    : base_path(base_path), invoker(invoker),
-      thread_pool(thread_pool), db_name(db_name), rt(rt) {
+    : base_path(base_path), invoker(invoker), thread_pool(thread_pool),
+      db_name(db_name), rt(rt) {
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
   BridgeResult result = opsqlite_open(db_name, path, crsqlite_path,
@@ -527,7 +562,7 @@ void DBHostObject::create_jsi_functions() {
           }
 
           invoker->invokeAsync([&rt, batchResult = std::move(batchResult),
-                                      resolve, reject] {
+                                resolve, reject] {
             if (batchResult.type == SQLiteOk) {
               auto res = jsi::Object(rt);
               res.setProperty(rt, "rowsAffected",
@@ -587,7 +622,7 @@ void DBHostObject::create_jsi_functions() {
           const auto result = importSQLFile(db_name, sqlFileName);
 
           invoker->invokeAsync([&rt, result = std::move(result), resolve,
-                                      reject] {
+                                reject] {
             if (result.type == SQLiteOk) {
               auto res = jsi::Object(rt);
               res.setProperty(rt, "rowsAffected",
@@ -773,8 +808,8 @@ void DBHostObject::create_jsi_functions() {
     sqlite3_stmt *statement = opsqlite_prepare_statement(db_name, query);
 #endif
     auto preparedStatementHostObject =
-        std::make_shared<PreparedStatementHostObject>(
-            db_name, statement, invoker, thread_pool);
+        std::make_shared<PreparedStatementHostObject>(db_name, statement,
+                                                      invoker, thread_pool);
 
     return jsi::Object::createFromHostObject(rt, preparedStatementHostObject);
   });
@@ -802,6 +837,12 @@ void DBHostObject::create_jsi_functions() {
     return jsi::String::createFromUtf8(rt, result);
   });
 
+  auto flush_pending_reactive_queries_js =
+      HOSTFN("flushPendingReactiveQueries") {
+    flush_pending_reactive_queries();
+    return {};
+  });
+
   function_map["attach"] = std::move(attach);
   function_map["detach"] = std::move(detach);
   function_map["close"] = std::move(close);
@@ -821,6 +862,8 @@ void DBHostObject::create_jsi_functions() {
   function_map["rollbackHook"] = std::move(rollback_hook);
   function_map["loadExtension"] = std::move(load_extension);
   function_map["reactiveExecute"] = std::move(reactive_execute);
+  function_map["flushPendingReactiveQueries"] =
+      std::move(flush_pending_reactive_queries_js);
 #endif
 }
 
@@ -834,6 +877,12 @@ jsi::Value DBHostObject::get(jsi::Runtime &rt,
                              const jsi::PropNameID &propNameID) {
 
   auto name = propNameID.utf8(rt);
+  if (name == "execute") {
+    return jsi::Value(rt, function_map["execute"]);
+  }
+  if (name == "flushPendingReactiveQueries") {
+    return jsi::Value(rt, function_map["flushPendingReactiveQueries"]);
+  }
   if (name == "attach") {
     return jsi::Value(rt, function_map["attach"]);
   }
@@ -845,9 +894,6 @@ jsi::Value DBHostObject::get(jsi::Runtime &rt,
   }
   if (name == "executeRaw") {
     return jsi::Value(rt, function_map["executeRaw"]);
-  }
-  if (name == "execute") {
-    return jsi::Value(rt, function_map["execute"]);
   }
   if (name == "executeWithHostObjects") {
     return jsi::Value(rt, function_map["executeWithHostObjects"]);

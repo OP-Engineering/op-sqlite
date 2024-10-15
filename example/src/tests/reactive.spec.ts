@@ -39,6 +39,7 @@ export function reactiveTests() {
     if (isLibsql()) {
       return;
     }
+
     it('Table reactive query', async () => {
       let fullSelectRan = false;
       let emittedUser = null;
@@ -68,14 +69,18 @@ export function reactiveTests() {
         },
       });
 
-      db.execute(
-        'INSERT INTO User (id, name, age, networth, nickname) VALUES (?, ?, ?, ?, ?);',
-        [1, 'John', 30, 1000, 'Johnny'],
-      );
+      await db.transaction(async tx => {
+        await tx.execute(
+          'INSERT INTO User (id, name, age, networth, nickname) VALUES (?, ?, ?, ?, ?);',
+          [1, 'John', 30, 1000, 'Johnny'],
+        );
+      });
 
       await sleep(20);
 
-      db.execute('UPDATE User SET name = ? WHERE id = ?;', ['Foo', 1]);
+      await db.transaction(async tx => {
+        await tx.execute('UPDATE User SET name = ? WHERE id = ?;', ['Foo', 1]);
+      });
 
       await sleep(20);
 
@@ -105,10 +110,12 @@ export function reactiveTests() {
 
       expect(unsubscribe).to.be.a('function');
 
-      db.execute(
-        'INSERT INTO User (id, name, age, networth, nickname) VALUES (?, ?, ?, ?, ?);',
-        [1, 'John', 30, 1000, 'Johnny'],
-      );
+      await db.transaction(async tx => {
+        await tx.execute(
+          'INSERT INTO User (id, name, age, networth, nickname) VALUES (?, ?, ?, ?, ?);',
+          [1, 'John', 30, 1000, 'Johnny'],
+        );
+      });
 
       await sleep(20);
 
@@ -166,14 +173,18 @@ export function reactiveTests() {
         },
       });
 
-      db.execute(
-        'INSERT INTO User (id, name, age, networth, nickname) VALUES (?, ?, ?, ?, ?);',
-        [1, 'John', 30, 1000, 'Johnny'],
-      );
+      await db.transaction(async tx => {
+        await tx.execute(
+          'INSERT INTO User (id, name, age, networth, nickname) VALUES (?, ?, ?, ?, ?);',
+          [1, 'John', 30, 1000, 'Johnny'],
+        );
+      });
 
       await sleep(0);
 
-      db.execute('UPDATE User SET name = ? WHERE id = ?;', ['Foo', 1]);
+      await db.transaction(async tx => {
+        await tx.execute('UPDATE User SET name = ? WHERE id = ?;', ['Foo', 1]);
+      });
 
       await sleep(0);
 
@@ -217,10 +228,13 @@ export function reactiveTests() {
       const name = chance.name();
       const age = chance.integer();
       const networth = chance.floating();
-      db.execute(
-        'INSERT INTO User (id, name, age, networth, nickname) VALUES (?, ?, ?, ?, ?);',
-        [id, name, age, networth, 'Johnny'],
-      );
+
+      await db.transaction(async tx => {
+        await tx.execute(
+          'INSERT INTO User (id, name, age, networth, nickname) VALUES (?, ?, ?, ?, ?);',
+          [id, name, age, networth, 'Johnny'],
+        );
+      });
 
       const operation = await promise;
 

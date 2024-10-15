@@ -59,7 +59,7 @@ export type QueryResult = {
   insertId?: number;
   rowsAffected: number;
   res?: any[];
-  rows?: any[];
+  rows: any[];
   // An array of intermediate results, just values without column names
   rawRows?: any[];
   columnNames?: string[];
@@ -178,6 +178,7 @@ export type DB = {
     callback: (response: any) => void;
   }) => () => void;
   sync: () => void;
+  flushPendingReactiveQueries: () => void;
 };
 
 type OPSQLiteProxy = {
@@ -243,6 +244,7 @@ function enhanceDB(db: DB, options: any): DB {
     getDbPath: db.getDbPath,
     reactiveExecute: db.reactiveExecute,
     sync: db.sync,
+    flushPendingReactiveQueries: db.flushPendingReactiveQueries,
     close: () => {
       db.close();
       delete locks[options.url];
@@ -284,7 +286,7 @@ function enhanceDB(db: DB, options: any): DB {
       let rows: any[] = [];
       for (let i = 0; i < (intermediateResult.rawRows?.length ?? 0); i++) {
         let row: any = {};
-        for (let j = 0; j < intermediateResult.columnNames!.length ?? 0; j++) {
+        for (let j = 0; j < intermediateResult.columnNames!.length; j++) {
           let columnName = intermediateResult.columnNames![j]!;
           let value = intermediateResult.rawRows![i][j];
 
@@ -347,6 +349,9 @@ function enhanceDB(db: DB, options: any): DB {
           );
         }
         const result = await enhancedDb.execute('COMMIT;');
+        console.log('BEFORE FLUSH');
+        enhancedDb.flushPendingReactiveQueries();
+        console.log('AFER FLUSH');
         isFinalized = true;
         return result;
       };
