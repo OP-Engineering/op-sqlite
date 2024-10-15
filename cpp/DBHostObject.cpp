@@ -15,7 +15,11 @@ namespace opsqlite {
 namespace jsi = facebook::jsi;
 namespace react = facebook::react;
 
-#ifndef OP_SQLITE_USE_LIBSQL
+#ifdef OP_SQLITE_USE_LIBSQL
+void DBHostObject::flush_pending_reactive_queries() {
+    // intentionally left blank
+}
+#else
 void DBHostObject::flush_pending_reactive_queries() {
   for (const auto &query_ptr : pending_reactive_queries) {
     auto query = query_ptr.get();
