@@ -17,11 +17,12 @@ namespace jsi = facebook::jsi;
 namespace react = facebook::react;
 
 #ifdef OP_SQLITE_USE_LIBSQL
-void DBHostObject::flush_pending_reactive_queries() {
-  // intentionally left blank
+void DBHostObject::flush_pending_reactive_queries(std::shared_ptr<jsi::Value> resolve) {
+    invoker->invokeAsync(
+        [this, resolve]() { resolve->asObject(rt).asFunction(rt).call(rt, {}); });
 }
 #else
-void DBHostObject::flush_pending_reactive_queries() {
+void DBHostObject::flush_pending_reactive_queries(std::shared_ptr<jsi::Value> resolve) {
   for (const auto &query_ptr : pending_reactive_queries) {
     auto query = query_ptr.get();
 
@@ -50,6 +51,9 @@ void DBHostObject::flush_pending_reactive_queries() {
           });
     }
   }
+    
+  invoker->invokeAsync(
+      [this, resolve]() { resolve->asObject(rt).asFunction(rt).call(rt, {}); });
 }
 
 void DBHostObject::auto_register_update_hook() {
@@ -302,8 +306,7 @@ void DBHostObject::create_jsi_functions() {
     std::vector<JSVariant> params;
 
     if (count == 2) {
-      const jsi::Value &originalParams = args[1];
-      params = to_variant_vec(rt, originalParams);
+      params = to_variant_vec(rt, args[1]);
     }
 
     auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
@@ -312,7 +315,7 @@ void DBHostObject::create_jsi_functions() {
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
       auto task = [&rt, this, query, params = std::move(params), resolve,
-                   reject, invoker = this->invoker]() {
+                   reject]() {
         try {
           std::vector<std::vector<JSVariant>> results;
 
@@ -361,7 +364,7 @@ void DBHostObject::create_jsi_functions() {
   });
 
   auto execute = HOSTFN("execute") {
-    const std::string query = args[0].asString(rt).utf8(rt);
+    std::string query = args[0].asString(rt).utf8(rt);
     std::vector<JSVariant> params;
 
     if (count == 2) {
@@ -369,13 +372,12 @@ void DBHostObject::create_jsi_functions() {
     }
 
     auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
-        auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor") {
+    auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor") {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
       auto task = [&rt, this, query = std::move(query),
-                   params = std::move(params), resolve, reject,
-                   invoker = this->invoker]() {
+                   params = std::move(params), resolve, reject]() {
         try {
 
 #ifdef OP_SQLITE_USE_LIBSQL
@@ -419,7 +421,7 @@ void DBHostObject::create_jsi_functions() {
       return {};
         }));
 
-        return promise;
+    return promise;
   });
 
   auto execute_with_host_objects = HOSTFN("executeWithHostObjects") {
@@ -811,8 +813,20 @@ void DBHostObject::create_jsi_functions() {
 
   auto flush_pending_reactive_queries_js =
       HOSTFN("flushPendingReactiveQueries") {
-    flush_pending_reactive_queries();
-    return {};
+    auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
+          auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor") {
+      auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
+
+      auto task = [&rt, this, resolve]() {
+        flush_pending_reactive_queries(resolve);
+      };
+
+      thread_pool->queueWork(task);
+
+      return {};
+              }));
+
+          return promise;
   });
 
   function_map["attach"] = std::move(attach);
