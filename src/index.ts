@@ -178,7 +178,7 @@ export type DB = {
     callback: (response: any) => void;
   }) => () => void;
   sync: () => void;
-  flushPendingReactiveQueries: () => void;
+  flushPendingReactiveQueries: () => Promise<void>;
 };
 
 type OPSQLiteProxy = {
@@ -349,9 +349,9 @@ function enhanceDB(db: DB, options: any): DB {
           );
         }
         const result = await enhancedDb.execute('COMMIT;');
-        console.log('BEFORE FLUSH');
-        enhancedDb.flushPendingReactiveQueries();
-        console.log('AFER FLUSH');
+
+        await enhancedDb.flushPendingReactiveQueries();
+
         isFinalized = true;
         return result;
       };
