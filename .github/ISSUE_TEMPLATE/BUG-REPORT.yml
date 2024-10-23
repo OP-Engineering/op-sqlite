@@ -5,6 +5,7 @@ body:
   - type: textarea
     id: what-happened
     attributes:
+      label: What happened?
       placeholder: Before filling a report, make sure you have read the documentation and you are on the latest version of the package. If the issue is non-trivial YOU MUST CREATE A REPRODUCIBLE EXAMPLE. Otherwise the issue will be closed.
     validations:
       required: true
