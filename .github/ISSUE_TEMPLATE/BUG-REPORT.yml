@@ -2,24 +2,24 @@ name: Bug Report
 description: File a bug report
 title: '[Bug]: '
 body:
-  - type: markdown
+  - type: textarea
     id: what-happened
     attributes:
-      value: Before filling a report, make sure you have read the documentation and you are on the latest version of the package. If the issue is non-trivial YOU MUST CREATE A REPRODUCIBLE EXAMPLE. Otherwise the issue will be closed.
+      placeholder: Before filling a report, make sure you have read the documentation and you are on the latest version of the package. If the issue is non-trivial YOU MUST CREATE A REPRODUCIBLE EXAMPLE. Otherwise the issue will be closed.
     validations:
       required: true
   - type: textarea
     id: version-op-sqlite
     attributes:
       label: op-sqlite version
-      value: What version of op-sqlite are you using? Have you tried the latest version?
+      placeholder: What version of op-sqlite are you using? Have you tried the latest version?
     validations:
       required: true
   - type: textarea
     id: version-rn
     attributes:
       label: React Native version
-      value: What version of React Native version are you using
+      placeholder: What version of React Native version are you using
     validations:
       required: true
 
@@ -27,6 +27,6 @@ body:
     id: repro
     attributes:
       label: Reproducible Example
-      value: Please post a repo with a minimum reproducible example
+      placeholder: Please post a repo with a minimum reproducible example
     validations:
       required: true
