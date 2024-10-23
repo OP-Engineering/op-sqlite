@@ -3,12 +3,11 @@ description: File a bug report
 title: '[Bug]: '
 labels: ['bug', 'triage']
 body:
-  - type: textarea
+  - type: markdown
     id: what-happened
     attributes:
       label: What happened?
-      description: what did you expect to happen?
-      placeholder: Tell us what you see!
+      placeholder: Before filling a report, make sure you have read the documentation and you are on the latest version of the package. If the issue is non-trivial YOU MUST CREATE A REPRODUCIBLE EXAMPLE. Otherwise the issue will be closed.
     validations:
       required: true
   - type: textarea
@@ -25,17 +24,11 @@ body:
       description: What version of React Native version are you using
     validations:
       required: true
+
   - type: textarea
     id: version
     attributes:
-      label: Device
-      description: On which device are you encountering the issue? emulator? OS version?
+      label: Reproducible example
+      description: Please post a repo with a minimum reproducible example
     validations:
       required: true
-  - type: textarea
-      id: version
-      attributes:
-        label: Reproducible example
-        description: Please post a repo with a minimum reproducible example
-      validations:
-        required: true
