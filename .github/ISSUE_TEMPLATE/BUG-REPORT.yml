@@ -11,12 +11,14 @@ body:
   - type: textarea
     id: version-op-sqlite
     attributes:
+      label: op-sqlite version
       value: What version of op-sqlite are you using? Have you tried the latest version?
     validations:
       required: true
   - type: textarea
     id: version-rn
     attributes:
+      label: React Native version
       value: What version of React Native version are you using
     validations:
       required: true
@@ -24,6 +26,7 @@ body:
   - type: textarea
     id: repro
     attributes:
+      label: Reproducible Example
       value: Please post a repo with a minimum reproducible example
     validations:
       required: true
