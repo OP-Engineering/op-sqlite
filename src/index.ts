@@ -193,6 +193,7 @@ type OPSQLiteProxy = {
     authToken: string;
     name: string;
     location?: string;
+    syncInterval?: number;
   }) => DB;
   isSQLCipher: () => boolean;
   isLibsql: () => boolean;
