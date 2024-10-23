@@ -9,14 +9,14 @@ body:
       placeholder: Before filling a report, make sure you have read the documentation and you are on the latest version of the package. If the issue is non-trivial YOU MUST CREATE A REPRODUCIBLE EXAMPLE. Otherwise the issue will be closed.
     validations:
       required: true
-  - type: textarea
+  - type: input
     id: version-op-sqlite
     attributes:
       label: op-sqlite version
       placeholder: What version of op-sqlite are you using? Have you tried the latest version?
     validations:
       required: true
-  - type: textarea
+  - type: input
     id: version-rn
     attributes:
       label: React Native version
@@ -24,7 +24,7 @@ body:
     validations:
       required: true
 
-  - type: textarea
+  - type: input
     id: repro
     attributes:
       label: Reproducible Example
