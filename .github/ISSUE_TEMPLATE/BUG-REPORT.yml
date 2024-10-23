@@ -5,25 +5,25 @@ body:
   - type: markdown
     id: what-happened
     attributes:
-      placeholder: Before filling a report, make sure you have read the documentation and you are on the latest version of the package. If the issue is non-trivial YOU MUST CREATE A REPRODUCIBLE EXAMPLE. Otherwise the issue will be closed.
+      value: Before filling a report, make sure you have read the documentation and you are on the latest version of the package. If the issue is non-trivial YOU MUST CREATE A REPRODUCIBLE EXAMPLE. Otherwise the issue will be closed.
     validations:
       required: true
   - type: textarea
     id: version-op-sqlite
     attributes:
-      description: What version of op-sqlite are you using? Have you tried the latest version?
+      value: What version of op-sqlite are you using? Have you tried the latest version?
     validations:
       required: true
   - type: textarea
     id: version-rn
     attributes:
-      description: What version of React Native version are you using
+      value: What version of React Native version are you using
     validations:
       required: true
 
   - type: textarea
     id: repro
     attributes:
-      description: Please post a repo with a minimum reproducible example
+      value: Please post a repo with a minimum reproducible example
     validations:
       required: true
