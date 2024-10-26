@@ -5,6 +5,11 @@ on:
     tags:
       - '*'
 
+permissions:
+  contents: write
+  id-token: write
+  packages: write
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -31,10 +36,12 @@ jobs:
       - uses: JS-DevTools/npm-publish@v3
         with:
           token: ${{ secrets.NPM_TOKEN }}
-      # - name: Create a Release
-      #   uses: elgohr/Github-Release-Action@v5
-      #   env:
-      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     title: ${{ github.ref }}
-      #     tag: ${{ github.ref }}
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
