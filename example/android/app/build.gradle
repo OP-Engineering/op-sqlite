@@ -6,7 +6,9 @@ project.ext.react = [
     hermesEnabled: true,  // clean and rebuild if changing
 ]
 
-apply plugin: 'com.facebook.react'
+react {
+    autolinkLibrariesWithApp()
+}
 
 def enableSeparateBuildPerCPUArchitecture = false
 
@@ -94,10 +96,7 @@ android {
 }
 
 dependencies {
-
     implementation "com.facebook.react:react-android"
-
-    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.0.0")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
@@ -105,5 +104,3 @@ dependencies {
         implementation jscFlavor
     }
 }
-
-apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)
