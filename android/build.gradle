@@ -164,7 +164,8 @@ android {
               "**/libreact_nativemodule_core.so",
               "**/libturbomodulejsijni.so",
               "**/libc++_shared.so",
-              "**/libfbjni.so"
+              "**/libfbjni.so",
+              "**/libreactnative.so",
       ]
     }
     
