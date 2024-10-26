@@ -13,6 +13,7 @@
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		3B5A9E3FD2C56B364AF5A4F3 /* libPods-OPSQLiteExample.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6EE3066EB7AAB7E17B1CAB50 /* libPods-OPSQLiteExample.a */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		92B54B8E74B0B43081C567EF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 2C08DBE2BF8FD676ED5D600B /* PrivacyInfo.xcprivacy */; };
 		AC1DF06E9759460CAA51B7B1 /* sample2.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = 9218E48CFB1F478CAC374D68 /* sample2.sqlite */; };
 /* End PBXBuildFile section */
 
@@ -24,6 +25,7 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = OPSQLiteExample/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = OPSQLiteExample/main.m; sourceTree = "<group>"; };
 		19F6CBCC0A4E27FBF8BF4A61 /* libPods-OPSQLiteExample-OPSQLiteExampleTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-OPSQLiteExample-OPSQLiteExampleTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		2C08DBE2BF8FD676ED5D600B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = OPSQLiteExample/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-OPSQLiteExample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OPSQLiteExample.debug.xcconfig"; path = "Target Support Files/Pods-OPSQLiteExample/Pods-OPSQLiteExample.debug.xcconfig"; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-OPSQLiteExample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OPSQLiteExample.release.xcconfig"; path = "Target Support Files/Pods-OPSQLiteExample/Pods-OPSQLiteExample.release.xcconfig"; sourceTree = "<group>"; };
 		6EE3066EB7AAB7E17B1CAB50 /* libPods-OPSQLiteExample.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-OPSQLiteExample.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -54,6 +56,7 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB71A68108700A75B9A /* main.m */,
+				2C08DBE2BF8FD676ED5D600B /* PrivacyInfo.xcprivacy */,
 			);
 			name = OPSQLiteExample;
 			sourceTree = "<group>";
@@ -181,6 +184,7 @@
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				022AA638EE144393ADDCAEC0 /* sample.sqlite in Resources */,
 				AC1DF06E9759460CAA51B7B1 /* sample2.sqlite in Resources */,
+				92B54B8E74B0B43081C567EF /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -447,6 +451,7 @@
 				OTHER_LDFLAGS = "$(inherited)";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
 				USE_HERMES = true;
 			};
 			name = Debug;
