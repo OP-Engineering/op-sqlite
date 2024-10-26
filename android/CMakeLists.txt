@@ -73,39 +73,72 @@ find_package(fbjni REQUIRED CONFIG)
 find_library(LOG_LIB log)
 
 if (USE_SQLCIPHER)
-  target_link_libraries(
-    ${PACKAGE_NAME}
-    ${LOG_LIB}
-    fbjni::fbjni
-    ReactAndroid::jsi
-    ReactAndroid::turbomodulejsijni
-    ReactAndroid::react_nativemodule_core
-    android
-    openssl::crypto
-  )
+  if (ReactAndroid_VERSION_MINOR GREATER_EQUAL 76)
+    target_link_libraries(
+      ${PACKAGE_NAME}
+      ${LOG_LIB}
+      ReactAndroid::reactnative
+      ReactAndroid::jsi
+      fbjni::fbjni
+      openssl::crypto
+    )
+  else()
+    target_link_libraries(
+      ${PACKAGE_NAME}
+      ${LOG_LIB}
+      fbjni::fbjni
+      ReactAndroid::jsi
+      ReactAndroid::turbomodulejsijni
+      ReactAndroid::react_nativemodule_core
+      android
+      openssl::crypto
+    )
+  endif()
 elseif (USE_LIBSQL)
   cmake_path(SET LIBSQL ${CMAKE_CURRENT_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libsql_experimental.a NORMALIZE)
   add_library(libsql STATIC IMPORTED)
   set_target_properties(libsql PROPERTIES IMPORTED_LOCATION ${LIBSQL})
 
-  target_link_libraries(
-    ${PACKAGE_NAME}
-    ${LOG_LIB}
-    fbjni::fbjni
-    ReactAndroid::jsi
-    ReactAndroid::turbomodulejsijni
-    ReactAndroid::react_nativemodule_core
-    android
-    libsql
-  )
+  if (ReactAndroid_VERSION_MINOR GREATER_EQUAL 76)
+    target_link_libraries(
+      ${PACKAGE_NAME}
+      ${LOG_LIB}
+      ReactAndroid::reactnative
+      ReactAndroid::jsi
+      fbjni::fbjni
+      libsql
+    )
+  else()
+    target_link_libraries(
+      ${PACKAGE_NAME}
+      ${LOG_LIB}
+      fbjni::fbjni
+      ReactAndroid::jsi
+      ReactAndroid::turbomodulejsijni
+      ReactAndroid::react_nativemodule_core
+      android
+      libsql
+    )
+  endif()
 else ()
-  target_link_libraries(
-    ${PACKAGE_NAME}
-    ${LOG_LIB}
-    fbjni::fbjni
-    ReactAndroid::jsi
-    ReactAndroid::turbomodulejsijni
-    ReactAndroid::react_nativemodule_core
-    android
-  )
+  # if (REACTNATIVE_MERGED_SO)
+  if (ReactAndroid_VERSION_MINOR GREATER_EQUAL 76)
+    target_link_libraries(
+      ${PACKAGE_NAME}
+      ${LOG_LIB}
+      ReactAndroid::reactnative
+      ReactAndroid::jsi
+      fbjni::fbjni
+    )
+  else()
+    target_link_libraries(
+      ${PACKAGE_NAME}
+      ${LOG_LIB}
+      fbjni::fbjni
+      ReactAndroid::jsi
+      ReactAndroid::turbomodulejsijni
+      ReactAndroid::react_nativemodule_core
+      android
+    )
+  endif()
 endif()
