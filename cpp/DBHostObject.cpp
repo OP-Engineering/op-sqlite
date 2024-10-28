@@ -52,6 +52,8 @@ void DBHostObject::flush_pending_reactive_queries(std::shared_ptr<jsi::Value> re
     }
   }
     
+    pending_reactive_queries.clear();
+    
   invoker->invokeAsync(
       [this, resolve]() { resolve->asObject(rt).asFunction(rt).call(rt, {}); });
 }
