@@ -121,8 +121,9 @@ export function reactiveTests() {
 
       unsubscribe();
 
-      db.execute('UPDATE User SET name = ? WHERE id = ?;', ['Foo', 1]);
-
+      await db.transaction(async tx => {
+        await tx.execute('UPDATE User SET name = ? WHERE id = ?;', ['Foo', 1]);
+      });
       await sleep(20);
       expect(emittedCount).to.eq(1);
     });
