@@ -204,7 +204,7 @@ export function queriesTests() {
       const sumRes = await db.execute('SELECT SUM(age) as sum FROM User;');
 
       // expect(sumRes.metadata?.[0]?.type).to.equal('UNKNOWN');
-      expect(sumRes.rows?.[0].sum).to.equal(age + age2);
+      expect(sumRes.rows[0]!.sum).to.equal(age + age2);
 
       // MAX(networth), MIN(networth)
       const maxRes = await db.execute(
@@ -218,8 +218,8 @@ export function queriesTests() {
       const maxNetworth = Math.max(networth, networth2);
       const minNetworth = Math.min(networth, networth2);
 
-      expect(maxRes.rows?.[0].max).to.equal(maxNetworth);
-      expect(minRes.rows?.[0].min).to.equal(minNetworth);
+      expect(maxRes.rows[0]!.max).to.equal(maxNetworth);
+      expect(minRes.rows[0]!.min).to.equal(minNetworth);
     });
 
     it('Executes all the statements in a single string', async () => {
@@ -235,13 +235,13 @@ export function queriesTests() {
         "SELECT name FROM sqlite_master WHERE type='table' AND name='T1';",
       );
 
-      expect(t1name.rows?.[0].name).to.equal('T1');
+      expect(t1name.rows[0]!.name).to.equal('T1');
 
       let t2name = await db.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='T2';",
       );
 
-      expect(t2name.rows?.[0].name).to.equal('T2');
+      expect(t2name.rows[0]!.name).to.equal('T2');
     });
 
     it('Failed insert', async () => {
@@ -360,7 +360,7 @@ export function queriesTests() {
             [id],
           );
 
-          actual.push(results.rows?.[0].networth);
+          actual.push(results.rows[0]!.networth);
         });
 
         promises.push(promised);
@@ -583,9 +583,9 @@ export function queriesTests() {
         },
       ]);
 
-      res.rows![0].name = 'quack_changed';
+      res.rows[0]!.name = 'quack_changed';
 
-      expect(res.rows![0].name).to.eq('quack_changed');
+      expect(res.rows[0]!.name).to.eq('quack_changed');
     });
 
     it('DumbHostObject allows to write new props', async () => {
@@ -612,9 +612,9 @@ export function queriesTests() {
         },
       ]);
 
-      res.rows![0].myWeirdProp = 'quack_changed';
+      res.rows[0]!.myWeirdProp = 'quack_changed';
 
-      expect(res.rows![0].myWeirdProp).to.eq('quack_changed');
+      expect(res.rows[0]!.myWeirdProp).to.eq('quack_changed');
     });
 
     it('Execute raw should return just an array of objects', async () => {

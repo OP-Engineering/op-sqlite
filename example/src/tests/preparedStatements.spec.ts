@@ -57,7 +57,7 @@ export function preparedStatementsTests() {
       expect(results.rows?.length).to.equal(3);
       results = await statement.execute();
 
-      expect(results.rows?.length).to.equal(3);
+      expect(results.rows.length).to.equal(3);
     });
 
     it('prepared statement, rebind select', async () => {
@@ -65,11 +65,11 @@ export function preparedStatementsTests() {
       statement.bind([1]);
 
       let results = await statement.execute();
-      expect(results.rows?.[0].name === 'Oscar');
+      expect(results.rows[0]!.name === 'Oscar');
 
       statement.bind([2]);
       results = await statement.execute();
-      expect(results.rows?.[0].name === 'Pablo');
+      expect(results.rows[0]!.name === 'Pablo');
     });
 
     it('prepared statement, rebind insert', async () => {

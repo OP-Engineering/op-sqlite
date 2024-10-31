@@ -51,7 +51,7 @@ export function reactiveTests() {
             table: 'User',
           },
         ],
-        callback: data => {
+        callback: _data => {
           fullSelectRan = true;
         },
       });
