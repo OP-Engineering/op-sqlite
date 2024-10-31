@@ -51,7 +51,7 @@ export function reactiveTests() {
             table: 'User',
           },
         ],
-        callback: () => {
+        callback: data => {
           fullSelectRan = true;
         },
       });
@@ -65,7 +65,7 @@ export function reactiveTests() {
           },
         ],
         callback: data => {
-          emittedUser = data.rows._array[0];
+          emittedUser = data.rows[0];
         },
       });
 
@@ -170,7 +170,7 @@ export function reactiveTests() {
           },
         ],
         callback: data => {
-          emittedUser = data.rows._array[0];
+          emittedUser = data.rows[0];
         },
       });
 
@@ -218,7 +218,7 @@ export function reactiveTests() {
           },
         ],
         callback: data => {
-          emittedUser = data.rows._array[0];
+          emittedUser = data.rows[0];
         },
       });
 

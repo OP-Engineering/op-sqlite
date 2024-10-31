@@ -58,7 +58,7 @@ BridgeResult opsqlite_open(std::string const &name,
 #else
 BridgeResult opsqlite_open(std::string const &name,
                            std::string const &last_path,
-                           std::string const &crsqlite_path,
+                           [[maybe_unused]] std::string const &crsqlite_path,
                            std::string const &sqlite_vec_path) {
 
   if (dbMap.count(name) != 0) {
@@ -253,10 +253,6 @@ BridgeResult opsqlite_execute_prepared_statement(
 
     switch (result) {
     case SQLITE_ROW: {
-      if (results == nullptr) {
-        break;
-      }
-
       i = 0;
       DumbHostObject row = DumbHostObject(metadatas);
 
@@ -314,9 +310,7 @@ BridgeResult opsqlite_execute_prepared_statement(
         i++;
       }
 
-      if (results != nullptr) {
-        results->emplace_back(row);
-      }
+      results->emplace_back(row);
 
       break;
     }
@@ -641,9 +635,8 @@ BridgeResult opsqlite_execute_host_objects(
           }
           i++;
         }
-        if (results != nullptr) {
-          results->push_back(row);
-        }
+
+        results->emplace_back(row);
         break;
       }
 
