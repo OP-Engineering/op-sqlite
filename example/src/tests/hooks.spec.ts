@@ -85,10 +85,16 @@ export function registerHooksTests() {
 
       expect(data.operation).to.equal('INSERT');
       expect(data.rowId).to.equal(1);
+
+      db.close();
     });
 
     it('remove update hook', async () => {
       const hookRes: string[] = [];
+      let db = open({
+        name: 'updateHookDb.sqlite',
+        encryptionKey: 'blah',
+      });
       db.updateHook(({operation}) => {
         hookRes.push(operation);
       });
@@ -112,6 +118,7 @@ export function registerHooksTests() {
       await sleep(0);
 
       expect(hookRes.length).to.equal(1);
+      db.close();
     });
 
     it('commit hook', async () => {
