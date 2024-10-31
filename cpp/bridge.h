@@ -29,7 +29,7 @@ BridgeResult opsqlite_open(std::string const &dbName, std::string const &dbPath,
                            std::string const &encryptionKey);
 #else
 BridgeResult opsqlite_open(std::string const &name, std::string const &path,
-                           std::string const &crsqlite_path,
+                           [[maybe_unused]] std::string const &crsqlite_path,
                            std::string const &sqlite_vec_path);
 #endif
 
@@ -65,13 +65,13 @@ BridgeResult opsqlite_execute_raw(std::string const &dbName,
 void opsqlite_close_all();
 
 BridgeResult opsqlite_register_update_hook(std::string const &dbName,
-                                           UpdateCallback const callback);
+                                           const UpdateCallback& callback);
 BridgeResult opsqlite_deregister_update_hook(std::string const &dbName);
 BridgeResult opsqlite_register_commit_hook(std::string const &dbName,
-                                           CommitCallback const callback);
+                                           const CommitCallback& callback);
 BridgeResult opsqlite_deregister_commit_hook(std::string const &dbName);
 BridgeResult opsqlite_register_rollback_hook(std::string const &dbName,
-                                             RollbackCallback const callback);
+                                             const RollbackCallback& callback);
 BridgeResult opsqlite_deregister_rollback_hook(std::string const &dbName);
 
 sqlite3_stmt *opsqlite_prepare_statement(std::string const &dbName,

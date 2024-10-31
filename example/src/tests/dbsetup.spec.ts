@@ -45,7 +45,7 @@ export function dbSetupTests() {
 
       const res = await db.execute('select sqlite_version();');
 
-      expect(res.rows?.[0]['sqlite_version()']).to.equal(expectedVersion);
+      expect(res.rows[0]!['sqlite_version()']).to.equal(expectedVersion);
       db.close();
     });
 
@@ -65,19 +65,19 @@ export function dbSetupTests() {
     });
 
     if (Platform.OS === 'android') {
-      it('Create db in external directory Android', () => {
+      it('Create db in external directory Android', async () => {
         let androidDb = open({
           name: 'AndroidSDCardDB.sqlite',
           location: ANDROID_EXTERNAL_FILES_PATH,
           encryptionKey: 'test',
         });
 
-        androidDb.execute('DROP TABLE IF EXISTS User;');
-        androidDb.execute(
+        await androidDb.execute('DROP TABLE IF EXISTS User;');
+        await androidDb.execute(
           'CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL) STRICT;',
         );
 
-        androidDb.close();
+        await androidDb.close();
       });
     }
 

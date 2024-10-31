@@ -200,10 +200,6 @@ jsi::Value
 createResult(jsi::Runtime &rt, BridgeResult status,
              std::vector<DumbHostObject> *results,
              std::shared_ptr<std::vector<SmartHostObject>> metadata) {
-  if (status.type == SQLiteError) {
-    throw std::invalid_argument(status.message);
-  }
-
   jsi::Object res = jsi::Object(rt);
 
   res.setProperty(rt, "rowsAffected", status.affectedRows);
@@ -212,20 +208,15 @@ createResult(jsi::Runtime &rt, BridgeResult status,
   }
 
   size_t rowCount = results->size();
-  jsi::Object rows = jsi::Object(rt);
-  rows.setProperty(rt, "length", jsi::Value((int)rowCount));
 
-  if (rowCount > 0) {
-    auto array = jsi::Array(rt, rowCount);
-    for (int i = 0; i < rowCount; i++) {
-      auto obj = results->at(i);
-      array.setValueAtIndex(rt, i,
-                            jsi::Object::createFromHostObject(
-                                rt, std::make_shared<DumbHostObject>(obj)));
-    }
-    rows.setProperty(rt, "_array", std::move(array));
-    res.setProperty(rt, "rows", std::move(rows));
+  auto array = jsi::Array(rt, rowCount);
+  for (int i = 0; i < rowCount; i++) {
+    auto obj = results->at(i);
+    array.setValueAtIndex(rt, i,
+                          jsi::Object::createFromHostObject(
+                              rt, std::make_shared<DumbHostObject>(obj)));
   }
+  res.setProperty(rt, "rows", std::move(array));
 
   size_t column_count = metadata->size();
   auto column_array = jsi::Array(rt, column_count);

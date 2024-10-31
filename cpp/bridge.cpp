@@ -58,7 +58,7 @@ BridgeResult opsqlite_open(std::string const &name,
 #else
 BridgeResult opsqlite_open(std::string const &name,
                            std::string const &last_path,
-                           std::string const &crsqlite_path,
+                           [[maybe_unused]] std::string const &crsqlite_path,
                            std::string const &sqlite_vec_path) {
 
   if (dbMap.count(name) != 0) {
@@ -253,10 +253,6 @@ BridgeResult opsqlite_execute_prepared_statement(
 
     switch (result) {
     case SQLITE_ROW: {
-      if (results == nullptr) {
-        break;
-      }
-
       i = 0;
       DumbHostObject row = DumbHostObject(metadatas);
 
@@ -314,9 +310,7 @@ BridgeResult opsqlite_execute_prepared_statement(
         i++;
       }
 
-      if (results != nullptr) {
-        results->emplace_back(row);
-      }
+      results->emplace_back(row);
 
       break;
     }
@@ -641,9 +635,8 @@ BridgeResult opsqlite_execute_host_objects(
           }
           i++;
         }
-        if (results != nullptr) {
-          results->push_back(row);
-        }
+
+        results->emplace_back(row);
         break;
       }
 
@@ -801,7 +794,7 @@ opsqlite_execute_raw(std::string const &dbName, std::string const &query,
           i++;
         }
 
-          results->emplace_back(row);
+        results->emplace_back(row);
 
         break;
       }
@@ -867,16 +860,17 @@ std::string operation_to_string(int operation_type) {
   }
 }
 
-void update_callback(void *dbName, int operation_type, char const *database,
-                     char const *table, sqlite3_int64 rowid) {
+void update_callback(void *dbName, int operation_type,
+                     [[maybe_unused]] char const *database, char const *table,
+                     sqlite3_int64 row_id) {
   std::string &strDbName = *(static_cast<std::string *>(dbName));
   auto callback = updateCallbackMap[strDbName];
   callback(strDbName, std::string(table), operation_to_string(operation_type),
-           static_cast<int>(rowid));
+           static_cast<int>(row_id));
 }
 
 BridgeResult opsqlite_register_update_hook(std::string const &dbName,
-                                           UpdateCallback const callback) {
+                                           UpdateCallback const &callback) {
   check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
@@ -915,7 +909,7 @@ int commit_callback(void *dbName) {
 }
 
 BridgeResult opsqlite_register_commit_hook(std::string const &dbName,
-                                           CommitCallback const callback) {
+                                           CommitCallback const &callback) {
   check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
@@ -951,7 +945,7 @@ void rollback_callback(void *dbName) {
 }
 
 BridgeResult opsqlite_register_rollback_hook(std::string const &dbName,
-                                             RollbackCallback const callback) {
+                                             RollbackCallback const &callback) {
   check_db_open(dbName);
 
   sqlite3 *db = dbMap[dbName];
@@ -1026,7 +1020,7 @@ BatchResult opsqlite_execute_batch(std::string &name,
     int affectedRows = 0;
     opsqlite_execute(name, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
     for (int i = 0; i < commandCount; i++) {
-      auto command = commands->at(i);
+      const auto &command = commands->at(i);
       // We do not provide a datastructure to receive query data because we
       // don't need/want to handle this results in a batch execution
       auto result = opsqlite_execute(name, command.sql, command.params.get());

@@ -23,7 +23,7 @@
     "mocha": "^10.7.3",
     "nativewind": "^2.0.11",
     "react": "18.3.1",
-    "react-native": "0.76.0",
+    "react-native": "0.76.1",
     "react-native-http-bridge-refurbished": "1.2.9",
     "react-native-restart": "^0.0.27",
     "react-native-share": "^11.0.3",
