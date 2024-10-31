@@ -59,7 +59,7 @@ export type QueryResult = {
   insertId?: number;
   rowsAffected: number;
   res?: any[];
-  rows: any[];
+  rows: Array<Record<string, string | number | boolean | ArrayBufferLike>>;
   // An array of intermediate results, just values without column names
   rawRows?: any[];
   columnNames?: string[];
@@ -264,10 +264,6 @@ function enhanceDB(db: DB, options: any): DB {
 
       const result = await db.executeWithHostObjects(query, sanitizedParams);
 
-      // Fix this on the native side
-      // @ts-ignore
-      result.rows = result.rows?._array ?? [];
-
       return result;
     },
     execute: async (
@@ -320,13 +316,7 @@ function enhanceDB(db: DB, options: any): DB {
 
           stmt.bind(sanitizedParams);
         },
-        execute: async () => {
-          const res = await stmt.execute();
-          // TODO fix on the native side
-          // @ts-ignore
-          res.rows = res.rows?._array;
-          return res;
-        },
+        execute: stmt.execute,
       };
     },
     transaction: async (

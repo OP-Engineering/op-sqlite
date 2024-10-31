@@ -8,7 +8,6 @@
 #include <jsi/jsi.h>
 #include <jsi/jsilib.h>
 #include <map>
-#include <stdio.h>
 #include <vector>
 
 namespace opsqlite {

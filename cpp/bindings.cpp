@@ -22,7 +22,6 @@ namespace jsi = facebook::jsi;
 std::string _base_path;
 std::string _crsqlite_path;
 std::string _sqlite_vec_path;
-std::shared_ptr<react::CallInvoker> _invoker;
 std::shared_ptr<ThreadPool> thread_pool = std::make_shared<ThreadPool>();
 std::vector<std::shared_ptr<DBHostObject>> dbs;
 
@@ -47,14 +46,13 @@ void clearState() {
   thread_pool->restartPool();
 }
 
-void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
+void install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker>& invoker,
              const char *base_path, const char *crsqlite_path,
              const char *sqlite_vec_path) {
   invalidated = false;
   _base_path = std::string(base_path);
   _crsqlite_path = std::string(crsqlite_path);
   _sqlite_vec_path = std::string(sqlite_vec_path);
-  _invoker = invoker;
 
   auto open = HOSTFN("open") {
     jsi::Object options = args[0].asObject(rt);
@@ -82,7 +80,7 @@ void install(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
     if (!location.empty()) {
       if (location == ":memory:") {
         path = ":memory:";
-      } else if (location.rfind("/", 0) == 0) {
+      } else if (location.rfind('/', 0) == 0) {
         path = location;
       } else {
         path = path + "/" + location;
