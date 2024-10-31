@@ -59,7 +59,7 @@ export type QueryResult = {
   insertId?: number;
   rowsAffected: number;
   res?: any[];
-  rows: any[];
+  rows: Array<Record<string, string | number | boolean | ArrayBufferLike>>;
   // An array of intermediate results, just values without column names
   rawRows?: any[];
   columnNames?: string[];
