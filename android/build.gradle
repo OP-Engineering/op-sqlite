@@ -34,6 +34,7 @@ def performanceMode = "0"
 def sqliteFlags = ""
 def enableFTS5 = false
 def useSqliteVec = false
+def enableRtree = false
 
 def packageJsonFile = new File("$rootDir/../package.json")
 def packageJson = new JsonSlurper().parseText(packageJsonFile.text)
@@ -47,6 +48,7 @@ if(opsqliteConfig) {
   sqliteFlags = opsqliteConfig["sqliteFlags"] ? opsqliteConfig["sqliteFlags"] : ""
   enableFTS5 = opsqliteConfig["fts5"]
   useLibsql = opsqliteConfig["libsql"]
+  enableRtree = opsqliteConfig["rtree"]
 }
 
 if(useSQLCipher) {
@@ -71,6 +73,10 @@ if(performanceMode == "2") {
 
 if(enableFTS5) {
   println "[OP-SQLITE] FTS5 enabled! 🔎"
+}
+
+if(enableRtree) {
+  println "[OP-SQLITE] RTree enabled! 🌲"
 }
 
 if(useSqliteVec) {
@@ -137,7 +143,10 @@ android {
               cFlags += ["-DSQLITE_DQS=0", "-DSQLITE_THREADSAFE=1", "-DSQLITE_DEFAULT_MEMSTATUS=0", "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1", "-DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1", "-DSQLITE_MAX_EXPR_DEPTH=0", "-DSQLITE_OMIT_DEPRECATED=1", "-DSQLITE_OMIT_PROGRESS_CALLBACK=1", "-DSQLITE_OMIT_SHARED_CACHE=1", "-DSQLITE_USE_ALLOCA=1"]
             }
             if(enableFTS5) {
-              cFlags += ["-DSQLITE_ENABLE_FTS4=1", "-DSQLITE_ENABLE_FTS3_PARENTHESIS=1", "-DSQLITE_ENABLE_FTS5=1"]
+              cFlags += ["-DSQLITE_ENABLE_FTS5=1"]
+            }
+            if(enableRtree) {
+              cFlags += ["-DSQLITE_ENABLE_RTREE=1"]
             }
             if(useSqliteVec) {
               cFlags += "-DOP_SQLITE_USE_SQLITE_VEC=1"
