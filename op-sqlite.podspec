@@ -10,10 +10,10 @@ fabric_enabled = ENV['RCT_NEW_ARCH_ENABLED'] == '1'
 
 parent_folder_name = File.basename(__dir__)
 app_package = nil
-# for development purposes on user machines the podspec should be able to read the package.json from the root folder
-# since it lives inside node_modules/@op-engineering/op-sqlite
+# When installed on user node_modules lives inside node_modules/@op-engineering/op-sqlite
 if __dir__.include?("node_modules")
   app_package = JSON.parse(File.read(File.join(__dir__, "..", "..", "..", "package.json")))
+# When running on the example app
 else
   app_package = JSON.parse(File.read(File.join(__dir__, "example", "package.json")))
 end
@@ -26,6 +26,7 @@ performance_mode = "0"
 phone_version = false
 sqlite_flags = ""
 fts5 = false
+rtree = false
 use_sqlite_vec = false
 
 if(op_sqlite_config != nil)
@@ -36,13 +37,31 @@ if(op_sqlite_config != nil)
   phone_version = op_sqlite_config["iosSqlite"] == true
   sqlite_flags = op_sqlite_config["sqliteFlags"] || ""
   fts5 = op_sqlite_config["fts5"] == true
+  rtree = op_sqlite_config["rtree"] == true
   use_sqlite_vec = op_sqlite_config["sqliteVec"] == true
 end
 
-if phone_version && use_sqlcipher
-  raise "Cannot use phone embedded version and SQLCipher. SQLCipher needs to be compiled from sources with the project."
-end
+if phone_version then
+  if use_sqlcipher then
+    raise "SQLCipher is not supported with phone version"
+  end
 
+  if use_crsqlite then
+    raise "CRSQLite is not supported with phone version"
+  end
+
+  if fts5 then
+    raise "FTS5 is not supported with phone version"
+  end
+
+  if rtree then
+    raise "RTree is not supported with phone version"
+  end
+
+  if use_sqlite_vec then
+    raise "SQLite Vec is not supported with phone version"
+  end
+end
 
 Pod::Spec.new do |s|
   s.name         = "op-sqlite"
@@ -91,24 +110,17 @@ Pod::Spec.new do |s|
   optimizedCflags = other_cflags + '$(inherited) -DSQLITE_DQS=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1 -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DEPRECATED=1 -DSQLITE_OMIT_PROGRESS_CALLBACK=1 -DSQLITE_OMIT_SHARED_CACHE=1 -DSQLITE_USE_ALLOCA=1'
   frameworks = []
 
-  if fts5 && !phone_version then
+  if fts5 then
     log_message.call("[OP-SQLITE] FTS5 enabled 🔎")
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " SQLITE_ENABLE_FTS5=1"
   end
+
+  if rtree then
+    log_message.call("[OP-SQLITE] RTree enabled 🌲")
+    xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " SQLITE_ENABLE_RTREE=1"
+  end
  
   if phone_version then
-    if use_sqlcipher then
-      raise "SQLCipher is not supported with phone version"
-    end
-
-    if use_crsqlite then
-      raise "CRSQLite is not supported with phone version"
-    end
-
-    if fts5 then
-      raise "FTS5 is not supported with phone version"
-    end
-
     log_message.call("[OP-SQLITE] using iOS embedded SQLite 📱")
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_PHONE_VERSION=1"
     s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h"
@@ -138,9 +150,6 @@ Pod::Spec.new do |s|
   end
 
   if use_libsql then
-    if use_sqlcipher then
-      raise "Cannot use SQLCipher and libsql at the same time"
-    end
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_LIBSQL=1"
     if use_crsqlite then
       frameworks = ["ios/libsql.xcframework", "ios/crsqlite.xcframework"]
