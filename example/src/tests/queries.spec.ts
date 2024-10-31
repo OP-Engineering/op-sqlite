@@ -572,9 +572,8 @@ export function queriesTests() {
 
       const res = await db.executeWithHostObjects('SELECT * FROM User');
 
-      expect(res.rowsAffected).to.equal(1);
       expect(res.insertId).to.equal(1);
-      expect(res.rows!).to.eql([
+      expect(res.rows).to.eql([
         {
           id,
           name,

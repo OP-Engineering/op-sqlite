@@ -49,6 +49,7 @@ export function preparedStatementsTests() {
         db = null;
       }
     });
+
     it('Creates a prepared statement and executes a prepared statement', async () => {
       const statement = db.prepareStatement('SELECT * FROM User;');
       let results = await statement.execute();
