@@ -28,6 +28,7 @@ sqlite_flags = ""
 fts5 = false
 rtree = false
 use_sqlite_vec = false
+extra_c_sources = []
 
 if(op_sqlite_config != nil)
   use_sqlcipher = op_sqlite_config["sqlcipher"] == true
@@ -39,6 +40,7 @@ if(op_sqlite_config != nil)
   fts5 = op_sqlite_config["fts5"] == true
   rtree = op_sqlite_config["rtree"] == true
   use_sqlite_vec = op_sqlite_config["sqliteVec"] == true
+  extra_c_sources = op_sqlite_config["cSources"] || []
 end
 
 if phone_version then
@@ -74,12 +76,26 @@ Pod::Spec.new do |s|
   s.platforms    = { :ios => "13.0", :osx => "10.15", :visionos => "1.0" }
   s.source       = { :git => "https://github.com/op-engineering/op-sqlite.git", :tag => "#{s.version}" }
   
-  s.source_files = "ios/**/*.{h,m,mm}", "cpp/**/*.{h,cpp,c}"
+  # Base source files
+  source_files = Dir.glob("ios/**/*.{h,m,mm}") + Dir.glob("cpp/**/*.{h,cpp,c}")
+
+  # Set the path to the `c_sources` directory based on environment
+  if __dir__.include?("node_modules")
+    c_sources_dir = File.join("..", "..", "..", "c_sources")
+  else
+    c_sources_dir = File.join("example", "c_sources")
+  end
+
+  # Add all .h and .c files from the `c_sources` directory
+  source_files += Dir.glob(File.join(c_sources_dir, "**/*.{h,c}"))
+  # s.public_header_files = 'example/c_sources/**/*.h'
+
+  # Assign the collected source files to `s.source_files`
+  s.source_files = source_files
 
   xcconfig = {
     :GCC_PREPROCESSOR_DEFINITIONS => "HAVE_FULLFSYNC=1",
     :WARNING_CFLAGS => "-Wno-shorten-64-to-32 -Wno-comma -Wno-unreachable-code -Wno-conditional-uninitialized -Wno-deprecated-declarations",
-    :USE_HEADERMAP => "No",
     :CLANG_CXX_LANGUAGE_STANDARD => "c++17",
   }
 
@@ -87,7 +103,7 @@ Pod::Spec.new do |s|
   
   if use_sqlcipher then
     log_message.call("[OP-SQLITE] using SQLCipher 🔒")
-    s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h"
+    s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h"
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_SQLCIPHER=1 HAVE_FULLFSYNC=1 SQLITE_HAS_CODEC SQLITE_TEMP_STORE=2"
     s.dependency "OpenSSL-Universal"    
   elsif use_libsql then
@@ -95,7 +111,7 @@ Pod::Spec.new do |s|
     s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/bridge.h", "cpp/bridge.cpp"
   else
     log_message.call("[OP-SQLITE] using vanilla SQLite 📦")
-    s.exclude_files = "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h"
+    s.exclude_files = "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h"
   end
   
   s.dependency "React-callinvoker"
