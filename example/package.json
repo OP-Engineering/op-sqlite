@@ -73,6 +73,9 @@
     "fts5": true,
     "rtree": true,
     "libsql": false,
-    "sqliteVec": true
+    "sqliteVec": true,
+    "tokenizers": [
+      "ngram"
+    ]
   }
 }

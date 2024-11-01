@@ -14,12 +14,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-extern "C" {
-    #include "../example/c_sources/custom_tokenizer.h"
-}
-//#include "example/c_sources/custom_tokenizer.h"
-//#include "../example/c_sources/custom_tokenizer.h"
-//#include "custom_tokenizer.h"
+#include "../example/c_sources/tokenizers.h"
 
 namespace opsqlite {
 
@@ -61,7 +56,8 @@ void install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker>& invoke
   _sqlite_vec_path = std::string(sqlite_vec_path);
     
     auto answer = HOSTFN("answer") {
-        return custom_tokenizer();
+        ngram();
+        return 52;
     });
 
   auto open = HOSTFN("open") {
