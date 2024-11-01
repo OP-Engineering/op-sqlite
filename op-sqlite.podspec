@@ -1,4 +1,5 @@
 require "json"
+require_relative "./generate_tokenizers_header_file"
 
 log_message = lambda do |message|
   puts "\e[34m#{message}\e[0m"
@@ -28,7 +29,7 @@ sqlite_flags = ""
 fts5 = false
 rtree = false
 use_sqlite_vec = false
-extra_c_sources = []
+tokenizers = []
 
 if(op_sqlite_config != nil)
   use_sqlcipher = op_sqlite_config["sqlcipher"] == true
@@ -40,7 +41,7 @@ if(op_sqlite_config != nil)
   fts5 = op_sqlite_config["fts5"] == true
   rtree = op_sqlite_config["rtree"] == true
   use_sqlite_vec = op_sqlite_config["sqliteVec"] == true
-  extra_c_sources = op_sqlite_config["cSources"] || []
+  tokenizers = op_sqlite_config["tokenizers"] || []
 end
 
 if phone_version then
@@ -79,16 +80,21 @@ Pod::Spec.new do |s|
   # Base source files
   source_files = Dir.glob("ios/**/*.{h,m,mm}") + Dir.glob("cpp/**/*.{h,cpp,c}")
 
-  # Set the path to the `c_sources` directory based on environment
+ 
+
+  # # Set the path to the `c_sources` directory based on environment
   if __dir__.include?("node_modules")
     c_sources_dir = File.join("..", "..", "..", "c_sources")
   else
     c_sources_dir = File.join("example", "c_sources")
   end
 
+  if tokenizers.any?
+    generate_tokenizers_header_file(tokenizers, File.join(c_sources_dir, "tokenizers.h"))
+  end
+
   # Add all .h and .c files from the `c_sources` directory
-  source_files += Dir.glob(File.join(c_sources_dir, "**/*.{h,c}"))
-  # s.public_header_files = 'example/c_sources/**/*.h'
+  source_files += Dir.glob(File.join(c_sources_dir, "**/*.{h,cpp}"))
 
   # Assign the collected source files to `s.source_files`
   s.source_files = source_files
