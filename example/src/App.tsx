@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import {useEffect, useState} from 'react';
 import {
+  Alert,
   Button,
   Clipboard,
   SafeAreaView,
@@ -15,7 +16,7 @@ import {blobTests, dbSetupTests, queriesTests, runTests} from './tests/index';
 import {preparedStatementsTests} from './tests/preparedStatements.spec';
 import {reactiveTests} from './tests/reactive.spec';
 import {setServerResults, startServer, stopServer} from './server';
-import {open} from '@op-engineering/op-sqlite';
+import {answer, open} from '@op-engineering/op-sqlite';
 import Share from 'react-native-share';
 import {createLargeDB, queryLargeDB} from './Database';
 import RNRestart from 'react-native-restart';
@@ -44,6 +45,8 @@ export default function App() {
     });
 
     startServer();
+
+    Alert.alert('Custom C file answer: ' + answer());
 
     return () => {
       stopServer();

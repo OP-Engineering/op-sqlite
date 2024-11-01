@@ -14,6 +14,12 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+extern "C" {
+    #include "../example/c_sources/custom_tokenizer.h"
+}
+//#include "example/c_sources/custom_tokenizer.h"
+//#include "../example/c_sources/custom_tokenizer.h"
+//#include "custom_tokenizer.h"
 
 namespace opsqlite {
 
@@ -53,6 +59,10 @@ void install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker>& invoke
   _base_path = std::string(base_path);
   _crsqlite_path = std::string(crsqlite_path);
   _sqlite_vec_path = std::string(sqlite_vec_path);
+    
+    auto answer = HOSTFN("answer") {
+        return custom_tokenizer();
+    });
 
   auto open = HOSTFN("open") {
     jsi::Object options = args[0].asObject(rt);
@@ -160,6 +170,7 @@ void install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker>& invoke
   module.setProperty(rt, "open", std::move(open));
   module.setProperty(rt, "isSQLCipher", std::move(is_sqlcipher));
   module.setProperty(rt, "isLibsql", std::move(is_libsql));
+    module.setProperty(rt, "answer", std::move(answer));
 #ifdef OP_SQLITE_USE_LIBSQL
   module.setProperty(rt, "openRemote", std::move(open_remote));
   module.setProperty(rt, "openSync", std::move(open_sync));
