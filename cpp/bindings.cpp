@@ -16,6 +16,10 @@
 #include <vector>
 #include "../example/c_sources/tokenizers.h"
 
+#ifndef STRING_LIST
+#define STRING_LIST ""
+#endif
+
 namespace opsqlite {
 
 namespace jsi = facebook::jsi;
@@ -56,7 +60,10 @@ void install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker>& invoke
   _sqlite_vec_path = std::string(sqlite_vec_path);
     
     auto answer = HOSTFN("answer") {
+        std::cout << "List of tokenizers" << std::endl;
+        std::cout << STRING_LIST << std::endl;
         ngram();
+        edgengram();
         return 52;
     });
 
