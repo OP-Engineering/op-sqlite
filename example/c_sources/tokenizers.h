@@ -4,6 +4,7 @@
 namespace opsqlite {
 
 void ngram();
+void edgengram();
 
 } // namespace opsqlite
 

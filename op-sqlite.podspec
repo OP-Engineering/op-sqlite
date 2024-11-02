@@ -185,6 +185,10 @@ Pod::Spec.new do |s|
     xcconfig[:OTHER_CFLAGS] += " #{sqlite_flags}"
   end
 
+  if tokenizers.any? then
+    xcconfig[:OTHER_CFLAGS] += " -DTOKENIZER_LIST=\\\"#{tokenizers.join(",")}\\\""
+  end
+
   s.pod_target_xcconfig = xcconfig
   s.vendored_frameworks = frameworks
 end
