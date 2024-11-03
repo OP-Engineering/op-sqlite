@@ -2,10 +2,6 @@
 #include <cctype>
 #include <memory>
 #include <string>
-#include <iostream>
-#include "../../cpp/sqlite3.h"
-
-//SQLITE_EXTENSION_INIT1
 
 namespace opsqlite {
 
@@ -63,25 +59,28 @@ int wordTokenizerTokenize(Fts5Tokenizer *pTokenizer, void *pCtx, int flags,
   return SQLITE_OK;
 }
 
-// int sqlite_ngram_init(sqlite3 *db, char **error,
-//                       const sqlite3_api_routines *api) {}
-// int sqlite_edgengram_init(sqlite3 *db, char **error,
-//                           const sqlite3_api_routines *api) {}
-int sqlite_wordtokenizer_init(sqlite3 *db, char **error,
+int opsqlite_wordtokenizer_init(sqlite3 *db, char **error,
                                          const sqlite3_api_routines *api) {
-//  SQLITE_EXTENSION_INIT2(api);
-
-  // Create the FTS5 tokenizer structure
   fts5_tokenizer wordtokenizer = {wordTokenizerCreate, wordTokenizerDelete,
                                   wordTokenizerTokenize};
 
-  // Register the tokenizer with FTS5
   fts5_api *ftsApi = (fts5_api *)fts5_api_from_db(db);
   if (ftsApi == NULL)
     return SQLITE_ERROR;
     
   return ftsApi->xCreateTokenizer(ftsApi, "wordtokenizer", NULL, &wordtokenizer,
                                   NULL);
+}
+
+
+int opsqlite_porter_init(sqlite3 *db, char **error, const sqlite3_api_routines *api) {
+    fts5_tokenizer porter_tokenizer = {wordTokenizerCreate, wordTokenizerDelete, wordTokenizerTokenize};
+    
+    fts5_api *ftsApi = (fts5_api *)fts5_api_from_db(db);
+    if (ftsApi == nullptr)
+        return SQLITE_ERROR;
+    
+    return ftsApi->xCreateTokenizer(ftsApi, "portertokenizer", NULL, &porter_tokenizer, NULL);
 }
 
 } // namespace opsqlite

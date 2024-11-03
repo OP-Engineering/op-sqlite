@@ -19,7 +19,7 @@ def generate_tokenizers_header_file(names, file_path, is_user_app)
     file.puts
 
     names.each do |name|
-      file.puts "int sqlite_#{name}_init(sqlite3 *db, char **error, const sqlite3_api_routines *api);"
+      file.puts "int opsqlite_#{name}_init(sqlite3 *db, char **error, const sqlite3_api_routines *api);"
     end
 
     file.puts
@@ -28,7 +28,3 @@ def generate_tokenizers_header_file(names, file_path, is_user_app)
     file.puts "#endif // TOKENIZERS_H"
   end
 end
-
-# # Example usage:
-# names = ["functionOne", "functionTwo", "functionThree"]
-# generate_header_file(names, "/path/to/generated_header.h")

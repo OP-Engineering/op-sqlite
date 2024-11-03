@@ -75,7 +75,8 @@
     "libsql": false,
     "sqliteVec": true,
     "tokenizers": [
-      "wordtokenizer"
+      "wordtokenizer",
+      "porter"
     ]
   }
 }

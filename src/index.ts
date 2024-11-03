@@ -197,7 +197,6 @@ type OPSQLiteProxy = {
   }) => DB;
   isSQLCipher: () => boolean;
   isLibsql: () => boolean;
-  answer: () => number;
 };
 
 const locks: Record<
@@ -459,8 +458,4 @@ export const isSQLCipher = (): boolean => {
 
 export const isLibsql = (): boolean => {
   return OPSQLite.isLibsql();
-};
-
-export const answer = (): number => {
-  return OPSQLite.answer();
 };
