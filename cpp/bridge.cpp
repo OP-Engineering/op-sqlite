@@ -7,10 +7,11 @@
 #include <unordered_map>
 #include <variant>
 #include <sstream>
-#include "../example/c_sources/tokenizers.h"
 
 #ifndef TOKENIZER_LIST
 #define TOKENIZER_LIST ""
+#else
+#include TOKENIZERS_HEADER_PATH
 #endif
 
 namespace opsqlite {
