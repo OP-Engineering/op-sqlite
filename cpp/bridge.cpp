@@ -6,6 +6,12 @@
 #include <iostream>
 #include <unordered_map>
 #include <variant>
+#include <sstream>
+#include "../example/c_sources/tokenizers.h"
+
+#ifndef TOKENIZER_LIST
+#define TOKENIZER_LIST ""
+#endif
 
 namespace opsqlite {
 
@@ -109,8 +115,9 @@ BridgeResult opsqlite_open(std::string const &name,
   if (errMsg != nullptr) {
     return {.type = SQLiteError, .message = errMsg};
   }
-
 #endif
+
+    TOKENIZER_LIST
 
   return {.type = SQLiteOk, .affectedRows = 0};
 }
