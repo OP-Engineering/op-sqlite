@@ -1,10 +1,11 @@
 #ifndef TOKENIZERS_H
 #define TOKENIZERS_H
 
+#include "../../cpp/sqlite3.h"
+
 namespace opsqlite {
 
-void ngram();
-void edgengram();
+int sqlite_wordtokenizer_init(sqlite3 *db, char **error, const sqlite3_api_routines *api);
 
 } // namespace opsqlite
 

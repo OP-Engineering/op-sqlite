@@ -5,6 +5,7 @@ log_message = lambda do |message|
   puts "\e[34m#{message}\e[0m"
 end
 
+is_user_app = __dir__.include?("node_modules")
 package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 folly_compiler_flags = '-DFOLLY_NO_CONFIG -DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1 -Wno-comma -Wno-shorten-64-to-32'
 fabric_enabled = ENV['RCT_NEW_ARCH_ENABLED'] == '1'
@@ -12,7 +13,7 @@ fabric_enabled = ENV['RCT_NEW_ARCH_ENABLED'] == '1'
 parent_folder_name = File.basename(__dir__)
 app_package = nil
 # When installed on user node_modules lives inside node_modules/@op-engineering/op-sqlite
-if __dir__.include?("node_modules")
+if is_user_app
   app_package = JSON.parse(File.read(File.join(__dir__, "..", "..", "..", "package.json")))
 # When running on the example app
 else
@@ -80,17 +81,15 @@ Pod::Spec.new do |s|
   # Base source files
   source_files = Dir.glob("ios/**/*.{h,m,mm}") + Dir.glob("cpp/**/*.{h,cpp,c}")
 
- 
-
-  # # Set the path to the `c_sources` directory based on environment
-  if __dir__.include?("node_modules")
+  # Set the path to the `c_sources` directory based on environment
+  if is_user_app
     c_sources_dir = File.join("..", "..", "..", "c_sources")
   else
     c_sources_dir = File.join("example", "c_sources")
   end
 
   if tokenizers.any?
-    generate_tokenizers_header_file(tokenizers, File.join(c_sources_dir, "tokenizers.h"))
+    generate_tokenizers_header_file(tokenizers, File.join(c_sources_dir, "tokenizers.h"), is_user_app)
   end
 
   # Add all .h and .c files from the `c_sources` directory
@@ -186,7 +185,8 @@ Pod::Spec.new do |s|
   end
 
   if tokenizers.any? then
-    xcconfig[:OTHER_CFLAGS] += " -DTOKENIZER_LIST=\\\"#{tokenizers.join(",")}\\\""
+    tokenizer_inits = tokenizers.map { |tokenizer| "sqlite_#{tokenizer}_init(db,&errMsg,nullptr);" }
+    xcconfig[:OTHER_CFLAGS] += " -DTOKENIZER_LIST=\"#{tokenizer_inits.join(" ")}\""
   end
 
   s.pod_target_xcconfig = xcconfig
