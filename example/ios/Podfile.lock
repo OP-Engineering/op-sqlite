@@ -1785,7 +1785,7 @@ SPEC CHECKSUMS:
   GCDWebServer: 2c156a56c8226e2d5c0c3f208a3621ccffbe3ce4
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
   hermes-engine: 46f1ffbf0297f4298862068dd4c274d4ac17a1fd
-  op-sqlite: b59c730cda63c0017c14b1b2dd6499719f50433b
+  op-sqlite: 47d86aff0fcabfe76845066dd4aba17041ae14a0
   RCT-Folly: 045d6ecaa59d826c5736dfba0b2f4083ff8d79df
   RCTDeprecation: fde92935b3caa6cb65cbff9fbb7d3a9867ffb259
   RCTRequired: 75c6cee42d21c1530a6f204ba32ff57335d19007

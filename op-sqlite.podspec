@@ -185,7 +185,7 @@ Pod::Spec.new do |s|
   end
 
   if tokenizers.any? then
-    tokenizer_inits = tokenizers.map { |tokenizer| "sqlite_#{tokenizer}_init(db,&errMsg,nullptr);" }
+    tokenizer_inits = tokenizers.map { |tokenizer| "opsqlite_#{tokenizer}_init(db,&errMsg,nullptr);" }
     xcconfig[:OTHER_CFLAGS] += " -DTOKENIZER_LIST=\"#{tokenizer_inits.join(" ")}\""
   end
 

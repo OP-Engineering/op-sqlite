@@ -15,7 +15,6 @@
 #include <unordered_map>
 #include <vector>
 
-
 namespace opsqlite {
 
 namespace jsi = facebook::jsi;
@@ -55,10 +54,6 @@ void install(jsi::Runtime &rt,
   _base_path = std::string(base_path);
   _crsqlite_path = std::string(crsqlite_path);
   _sqlite_vec_path = std::string(sqlite_vec_path);
-
-  auto answer = HOSTFN("answer") {
-    return 52;
-  });
 
   auto open = HOSTFN("open") {
     jsi::Object options = args[0].asObject(rt);
@@ -166,7 +161,6 @@ void install(jsi::Runtime &rt,
   module.setProperty(rt, "open", std::move(open));
   module.setProperty(rt, "isSQLCipher", std::move(is_sqlcipher));
   module.setProperty(rt, "isLibsql", std::move(is_libsql));
-  module.setProperty(rt, "answer", std::move(answer));
 #ifdef OP_SQLITE_USE_LIBSQL
   module.setProperty(rt, "openRemote", std::move(open_remote));
   module.setProperty(rt, "openSync", std::move(open_sync));
