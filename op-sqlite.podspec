@@ -187,6 +187,11 @@ Pod::Spec.new do |s|
   if tokenizers.any? then
     tokenizer_inits = tokenizers.map { |tokenizer| "opsqlite_#{tokenizer}_init(db,&errMsg,nullptr);" }
     xcconfig[:OTHER_CFLAGS] += " -DTOKENIZER_LIST=\"#{tokenizer_inits.join(" ")}\""
+    if is_user_app then
+      xcconfig[:OTHER_CFLAGS] += " -DTOKENIZERS_HEADER_PATH=\\\"../../../c_sources/tokenizers.h\\\""
+    else 
+      xcconfig[:OTHER_CFLAGS] += " -DTOKENIZERS_HEADER_PATH=\\\"../example/c_sources/tokenizers.h\\\""
+    end
   end
 
   s.pod_target_xcconfig = xcconfig
