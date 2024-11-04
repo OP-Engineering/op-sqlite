@@ -35,9 +35,18 @@ def sqliteFlags = ""
 def enableFTS5 = false
 def useSqliteVec = false
 def enableRtree = false
+def tokenizers = []
 
-def packageJsonFile = new File("$rootDir/../package.json")
-def packageJson = new JsonSlurper().parseText(packageJsonFile.text)
+def isInsideNodeModules = rootDir.absolutePath.contains("node_modules")
+def packageJson
+
+if ( isInsideNodeModules ) {
+  def packageJsonFile = new File("$rootDir/../../../package.json")
+  packageJson = new JsonSlurper().parseText(packageJsonFile.text)
+} else {
+  def packageJsonFile = new File("$rootDir/../package.json")
+  packageJson = new JsonSlurper().parseText(packageJsonFile.text)
+}
 
 def opsqliteConfig = packageJson["op-sqlite"]
 if(opsqliteConfig) {
@@ -49,6 +58,7 @@ if(opsqliteConfig) {
   enableFTS5 = opsqliteConfig["fts5"]
   useLibsql = opsqliteConfig["libsql"]
   enableRtree = opsqliteConfig["rtree"]
+  tokenizers = opsqliteConfig["tokenizers"] ? opsqliteConfig["tokenizers"] : []
 }
 
 if(useSQLCipher) {
@@ -153,14 +163,34 @@ android {
               cppFlags += "-DOP_SQLITE_USE_SQLITE_VEC=1"
             }
 
-            cppFlags "-O2", "-fexceptions", "-frtti", "-std=c++1y", "-DONANDROID"
+            // This are zeroes because they will be passed as C flags, so they become falsy
+            def sourceFiles = 0
+            // def tokenizerInitStrings = 0
+            def tokenizersHeaderPath = 0
+            if (!tokenizers.isEmpty()) {
+              // Scan user directories for .h and .cpp files
+              def sourceDir = isInsideNodeModules ? file("$rootDir/../../../c_sources") : file("$rootDir/../c_sources")
+              sourceFiles = fileTree(dir: sourceDir, include: ["**/*.cpp", "**/*.h"])
+                      .files
+                      .join(";") // Join paths with `;` for CMake
+              // tokenizerInitStrings = tokenizers.collect { tokenizer ->
+              //   "opsqlite_${tokenizer}_init(db,&errMsg,nullptr);"
+              // }.join("")
+              tokenizersHeaderPath = isInsideNodeModules ? "../../../c_sources/tokenizers.h" : "../example/c_sources/tokenizers.h"
+                println("tokenizers header path $tokenizersHeaderPath")
+            }
+
+            cppFlags "-O2", "-fexceptions", "-DONANDROID"
             abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
             arguments "-DANDROID_STL=c++_shared",
               "-DSQLITE_FLAGS='$sqliteFlags'",
               "-DUSE_SQLCIPHER=${useSQLCipher ? 1 : 0}",
               "-DUSE_CRSQLITE=${useCRSQLite ? 1 : 0}",
               "-DUSE_LIBSQL=${useLibsql ? 1 : 0}",
-              "-DUSE_SQLITE_VEC=${useSqliteVec ? 1 : 0}"
+              "-DUSE_SQLITE_VEC=${useSqliteVec ? 1 : 0}",
+              "-DUSER_DEFINED_SOURCE_FILES=${sourceFiles}",
+              // "-DUSER_DEFINED_TOKENIZER_INIT_STRINGS='${tokenizerInitStrings}'",
+              "-DUSER_DEFINED_TOKENIZERS_HEADER_PATH='${tokenizersHeaderPath}'"
         }
     }
 
