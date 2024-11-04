@@ -8,10 +8,10 @@
 #include <variant>
 #include <sstream>
 
-#ifndef TOKENIZER_LIST
-#define TOKENIZER_LIST ""
-#else
+#ifdef TOKENIZERS_HEADER_PATH
 #include TOKENIZERS_HEADER_PATH
+#else
+#define TOKENIZERS_LIST
 #endif
 
 namespace opsqlite {
@@ -118,7 +118,7 @@ BridgeResult opsqlite_open(std::string const &name,
   }
 #endif
 
-    TOKENIZER_LIST
+  TOKENIZER_LIST
 
   return {.type = SQLiteOk, .affectedRows = 0};
 }
