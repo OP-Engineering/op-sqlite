@@ -13,7 +13,7 @@ def generate_tokenizers_header_file(names, file_path, is_user_app)
     file.puts "#define TOKENIZER_LIST #{tokenizer_list}"
     file.puts
     if is_user_app
-      file.puts "#include \"node-modules/@op-engineering/op-sqlite/cpp/sqlite3ext.h\""
+      file.puts "#include \"node-modules/@op-engineering/op-sqlite/cpp/sqlite3.h\""
     else
       file.puts "#include \"../../cpp/sqlite3.h\""
     end

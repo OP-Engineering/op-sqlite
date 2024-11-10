@@ -10,9 +10,9 @@
 namespace opsqlite {
 
 int opsqlite_wordtokenizer_init(sqlite3 *db, char **error,
-                                sqlite3_api_routines const *api);
+                                const sqlite3_api_routines *api);
 int opsqlite_porter_init(sqlite3 *db, char **error,
-                         sqlite3_api_routines const *api);
+                         const sqlite3_api_routines *api);
 
 } // namespace opsqlite
 
