@@ -150,12 +150,12 @@ Pod::Spec.new do |s|
 
   if performance_mode == '1' then
     log_message.call("[OP-SQLITE] Thread unsafe (1) performance mode enabled. Use only transactions! 🚀🚀")
-    xcconfig[:OTHER_CFLAGS] = optimizedCflags + ' -DSQLITE_THREADSAFE=0 '
+    other_cflags = optimizedCflags + ' -DSQLITE_THREADSAFE=0 '
   end
 
   if performance_mode == '2' then
     log_message.call("[OP-SQLITE] Thread safe (2) performance mode enabled 🚀")
-    xcconfig[:OTHER_CFLAGS] = optimizedCflags + ' -DSQLITE_THREADSAFE=1 '
+    other_cflags = optimizedCflags + ' -DSQLITE_THREADSAFE=1 '
   end
 
   if use_crsqlite then
@@ -181,19 +181,19 @@ Pod::Spec.new do |s|
 
   if sqlite_flags != "" then
     log_message.call("[OP-SQLITE] Custom SQLite flags: #{sqlite_flags}")
-    xcconfig[:OTHER_CFLAGS] += " #{sqlite_flags}"
+    other_cflags += " #{sqlite_flags}"
   end
 
   if tokenizers.any? then
-    # tokenizer_inits = tokenizers.map { |tokenizer| "opsqlite_#{tokenizer}_init(db,&errMsg,nullptr);" }
-    # xcconfig[:OTHER_CFLAGS] += " -DTOKENIZER_LIST=\"#{tokenizer_inits.join(" ")}\""
+    log_message.call("[OP_SQLITE] Tokenizers enabled: #{tokenizers}")
     if is_user_app then
-      xcconfig[:OTHER_CFLAGS] += " -DTOKENIZERS_HEADER_PATH=\\\"../../../c_sources/tokenizers.h\\\""
+      other_cflags += " -DTOKENIZERS_HEADER_PATH=\\\"../../../c_sources/tokenizers.h\\\""
     else 
-      xcconfig[:OTHER_CFLAGS] += " -DTOKENIZERS_HEADER_PATH=\\\"../example/c_sources/tokenizers.h\\\""
+      other_cflags += " -DTOKENIZERS_HEADER_PATH=\\\"../example/c_sources/tokenizers.h\\\""
     end
   end
 
+  xcconfig[:OTHER_CFLAGS] = other_cflags
   s.pod_target_xcconfig = xcconfig
   s.vendored_frameworks = frameworks
 end
