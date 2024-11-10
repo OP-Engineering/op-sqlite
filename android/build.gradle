@@ -171,11 +171,9 @@ android {
               // Scan user directories for .h and .cpp files
               def sourceDir = isInsideNodeModules ? file("$rootDir/../../../c_sources") : file("$rootDir/../c_sources")
               sourceFiles = fileTree(dir: sourceDir, include: ["**/*.cpp", "**/*.h"])
+//              sourceFiles = fileTree(dir: sourceDir, include: ["**/*.cpp"])
                       .files
                       .join(";") // Join paths with `;` for CMake
-              // tokenizerInitStrings = tokenizers.collect { tokenizer ->
-              //   "opsqlite_${tokenizer}_init(db,&errMsg,nullptr);"
-              // }.join("")
               tokenizersHeaderPath = isInsideNodeModules ? "../../../c_sources/tokenizers.h" : "../example/c_sources/tokenizers.h"
                 println("tokenizers header path $tokenizersHeaderPath")
             }

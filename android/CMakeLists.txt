@@ -10,6 +10,7 @@ set (BUILD_DIR ${CMAKE_SOURCE_DIR}/build)
    ../cpp
    ../cpp/sqlcipher
    ../cpp/libsql
+#   ../example/c_sources
  )
 
 add_definitions(
@@ -74,12 +75,11 @@ find_library(LOG_LIB log)
 
 # Add user defined files
 if (USER_DEFINED_SOURCE_FILES)
-  string(REPLACE ";" " " user_source_files "${USER_DEFINED_SOURCE_FILES}")
+#  string(REPLACE ";" "\n" user_source_files "${USER_DEFINED_SOURCE_FILES}")
   message(WARNING "User source files: ${user_source_files}")
-  message(WARNING "INITLIST ${USER_DEFINED_TOKENIZER_INIT_STRINGS}")
   message(WARNING "TOKENIZERS_HEADER_PATH ${USER_DEFINED_TOKENIZERS_HEADER_PATH}")
 
-  target_sources(${PACKAGE_NAME} PRIVATE ${source_files})
+  target_sources(${PACKAGE_NAME} PRIVATE ${USER_DEFINED_SOURCE_FILES})
 #  add_definitions("-DTOKENIZER_LIST=${USER_DEFINED_TOKENIZER_INIT_STRINGS}")
 
   add_definitions("-DTOKENIZERS_HEADER_PATH=\"${USER_DEFINED_TOKENIZERS_HEADER_PATH}\"")

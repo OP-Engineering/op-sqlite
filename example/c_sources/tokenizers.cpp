@@ -5,12 +5,12 @@
 
 namespace opsqlite {
 
-fts5_api *fts5_api_from_db(sqlite3 *db){
+fts5_api *fts5_api_from_db(sqlite3 *db) {
   fts5_api *pRet = 0;
   sqlite3_stmt *pStmt = 0;
 
-  if( SQLITE_OK == sqlite3_prepare_v2(db, "SELECT fts5(?1)", -1, &pStmt, 0) ){
-    sqlite3_bind_pointer(pStmt, 1, (void*)&pRet, "fts5_api_ptr", NULL);
+  if (SQLITE_OK == sqlite3_prepare_v2(db, "SELECT fts5(?1)", -1, &pStmt, 0)) {
+    sqlite3_bind_pointer(pStmt, 1, (void *)&pRet, "fts5_api_ptr", NULL);
     sqlite3_step(pStmt);
   }
   sqlite3_finalize(pStmt);
@@ -60,27 +60,29 @@ int wordTokenizerTokenize(Fts5Tokenizer *pTokenizer, void *pCtx, int flags,
 }
 
 int opsqlite_wordtokenizer_init(sqlite3 *db, char **error,
-                                         const sqlite3_api_routines *api) {
+                                sqlite3_api_routines const *api) {
   fts5_tokenizer wordtokenizer = {wordTokenizerCreate, wordTokenizerDelete,
                                   wordTokenizerTokenize};
 
   fts5_api *ftsApi = (fts5_api *)fts5_api_from_db(db);
   if (ftsApi == NULL)
     return SQLITE_ERROR;
-    
+
   return ftsApi->xCreateTokenizer(ftsApi, "wordtokenizer", NULL, &wordtokenizer,
                                   NULL);
 }
 
+int opsqlite_porter_init(sqlite3 *db, char **error,
+                         sqlite3_api_routines const *api) {
+  fts5_tokenizer porter_tokenizer = {wordTokenizerCreate, wordTokenizerDelete,
+                                     wordTokenizerTokenize};
 
-int opsqlite_porter_init(sqlite3 *db, char **error, const sqlite3_api_routines *api) {
-    fts5_tokenizer porter_tokenizer = {wordTokenizerCreate, wordTokenizerDelete, wordTokenizerTokenize};
-    
-    fts5_api *ftsApi = (fts5_api *)fts5_api_from_db(db);
-    if (ftsApi == nullptr)
-        return SQLITE_ERROR;
-    
-    return ftsApi->xCreateTokenizer(ftsApi, "portertokenizer", NULL, &porter_tokenizer, NULL);
+  fts5_api *ftsApi = (fts5_api *)fts5_api_from_db(db);
+  if (ftsApi == nullptr)
+    return SQLITE_ERROR;
+
+  return ftsApi->xCreateTokenizer(ftsApi, "portertokenizer", NULL,
+                                  &porter_tokenizer, NULL);
 }
 
 } // namespace opsqlite
