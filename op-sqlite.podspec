@@ -83,7 +83,7 @@ Pod::Spec.new do |s|
 
   # Set the path to the `c_sources` directory based on environment
   if is_user_app
-    c_sources_dir = File.join("..", "..", "..", "c_sources")
+    c_sources_dir = File.join("..", "..", "..", "..", "c_sources")
   else
     c_sources_dir = File.join("example", "c_sources")
   end
