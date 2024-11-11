@@ -187,7 +187,7 @@ Pod::Spec.new do |s|
   if tokenizers.any? then
     log_message.call("[OP_SQLITE] Tokenizers enabled: #{tokenizers}")
     if is_user_app then
-      other_cflags += " -DTOKENIZERS_HEADER_PATH=\\\"../../../c_sources/tokenizers.h\\\""
+      other_cflags += " -DTOKENIZERS_HEADER_PATH=\\\"../../../../c_sources/tokenizers.h\\\""
     else 
       other_cflags += " -DTOKENIZERS_HEADER_PATH=\\\"../example/c_sources/tokenizers.h\\\""
     end
