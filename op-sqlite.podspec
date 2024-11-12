@@ -87,13 +87,21 @@ Pod::Spec.new do |s|
   else
     c_sources_dir = File.join("example", "c_sources")
   end
+  
 
   if tokenizers.any?
-    generate_tokenizers_header_file(tokenizers, File.join(c_sources_dir, "tokenizers.h"), is_user_app)
+    FileUtils.cp_r(c_sources_dir, __dir__)
+    # generate_tokenizers_header_file(tokenizers, File.join(c_sources_dir, "tokenizers.h"), is_user_app)
+    # puts "Current directory: #{__dir__}"
+    # c_sources_dir_output = Dir.glob(File.join(c_sources_dir, "**/*.{h,cpp}"))
+  
+    # puts "c_sources_dir: #{c_sources_dir_output}"
+  
+    # # Add all .h and .c files from the `c_sources` directory
+    source_files += Dir.glob(File.join("c_sources", "**/*.{h,cpp}"))
+    # source_files += ["../../c_sources/tokenizers.h", "../../c_sources/tokenizers.cpp"]
+    # puts "Source files: #{source_files}"
   end
-
-  # Add all .h and .c files from the `c_sources` directory
-  source_files += Dir.glob(File.join(c_sources_dir, "**/*.{h,cpp}"))
 
   # Assign the collected source files to `s.source_files`
   s.source_files = source_files
@@ -187,7 +195,7 @@ Pod::Spec.new do |s|
   if tokenizers.any? then
     log_message.call("[OP_SQLITE] Tokenizers enabled: #{tokenizers}")
     if is_user_app then
-      other_cflags += " -DTOKENIZERS_HEADER_PATH=\\\"../../../../c_sources/tokenizers.h\\\""
+      other_cflags += " -DTOKENIZERS_HEADER_PATH=\\\"../c_sources/tokenizers.h\\\""
     else 
       other_cflags += " -DTOKENIZERS_HEADER_PATH=\\\"../example/c_sources/tokenizers.h\\\""
     end
