@@ -168,14 +168,17 @@ android {
             // def tokenizerInitStrings = 0
             def tokenizersHeaderPath = 0
             if (!tokenizers.isEmpty()) {
-              // Scan user directories for .h and .cpp files
               def sourceDir = isInsideNodeModules ? file("$rootDir/../../../c_sources") : file("$rootDir/../c_sources")
-              sourceFiles = fileTree(dir: sourceDir, include: ["**/*.cpp", "**/*.h"])
-//              sourceFiles = fileTree(dir: sourceDir, include: ["**/*.cpp"])
-                      .files
-                      .join(";") // Join paths with `;` for CMake
-              tokenizersHeaderPath = isInsideNodeModules ? "../../../c_sources/tokenizers.h" : "../example/c_sources/tokenizers.h"
-                println("tokenizers header path $tokenizersHeaderPath")
+              def destDir = file("$buildscript.sourceFile.parentFile/c_sources")
+              copy {
+                from sourceDir
+                into destDir
+                include "**/*.cpp", "**/*.h"
+              }
+              sourceFiles = fileTree(dir: destDir, include: ["**/*.cpp", "**/*.h"]).files.join(";")
+              tokenizersHeaderPath = "../c_sources/tokenizers.h" 
+              println("tokenizers header path $tokenizersHeaderPath")
+
             }
 
             cppFlags "-O2", "-fexceptions", "-DONANDROID"
