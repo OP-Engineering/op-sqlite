@@ -4,14 +4,14 @@
 #include "logs.h"
 #include "utils.h"
 #include <iostream>
+#include <sstream>
 #include <unordered_map>
 #include <variant>
-#include <sstream>
 
 #ifdef TOKENIZERS_HEADER_PATH
 #include TOKENIZERS_HEADER_PATH
 #else
-#define TOKENIZERS_LIST
+#define TOKENIZER_LIST
 #endif
 
 namespace opsqlite {
