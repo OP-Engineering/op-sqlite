@@ -1,6 +1,6 @@
 require 'fileutils'
 
-def generate_tokenizers_header_file(names, file_path, is_user_app)
+def generate_tokenizers_header_file(names, file_path)
   # Ensure the directory exists
   dir_path = File.dirname(file_path)
   FileUtils.mkdir_p(dir_path) unless Dir.exist?(dir_path)
@@ -12,11 +12,7 @@ def generate_tokenizers_header_file(names, file_path, is_user_app)
     file.puts
     file.puts "#define TOKENIZER_LIST #{tokenizer_list}"
     file.puts
-    if is_user_app
-      file.puts "#include \"sqlite3.h\""
-    else
-      file.puts "#include \"../../cpp/sqlite3.h\""
-    end
+    file.puts "#include \"sqlite3.h\""
     file.puts
     file.puts "namespace opsqlite {"
     file.puts

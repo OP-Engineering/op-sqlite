@@ -69,6 +69,7 @@
     "sqlcipher": false,
     "crsqlite": false,
     "performanceMode": "2",
+    "sqliteFlags": "-DSQLITE_TEMP_STORE=2",
     "iosSqlite": false,
     "fts5": true,
     "rtree": true,

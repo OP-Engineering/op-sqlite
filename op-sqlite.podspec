@@ -90,8 +90,8 @@ Pod::Spec.new do |s|
   
 
   if tokenizers.any?
+    generate_tokenizers_header_file(tokenizers, File.join(c_sources_dir, "tokenizers.h"))
     FileUtils.cp_r(c_sources_dir, __dir__)
-    # generate_tokenizers_header_file(tokenizers, File.join(c_sources_dir, "tokenizers.h"), is_user_app)
     # puts "Current directory: #{__dir__}"
     # c_sources_dir_output = Dir.glob(File.join(c_sources_dir, "**/*.{h,cpp}"))
   
