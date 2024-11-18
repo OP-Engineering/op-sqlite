@@ -1,4 +1,4 @@
-import {open, type DB} from '@op-engineering/op-sqlite';
+import {isLibsql, open, type DB} from '@op-engineering/op-sqlite';
 import chai from 'chai';
 import {afterEach, beforeEach, describe, it} from './MochaRNAdapter';
 
@@ -14,9 +14,11 @@ export function tokenizerTests() {
         encryptionKey: 'test',
       });
 
-      await db.execute(
-        `CREATE VIRTUAL TABLE tokenizer_table USING fts5(content, tokenize = 'wordtokenizer');`,
-      );
+      if (!isLibsql()) {
+        await db.execute(
+          `CREATE VIRTUAL TABLE tokenizer_table USING fts5(content, tokenize = 'wordtokenizer');`,
+        );
+      }
     });
 
     afterEach(() => {
@@ -28,16 +30,18 @@ export function tokenizerTests() {
       }
     });
 
-    it('Should match the word split by the tokenizer', async () => {
-      await db.execute('INSERT INTO tokenizer_table(content) VALUES (?)', [
-        'This is a test document',
-      ]);
-      const res = await db.execute(
-        'SELECT content FROM tokenizer_table WHERE content MATCH ?',
-        ['test'],
-      );
-      expect(res.rows.length).to.be.equal(1);
-      expect(res.rows[0]!.content).to.be.equal('This is a test document');
-    });
+    if (!isLibsql()) {
+      it('Should match the word split by the tokenizer', async () => {
+        await db.execute('INSERT INTO tokenizer_table(content) VALUES (?)', [
+          'This is a test document',
+        ]);
+        const res = await db.execute(
+          'SELECT content FROM tokenizer_table WHERE content MATCH ?',
+          ['test'],
+        );
+        expect(res.rows.length).to.be.equal(1);
+        expect(res.rows[0]!.content).to.be.equal('This is a test document');
+      });
+    }
   });
 }
