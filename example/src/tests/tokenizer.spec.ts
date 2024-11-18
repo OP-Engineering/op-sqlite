@@ -1,6 +1,6 @@
 import {open, type DB} from '@op-engineering/op-sqlite';
 import chai from 'chai';
-import {afterEach, beforeEach, describe, it, itOnly} from './MochaRNAdapter';
+import {afterEach, beforeEach, describe, it} from './MochaRNAdapter';
 
 const expect = chai.expect;
 
@@ -28,7 +28,7 @@ export function tokenizerTests() {
       }
     });
 
-    itOnly('Should match the word split by the tokenizer', async () => {
+    it('Should match the word split by the tokenizer', async () => {
       await db.execute('INSERT INTO tokenizer_table(content) VALUES (?)', [
         'This is a test document',
       ]);
