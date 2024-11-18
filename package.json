@@ -1,6 +1,6 @@
 {
   "name": "@op-engineering/op-sqlite",
-  "version": "10.0.0",
+  "version": "10.0.0-tokenizers-beta9",
   "description": "Next generation SQLite for React Native",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
@@ -14,6 +14,7 @@
     "ios",
     "cpp",
     "op-sqlite.podspec",
+    "generate_tokenizers_header_file.rb",
     "ios/**.xcframework",
     "!lib/typescript/example",
     "!android/build",

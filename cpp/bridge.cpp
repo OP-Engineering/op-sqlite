@@ -4,8 +4,15 @@
 #include "logs.h"
 #include "utils.h"
 #include <iostream>
+#include <sstream>
 #include <unordered_map>
 #include <variant>
+
+#ifdef TOKENIZERS_HEADER_PATH
+#include TOKENIZERS_HEADER_PATH
+#else
+#define TOKENIZER_LIST
+#endif
 
 namespace opsqlite {
 
@@ -109,8 +116,9 @@ BridgeResult opsqlite_open(std::string const &name,
   if (errMsg != nullptr) {
     return {.type = SQLiteError, .message = errMsg};
   }
-
 #endif
+
+  TOKENIZER_LIST
 
   return {.type = SQLiteOk, .affectedRows = 0};
 }

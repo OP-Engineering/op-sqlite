@@ -4,7 +4,6 @@ let results: any[] = [];
 const server = new BridgeServer('http_service', true);
 
 server.get('/ping', async (_req, _res) => {
-  // console.log("🟦 🟦🟦🟦🟦🟦🟦 🟦 Received request for '/ping'");
   return {message: 'pong'};
 });
 
@@ -23,5 +22,11 @@ export function stopServer() {
 }
 
 export function setServerResults(r: any[]) {
+  console.log('Setting server results');
   results = r;
+}
+
+export function setServerError(e: any) {
+  console.log('Setting server error');
+  results = e;
 }

@@ -177,6 +177,13 @@ export type DB = {
     }[];
     callback: (response: any) => void;
   }) => () => void;
+  /** This function is only available for libsql.
+   * Allows to trigger a sync the database with it's remote replica
+   * In order for this function to work you need to use openSync or openRemote functions
+   * with libsql: true in the package.json
+   *
+   * The database is hosted in turso
+   **/
   sync: () => void;
   flushPendingReactiveQueries: () => Promise<void>;
 };
@@ -405,6 +412,9 @@ function enhanceDB(db: DB, options: any): DB {
   return enhancedDb;
 }
 
+/** Open a replicating connection via libsql to a turso db
+ * libsql needs to be enabled on your package.json
+ */
 export const openSync = (options: {
   url: string;
   authToken: string;
@@ -422,6 +432,9 @@ export const openSync = (options: {
   return enhancedDb;
 };
 
+/** Open a remote connection via libsql to a turso db
+ * libsql needs to be enabled on your package.json
+ */
 export const openRemote = (options: { url: string; authToken: string }): DB => {
   if (!isLibsql()) {
     throw new Error('This function is only available for libsql');

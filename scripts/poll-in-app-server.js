@@ -10,16 +10,25 @@ async function pollInAppServer() {
       const response = await makeHttpRequest('http://127.0.0.1:9000/results');
 
       if (response !== null) {
-        let parsed_response = JSON.parse(response);
-        const allTestsPassed = parsed_response.results.reduce((acc, r) => {
+        let parsedResponse = JSON.parse(response);
+
+        // Wait until some results are returned
+        if (parsedResponse.results.length === 0) {
+          continue;
+        }
+
+        const allTestsPassed = parsedResponse.results.reduce((acc, r) => {
+          console.log(`- ${r.description} : ${r.type}`);
           return acc && r.type !== 'incorrect';
         }, true);
 
         if (allTestsPassed) {
-          console.log('🟢🟢🟢🟢🟢 All tests passed!');
+          console.log(
+            `🟢🟢🟢🟢🟢 ${parsedResponse.results.length} tests passed!`
+          );
           process.exit(0);
         } else {
-          parsed_response.results.forEach((r) => {
+          parsedResponse.results.forEach((r) => {
             if (r.type === 'incorrect') {
               console.log(`🟥Failed: ${JSON.stringify(r, null, 2)}`);
             }

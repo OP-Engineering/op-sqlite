@@ -341,4 +341,14 @@ int mkdir(std::string const &path) {
   return 0;
 }
 
+std::vector<std::string> parse_string_list(const std::string& str) {
+    std::vector<std::string> result;
+    std::istringstream stream(str);
+    std::string token;
+    while (std::getline(stream, token, ',')) {
+        result.push_back(token);
+    }
+    return result;
+}
+
 } // namespace opsqlite

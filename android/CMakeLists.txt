@@ -10,6 +10,7 @@ set (BUILD_DIR ${CMAKE_SOURCE_DIR}/build)
    ../cpp
    ../cpp/sqlcipher
    ../cpp/libsql
+#   ../example/c_sources
  )
 
 add_definitions(
@@ -71,6 +72,13 @@ set_target_properties(
 find_package(ReactAndroid REQUIRED CONFIG)
 find_package(fbjni REQUIRED CONFIG)
 find_library(LOG_LIB log)
+
+# Add user defined files
+if (USER_DEFINED_SOURCE_FILES)
+  target_sources(${PACKAGE_NAME} PRIVATE ${USER_DEFINED_SOURCE_FILES})
+
+  add_definitions("-DTOKENIZERS_HEADER_PATH=\"${USER_DEFINED_TOKENIZERS_HEADER_PATH}\"")
+endif()
 
 if (USE_SQLCIPHER)
   if (ReactAndroid_VERSION_MINOR GREATER_EQUAL 76)
