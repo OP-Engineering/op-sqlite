@@ -11,8 +11,8 @@ async function pollInAppServer() {
 
       if (response !== null) {
         let parsedResponse = JSON.parse(response);
-        console.log('Received response:', parsedResponse);
 
+        // Wait until some results are returned
         if (parsedResponse.results.length === 0) {
           continue;
         }
