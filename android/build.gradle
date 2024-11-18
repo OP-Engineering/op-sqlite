@@ -30,7 +30,7 @@ def isNewArchitectureEnabled() {
 def useSQLCipher = false
 def useLibsql = false
 def useCRSQLite = false
-def performanceMode = "0"
+def performanceMode = false
 def sqliteFlags = ""
 def enableFTS5 = false
 def useSqliteVec = false
@@ -53,7 +53,7 @@ if(opsqliteConfig) {
   useSQLCipher = opsqliteConfig["sqlcipher"]
   useCRSQLite = opsqliteConfig["crsqlite"]
   useSqliteVec = opsqliteConfig["sqliteVec"]
-  performanceMode = opsqliteConfig["performanceMode"] ? opsqliteConfig["performanceMode"] : ""
+  performanceMode = opsqliteConfig["performanceMode"]
   sqliteFlags = opsqliteConfig["sqliteFlags"] ? opsqliteConfig["sqliteFlags"] : ""
   enableFTS5 = opsqliteConfig["fts5"]
   useLibsql = opsqliteConfig["libsql"]
@@ -73,12 +73,8 @@ if(useCRSQLite) {
   println "[OP-SQLITE] using CR-SQLite 🤖"
 }
 
-if(performanceMode == "1") {
-  println "[OP-SQLITE] Thread unsafe performance mode enabled. Use only transactions! 🚀"
-}
-
-if(performanceMode == "2") {
-  println "[OP-SQLITE] Thread safe performance mode enabled! 🚀"
+if(performanceMode) {
+  println "[OP-SQLITE] Performance mode enabled! 🚀"
 }
 
 if(enableFTS5) {
@@ -151,10 +147,7 @@ android {
               cFlags += "-DOP_SQLITE_USE_CRSQLITE=1"
               cppFlags += "-DOP_SQLITE_USE_CRSQLITE=1"
             }
-            if(performanceMode == '1') {
-              cFlags  += ["-DSQLITE_DQS=0", "-DSQLITE_THREADSAFE=0", "-DSQLITE_DEFAULT_MEMSTATUS=0", "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1", "-DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1", "-DSQLITE_MAX_EXPR_DEPTH=0", "-DSQLITE_OMIT_DEPRECATED=1", "-DSQLITE_OMIT_PROGRESS_CALLBACK=1", "-DSQLITE_OMIT_SHARED_CACHE=1", "-DSQLITE_USE_ALLOCA=1"]
-            }
-            if(performanceMode == '2') {
+            if(performanceMode) {
               cFlags += ["-DSQLITE_DQS=0", "-DSQLITE_THREADSAFE=1", "-DSQLITE_DEFAULT_MEMSTATUS=0", "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1", "-DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1", "-DSQLITE_MAX_EXPR_DEPTH=0", "-DSQLITE_OMIT_DEPRECATED=1", "-DSQLITE_OMIT_PROGRESS_CALLBACK=1", "-DSQLITE_OMIT_SHARED_CACHE=1", "-DSQLITE_USE_ALLOCA=1"]
             }
             if(enableFTS5) {

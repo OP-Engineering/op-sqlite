@@ -24,7 +24,7 @@ op_sqlite_config = app_package["op-sqlite"]
 use_sqlcipher = false
 use_crsqlite = false
 use_libsql = false
-performance_mode = "0"
+performance_mode = false
 phone_version = false
 sqlite_flags = ""
 fts5 = false
@@ -36,7 +36,7 @@ if(op_sqlite_config != nil)
   use_sqlcipher = op_sqlite_config["sqlcipher"] == true
   use_crsqlite = op_sqlite_config["crsqlite"] == true
   use_libsql = op_sqlite_config["libsql"] == true
-  performance_mode = op_sqlite_config["performanceMode"] || "0"
+  performance_mode = op_sqlite_config["performanceMode"] || false
   phone_version = op_sqlite_config["iosSqlite"] == true
   sqlite_flags = op_sqlite_config["sqliteFlags"] || ""
   fts5 = op_sqlite_config["fts5"] == true
@@ -136,7 +136,7 @@ Pod::Spec.new do |s|
   end
 
   other_cflags = '-DSQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION=1'
-  optimizedCflags = other_cflags + '$(inherited) -DSQLITE_DQS=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1 -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DEPRECATED=1 -DSQLITE_OMIT_PROGRESS_CALLBACK=1 -DSQLITE_OMIT_SHARED_CACHE=1 -DSQLITE_USE_ALLOCA=1'
+  optimizedCflags = '$(inherited) -DSQLITE_DQS=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1 -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DEPRECATED=1 -DSQLITE_OMIT_PROGRESS_CALLBACK=1 -DSQLITE_OMIT_SHARED_CACHE=1 -DSQLITE_USE_ALLOCA=1 -DSQLITE_THREADSAFE=1'
   frameworks = []
 
   if fts5 then
@@ -156,14 +156,9 @@ Pod::Spec.new do |s|
     s.library = "sqlite3"
   end
 
-  if performance_mode == '1' then
-    log_message.call("[OP-SQLITE] Thread unsafe (1) performance mode enabled. Use only transactions! 🚀🚀")
-    other_cflags = optimizedCflags + ' -DSQLITE_THREADSAFE=0 '
-  end
-
-  if performance_mode == '2' then
-    log_message.call("[OP-SQLITE] Thread safe (2) performance mode enabled 🚀")
-    other_cflags = optimizedCflags + ' -DSQLITE_THREADSAFE=1 '
+  if performance_mode then
+    log_message.call("[OP-SQLITE] Performance mode enabled, some features might be disabled 🚀")
+    other_cflags += optimizedCflags
   end
 
   if use_crsqlite then
