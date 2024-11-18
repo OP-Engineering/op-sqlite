@@ -13,7 +13,12 @@ import RNRestart from 'react-native-restart';
 import Share from 'react-native-share';
 import 'reflect-metadata';
 import {createLargeDB, queryLargeDB} from './Database';
-import {setServerResults, startServer, stopServer} from './server';
+import {
+  setServerError,
+  setServerResults,
+  startServer,
+  stopServer,
+} from './server';
 import {constantsTests} from './tests/constants.spec';
 import {registerHooksTests} from './tests/hooks.spec';
 import {blobTests, dbSetupTests, queriesTests, runTests} from './tests/index';
@@ -40,10 +45,14 @@ export default function App() {
       constantsTests,
       reactiveTests,
       tokenizerTests,
-    ).then(results => {
-      setServerResults(results as any);
-      setResults(results);
-    });
+    )
+      .then(results => {
+        setServerResults(results as any);
+        setResults(results);
+      })
+      .catch(e => {
+        setServerError(e);
+      });
 
     startServer();
 
