@@ -14,7 +14,7 @@ async function pollInAppServer() {
         console.log('Received response:', parsedResponse);
 
         if (parsedResponse.results.length === 0) {
-          console.log('0 tests ran WTF');
+          continue;
         }
 
         const allTestsPassed = parsedResponse.results.reduce((acc, r) => {
