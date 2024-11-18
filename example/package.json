@@ -73,7 +73,7 @@
     "iosSqlite": false,
     "fts5": true,
     "rtree": true,
-    "libsql": false,
+    "libsql": true,
     "sqliteVec": true,
     "tokenizers": [
       "wordtokenizer",
