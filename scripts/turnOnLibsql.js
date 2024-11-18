@@ -1,7 +1,5 @@
 const fs = require('fs');
 
-console.log('Current working directory:', process.cwd());
-
 // Read the package.json file
 const packageJson = JSON.parse(fs.readFileSync('./example/package.json'));
 
@@ -15,4 +13,4 @@ fs.writeFileSync(
   JSON.stringify(packageJson, null, 2)
 );
 
-console.log('package.json updated successfully!');
+console.log('Turned on libsql in package.json', packageJson);

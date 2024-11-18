@@ -1,3 +1,4 @@
+import {open} from '@op-engineering/op-sqlite';
 import clsx from 'clsx';
 import {useEffect, useState} from 'react';
 import {
@@ -8,17 +9,22 @@ import {
   Text,
   View,
 } from 'react-native';
+import RNRestart from 'react-native-restart';
+import Share from 'react-native-share';
 import 'reflect-metadata';
+import {createLargeDB, queryLargeDB} from './Database';
+import {
+  setServerError,
+  setServerResults,
+  startServer,
+  stopServer,
+} from './server';
 import {constantsTests} from './tests/constants.spec';
 import {registerHooksTests} from './tests/hooks.spec';
 import {blobTests, dbSetupTests, queriesTests, runTests} from './tests/index';
 import {preparedStatementsTests} from './tests/preparedStatements.spec';
 import {reactiveTests} from './tests/reactive.spec';
-import {setServerResults, startServer, stopServer} from './server';
-import {open} from '@op-engineering/op-sqlite';
-import Share from 'react-native-share';
-import {createLargeDB, queryLargeDB} from './Database';
-import RNRestart from 'react-native-restart';
+import {tokenizerTests} from './tests/tokenizer.spec';
 
 export default function App() {
   const [times, setTimes] = useState<number[]>([]);
@@ -38,10 +44,15 @@ export default function App() {
       preparedStatementsTests,
       constantsTests,
       reactiveTests,
-    ).then(results => {
-      setServerResults(results as any);
-      setResults(results);
-    });
+      tokenizerTests,
+    )
+      .then(results => {
+        setServerResults(results as any);
+        setResults(results);
+      })
+      .catch(e => {
+        setServerError(e);
+      });
 
     startServer();
 

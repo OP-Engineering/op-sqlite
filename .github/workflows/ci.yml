@@ -420,12 +420,9 @@ jobs:
     env:
       TURBO_CACHE_DIR: .turbo/android
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Turn on libsql
-        run: |
-          node ./scripts/turnOnLibsql.js
+      - run: node ./scripts/turnOnLibsql.js
 
       - name: Setup
         uses: ./.github/actions/setup

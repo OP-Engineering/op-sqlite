@@ -1,9 +1,11 @@
 require "json"
+require_relative "./generate_tokenizers_header_file"
 
 log_message = lambda do |message|
   puts "\e[34m#{message}\e[0m"
 end
 
+is_user_app = __dir__.include?("node_modules")
 package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 folly_compiler_flags = '-DFOLLY_NO_CONFIG -DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1 -Wno-comma -Wno-shorten-64-to-32'
 fabric_enabled = ENV['RCT_NEW_ARCH_ENABLED'] == '1'
@@ -11,7 +13,7 @@ fabric_enabled = ENV['RCT_NEW_ARCH_ENABLED'] == '1'
 parent_folder_name = File.basename(__dir__)
 app_package = nil
 # When installed on user node_modules lives inside node_modules/@op-engineering/op-sqlite
-if __dir__.include?("node_modules")
+if is_user_app
   app_package = JSON.parse(File.read(File.join(__dir__, "..", "..", "..", "package.json")))
 # When running on the example app
 else
@@ -28,6 +30,7 @@ sqlite_flags = ""
 fts5 = false
 rtree = false
 use_sqlite_vec = false
+tokenizers = []
 
 if(op_sqlite_config != nil)
   use_sqlcipher = op_sqlite_config["sqlcipher"] == true
@@ -39,6 +42,7 @@ if(op_sqlite_config != nil)
   fts5 = op_sqlite_config["fts5"] == true
   rtree = op_sqlite_config["rtree"] == true
   use_sqlite_vec = op_sqlite_config["sqliteVec"] == true
+  tokenizers = op_sqlite_config["tokenizers"] || []
 end
 
 if phone_version then
@@ -74,12 +78,37 @@ Pod::Spec.new do |s|
   s.platforms    = { :ios => "13.0", :osx => "10.15", :visionos => "1.0" }
   s.source       = { :git => "https://github.com/op-engineering/op-sqlite.git", :tag => "#{s.version}" }
   
-  s.source_files = "ios/**/*.{h,m,mm}", "cpp/**/*.{h,cpp,c}"
+  # Base source files
+  source_files = Dir.glob("ios/**/*.{h,m,mm}") + Dir.glob("cpp/**/*.{h,cpp,c}")
+
+  # Set the path to the `c_sources` directory based on environment
+  if is_user_app
+    c_sources_dir = File.join("..", "..", "..", "c_sources")
+  else
+    c_sources_dir = File.join("example", "c_sources")
+  end
+  
+
+  if tokenizers.any?
+    generate_tokenizers_header_file(tokenizers, File.join(c_sources_dir, "tokenizers.h"))
+    FileUtils.cp_r(c_sources_dir, __dir__)
+    # puts "Current directory: #{__dir__}"
+    # c_sources_dir_output = Dir.glob(File.join(c_sources_dir, "**/*.{h,cpp}"))
+  
+    # puts "c_sources_dir: #{c_sources_dir_output}"
+  
+    # # Add all .h and .c files from the `c_sources` directory
+    source_files += Dir.glob(File.join("c_sources", "**/*.{h,cpp}"))
+    # source_files += ["../../c_sources/tokenizers.h", "../../c_sources/tokenizers.cpp"]
+    # puts "Source files: #{source_files}"
+  end
+
+  # Assign the collected source files to `s.source_files`
+  s.source_files = source_files
 
   xcconfig = {
     :GCC_PREPROCESSOR_DEFINITIONS => "HAVE_FULLFSYNC=1",
     :WARNING_CFLAGS => "-Wno-shorten-64-to-32 -Wno-comma -Wno-unreachable-code -Wno-conditional-uninitialized -Wno-deprecated-declarations",
-    :USE_HEADERMAP => "No",
     :CLANG_CXX_LANGUAGE_STANDARD => "c++17",
   }
 
@@ -87,7 +116,7 @@ Pod::Spec.new do |s|
   
   if use_sqlcipher then
     log_message.call("[OP-SQLITE] using SQLCipher 🔒")
-    s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h"
+    s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h"
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_SQLCIPHER=1 HAVE_FULLFSYNC=1 SQLITE_HAS_CODEC SQLITE_TEMP_STORE=2"
     s.dependency "OpenSSL-Universal"    
   elsif use_libsql then
@@ -95,7 +124,7 @@ Pod::Spec.new do |s|
     s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/bridge.h", "cpp/bridge.cpp"
   else
     log_message.call("[OP-SQLITE] using vanilla SQLite 📦")
-    s.exclude_files = "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h"
+    s.exclude_files = "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h"
   end
   
   s.dependency "React-callinvoker"
@@ -129,12 +158,12 @@ Pod::Spec.new do |s|
 
   if performance_mode == '1' then
     log_message.call("[OP-SQLITE] Thread unsafe (1) performance mode enabled. Use only transactions! 🚀🚀")
-    xcconfig[:OTHER_CFLAGS] = optimizedCflags + ' -DSQLITE_THREADSAFE=0 '
+    other_cflags = optimizedCflags + ' -DSQLITE_THREADSAFE=0 '
   end
 
   if performance_mode == '2' then
     log_message.call("[OP-SQLITE] Thread safe (2) performance mode enabled 🚀")
-    xcconfig[:OTHER_CFLAGS] = optimizedCflags + ' -DSQLITE_THREADSAFE=1 '
+    other_cflags = optimizedCflags + ' -DSQLITE_THREADSAFE=1 '
   end
 
   if use_crsqlite then
@@ -160,9 +189,19 @@ Pod::Spec.new do |s|
 
   if sqlite_flags != "" then
     log_message.call("[OP-SQLITE] Custom SQLite flags: #{sqlite_flags}")
-    xcconfig[:OTHER_CFLAGS] += " #{sqlite_flags}"
+    other_cflags += " #{sqlite_flags}"
   end
 
+  if tokenizers.any? then
+    log_message.call("[OP_SQLITE] Tokenizers enabled: #{tokenizers}")
+    if is_user_app then
+      other_cflags += " -DTOKENIZERS_HEADER_PATH=\\\"../c_sources/tokenizers.h\\\""
+    else 
+      other_cflags += " -DTOKENIZERS_HEADER_PATH=\\\"../example/c_sources/tokenizers.h\\\""
+    end
+  end
+
+  xcconfig[:OTHER_CFLAGS] = other_cflags
   s.pod_target_xcconfig = xcconfig
   s.vendored_frameworks = frameworks
 end
