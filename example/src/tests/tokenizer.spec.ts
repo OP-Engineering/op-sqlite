@@ -36,7 +36,6 @@ export function tokenizerTests() {
         'SELECT content FROM tokenizer_table WHERE content MATCH ?',
         ['test'],
       );
-      console.warn(res);
       expect(res.rows.length).to.be.equal(1);
       expect(res.rows[0]!.content).to.be.equal('This is a test document');
     });
