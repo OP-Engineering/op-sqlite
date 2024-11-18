@@ -93,6 +93,11 @@ if(useSqliteVec) {
     println "[OP-SQLITE] Sqlite Vec enabled! ↗️"
 }
 
+
+if (!tokenizers.isEmpty()) {
+  println "[OP-SQLITE] Tokenizers enabled! 🧾 Tokenizers: " + tokenizers
+}
+
 if (isNewArchitectureEnabled()) {
     apply plugin: "com.facebook.react"
 }
