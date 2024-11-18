@@ -12,3 +12,5 @@ fs.writeFileSync(
   './example/package.json',
   JSON.stringify(packageJson, null, 2)
 );
+
+console.log('Turned on libsql in package.json', packageJson);
