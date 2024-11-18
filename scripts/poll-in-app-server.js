@@ -11,8 +11,14 @@ async function pollInAppServer() {
 
       if (response !== null) {
         let parsedResponse = JSON.parse(response);
+        console.log('Received response:', parsedResponse);
+
+        if (parsedResponse.results.length === 0) {
+          console.log('0 tests ran WTF');
+        }
+
         const allTestsPassed = parsedResponse.results.reduce((acc, r) => {
-          console.log(r.description);
+          console.log(`- ${r.description} : ${r.type}`);
           return acc && r.type !== 'incorrect';
         }, true);
 
