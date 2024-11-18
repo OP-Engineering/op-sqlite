@@ -177,8 +177,6 @@ android {
               }
               sourceFiles = fileTree(dir: destDir, include: ["**/*.cpp", "**/*.h"]).files.join(";")
               tokenizersHeaderPath = "../c_sources/tokenizers.h" 
-              println("tokenizers header path $tokenizersHeaderPath")
-
             }
 
             cppFlags "-O2", "-fexceptions", "-DONANDROID"
@@ -190,7 +188,6 @@ android {
               "-DUSE_LIBSQL=${useLibsql ? 1 : 0}",
               "-DUSE_SQLITE_VEC=${useSqliteVec ? 1 : 0}",
               "-DUSER_DEFINED_SOURCE_FILES=${sourceFiles}",
-              // "-DUSER_DEFINED_TOKENIZER_INIT_STRINGS='${tokenizerInitStrings}'",
               "-DUSER_DEFINED_TOKENIZERS_HEADER_PATH='${tokenizersHeaderPath}'"
         }
     }

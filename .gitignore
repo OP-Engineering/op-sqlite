@@ -82,3 +82,5 @@ android/gradle/
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+android/c_sources
