@@ -788,6 +788,127 @@ opsqlite_libsql_execute_raw(std::string const &name, std::string const &query,
           .insertId = static_cast<double>(insert_row_id)};
 }
 
+BridgeResult opsqlite_libsql_execute_sync(std::string const &name,
+                                          std::string const &query,
+                                          const std::vector<JSVariant> *params) {
+
+  check_db_open(name);
+
+  std::vector<std::string> column_names;
+  std::vector<std::vector<JSVariant>> out_rows;
+  std::vector<JSVariant> out_row;
+  libsql_connection_t c = db_map[name].c;
+  libsql_rows_t rows;
+  libsql_row_t row;
+  libsql_stmt_t stmt;
+  int status;
+  const char *err = nullptr;
+
+  status = libsql_prepare(c, query.c_str(), &stmt, &err);
+
+  if (status != 0) {
+    return {.type = SQLiteError, .message = err};
+  }
+
+  if (params != nullptr && !params->empty()) {
+    opsqlite_libsql_bind_statement(stmt, params);
+  }
+
+  status = libsql_query_stmt(stmt, &rows, &err);
+
+  if (status != 0) {
+    return {.type = SQLiteError, .message = err};
+  }
+
+  // Get the column names on the first pass
+  int column_count = libsql_column_count(rows);
+  const char *col_name;
+
+  for (int i = 0; i < column_count; i++) {
+    status = libsql_column_name(rows, i, &col_name, &err);
+    if (status != 0) {
+      throw std::runtime_error(err);
+    }
+    column_names.emplace_back(col_name);
+  }
+
+  long long int_value;
+  double float_value;
+  const char *text_value;
+  blob blob_value;
+
+  status = libsql_next_row(rows, &row, &err);
+  while (status == 0) {
+    out_row = std::vector<JSVariant>();
+
+    if (!err && !row) {
+      break;
+    }
+
+    for (int col = 0; col < column_count; col++) {
+      int type;
+
+      libsql_column_type(rows, row, col, &type, &err);
+
+      switch (type) {
+      case LIBSQL_INT:
+        status = libsql_get_int(row, col, &int_value, &err);
+        out_row.emplace_back(int_value);
+        break;
+
+      case LIBSQL_FLOAT:
+        status = libsql_get_float(row, col, &float_value, &err);
+        out_row.emplace_back(float_value);
+        break;
+
+      case LIBSQL_TEXT:
+        status = libsql_get_string(row, col, &text_value, &err);
+        out_row.emplace_back(text_value);
+        break;
+
+      case LIBSQL_BLOB: {
+        libsql_get_blob(row, col, &blob_value, &err);
+        auto data = new uint8_t[blob_value.len];
+        // You cannot share raw memory between native and JS
+        // always copy the data
+        memcpy(data, blob_value.ptr, blob_value.len);
+        libsql_free_blob(blob_value);
+        out_row.emplace_back(
+            ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+                        .size = static_cast<size_t>(blob_value.len)});
+        break;
+      }
+
+      case LIBSQL_NULL:
+        // intentional fall-through
+      default:
+        out_row.emplace_back(nullptr);
+        break;
+      }
+
+      if (status != 0) {
+        throw std::runtime_error(err);
+      }
+    }
+
+    out_rows.emplace_back(out_row);
+    err = nullptr;
+    status = libsql_next_row(rows, &row, &err);
+  }
+
+  libsql_free_rows(rows);
+  libsql_free_stmt(stmt);
+
+  unsigned long long changes = libsql_changes(c);
+  long long insert_row_id = libsql_last_insert_rowid(c);
+
+  return {.type = SQLiteOk,
+          .affectedRows = static_cast<int>(changes),
+          .insertId = static_cast<double>(insert_row_id),
+          .rows = std::move(out_rows),
+          .column_names = std::move(column_names)};
+}
+
 BatchResult
 opsqlite_libsql_execute_batch(std::string const &name,
                               std::vector<BatchArguments> *commands) {

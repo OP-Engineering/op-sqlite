@@ -59,15 +59,15 @@ BridgeResult opsqlite_libsql_execute(
     std::string const &name, std::string const &query,
     const std::vector<JSVariant> *params);
 
-    BridgeResult opsqlite_libsql_execute_with_host_objects(
-            std::string const &name, std::string const &query,
-            const std::vector<JSVariant> *params, std::vector<DumbHostObject> *results,
+BridgeResult opsqlite_libsql_execute_with_host_objects(
+    std::string const &name, std::string const &query,
+    const std::vector<JSVariant> *params, std::vector<DumbHostObject> *results,
             const std::shared_ptr<std::vector<SmartHostObject>>& metadatas);
 
 BridgeResult
 opsqlite_libsql_execute_raw(std::string const &dbName, std::string const &query,
-                            const std::vector<JSVariant> *params,
-                            std::vector<std::vector<JSVariant>> *results);
+    const std::vector<JSVariant> *params,
+    std::vector<std::vector<JSVariant>> *results);
 
 BatchResult
 opsqlite_libsql_execute_batch(std::string const &name,
@@ -84,6 +84,10 @@ void opsqlite_libsql_bind_statement(libsql_stmt_t stmt,
 BridgeResult opsqlite_libsql_execute_prepared_statement(
     std::string const &name, libsql_stmt_t stmt,
     std::vector<DumbHostObject> *results,
-    const std::shared_ptr<std::vector<SmartHostObject>>& metadatas);
+    const std::shared_ptr<std::vector<SmartHostObject>> &metadatas);
+
+BridgeResult opsqlite_libsql_execute_sync(
+    std::string const &name, std::string const &query,
+    const std::vector<JSVariant> *params);
 
 } // namespace opsqlite

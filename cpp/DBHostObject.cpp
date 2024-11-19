@@ -426,6 +426,38 @@ void DBHostObject::create_jsi_functions() {
     return promise;
   });
 
+  auto executeSync = HOSTFN("executeSync") {
+    std::string query = args[0].asString(rt).utf8(rt);
+    std::vector<JSVariant> params;
+
+    if (count == 2) {
+      params = to_variant_vec(rt, args[1]);
+    }
+
+    try {
+#ifdef OP_SQLITE_USE_LIBSQL
+      auto status = opsqlite_libsql_execute(db_name, query, &params);
+#else
+      auto status = opsqlite_execute(db_name, query, &params);
+#endif
+
+      if (status.type == SQLiteOk) {
+        return create_js_rows(rt, status);
+      } else {
+        auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+        auto error = errorCtr.callAsConstructor(
+            rt, jsi::String::createFromUtf8(rt, status.message));
+        throw jsi::JSError(rt, error);
+      }
+    } catch (std::exception &exc) {
+      auto what = exc.what();
+      auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+      auto error = errorCtr.callAsConstructor(
+          rt, jsi::String::createFromAscii(rt, what));
+      throw jsi::JSError(rt, error);
+    }
+  });
+
   auto execute_with_host_objects = HOSTFN("executeWithHostObjects") {
     const std::string query = args[0].asString(rt).utf8(rt);
     std::vector<JSVariant> params;
@@ -835,6 +867,7 @@ void DBHostObject::create_jsi_functions() {
   function_map["detach"] = std::move(detach);
   function_map["close"] = std::move(close);
   function_map["execute"] = std::move(execute);
+  function_map["executeSync"] = std::move(executeSync);
   function_map["executeRaw"] = std::move(execute_raw);
   function_map["executeWithHostObjects"] = std::move(execute_with_host_objects);
   function_map["delete"] = std::move(remove);
@@ -867,6 +900,9 @@ jsi::Value DBHostObject::get(jsi::Runtime &rt,
   auto name = propNameID.utf8(rt);
   if (name == "execute") {
     return jsi::Value(rt, function_map["execute"]);
+  }
+  if (name == "executeSync") {
+    return jsi::Value(rt, function_map["executeSync"]);
   }
   if (name == "flushPendingReactiveQueries") {
     return jsi::Value(rt, function_map["flushPendingReactiveQueries"]);

@@ -652,5 +652,27 @@ export function queriesTests() {
       await db.execute('SELECT 1; ', []);
       await db.execute('SELECT ?; ', [1]);
     });
+
+    it('Synchronous execute', () => {
+      const id = chance.integer();
+      const name = chance.name();
+      const age = chance.integer();
+      const networth = chance.floating();
+      db.executeSync(
+        'INSERT INTO User (id, name, age, networth) VALUES(?, ?, ?, ?)',
+        [id, name, age, networth],
+      );
+
+      const res = db.executeSync('SELECT * FROM User');
+      expect(res.rows).to.eql([
+        {
+          id,
+          name,
+          age,
+          networth,
+          nickname: null,
+        },
+      ]);
+    });
   });
 }

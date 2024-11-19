@@ -60,6 +60,9 @@ public:
   void invalidate();
   ~DBHostObject();
 
+  // Declare the new executeSync function
+  jsi::Value executeSync(jsi::Runtime &rt, const jsi::Value *args, size_t count);
+
 private:
     std::set<std::shared_ptr<ReactiveQuery>> pending_reactive_queries;
   void auto_register_update_hook();
