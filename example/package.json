@@ -6,7 +6,7 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios --scheme='debug' --simulator='iPhone 16 Pro'",
     "run:ios:unused": "xcodebuild -workspace ios/OPSQLiteExample.xcworkspace -scheme release -configuration Release -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' clean build",
-    "run:ios": "react-native run-ios --scheme='release' --simulator='iPhone 16 Pro' --no-packager",
+    "run:ios": "react-native run-ios --scheme='release' --no-packager",
     "start": "react-native start",
     "pods": "cd ios && bundle exec pod install",
     "pods:nuke": "cd ios && rm -rf Pods && rm -rf Podfile.lock && bundle exec pod install",
