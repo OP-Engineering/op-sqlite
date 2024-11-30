@@ -50,6 +50,11 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextB
         }
     }
 
+    @ReactMethod(isBlockingSynchronousMethod = true)
+    fun getDylibPath(bundleId: String, name: String) {
+        throw Exception("Do not call getDylibPath on Android")
+    }
+
     @ReactMethod
     fun moveAssetsDatabase(args: ReadableMap, promise: Promise) {
         val filename = args.getString("filename")!!
