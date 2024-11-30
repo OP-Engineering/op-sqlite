@@ -1,4 +1,4 @@
-![benchmark](benchmark.jpg)
+![benchmark](benchmark2.jpg)
 
 Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider sponsoring!**.
 
