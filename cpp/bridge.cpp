@@ -988,28 +988,30 @@ BridgeResult opsqlite_load_extension(std::string const &db_name,
                                      std::string &entry_point) {
 #ifdef OP_SQLITE_USE_PHONE_VERSION
   throw std::runtime_error(
-      "Embedded version of SQLite does not support loading extensions");
+      "[op-sqlite] Embedded version of SQLite does not support loading extensions");
 #else
   check_db_open(db_name);
 
   sqlite3 *db = dbMap[db_name];
-  int loading_extensions_enabled = sqlite3_enable_load_extension(db, 1);
-  if (loading_extensions_enabled != SQLITE_OK) {
+  int status = 0;
+  status = sqlite3_enable_load_extension(db, 1);
+  if (status != SQLITE_OK) {
     return {SQLiteError, "[op-sqlite] could not enable extension loading"};
   }
-  const char *path_cstr = path.c_str();
-  const char *entry_point_cstr;
+
+  const char *entry_point_cstr = nullptr;
   if (!entry_point.empty()) {
     entry_point_cstr = entry_point.c_str();
   }
 
   char *error_message;
 
-  int extension_loaded =
-      sqlite3_load_extension(db, path_cstr, entry_point_cstr, &error_message);
-  if (extension_loaded != SQLITE_OK) {
+  status = sqlite3_load_extension(db, path.c_str(), entry_point_cstr,
+                                  &error_message);
+  if (status != SQLITE_OK) {
     return {SQLiteError, std::string(error_message)};
   }
+    
   return {SQLiteOk};
 #endif
 }
