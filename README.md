@@ -21,6 +21,8 @@ Some of the big supported features:
 - sqlite-vec plugin
 - Reactive queries
 - Custom tokenizers
+- Load runtime extensions
+- JSONB support
 
 # License
 
