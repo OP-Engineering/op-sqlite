@@ -465,6 +465,10 @@ export const moveAssetsDatabase = async (args: {
   return NativeModules.OPSQLite.moveAssetsDatabase(args);
 };
 
+export const getDylibPath = (bundle: string, name: string): string => {
+  return NativeModules.OPSQLite.getDylibPath(bundle, name);
+};
+
 export const isSQLCipher = (): boolean => {
   return OPSQLite.isSQLCipher();
 };

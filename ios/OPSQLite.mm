@@ -93,6 +93,13 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
   return @true;
 }
 
+RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(getDylibPath : (
+    NSString *)bundleId andResource : (NSString *)resourceName) {
+  NSBundle *bundle = [NSBundle bundleWithIdentifier:bundleId];
+  NSString *path = [bundle pathForResource:resourceName ofType:@""];
+  return path;
+}
+
 RCT_EXPORT_METHOD(moveAssetsDatabase : (NSDictionary *)args resolve : (
     RCTPromiseResolveBlock)resolve reject : (RCTPromiseRejectBlock)reject) {
   NSString *documentPath = [NSSearchPathForDirectoriesInDomains(

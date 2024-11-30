@@ -1,9 +1,10 @@
-import {open} from '@op-engineering/op-sqlite';
+import {getDylibPath, open} from '@op-engineering/op-sqlite';
 import clsx from 'clsx';
 import {useEffect, useState} from 'react';
 import {
   Button,
   Clipboard,
+  Platform,
   SafeAreaView,
   ScrollView,
   Text,
@@ -131,10 +132,27 @@ export default function App() {
     }, 200);
   };
 
+  const loadExtention = async () => {
+    try {
+      let db = open({name: 'extension.sqlite'});
+      let path = 'libcrsqlite';
+      if (Platform.OS === 'ios') {
+        console.log('Getting new path');
+        path = getDylibPath('io.vlcn.crsqlite', 'crsqlite');
+      }
+      console.log(`final path ${path}`);
+      db.loadExtension(path);
+      console.log('Loaded extension!');
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-neutral-900">
       <ScrollView>
         <Button title="Reload app middle of query" onPress={queryAndReload} />
+        <Button title="Load extension" onPress={loadExtention} />
         <Button title="Share DB" onPress={shareDb} />
         <Button title="Copy DB Path" onPress={copyDbPathToClipboad} />
         <Button title="Create 300k Record DB" onPress={createLargeDb} />
