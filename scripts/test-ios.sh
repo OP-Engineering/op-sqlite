@@ -1,5 +1,5 @@
 #!/bin/bash
 
-yarn turbo run run:ios --cache-dir=.turbo/ios
+yarn run run:ios
 echo "Polling in-app server..."
 node ./scripts/poll-in-app-server.js
