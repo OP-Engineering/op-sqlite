@@ -69,7 +69,7 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
                metadata, resolve, reject] {
                 if (status.type == SQLiteOk) {
                   auto jsiResult =
-                      createResult(rt, status, results.get(), metadata);
+                      create_result(rt, status, results.get(), metadata);
                   resolve->asObject(rt).asFunction(rt).call(
                       rt, std::move(jsiResult));
                 } else {
