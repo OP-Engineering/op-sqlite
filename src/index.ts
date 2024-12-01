@@ -147,8 +147,8 @@ export type DB = {
   ) => void;
   detach: (mainDbName: string, alias: string) => void;
   transaction: (fn: (tx: Transaction) => Promise<void>) => Promise<void>;
-  executeSync: (query: string, params?: any[]) => QueryResult;
-  execute: (query: string, params?: any[]) => Promise<QueryResult>;
+  executeSync: (query: string, params?: Scalar[]) => QueryResult;
+  execute: (query: string, params?: Scalar[]) => Promise<QueryResult>;
   executeWithHostObjects: (
     query: string,
     params?: any[]
