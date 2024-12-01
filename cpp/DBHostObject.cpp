@@ -376,7 +376,7 @@ void DBHostObject::create_jsi_functions() {
       params = to_variant_vec(rt, args[1]);
     }
 #ifdef OP_SQLITE_USE_LIBSQL
-      auto status = opsqlite_libsql_execute(db_name, query, &params);
+    auto status = opsqlite_libsql_execute(db_name, query, &params);
 #else
     auto status = opsqlite_execute(db_name, query, &params);
 #endif
@@ -888,9 +888,11 @@ jsi::Value DBHostObject::get(jsi::Runtime &rt,
                              const jsi::PropNameID &propNameID) {
   auto name = propNameID.utf8(rt);
   if (function_map.count(name) != 1) {
-      return HOSTFN(name.c_str()) {
-          throw std::runtime_error("[op-sqlite] Function " + name + " not implemented for current backend (libsql or sqlcipher)");
-      });
+    return HOSTFN(name.c_str()) {
+      throw std::runtime_error(
+          "[op-sqlite] Function " + name +
+          " not implemented for current backend (libsql or sqlcipher)");
+    });
   }
 
   return jsi::Value(rt, function_map[name]);
