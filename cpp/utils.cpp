@@ -84,7 +84,7 @@ std::vector<std::string> to_string_vec(jsi::Runtime &rt, jsi::Value const &xs) {
   std::vector<std::string> res;
   for (int ii = 0; ii < values.length(rt); ii++) {
     std::string value = values.getValueAtIndex(rt, ii).asString(rt).utf8(rt);
-    res.push_back(value);
+    res.emplace_back(value);
   }
   return res;
 }
@@ -94,7 +94,7 @@ std::vector<int> to_int_vec(jsi::Runtime &rt, jsi::Value const &xs) {
   std::vector<int> res;
   for (int ii = 0; ii < values.length(rt); ii++) {
     int value = static_cast<int>(values.getValueAtIndex(rt, ii).asNumber());
-    res.push_back(value);
+    res.emplace_back(value);
   }
   return res;
 }
@@ -110,7 +110,7 @@ std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt, jsi::Value const &xs) {
 
   for (int ii = 0; ii < values.length(rt); ii++) {
     jsi::Value value = values.getValueAtIndex(rt, ii);
-    res.push_back(toVariant(rt, value));
+    res.emplace_back(toVariant(rt, value));
   }
 
   return res;
@@ -235,12 +235,12 @@ void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batchParams,
         const jsi::Value &p = batchUpdateParams.getValueAtIndex(rt, x);
         auto params =
             std::make_shared<std::vector<JSVariant>>(to_variant_vec(rt, p));
-        commands->push_back({query, params});
+        commands->emplace_back(query, params);
       }
     } else {
       auto params = std::make_shared<std::vector<JSVariant>>(
           to_variant_vec(rt, commandParams));
-      commands->push_back({query, params});
+      commands->emplace_back(query, params);
     }
   }
 }
@@ -304,7 +304,7 @@ std::vector<std::string> parse_string_list(const std::string &str) {
   std::istringstream stream(str);
   std::string token;
   while (std::getline(stream, token, ',')) {
-    result.push_back(token);
+    result.emplace_back(token);
   }
   return result;
 }
