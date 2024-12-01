@@ -67,6 +67,25 @@ export function queriesTests() {
     //   });
     // }
 
+    it('executeSync', () => {
+      const res = db.executeSync('SELECT 1');
+      expect(res.rowsAffected).to.equal(0);
+
+      const id = chance.integer();
+      const name = chance.name();
+      const age = chance.integer();
+      const networth = chance.floating();
+      const res2 = db.executeSync(
+        'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+        [id, name, age, networth],
+      );
+
+      expect(res2.rowsAffected).to.equal(1);
+      expect(res2.insertId).to.equal(1);
+      expect(res2.rows).to.eql([]);
+      expect(res2.rows?.length).to.equal(0);
+    });
+
     it('Insert', async () => {
       const id = chance.integer();
       const name = chance.name();

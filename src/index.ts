@@ -45,6 +45,8 @@ export const {
   ? NativeModules.OPSQLite.getConstants()
   : NativeModules.OPSQLite;
 
+type Scalar = string | number | boolean | null | ArrayBuffer | ArrayBufferView;
+
 /**
  * Object returned by SQL Query executions {
  *  insertId: Represent the auto-generated row id if applicable
@@ -59,9 +61,9 @@ export type QueryResult = {
   insertId?: number;
   rowsAffected: number;
   res?: any[];
-  rows: Array<Record<string, string | number | boolean | ArrayBufferLike>>;
+  rows: Array<Record<string, Scalar>>;
   // An array of intermediate results, just values without column names
-  rawRows?: any[];
+  rawRows?: Scalar[][];
   columnNames?: string[];
   /**
    * Query metadata, available only for select query results
@@ -112,7 +114,7 @@ export interface FileLoadResult extends BatchQueryResult {
 
 export interface Transaction {
   commit: () => Promise<QueryResult>;
-  execute: (query: string, params?: any[]) => Promise<QueryResult>;
+  execute: (query: string, params?: Scalar[]) => Promise<QueryResult>;
   rollback: () => Promise<QueryResult>;
 }
 
@@ -145,6 +147,7 @@ export type DB = {
   ) => void;
   detach: (mainDbName: string, alias: string) => void;
   transaction: (fn: (tx: Transaction) => Promise<void>) => Promise<void>;
+  executeSync: (query: string, params?: any[]) => QueryResult;
   execute: (query: string, params?: any[]) => Promise<QueryResult>;
   executeWithHostObjects: (
     query: string,
@@ -273,9 +276,44 @@ function enhanceDB(db: DB, options: any): DB {
 
       return result;
     },
+    executeSync: (
+      query: string,
+      params?: Scalar[] | undefined
+    ): QueryResult => {
+      const sanitizedParams = params?.map((p) => {
+        if (ArrayBuffer.isView(p)) {
+          return p.buffer;
+        }
+
+        return p;
+      });
+
+      let intermediateResult = db.executeSync(query, sanitizedParams);
+      let rows: any[] = [];
+      for (let i = 0; i < (intermediateResult.rawRows?.length ?? 0); i++) {
+        let row: Record<string, Scalar> = {};
+        let rawRow = intermediateResult.rawRows![i]!;
+        for (let j = 0; j < intermediateResult.columnNames!.length; j++) {
+          let columnName = intermediateResult.columnNames![j]!;
+          let value = rawRow[j]!;
+
+          row[columnName] = value;
+        }
+        rows.push(row);
+      }
+
+      let res = {
+        ...intermediateResult,
+        rows,
+      };
+
+      delete res.rawRows;
+
+      return res;
+    },
     execute: async (
       query: string,
-      params?: any[] | undefined
+      params?: Scalar[] | undefined
     ): Promise<QueryResult> => {
       const sanitizedParams = params?.map((p) => {
         if (ArrayBuffer.isView(p)) {
@@ -290,9 +328,10 @@ function enhanceDB(db: DB, options: any): DB {
       let rows: any[] = [];
       for (let i = 0; i < (intermediateResult.rawRows?.length ?? 0); i++) {
         let row: any = {};
+        let rawRow = intermediateResult.rawRows![i]!;
         for (let j = 0; j < intermediateResult.columnNames!.length; j++) {
           let columnName = intermediateResult.columnNames![j]!;
-          let value = intermediateResult.rawRows![i][j];
+          let value = rawRow[j]!;
 
           row[columnName] = value;
         }
