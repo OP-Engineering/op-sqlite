@@ -884,98 +884,13 @@ std::vector<jsi::PropNameID> DBHostObject::getPropertyNames(jsi::Runtime &rt) {
 jsi::Value DBHostObject::get(jsi::Runtime &rt,
                              const jsi::PropNameID &propNameID) {
   auto name = propNameID.utf8(rt);
-  if (name == "execute") {
-    return jsi::Value(rt, function_map["execute"]);
+  if (function_map.count(name) != 1) {
+      return HOSTFN(name.c_str()) {
+          throw std::runtime_error("[op-sqlite] Function " + name + " not implemented for current backend (libsql or sqlcipher)");
+      });
   }
-  if (name == "executeSync") {
-    return jsi::Value(rt, function_map["executeSync"]);
-  }
-  if (name == "flushPendingReactiveQueries") {
-    return jsi::Value(rt, function_map["flushPendingReactiveQueries"]);
-  }
-  if (name == "attach") {
-    return jsi::Value(rt, function_map["attach"]);
-  }
-  if (name == "detach") {
-    return jsi::Value(rt, function_map["detach"]);
-  }
-  if (name == "close") {
-    return jsi::Value(rt, function_map["close"]);
-  }
-  if (name == "executeRaw") {
-    return jsi::Value(rt, function_map["executeRaw"]);
-  }
-  if (name == "executeWithHostObjects") {
-    return jsi::Value(rt, function_map["executeWithHostObjects"]);
-  }
-  if (name == "delete") {
-    return jsi::Value(rt, function_map["delete"]);
-  }
-  if (name == "executeBatch") {
-    return jsi::Value(rt, function_map["executeBatch"]);
-  }
-  if (name == "prepareStatement") {
-    return jsi::Value(rt, function_map["prepareStatement"]);
-  }
-  if (name == "getDbPath") {
-    return jsi::Value(rt, function_map["getDbPath"]);
-  }
-  if (name == "sync") {
-    return jsi::Value(rt, function_map["sync"]);
-  }
-#ifdef OP_SQLITE_USE_LIBSQL
-  if (name == "loadFile") {
-    return HOSTFN("loadFile") {
-      throw std::runtime_error("[op-sqlite] Load file not implemented");
-    });
-  }
-  if (name == "updateHook") {
-    return HOSTFN("updateHook") {
-      throw std::runtime_error("[op-sqlite] Hooks not supported in libsql");
-    });
-  }
-  if (name == "commitHook") {
-    return HOSTFN("commitHook") {
-      throw std::runtime_error("[op-sqlite] Hooks not supported in libsql");
-    });
-  }
-  if (name == "rollbackHook") {
-    return HOSTFN("rollbackHook") {
-      throw std::runtime_error("[op-sqlite] Hooks not supported in libsql");
-    });
-  }
-  if (name == "loadExtension") {
-    return HOSTFN("loadExtension") {
-      throw std::runtime_error("[op-sqlite] Hooks not supported in libsql");
-    });
-  }
-  if (name == "reactiveExecute") {
-    return HOSTFN("reactiveExecute") {
-      throw std::runtime_error("[op-sqlite] Hooks not supported in libsql");
-    });
-  }
-#else
-  if (name == "loadFile") {
-    return jsi::Value(rt, function_map["loadFile"]);
-  }
-  if (name == "updateHook") {
-    return jsi::Value(rt, function_map["updateHook"]);
-  }
-  if (name == "commitHook") {
-    return jsi::Value(rt, function_map["commitHook"]);
-  }
-  if (name == "rollbackHook") {
-    return jsi::Value(rt, function_map["rollbackHook"]);
-  }
-  if (name == "loadExtension") {
-    return jsi::Value(rt, function_map["loadExtension"]);
-  }
-  if (name == "reactiveExecute") {
-    return jsi::Value(rt, function_map["reactiveExecute"]);
-  }
-#endif
 
-  return {};
+  return jsi::Value(rt, function_map[name]);
 }
 
 void DBHostObject::set(jsi::Runtime &rt, const jsi::PropNameID &name,
