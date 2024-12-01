@@ -17,12 +17,14 @@ namespace jsi = facebook::jsi;
 namespace react = facebook::react;
 
 #ifdef OP_SQLITE_USE_LIBSQL
-void DBHostObject::flush_pending_reactive_queries(std::shared_ptr<jsi::Value> resolve) {
-    invoker->invokeAsync(
-        [this, resolve]() { resolve->asObject(rt).asFunction(rt).call(rt, {}); });
+void DBHostObject::flush_pending_reactive_queries(
+    std::shared_ptr<jsi::Value> resolve) {
+  invoker->invokeAsync(
+      [this, resolve]() { resolve->asObject(rt).asFunction(rt).call(rt, {}); });
 }
 #else
-void DBHostObject::flush_pending_reactive_queries(std::shared_ptr<jsi::Value> resolve) {
+void DBHostObject::flush_pending_reactive_queries(
+    std::shared_ptr<jsi::Value> resolve) {
   for (const auto &query_ptr : pending_reactive_queries) {
     auto query = query_ptr.get();
 
@@ -51,9 +53,9 @@ void DBHostObject::flush_pending_reactive_queries(std::shared_ptr<jsi::Value> re
           });
     }
   }
-    
-    pending_reactive_queries.clear();
-    
+
+  pending_reactive_queries.clear();
+
   invoker->invokeAsync(
       [this, resolve]() { resolve->asObject(rt).asFunction(rt).call(rt, {}); });
 }
@@ -363,6 +365,23 @@ void DBHostObject::create_jsi_functions() {
      }));
 
     return promise;
+  });
+
+  auto execute_sync = HOSTFN("executeSync") {
+
+    std::string query = args[0].asString(rt).utf8(rt);
+    std::vector<JSVariant> params;
+
+    if (count == 2) {
+      params = to_variant_vec(rt, args[1]);
+    }
+
+    auto status = opsqlite_execute(db_name, query, &params);
+
+    if (status.type != SQLiteOk) {
+      throw std::runtime_error(status.message);
+    }
+    return create_js_rows(rt, status);
   });
 
   auto execute = HOSTFN("execute") {
@@ -835,6 +854,7 @@ void DBHostObject::create_jsi_functions() {
   function_map["detach"] = std::move(detach);
   function_map["close"] = std::move(close);
   function_map["execute"] = std::move(execute);
+  function_map["executeSync"] = std::move(execute_sync);
   function_map["executeRaw"] = std::move(execute_raw);
   function_map["executeWithHostObjects"] = std::move(execute_with_host_objects);
   function_map["delete"] = std::move(remove);
@@ -863,10 +883,12 @@ std::vector<jsi::PropNameID> DBHostObject::getPropertyNames(jsi::Runtime &rt) {
 
 jsi::Value DBHostObject::get(jsi::Runtime &rt,
                              const jsi::PropNameID &propNameID) {
-
   auto name = propNameID.utf8(rt);
   if (name == "execute") {
     return jsi::Value(rt, function_map["execute"]);
+  }
+  if (name == "executeSync") {
+    return jsi::Value(rt, function_map["executeSync"]);
   }
   if (name == "flushPendingReactiveQueries") {
     return jsi::Value(rt, function_map["flushPendingReactiveQueries"]);
