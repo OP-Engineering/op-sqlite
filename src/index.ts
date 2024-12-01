@@ -151,7 +151,7 @@ export type DB = {
   execute: (query: string, params?: Scalar[]) => Promise<QueryResult>;
   executeWithHostObjects: (
     query: string,
-    params?: any[]
+    params?: Scalar[]
   ) => Promise<QueryResult>;
   executeBatch: (commands: SQLBatchTuple[]) => Promise<BatchQueryResult>;
   loadFile: (location: string) => Promise<FileLoadResult>;
@@ -169,7 +169,7 @@ export type DB = {
   rollbackHook: (callback?: (() => void) | null) => void;
   prepareStatement: (query: string) => PreparedStatementObj;
   loadExtension: (path: string, entryPoint?: string) => void;
-  executeRaw: (query: string, params?: any[]) => Promise<any[]>;
+  executeRaw: (query: string, params?: Scalar[]) => Promise<any[]>;
   getDbPath: (location?: string) => string;
   reactiveExecute: (params: {
     query: string;
