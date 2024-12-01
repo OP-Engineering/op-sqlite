@@ -87,20 +87,12 @@ Pod::Spec.new do |s|
   else
     c_sources_dir = File.join("example", "c_sources")
   end
-  
 
   if tokenizers.any?
     generate_tokenizers_header_file(tokenizers, File.join(c_sources_dir, "tokenizers.h"))
     FileUtils.cp_r(c_sources_dir, __dir__)
-    # puts "Current directory: #{__dir__}"
-    # c_sources_dir_output = Dir.glob(File.join(c_sources_dir, "**/*.{h,cpp}"))
-  
-    # puts "c_sources_dir: #{c_sources_dir_output}"
-  
     # # Add all .h and .c files from the `c_sources` directory
     source_files += Dir.glob(File.join("c_sources", "**/*.{h,cpp}"))
-    # source_files += ["../../c_sources/tokenizers.h", "../../c_sources/tokenizers.cpp"]
-    # puts "Source files: #{source_files}"
   end
 
   # Assign the collected source files to `s.source_files`

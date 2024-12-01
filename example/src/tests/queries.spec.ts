@@ -67,6 +67,18 @@ export function queriesTests() {
     //   });
     // }
 
+    it('Trying to pass object as param should throw', async () => {
+      try {
+        // @ts-ignore
+        await db.execute('SELECT ?', [{foo: 'bar'}]);
+      } catch (e: any) {
+        console.log(e);
+        expect(e.message).to.include(
+          'Exception in HostFunction: Object is not an ArrayBuffer, cannot bind to SQLite',
+        );
+      }
+    });
+
     it('executeSync', () => {
       const res = db.executeSync('SELECT 1');
       expect(res.rowsAffected).to.equal(0);
