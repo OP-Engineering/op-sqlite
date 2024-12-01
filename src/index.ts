@@ -145,6 +145,7 @@ export type DB = {
   ) => void;
   detach: (mainDbName: string, alias: string) => void;
   transaction: (fn: (tx: Transaction) => Promise<void>) => Promise<void>;
+  executeSync: (query: string, params?: any[]) => QueryResult;
   execute: (query: string, params?: any[]) => Promise<QueryResult>;
   executeWithHostObjects: (
     query: string,
@@ -272,6 +273,37 @@ function enhanceDB(db: DB, options: any): DB {
       const result = await db.executeWithHostObjects(query, sanitizedParams);
 
       return result;
+    },
+    executeSync: (query: string, params?: any[] | undefined): QueryResult => {
+      const sanitizedParams = params?.map((p) => {
+        if (ArrayBuffer.isView(p)) {
+          return p.buffer;
+        }
+
+        return p;
+      });
+
+      let intermediateResult = db.executeSync(query, sanitizedParams);
+      let rows: any[] = [];
+      for (let i = 0; i < (intermediateResult.rawRows?.length ?? 0); i++) {
+        let row: any = {};
+        for (let j = 0; j < intermediateResult.columnNames!.length; j++) {
+          let columnName = intermediateResult.columnNames![j]!;
+          let value = intermediateResult.rawRows![i][j];
+
+          row[columnName] = value;
+        }
+        rows.push(row);
+      }
+
+      let res = {
+        ...intermediateResult,
+        rows,
+      };
+
+      delete res.rawRows;
+
+      return res;
     },
     execute: async (
       query: string,
