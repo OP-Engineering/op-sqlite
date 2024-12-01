@@ -48,7 +48,7 @@ void DBHostObject::flush_pending_reactive_queries(
           [this,
            results = std::make_shared<std::vector<DumbHostObject>>(results),
            callback = query->callback, metadata, status = std::move(status)] {
-            auto jsiResult = createResult(rt, status, results.get(), metadata);
+            auto jsiResult = create_result(rt, status, results.get(), metadata);
             callback->asObject(rt).asFunction(rt).call(rt, jsiResult);
           });
     }
@@ -486,7 +486,7 @@ void DBHostObject::create_jsi_functions() {
                metadata, status = std::move(status), resolve, reject] {
                 if (status.type == SQLiteOk) {
                   auto jsiResult =
-                      createResult(rt, status, results.get(), metadata);
+                      create_result(rt, status, results.get(), metadata);
                   resolve->asObject(rt).asFunction(rt).call(
                       rt, std::move(jsiResult));
                 } else {

@@ -25,9 +25,10 @@ std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt, jsi::Value const &xs);
 
 std::vector<int> to_int_vec(jsi::Runtime &rt, jsi::Value const &xs);
 
-jsi::Value createResult(jsi::Runtime &rt, BridgeResult status,
-                        std::vector<DumbHostObject> *results,
-                        std::shared_ptr<std::vector<SmartHostObject>> metadata);
+jsi::Value
+create_result(jsi::Runtime &rt, BridgeResult status,
+              std::vector<DumbHostObject> *results,
+              std::shared_ptr<std::vector<SmartHostObject>> metadata);
 
 jsi::Value create_js_rows(jsi::Runtime &rt, const BridgeResult &status);
 

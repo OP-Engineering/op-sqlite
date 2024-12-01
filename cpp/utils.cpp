@@ -155,9 +155,9 @@ jsi::Value create_js_rows(jsi::Runtime &rt, const BridgeResult &status) {
 }
 
 jsi::Value
-createResult(jsi::Runtime &rt, BridgeResult status,
-             std::vector<DumbHostObject> *results,
-             std::shared_ptr<std::vector<SmartHostObject>> metadata) {
+create_result(jsi::Runtime &rt, BridgeResult status,
+              std::vector<DumbHostObject> *results,
+              std::shared_ptr<std::vector<SmartHostObject>> metadata) {
   jsi::Object res = jsi::Object(rt);
 
   res.setProperty(rt, "rowsAffected", status.affectedRows);
