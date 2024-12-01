@@ -15,9 +15,9 @@ namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 
-inline jsi::Value toJSI(jsi::Runtime &rt, const JSVariant &value);
+jsi::Value toJSI(jsi::Runtime &rt, const JSVariant &value);
 
-inline JSVariant toVariant(jsi::Runtime &rt, jsi::Value const &value);
+JSVariant toVariant(jsi::Runtime &rt, jsi::Value const &value);
 
 std::vector<std::string> to_string_vec(jsi::Runtime &rt, jsi::Value const &xs);
 

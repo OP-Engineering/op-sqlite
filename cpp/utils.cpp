@@ -13,7 +13,7 @@ namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 
-inline jsi::Value toJSI(jsi::Runtime &rt, const JSVariant &value) {
+jsi::Value toJSI(jsi::Runtime &rt, const JSVariant &value) {
   if (std::holds_alternative<bool>(value)) {
     return std::get<bool>(value);
   } else if (std::holds_alternative<int>(value)) {
@@ -39,7 +39,7 @@ inline jsi::Value toJSI(jsi::Runtime &rt, const JSVariant &value) {
   return jsi::Value::null();
 }
 
-inline JSVariant toVariant(jsi::Runtime &rt, const jsi::Value &value) {
+JSVariant toVariant(jsi::Runtime &rt, const jsi::Value &value) {
   if (value.isNull() || value.isUndefined()) {
     return JSVariant(nullptr);
   } else if (value.isBool()) {
