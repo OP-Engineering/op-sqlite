@@ -375,8 +375,11 @@ void DBHostObject::create_jsi_functions() {
     if (count == 2) {
       params = to_variant_vec(rt, args[1]);
     }
-
+#ifdef OP_SQLITE_USE_LIBSQL
+      auto status = opsqlite_libsql_execute(db_name, query, &params);
+#else
     auto status = opsqlite_execute(db_name, query, &params);
+#endif
 
     if (status.type != SQLiteOk) {
       throw std::runtime_error(status.message);
