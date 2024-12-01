@@ -235,12 +235,12 @@ void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batchParams,
         const jsi::Value &p = batchUpdateParams.getValueAtIndex(rt, x);
         auto params =
             std::make_shared<std::vector<JSVariant>>(to_variant_vec(rt, p));
-        commands->emplace_back(query, params);
+        commands->push_back({query, params});
       }
     } else {
       auto params = std::make_shared<std::vector<JSVariant>>(
           to_variant_vec(rt, commandParams));
-      commands->emplace_back(query, params);
+      commands->push_back({query, params});
     }
   }
 }
