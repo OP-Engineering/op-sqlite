@@ -8,8 +8,8 @@
 #include <jsi/jsi.h>
 #include <jsi/jsilib.h>
 #include <map>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace opsqlite {
 
@@ -46,7 +46,7 @@ bool folder_exists(const std::string &foldername);
 
 bool file_exists(const std::string &path);
 
-std::vector<std::string> parse_string_list(const std::string& str);
+std::vector<std::string> parse_string_list(const std::string &str);
 
 } // namespace opsqlite
 
