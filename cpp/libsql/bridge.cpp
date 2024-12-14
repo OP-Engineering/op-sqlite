@@ -159,15 +159,6 @@ BridgeResult opsqlite_libsql_close(std::string const &name) {
   };
 }
 
-void opsqlite_libsql_close_all() {
-  //  for (auto const &db : db_map) {
-  //      libsql_close();
-  //  }
-  for (auto const &db : db_map) {
-    opsqlite_libsql_close(db.first);
-  }
-}
-
 BridgeResult opsqlite_libsql_attach(std::string const &mainDBName,
                                     std::string const &docPath,
                                     std::string const &databaseToAttach,
@@ -255,7 +246,7 @@ void opsqlite_libsql_bind_statement(libsql_stmt_t statement,
 
     if (std::holds_alternative<bool>(value)) {
       status = libsql_bind_int(statement, index,
-                       static_cast<int>(std::get<bool>(value)), &err);
+                               static_cast<int>(std::get<bool>(value)), &err);
     } else if (std::holds_alternative<int>(value)) {
       status = libsql_bind_int(statement, index, std::get<int>(value), &err);
     } else if (std::holds_alternative<long long>(value)) {
