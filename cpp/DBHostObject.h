@@ -5,9 +5,9 @@
 #include "types.h"
 #include <ReactCommon/CallInvoker.h>
 #include <jsi/jsi.h>
+#include <set>
 #include <unordered_map>
 #include <vector>
-#include <set>
 
 namespace opsqlite {
 
@@ -15,9 +15,9 @@ namespace jsi = facebook::jsi;
 namespace react = facebook::react;
 
 struct PendingReactiveInvocation {
-    std::string db_name;
-    std::string table;
-    std::string rowid;
+  std::string db_name;
+  std::string table;
+  std::string rowid;
 };
 
 struct TableRowDiscriminator {
@@ -61,7 +61,7 @@ public:
   ~DBHostObject();
 
 private:
-    std::set<std::shared_ptr<ReactiveQuery>> pending_reactive_queries;
+  std::set<std::shared_ptr<ReactiveQuery>> pending_reactive_queries;
   void auto_register_update_hook();
   void create_jsi_functions();
   void flush_pending_reactive_queries(std::shared_ptr<jsi::Value> resolve);
@@ -80,6 +80,7 @@ private:
   std::vector<PendingReactiveInvocation> pending_reactive_invocations;
   bool is_update_hook_registered = false;
   bool invalidated = false;
+  sqlite3 *db;
 };
 
 } // namespace opsqlite

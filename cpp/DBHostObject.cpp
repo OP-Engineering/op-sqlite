@@ -32,7 +32,7 @@ void DBHostObject::flush_pending_reactive_queries(
     std::shared_ptr<std::vector<SmartHostObject>> metadata =
         std::make_shared<std::vector<SmartHostObject>>();
 
-    auto status = opsqlite_execute_prepared_statement(db_name, query->stmt,
+    auto status = opsqlite_execute_prepared_statement(db, query->stmt,
                                                       &results, metadata);
 
     if (status.type == SQLiteError) {
@@ -128,6 +128,12 @@ void DBHostObject::auto_register_update_hook() {
 }
 #endif
 
+//    _____                _                   _
+//   / ____|              | |                 | |
+//  | |     ___  _ __  ___| |_ _ __ _   _  ___| |_ ___  _ __
+//  | |    / _ \| '_ \/ __| __| '__| | | |/ __| __/ _ \| '__|
+//  | |___| (_) | | | \__ \ |_| |  | |_| | (__| || (_) | |
+//   \_____\___/|_| |_|___/\__|_|   \__,_|\___|\__\___/|_|
 #ifdef OP_SQLITE_USE_LIBSQL
 DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &url,
                            std::string &auth_token,
@@ -180,14 +186,8 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
 #elif OP_SQLITE_USE_LIBSQL
   BridgeResult result = opsqlite_libsql_open(db_name, path, crsqlite_path);
 #else
-  BridgeResult result =
-      opsqlite_open(db_name, path, crsqlite_path, sqlite_vec_path);
+  db = opsqlite_open(db_name, path, crsqlite_path, sqlite_vec_path);
 #endif
-
-  if (result.type == SQLiteError) {
-    throw std::runtime_error(result.message);
-  }
-
   create_jsi_functions();
 };
 
@@ -221,7 +221,7 @@ void DBHostObject::create_jsi_functions() {
         opsqlite_libsql_attach(dbName, tempDocPath, databaseToAttach, alias);
 #else
     BridgeResult result =
-        opsqlite_attach(dbName, tempDocPath, databaseToAttach, alias);
+        opsqlite_attach(db, dbName, tempDocPath, databaseToAttach, alias);
 #endif
     if (result.type == SQLiteError) {
       throw std::runtime_error(result.message);
@@ -246,7 +246,7 @@ void DBHostObject::create_jsi_functions() {
 #ifdef OP_SQLITE_USE_LIBSQL
     BridgeResult result = opsqlite_libsql_detach(dbName, alias);
 #else
-    BridgeResult result = opsqlite_detach(dbName, alias);
+    BridgeResult result = opsqlite_detach(db, dbName, alias);
 #endif
 
     if (result.type == SQLiteError) {
@@ -260,12 +260,8 @@ void DBHostObject::create_jsi_functions() {
 #ifdef OP_SQLITE_USE_LIBSQL
     BridgeResult result = opsqlite_libsql_close(db_name);
 #else
-    BridgeResult result = opsqlite_close(db_name);
+    opsqlite_close(db);
 #endif
-
-    if (result.type == SQLiteError) {
-      throw jsi::JSError(rt, result.message.c_str());
-    }
 
     return {};
   });
@@ -295,12 +291,8 @@ void DBHostObject::create_jsi_functions() {
 #ifdef OP_SQLITE_USE_LIBSQL
     BridgeResult result = opsqlite_libsql_remove(db_name, path);
 #else
-    BridgeResult result = opsqlite_remove(db_name, path);
+    opsqlite_remove(db, db_name, path);
 #endif
-
-    if (result.type == SQLiteError) {
-      throw std::runtime_error(result.message);
-    }
 
     return {};
   });
@@ -327,7 +319,7 @@ void DBHostObject::create_jsi_functions() {
           auto status =
               opsqlite_libsql_execute_raw(db_name, query, &params, &results);
 #else
-          auto status = opsqlite_execute_raw(db_name, query, &params, &results);
+          auto status = opsqlite_execute_raw(db, query, &params, &results);
 #endif
 
           if (invalidated) {
@@ -378,7 +370,7 @@ void DBHostObject::create_jsi_functions() {
 #ifdef OP_SQLITE_USE_LIBSQL
     auto status = opsqlite_libsql_execute(db_name, query, &params);
 #else
-    auto status = opsqlite_execute(db_name, query, &params);
+    auto status = opsqlite_execute(db, query, &params);
 #endif
 
     if (status.type != SQLiteOk) {
@@ -407,7 +399,7 @@ void DBHostObject::create_jsi_functions() {
 #ifdef OP_SQLITE_USE_LIBSQL
           auto status = opsqlite_libsql_execute(db_name, query, &params);
 #else
-          auto status = opsqlite_execute(db_name, query, &params);
+          auto status = opsqlite_execute(db, query, &params);
 #endif
 
           if (invalidated) {
@@ -472,7 +464,7 @@ void DBHostObject::create_jsi_functions() {
           auto status = opsqlite_libsql_execute_with_host_objects(
               db_name, query, &params, &results, metadata);
 #else
-          auto status = opsqlite_execute_host_objects(db_name, query, &params,
+          auto status = opsqlite_execute_host_objects(db, query, &params,
                                                       &results, metadata);
 #endif
 
@@ -552,7 +544,7 @@ void DBHostObject::create_jsi_functions() {
           auto batchResult =
               opsqlite_libsql_execute_batch(db_name, commands.get());
 #else
-          auto batchResult = opsqlite_execute_batch(db_name, commands.get());
+          auto batchResult = opsqlite_execute_batch(db, commands.get());
 #endif
 
           if (invalidated) {
@@ -617,7 +609,7 @@ void DBHostObject::create_jsi_functions() {
 
       auto task = [&rt, this, sqlFileName, resolve, reject]() {
         try {
-          const auto result = importSQLFile(db_name, sqlFileName);
+          const auto result = import_sql_file(db, sqlFileName);
 
           invoker->invokeAsync([&rt, result = std::move(result), resolve,
                                 reject] {
@@ -716,10 +708,7 @@ void DBHostObject::create_jsi_functions() {
       entry_point = args[1].asString(rt).utf8(rt);
     }
 
-    auto result = opsqlite_load_extension(db_name, path, entry_point);
-    if (result.type == SQLiteError) {
-      throw std::runtime_error(result.message);
-    }
+    opsqlite_load_extension(db, path, entry_point);
     return {};
   });
 
@@ -742,7 +731,7 @@ void DBHostObject::create_jsi_functions() {
         query.getProperty(rt, "fireOn").asObject(rt).asArray(rt);
     auto variant_args = to_variant_vec(rt, js_args);
 
-    sqlite3_stmt *stmt = opsqlite_prepare_statement(db_name, query_str);
+    sqlite3_stmt *stmt = opsqlite_prepare_statement(db, query_str);
     opsqlite_bind_statement(stmt, &variant_args);
 
     auto callback =
@@ -803,10 +792,10 @@ void DBHostObject::create_jsi_functions() {
 #ifdef OP_SQLITE_USE_LIBSQL
     libsql_stmt_t statement = opsqlite_libsql_prepare_statement(db_name, query);
 #else
-    sqlite3_stmt *statement = opsqlite_prepare_statement(db_name, query);
+    sqlite3_stmt *statement = opsqlite_prepare_statement(db, query);
 #endif
     auto preparedStatementHostObject =
-        std::make_shared<PreparedStatementHostObject>(db_name, statement,
+        std::make_shared<PreparedStatementHostObject>(db, db_name, statement,
                                                       invoker, thread_pool);
 
     return jsi::Object::createFromHostObject(rt, preparedStatementHostObject);

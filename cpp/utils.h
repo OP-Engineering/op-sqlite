@@ -4,6 +4,7 @@
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
 #include "types.h"
+#include "sqlite3.h"
 #include <any>
 #include <jsi/jsi.h>
 #include <jsi/jsilib.h>
@@ -39,7 +40,7 @@ create_raw_result(jsi::Runtime &rt, BridgeResult status,
 void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batchParams,
                         std::vector<BatchArguments> *commands);
 
-BatchResult importSQLFile(std::string dbName, std::string fileLocation);
+BatchResult import_sql_file(sqlite3 *db, std::string fileLocation);
 
 int mkdir(const std::string &path);
 

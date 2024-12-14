@@ -60,7 +60,7 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
           auto status = opsqlite_libsql_execute_prepared_statement(
               _name, _stmt, &results, metadata);
 #else
-          auto status = opsqlite_execute_prepared_statement(_name, _stmt,
+          auto status = opsqlite_execute_prepared_statement(_db, _stmt,
                                                             &results, metadata);
 #endif
           invoker->invokeAsync(

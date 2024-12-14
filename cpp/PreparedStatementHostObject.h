@@ -26,10 +26,11 @@ public:
         _thread_pool(thread_pool){};
 #else
   PreparedStatementHostObject(
+                              sqlite3 *db,
       std::string name, sqlite3_stmt *stmt,
       std::shared_ptr<react::CallInvoker> js_call_invoker,
       std::shared_ptr<ThreadPool> thread_pool)
-      : _name(name), _stmt(stmt), _js_call_invoker(js_call_invoker),
+      : _db(db), _name(name), _stmt(stmt), _js_call_invoker(js_call_invoker),
         _thread_pool(thread_pool){};
 #endif
   virtual ~PreparedStatementHostObject();
@@ -42,6 +43,7 @@ private:
   std::shared_ptr<react::CallInvoker> _js_call_invoker;
   std::shared_ptr<ThreadPool> _thread_pool;
   std::string _name;
+  sqlite3 *_db;
 #ifdef OP_SQLITE_USE_LIBSQL
   libsql_stmt_t _stmt;
 #else
