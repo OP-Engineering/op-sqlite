@@ -36,7 +36,7 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
 void opsqlite_close(sqlite3 *db);
 
 void opsqlite_remove(sqlite3 *db, std::string const &name,
-                             std::string const &doc_path);
+                     std::string const &doc_path);
 
 BridgeResult opsqlite_attach(sqlite3 *db, std::string const &mainDBName,
                              std::string const &docPath,
@@ -46,19 +46,18 @@ BridgeResult opsqlite_attach(sqlite3 *db, std::string const &mainDBName,
 BridgeResult opsqlite_detach(sqlite3 *db, std::string const &mainDBName,
                              std::string const &alias);
 
-BridgeResult opsqlite_execute(sqlite3* db, std::string const &query,
+BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
                               const std::vector<JSVariant> *params);
 
 BridgeResult opsqlite_execute_host_objects(
-    sqlite3 *db, std::string const &query,
-    const std::vector<JSVariant> *params, std::vector<DumbHostObject> *results,
+    sqlite3 *db, std::string const &query, const std::vector<JSVariant> *params,
+    std::vector<DumbHostObject> *results,
     std::shared_ptr<std::vector<SmartHostObject>> &metadatas);
 
 BatchResult opsqlite_execute_batch(sqlite3 *db,
                                    std::vector<BatchArguments> *commands);
 
-  BridgeResult opsqlite_execute_raw(sqlite3 *db,
-                                  std::string const &query,
+BridgeResult opsqlite_execute_raw(sqlite3 *db, std::string const &query,
                                   const std::vector<JSVariant> *params,
                                   std::vector<std::vector<JSVariant>> *results);
 
@@ -74,20 +73,17 @@ BridgeResult opsqlite_register_rollback_hook(std::string const &dbName,
                                              const RollbackCallback &callback);
 BridgeResult opsqlite_deregister_rollback_hook(std::string const &dbName);
 
-sqlite3_stmt *opsqlite_prepare_statement(sqlite3 *db,
-                                         std::string const &query);
+sqlite3_stmt *opsqlite_prepare_statement(sqlite3 *db, std::string const &query);
 
 void opsqlite_bind_statement(sqlite3_stmt *statement,
                              const std::vector<JSVariant> *params);
 
-BridgeResult opsqlite_execute_prepared_statement(sqlite3 *db,
-    sqlite3_stmt *statement,
-    std::vector<DumbHostObject> *results,
+BridgeResult opsqlite_execute_prepared_statement(
+    sqlite3 *db, sqlite3_stmt *statement, std::vector<DumbHostObject> *results,
     std::shared_ptr<std::vector<SmartHostObject>> &metadatas);
 
-void opsqlite_load_extension(sqlite3* db,
-                                     std::string &path,
-                                     std::string &entry_point);
+void opsqlite_load_extension(sqlite3 *db, std::string &path,
+                             std::string &entry_point);
 
 } // namespace opsqlite
 
