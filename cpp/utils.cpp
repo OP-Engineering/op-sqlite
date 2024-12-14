@@ -246,19 +246,19 @@ void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batchParams,
 }
 
 #ifndef OP_SQLITE_USE_LIBSQL
-BatchResult importSQLFile(std::string dbName, std::string fileLocation) {
+BatchResult import_sql_file(sqlite3 *db, std::string fileLocation) {
   std::string line;
   std::ifstream sqFile(fileLocation);
   if (sqFile.is_open()) {
     try {
       int affectedRows = 0;
       int commands = 0;
-      opsqlite_execute(dbName, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
+      opsqlite_execute(db, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
       while (std::getline(sqFile, line, '\n')) {
         if (!line.empty()) {
-          BridgeResult result = opsqlite_execute(dbName, line, nullptr);
+          BridgeResult result = opsqlite_execute(db, line, nullptr);
           if (result.type == SQLiteError) {
-            opsqlite_execute(dbName, "ROLLBACK", nullptr);
+            opsqlite_execute(db, "ROLLBACK", nullptr);
             sqFile.close();
             return {SQLiteError, result.message, 0, commands};
           } else {
@@ -268,11 +268,11 @@ BatchResult importSQLFile(std::string dbName, std::string fileLocation) {
         }
       }
       sqFile.close();
-      opsqlite_execute(dbName, "COMMIT", nullptr);
+      opsqlite_execute(db, "COMMIT", nullptr);
       return {SQLiteOk, "", affectedRows, commands};
     } catch (...) {
       sqFile.close();
-      opsqlite_execute(dbName, "ROLLBACK", nullptr);
+      opsqlite_execute(db, "ROLLBACK", nullptr);
       return {SQLiteError,
               "[op-sqlite][loadSQLFile] Unexpected error, transaction was "
               "rolledback",
