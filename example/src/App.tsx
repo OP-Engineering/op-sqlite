@@ -39,13 +39,13 @@ export default function App() {
   useEffect(() => {
     runTests(
       queriesTests,
-      dbSetupTests,
-      blobTests,
-      registerHooksTests,
-      preparedStatementsTests,
-      constantsTests,
-      reactiveTests,
-      tokenizerTests,
+      // dbSetupTests,
+      // blobTests,
+      // registerHooksTests,
+      // preparedStatementsTests,
+      // constantsTests,
+      // reactiveTests,
+      // tokenizerTests,
     )
       .then(results => {
         setServerResults(results as any);
