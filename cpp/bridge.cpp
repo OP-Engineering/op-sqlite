@@ -19,6 +19,41 @@
 #endif
 
 namespace opsqlite {
+
+inline void opsqlite_bind_statement(sqlite3_stmt *statement,
+                                    const std::vector<JSVariant> *values) {
+  sqlite3_clear_bindings(statement);
+
+  size_t size = values->size();
+
+  for (int ii = 0; ii < size; ii++) {
+    int stmt_index = ii + 1;
+    JSVariant value = values->at(ii);
+
+    if (std::holds_alternative<bool>(value)) {
+      sqlite3_bind_int(statement, stmt_index,
+                       static_cast<int>(std::get<bool>(value)));
+    } else if (std::holds_alternative<int>(value)) {
+      sqlite3_bind_int(statement, stmt_index, std::get<int>(value));
+    } else if (std::holds_alternative<long long>(value)) {
+      sqlite3_bind_double(statement, stmt_index,
+                          static_cast<double>(std::get<long long>(value)));
+    } else if (std::holds_alternative<double>(value)) {
+      sqlite3_bind_double(statement, stmt_index, std::get<double>(value));
+    } else if (std::holds_alternative<std::string>(value)) {
+      std::string str = std::get<std::string>(value);
+      sqlite3_bind_text(statement, stmt_index, str.c_str(),
+                        static_cast<int>(str.length()), SQLITE_TRANSIENT);
+    } else if (std::holds_alternative<ArrayBuffer>(value)) {
+      ArrayBuffer buffer = std::get<ArrayBuffer>(value);
+      sqlite3_bind_blob(statement, stmt_index, buffer.data.get(),
+                        static_cast<int>(buffer.size), SQLITE_TRANSIENT);
+    } else {
+      sqlite3_bind_null(statement, stmt_index);
+    }
+  }
+}
+
 /// Returns the completely formed db path, but it also creates any sub-folders
 /// along the way
 std::string opsqlite_get_db_path(std::string const &db_name,
@@ -147,41 +182,6 @@ void opsqlite_remove(sqlite3 *db, std::string const &name,
   }
 
   remove(db_path.c_str());
-}
-
-inline void opsqlite_bind_statement(sqlite3_stmt *statement,
-                                    const std::vector<JSVariant> *values) {
-  // reset any existing bound values
-  sqlite3_clear_bindings(statement);
-
-  size_t size = values->size();
-
-  for (int ii = 0; ii < size; ii++) {
-    int sqIndex = ii + 1;
-    JSVariant value = values->at(ii);
-
-    if (std::holds_alternative<bool>(value)) {
-      sqlite3_bind_int(statement, sqIndex,
-                       static_cast<int>(std::get<bool>(value)));
-    } else if (std::holds_alternative<int>(value)) {
-      sqlite3_bind_int(statement, sqIndex, std::get<int>(value));
-    } else if (std::holds_alternative<long long>(value)) {
-      sqlite3_bind_double(statement, sqIndex,
-                          static_cast<double>(std::get<long long>(value)));
-    } else if (std::holds_alternative<double>(value)) {
-      sqlite3_bind_double(statement, sqIndex, std::get<double>(value));
-    } else if (std::holds_alternative<std::string>(value)) {
-      std::string str = std::get<std::string>(value);
-      sqlite3_bind_text(statement, sqIndex, str.c_str(),
-                        static_cast<int>(str.length()), SQLITE_TRANSIENT);
-    } else if (std::holds_alternative<ArrayBuffer>(value)) {
-      ArrayBuffer buffer = std::get<ArrayBuffer>(value);
-      sqlite3_bind_blob(statement, sqIndex, buffer.data.get(),
-                        static_cast<int>(buffer.size), SQLITE_TRANSIENT);
-    } else {
-      sqlite3_bind_null(statement, sqIndex);
-    }
-  }
 }
 
 BridgeResult opsqlite_execute_prepared_statement(
@@ -464,7 +464,6 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
           .column_names = std::move(column_names)};
 }
 
-/// Base execution function, returns HostObjects to the JS environment
 BridgeResult opsqlite_execute_host_objects(
     sqlite3 *db, std::string const &query, const std::vector<JSVariant> *params,
     std::vector<DumbHostObject> *results,
@@ -761,24 +760,6 @@ opsqlite_execute_raw(sqlite3 *db, std::string const &query,
   return {.type = SQLiteOk,
           .affectedRows = changedRowCount,
           .insertId = static_cast<double>(latestInsertRowId)};
-}
-
-void opsqlite_close_all() {
-  //  TODO figure out if there is a way to close all the connections
-  // IS THIS EVEN NEEDED? Each host object now has a destructor, so we can clear
-  // the connection there
-
-  //  for (auto const &x : dbMap) {
-  //    // Interrupt will make all pending operations to fail with
-  //    // SQLITE_INTERRUPT The ongoing work from threads will then fail ASAP
-  //    sqlite3_interrupt(x.second);
-  //    // Each DB connection can then be safely interrupted
-  //    sqlite3_close_v2(x.second);
-  //  }
-  //  dbMap.clear();
-  //  updateCallbackMap.clear();
-  //  rollbackCallbackMap.clear();
-  //  commitCallbackMap.clear();
 }
 
 std::string operation_to_string(int operation_type) {
