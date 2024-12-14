@@ -32,8 +32,8 @@ void DBHostObject::flush_pending_reactive_queries(
     std::shared_ptr<std::vector<SmartHostObject>> metadata =
         std::make_shared<std::vector<SmartHostObject>>();
 
-    auto status = opsqlite_execute_prepared_statement(db, query->stmt,
-                                                      &results, metadata);
+    auto status = opsqlite_execute_prepared_statement(db, query->stmt, &results,
+                                                      metadata);
 
     if (status.type == SQLiteError) {
       invoker->invokeAsync(
@@ -892,8 +892,14 @@ void DBHostObject::set(jsi::Runtime &rt, const jsi::PropNameID &name,
   throw std::runtime_error("You cannot write to this object!");
 }
 
-void DBHostObject::invalidate() { invalidated = true; }
+void DBHostObject::invalidate() {
+  invalidated = true;
+  opsqlite_close(db);
+}
 
-DBHostObject::~DBHostObject() { invalidated = true; }
+DBHostObject::~DBHostObject() {
+  invalidated = true;
+  opsqlite_close(db);
+}
 
 } // namespace opsqlite
