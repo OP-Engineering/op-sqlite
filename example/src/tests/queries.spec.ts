@@ -67,6 +67,30 @@ export function queriesTests() {
     //   });
     // }
 
+    it('Can create multiple connections to same db', async () => {
+      const db2 = open({
+        name: 'queries.sqlite',
+        encryptionKey: 'test',
+      });
+
+      const db3 = open({
+        name: 'queries.sqlite',
+        encryptionKey: 'test',
+      });
+
+      let promises = [
+        db.execute('SELECT 1'),
+        db2.execute('SELECT 1'),
+        db3.execute('SELECT 1'),
+      ];
+
+      let res = await Promise.all(promises);
+      res.forEach(r => {
+        expect(r.rowsAffected).to.equal(0);
+        expect(r.rows[0]!['1']).to.equal(1);
+      });
+    });
+
     it('Trying to pass object as param should throw', async () => {
       try {
         // @ts-ignore
