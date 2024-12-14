@@ -61,8 +61,6 @@ BridgeResult opsqlite_execute_raw(sqlite3 *db, std::string const &query,
                                   const std::vector<JSVariant> *params,
                                   std::vector<std::vector<JSVariant>> *results);
 
-void opsqlite_close_all();
-
 BridgeResult opsqlite_register_update_hook(std::string const &dbName,
                                            const UpdateCallback &callback);
 BridgeResult opsqlite_deregister_update_hook(std::string const &dbName);

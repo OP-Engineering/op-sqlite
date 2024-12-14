@@ -36,12 +36,6 @@ void clearState() {
   }
   invalidated = true;
 
-#ifdef OP_SQLITE_USE_LIBSQL
-  opsqlite_libsql_close_all();
-#else
-  opsqlite_close_all();
-#endif
-
   // We then join all the threads before the context gets invalidated
   thread_pool->restartPool();
 }
