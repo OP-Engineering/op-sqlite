@@ -312,7 +312,14 @@ void DBHostObject::create_jsi_functions() {
             auto jsiResult = create_raw_result(rt, status, &results);
             resolve->asObject(rt).asFunction(rt).call(rt, std::move(jsiResult));
           });
-
+        } catch (std::runtime_error &e) {
+            auto what = e.what();
+            invoker->invokeAsync([&rt, what = std::string(what), reject] {
+                auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+                auto error = errorCtr.callAsConstructor(
+                        rt, jsi::String::createFromAscii(rt, what));
+                reject->asObject(rt).asFunction(rt).call(rt, error);
+            });
         } catch (std::exception &exc) {
           auto what = exc.what();
           invoker->invokeAsync([&rt, what = std::move(what), reject] {
@@ -381,7 +388,17 @@ void DBHostObject::create_jsi_functions() {
             auto jsiResult = create_js_rows(rt, status);
             resolve->asObject(rt).asFunction(rt).call(rt, std::move(jsiResult));
           });
-
+          // On Android RN is broken and does not correctly match runtime_error
+          // to the generic exception We have to explicitly catch it
+          // https://github.com/facebook/react-native/issues/48027
+        } catch (std::runtime_error &e) {
+          auto what = e.what();
+          invoker->invokeAsync([&rt, what = std::string(what), reject] {
+            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto error = errorCtr.callAsConstructor(
+                rt, jsi::String::createFromAscii(rt, what));
+            reject->asObject(rt).asFunction(rt).call(rt, error);
+          });
         } catch (std::exception &exc) {
           auto what = exc.what();
           invoker->invokeAsync([&rt, what = std::string(what), reject] {
@@ -442,7 +459,14 @@ void DBHostObject::create_jsi_functions() {
                 resolve->asObject(rt).asFunction(rt).call(rt,
                                                           std::move(jsiResult));
               });
-
+        } catch (std::runtime_error &e) {
+            auto what = e.what();
+            invoker->invokeAsync([&rt, what = std::string(what), reject] {
+                auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+                auto error = errorCtr.callAsConstructor(
+                        rt, jsi::String::createFromAscii(rt, what));
+                reject->asObject(rt).asFunction(rt).call(rt, error);
+            });
         } catch (std::exception &exc) {
           auto what = exc.what();
           invoker->invokeAsync([&rt, what = std::move(what), reject] {
@@ -463,7 +487,7 @@ void DBHostObject::create_jsi_functions() {
   });
 
   auto execute_batch = HOSTFN("executeBatch") {
-    if (sizeof(args) < 1) {
+    if (count < 1) {
       throw std::runtime_error(
           "[op-sqlite][executeAsyncBatch] Incorrect parameter count");
       return {};
@@ -511,6 +535,14 @@ void DBHostObject::create_jsi_functions() {
                                 jsi::Value(batchResult.affectedRows));
                 resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
               });
+        } catch (std::runtime_error &e) {
+            auto what = e.what();
+            invoker->invokeAsync([&rt, what = std::string(what), reject] {
+                auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+                auto error = errorCtr.callAsConstructor(
+                        rt, jsi::String::createFromAscii(rt, what));
+                reject->asObject(rt).asFunction(rt).call(rt, error);
+            });
         } catch (std::exception &exc) {
           auto what = exc.what();
           invoker->invokeAsync([&rt, what = std::move(what), reject] {
@@ -565,9 +597,17 @@ void DBHostObject::create_jsi_functions() {
                 res.setProperty(rt, "commands", jsi::Value(result.commands));
                 resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
               });
+        } catch (std::runtime_error &e) {
+            auto what = e.what();
+            invoker->invokeAsync([&rt, what = std::string(what), reject] {
+                auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+                auto error = errorCtr.callAsConstructor(
+                        rt, jsi::String::createFromAscii(rt, what));
+                reject->asObject(rt).asFunction(rt).call(rt, error);
+            });
         } catch (std::exception &exc) {
           auto what = exc.what();
-          invoker->invokeAsync([&rt, what = std::move(what), reject] {
+          invoker->invokeAsync([&rt, what = std::string(what), reject] {
             auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
             auto error = errorCtr.callAsConstructor(
                 rt, jsi::String::createFromAscii(rt, what));

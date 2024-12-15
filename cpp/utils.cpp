@@ -62,7 +62,7 @@ JSVariant toVariant(jsi::Runtime &rt, const jsi::Value &value) {
     auto obj = value.asObject(rt);
 
     if (!obj.isArrayBuffer(rt)) {
-      throw std::invalid_argument(
+      throw std::runtime_error(
           "Object is not an ArrayBuffer, cannot bind to SQLite");
     }
 
@@ -74,8 +74,7 @@ JSVariant toVariant(jsi::Runtime &rt, const jsi::Value &value) {
                                  .size = buffer.size(rt)});
 
   } else {
-    throw std::invalid_argument(
-        "Cannot convert JSI value to C++ Variant value");
+    throw std::runtime_error("Cannot convert JSI value to C++ Variant value");
   }
 }
 
