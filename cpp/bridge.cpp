@@ -134,25 +134,19 @@ void opsqlite_close(sqlite3 *db) {
   sqlite3_close_v2(db);
 }
 
-BridgeResult opsqlite_attach(sqlite3 *db, std::string const &mainDBName,
-                             std::string const &docPath,
-                             std::string const &databaseToAttach,
+void opsqlite_attach(sqlite3 *db, std::string const &main_db_name,
+                             std::string const &doc_path,
+                             std::string const &secondary_db_name,
                              std::string const &alias) {
-  std::string dbPath = opsqlite_get_db_path(databaseToAttach, docPath);
-  std::string statement = "ATTACH DATABASE '" + dbPath + "' AS " + alias;
+  std::string secondary_db_path = opsqlite_get_db_path(secondary_db_name, doc_path);
+  std::string statement = "ATTACH DATABASE '" + secondary_db_path + "' AS " + alias;
 
   BridgeResult result = opsqlite_execute(db, statement, nullptr);
 
   if (result.type == SQLiteError) {
-    return {
-        .type = SQLiteError,
-        .message = mainDBName + " was unable to attach another database: " +
-                   std::string(result.message),
-    };
+    throw std::runtime_error(main_db_name + " was unable to attach another database: " +
+                             std::string(result.message));
   }
-  return {
-      .type = SQLiteOk,
-  };
 }
 
 BridgeResult opsqlite_detach(sqlite3 *db, std::string const &mainDBName,

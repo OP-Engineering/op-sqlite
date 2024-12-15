@@ -49,7 +49,7 @@ void install(jsi::Runtime &rt,
   _crsqlite_path = std::string(crsqlite_path);
   _sqlite_vec_path = std::string(sqlite_vec_path);
 
-  auto open = HOSTFN("open") {
+  auto open = HOST_STATIC_FN("open") {
     jsi::Object options = args[0].asObject(rt);
     std::string name = options.getProperty(rt, "name").asString(rt).utf8(rt);
     std::string path = std::string(_base_path);
@@ -89,7 +89,7 @@ void install(jsi::Runtime &rt,
     return jsi::Object::createFromHostObject(rt, db);
   });
 
-  auto is_sqlcipher = HOSTFN("isSQLCipher") {
+  auto is_sqlcipher = HOST_STATIC_FN("isSQLCipher") {
 #ifdef OP_SQLITE_USE_SQLCIPHER
     return true;
 #else
@@ -97,7 +97,7 @@ void install(jsi::Runtime &rt,
 #endif
   });
 
-  auto is_libsql = HOSTFN("isLibsql") {
+  auto is_libsql = HOST_STATIC_FN("isLibsql") {
 #ifdef OP_SQLITE_USE_LIBSQL
     return true;
 #else
@@ -106,7 +106,7 @@ void install(jsi::Runtime &rt,
   });
 
 #ifdef OP_SQLITE_USE_LIBSQL
-  auto open_remote = HOSTFN("openRemote") {
+  auto open_remote = HOST_STATIC_FN("openRemote") {
     jsi::Object options = args[0].asObject(rt);
     std::string url = options.getProperty(rt, "url").asString(rt).utf8(rt);
     std::string auth_token =
@@ -117,7 +117,7 @@ void install(jsi::Runtime &rt,
     return jsi::Object::createFromHostObject(rt, db);
   });
 
-  auto open_sync = HOSTFN("openSync") {
+  auto open_sync = HOST_STATIC_FN("openSync") {
     jsi::Object options = args[0].asObject(rt);
     std::string name = options.getProperty(rt, "name").asString(rt).utf8(rt);
     std::string path = std::string(_base_path);

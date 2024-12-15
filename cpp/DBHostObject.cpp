@@ -198,34 +198,31 @@ void DBHostObject::create_jsi_functions() {
                          "[op-sqlite][attach] Incorrect number of arguments");
     }
     if (!args[0].isString() || !args[1].isString() || !args[2].isString()) {
-      throw jsi::JSError(
-          rt, "dbName, databaseToAttach and alias must be a strings");
+      throw jsi::JSError(rt,
+                         "dbName, databaseToAttach and alias must be strings");
       return {};
     }
 
-    std::string tempDocPath = std::string(base_path);
-    if (count > 3 && !args[3].isUndefined() && !args[3].isNull()) {
+    std::string secondary_db_path = std::string(base_path);
+    if (count > 3) {
       if (!args[3].isString()) {
         throw std::runtime_error(
             "[op-sqlite][attach] database location must be a string");
       }
 
-      tempDocPath = tempDocPath + "/" + args[3].asString(rt).utf8(rt);
+      secondary_db_path += "/" + args[3].asString(rt).utf8(rt);
     }
 
-    std::string dbName = args[0].asString(rt).utf8(rt);
-    std::string databaseToAttach = args[1].asString(rt).utf8(rt);
+    std::string main_db_name = args[0].asString(rt).utf8(rt);
+    std::string secondary_db_name = args[1].asString(rt).utf8(rt);
     std::string alias = args[2].asString(rt).utf8(rt);
 #ifdef OP_SQLITE_USE_LIBSQL
-    BridgeResult result =
-        opsqlite_libsql_attach(dbName, tempDocPath, databaseToAttach, alias);
+    BridgeResult result = opsqlite_libsql_attach(
+        main_db_name, secondary_db_path, secondary_db_name, alias);
 #else
-    BridgeResult result =
-        opsqlite_attach(db, dbName, tempDocPath, databaseToAttach, alias);
+    opsqlite_attach(db, main_db_name, secondary_db_path, secondary_db_name,
+                    alias);
 #endif
-    if (result.type == SQLiteError) {
-      throw std::runtime_error(result.message);
-    }
 
     return {};
   });
@@ -310,7 +307,7 @@ void DBHostObject::create_jsi_functions() {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-      auto task = [&rt, this, query, params = std::move(params), resolve,
+      auto task = [this, &rt, query, params = std::move(params), resolve,
                    reject]() {
         try {
           std::vector<std::vector<JSVariant>> results;
@@ -392,7 +389,7 @@ void DBHostObject::create_jsi_functions() {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-      auto task = [&rt, this, query = std::move(query),
+      auto task = [this, &rt, query = std::move(query),
                    params = std::move(params), resolve, reject]() {
         try {
 
@@ -535,7 +532,7 @@ void DBHostObject::create_jsi_functions() {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-      auto task = [&rt, this,
+      auto task = [this, &rt,
                    commands =
                        std::make_shared<std::vector<BatchArguments>>(commands),
                    resolve, reject]() {
