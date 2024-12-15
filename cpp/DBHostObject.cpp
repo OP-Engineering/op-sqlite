@@ -234,8 +234,7 @@ void DBHostObject::create_jsi_functions() {
     }
     if (!args[0].isString() || !args[1].isString()) {
       throw std::runtime_error(
-          "dbName, databaseToAttach and alias must be a strings");
-      return {};
+          "[op-sqlite] database name and alias must be a strings");
     }
 
     std::string dbName = args[0].asString(rt).utf8(rt);
