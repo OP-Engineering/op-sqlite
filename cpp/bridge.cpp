@@ -135,28 +135,21 @@ void opsqlite_close(sqlite3 *db) {
 }
 
 void opsqlite_attach(sqlite3 *db, std::string const &main_db_name,
-                             std::string const &doc_path,
-                             std::string const &secondary_db_name,
-                             std::string const &alias) {
-  std::string secondary_db_path = opsqlite_get_db_path(secondary_db_name, doc_path);
-  std::string statement = "ATTACH DATABASE '" + secondary_db_path + "' AS " + alias;
+                     std::string const &doc_path,
+                     std::string const &secondary_db_name,
+                     std::string const &alias) {
+  std::string secondary_db_path =
+      opsqlite_get_db_path(secondary_db_name, doc_path);
+  std::string statement =
+      "ATTACH DATABASE '" + secondary_db_path + "' AS " + alias;
 
-  BridgeResult result = opsqlite_execute(db, statement, nullptr);
-
-  if (result.type == SQLiteError) {
-    throw std::runtime_error(main_db_name + " was unable to attach another database: " +
-                             std::string(result.message));
-  }
+  opsqlite_execute(db, statement, nullptr);
 }
 
 void opsqlite_detach(sqlite3 *db, std::string const &main_db_name,
-                             std::string const &alias) {
+                     std::string const &alias) {
   std::string statement = "DETACH DATABASE " + alias;
-  BridgeResult result = opsqlite_execute(db, statement, nullptr);
-  if (result.type == SQLiteError) {
-    throw std::runtime_error(main_db_name + "was unable to detach database: " +
-                             std::string(result.message));
-  }
+  opsqlite_execute(db, statement, nullptr);
 }
 
 void opsqlite_remove(sqlite3 *db, std::string const &name,
@@ -284,16 +277,15 @@ BridgeResult opsqlite_execute_prepared_statement(
   sqlite3_reset(statement);
 
   if (isFailed) {
-    return {.type = SQLiteError,
-            .message = "[op-sqlite] SQLite code: " + std::to_string(result) +
-                       " execution error: " + std::string(errorMessage)};
+    throw std::runtime_error(
+        "[op-sqlite] SQLite code: " + std::to_string(result) +
+        " execution error: " + std::string(errorMessage));
   }
 
   int changedRowCount = sqlite3_changes(db);
   long long latestInsertRowId = sqlite3_last_insert_rowid(db);
 
-  return {.type = SQLiteOk,
-          .affectedRows = changedRowCount,
+  return {.affectedRows = changedRowCount,
           .insertId = static_cast<double>(latestInsertRowId)};
 }
 
@@ -337,10 +329,8 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
 
     if (status != SQLITE_OK) {
       errorMessage = sqlite3_errmsg(db);
-      return {.type = SQLiteError,
-              .message =
-                  "[op-sqlite] SQL prepare error: " + std::string(errorMessage),
-              .affectedRows = 0};
+      throw std::runtime_error("[op-sqlite] SQL prepare error: " +
+                               std::string(errorMessage));
     }
 
     // The statement did not fail to parse but there is nothing to do, just
@@ -436,17 +426,13 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
 
   if (has_failed) {
     const char *message = sqlite3_errmsg(db);
-    return {.type = SQLiteError,
-            .message =
-                "[op-sqlite] SQL execution error: " + std::string(message),
-            .affectedRows = 0,
-            .insertId = 0};
+    throw std::runtime_error("[op-sqlite] SQL execution error: " +
+                             std::string(message));
   }
 
   int changedRowCount = sqlite3_changes(db);
   long long latestInsertRowId = sqlite3_last_insert_rowid(db);
-  return {.type = SQLiteOk,
-          .affectedRows = changedRowCount,
+  return {.affectedRows = changedRowCount,
           .insertId = static_cast<double>(latestInsertRowId),
           .rows = std::move(rows),
           .column_names = std::move(column_names)};
@@ -475,11 +461,10 @@ BridgeResult opsqlite_execute_host_objects(
 
     if (statementStatus != SQLITE_OK) {
       const char *message = sqlite3_errmsg(db);
-      return {.type = SQLiteError,
-              .message =
-                  "[op-sqlite] SQL statement error on opsqlite_execute:\n" +
-                  std::to_string(statementStatus) + " description:\n" +
-                  std::string(message)};
+      throw std::runtime_error(
+          "[op-sqlite] SQL statement error on opsqlite_execute:\n" +
+          std::to_string(statementStatus) + " description:\n" +
+          std::string(message));
     }
 
     // The statement did not fail to parse but there is nothing to do, just
@@ -598,18 +583,15 @@ BridgeResult opsqlite_execute_host_objects(
            strcmp(remainingStatement, "") != 0 && !isFailed);
 
   if (isFailed) {
-
-    return {.type = SQLiteError,
-            .message =
-                "[op-sqlite] SQLite error code: " + std::to_string(result) +
-                ", description: " + std::string(errorMessage)};
+    throw std::runtime_error(
+        "[op-sqlite] SQLite error code: " + std::to_string(result) +
+        ", description: " + std::string(errorMessage));
   }
 
   int changedRowCount = sqlite3_changes(db);
   long long latestInsertRowId = sqlite3_last_insert_rowid(db);
 
-  return {.type = SQLiteOk,
-          .affectedRows = changedRowCount,
+  return {.affectedRows = changedRowCount,
           .insertId = static_cast<double>(latestInsertRowId)};
 }
 
@@ -637,12 +619,9 @@ opsqlite_execute_raw(sqlite3 *db, std::string const &query,
 
     if (statementStatus != SQLITE_OK) {
       const char *message = sqlite3_errmsg(db);
-      return {
-          .type = SQLiteError,
-          .message = "[op-sqlite] SQL statement error:" +
-                     std::to_string(statementStatus) +
-                     " description:" + std::string(message),
-      };
+      throw std::runtime_error("[op-sqlite] SQL statement error:" +
+                               std::to_string(statementStatus) +
+                               " description:" + std::string(message));
     }
 
     // The statement did not fail to parse but there is nothing to do, just
@@ -735,17 +714,14 @@ opsqlite_execute_raw(sqlite3 *db, std::string const &query,
            strcmp(remainingStatement, "") != 0 && !isFailed);
 
   if (isFailed) {
-
-    return {.type = SQLiteError,
-            .message =
-                "[op-sqlite] SQLite error code: " + std::to_string(step) +
-                ", description: " + std::string(errorMessage)};
+    throw std::runtime_error("[op-sqlite] SQLite error code: " + std::to_string(step) +
+                             ", description: " + std::string(errorMessage));
   }
 
   int changedRowCount = sqlite3_changes(db);
   long long latestInsertRowId = sqlite3_last_insert_rowid(db);
 
-  return {.type = SQLiteOk,
+  return {
           .affectedRows = changedRowCount,
           .insertId = static_cast<double>(latestInsertRowId)};
 }
@@ -793,7 +769,7 @@ BridgeResult opsqlite_register_update_hook(std::string const &dbName,
   //
   //  sqlite3_update_hook(db, &update_callback, (void *)key);
 
-  return {SQLiteOk};
+  return {};
 }
 
 BridgeResult opsqlite_deregister_update_hook(std::string const &dbName) {
@@ -804,7 +780,7 @@ BridgeResult opsqlite_deregister_update_hook(std::string const &dbName) {
   //
   //  sqlite3_update_hook(db, nullptr, nullptr);
 
-  return {SQLiteOk};
+  return {};
 }
 
 int commit_callback(void *dbName) {
@@ -832,7 +808,7 @@ BridgeResult opsqlite_register_commit_hook(std::string const &dbName,
   //
   //  sqlite3_commit_hook(db, &commit_callback, (void *)key);
 
-  return {SQLiteOk};
+  return {};
 }
 
 BridgeResult opsqlite_deregister_commit_hook(std::string const &dbName) {
@@ -842,7 +818,7 @@ BridgeResult opsqlite_deregister_commit_hook(std::string const &dbName) {
   //  commitCallbackMap.erase(dbName);
   //  sqlite3_commit_hook(db, nullptr, nullptr);
 
-  return {SQLiteOk};
+  return {};
 }
 
 void rollback_callback(void *dbName) {
@@ -868,7 +844,7 @@ BridgeResult opsqlite_register_rollback_hook(std::string const &dbName,
   //
   //  sqlite3_rollback_hook(db, &rollback_callback, (void *)key);
 
-  return {SQLiteOk};
+  return {};
 }
 
 BridgeResult opsqlite_deregister_rollback_hook(std::string const &dbName) {
@@ -879,7 +855,7 @@ BridgeResult opsqlite_deregister_rollback_hook(std::string const &dbName) {
   //
   //  sqlite3_rollback_hook(db, nullptr, nullptr);
 
-  return {SQLiteOk};
+  return {};
 }
 
 void opsqlite_load_extension(sqlite3 *db, std::string &path,
@@ -914,43 +890,29 @@ BatchResult opsqlite_execute_batch(sqlite3 *db,
                                    std::vector<BatchArguments> *commands) {
   size_t commandCount = commands->size();
   if (commandCount <= 0) {
-    return BatchResult{
-        .type = SQLiteError,
-        .message = "No SQL commands provided",
-    };
+    throw std::invalid_argument("No SQL commands provided");
   }
 
-  try {
-    int affectedRows = 0;
-    opsqlite_execute(db, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
-    for (int i = 0; i < commandCount; i++) {
-      const auto &command = commands->at(i);
-      // We do not provide a datastructure to receive query data because we
-      // don't need/want to handle this results in a batch execution
+
+  int affectedRows = 0;
+  opsqlite_execute(db, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
+  for (int i = 0; i < commandCount; i++) {
+    const auto &command = commands->at(i);
+    // We do not provide a datastructure to receive query data because we
+    // don't need/want to handle this results in a batch execution
+    try {
       auto result = opsqlite_execute(db, command.sql, command.params.get());
-      if (result.type == SQLiteError) {
-        opsqlite_execute(db, "ROLLBACK", nullptr);
-        return BatchResult{
-            .type = SQLiteError,
-            .message = result.message,
-        };
-      } else {
-        affectedRows += result.affectedRows;
-      }
+      affectedRows += result.affectedRows;
+    } catch(std::exception &exc) {
+      opsqlite_execute(db, "ROLLBACK", nullptr);
+      throw exc;
     }
-    opsqlite_execute(db, "COMMIT", nullptr);
-    return BatchResult{
-        .type = SQLiteOk,
-        .affectedRows = affectedRows,
-        .commands = static_cast<int>(commandCount),
-    };
-  } catch (std::exception &exc) {
-    opsqlite_execute(db, "ROLLBACK", nullptr);
-    return BatchResult{
-        .type = SQLiteError,
-        .message = exc.what(),
-    };
   }
+  opsqlite_execute(db, "COMMIT", nullptr);
+  return BatchResult{
+      .affectedRows = affectedRows,
+      .commands = static_cast<int>(commandCount),
+  };
 }
 
 } // namespace opsqlite

@@ -14,10 +14,7 @@ struct ArrayBuffer {
 using JSVariant = std::variant<nullptr_t, bool, int, double, long, long long,
                                std::string, ArrayBuffer>;
 
-enum ResultType { SQLiteOk, SQLiteError };
-
 struct BridgeResult {
-  ResultType type;
   std::string message;
   int affectedRows;
   double insertId;
@@ -26,7 +23,6 @@ struct BridgeResult {
 };
 
 struct BatchResult {
-  ResultType type;
   std::string message;
   int affectedRows;
   int commands;
