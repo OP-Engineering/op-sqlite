@@ -149,20 +149,14 @@ void opsqlite_attach(sqlite3 *db, std::string const &main_db_name,
   }
 }
 
-BridgeResult opsqlite_detach(sqlite3 *db, std::string const &mainDBName,
+void opsqlite_detach(sqlite3 *db, std::string const &main_db_name,
                              std::string const &alias) {
   std::string statement = "DETACH DATABASE " + alias;
   BridgeResult result = opsqlite_execute(db, statement, nullptr);
   if (result.type == SQLiteError) {
-    return BridgeResult{
-        .type = SQLiteError,
-        .message = mainDBName + "was unable to detach database: " +
-                   std::string(result.message),
-    };
+    throw std::runtime_error(main_db_name + "was unable to detach database: " +
+                             std::string(result.message));
   }
-  return BridgeResult{
-      .type = SQLiteOk,
-  };
 }
 
 void opsqlite_remove(sqlite3 *db, std::string const &name,
