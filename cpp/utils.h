@@ -3,8 +3,8 @@
 
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
-#include "types.h"
 #include "sqlite3.h"
+#include "types.h"
 #include <any>
 #include <jsi/jsi.h>
 #include <jsi/jsilib.h>

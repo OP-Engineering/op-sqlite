@@ -31,7 +31,6 @@ export function queriesTests() {
 
     afterEach(() => {
       if (db) {
-        db.close();
         db.delete();
         // @ts-ignore
         db = null;

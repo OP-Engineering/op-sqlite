@@ -35,23 +35,12 @@ void DBHostObject::flush_pending_reactive_queries(
     auto status = opsqlite_execute_prepared_statement(db, query->stmt, &results,
                                                       metadata);
 
-    if (status.type == SQLiteError) {
-      invoker->invokeAsync(
-          [this, callback = query->callback, status = std::move(status)] {
-            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-            auto error = errorCtr.callAsConstructor(
-                rt, jsi::String::createFromUtf8(rt, status.message));
-            callback->asObject(rt).asFunction(rt).call(rt, error);
-          });
-    } else {
-      invoker->invokeAsync(
-          [this,
-           results = std::make_shared<std::vector<DumbHostObject>>(results),
-           callback = query->callback, metadata, status = std::move(status)] {
-            auto jsiResult = create_result(rt, status, results.get(), metadata);
-            callback->asObject(rt).asFunction(rt).call(rt, jsiResult);
-          });
-    }
+    invoker->invokeAsync(
+        [this, results = std::make_shared<std::vector<DumbHostObject>>(results),
+         callback = query->callback, metadata, status = std::move(status)] {
+          auto jsiResult = create_result(rt, status, results.get(), metadata);
+          callback->asObject(rt).asFunction(rt).call(rt, jsiResult);
+        });
   }
 
   pending_reactive_queries.clear();
@@ -261,7 +250,7 @@ void DBHostObject::create_jsi_functions() {
   auto remove = HOSTFN("delete") {
     std::string path = std::string(base_path);
 
-    if (count == 1 && !args[0].isUndefined() && !args[0].isNull()) {
+    if (count == 1) {
       if (!args[1].isString()) {
         throw std::runtime_error(
             "[op-sqlite][open] database location must be a string");
@@ -320,16 +309,8 @@ void DBHostObject::create_jsi_functions() {
 
           invoker->invokeAsync([&rt, results = std::move(results),
                                 status = std::move(status), resolve, reject] {
-            if (status.type == SQLiteOk) {
-              auto jsiResult = create_raw_result(rt, status, &results);
-              resolve->asObject(rt).asFunction(rt).call(rt,
-                                                        std::move(jsiResult));
-            } else {
-              auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-              auto error = errorCtr.callAsConstructor(
-                  rt, jsi::String::createFromUtf8(rt, status.message));
-              reject->asObject(rt).asFunction(rt).call(rt, error);
-            }
+            auto jsiResult = create_raw_result(rt, status, &results);
+            resolve->asObject(rt).asFunction(rt).call(rt, std::move(jsiResult));
           });
 
         } catch (std::exception &exc) {
@@ -365,9 +346,6 @@ void DBHostObject::create_jsi_functions() {
     auto status = opsqlite_execute(db, query, &params);
 #endif
 
-    if (status.type != SQLiteOk) {
-      throw std::runtime_error(status.message);
-    }
     return create_js_rows(rt, status);
   });
 
@@ -380,12 +358,12 @@ void DBHostObject::create_jsi_functions() {
     }
 
     auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
-    auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor") {
-      auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
-      auto reject = std::make_shared<jsi::Value>(rt, args[1]);
-
+    auto promise = promiseCtr.callAsConstructor(rt,
+ HOSTFN("executor") {
       auto task = [this, &rt, query = std::move(query),
-                   params = std::move(params), resolve, reject]() {
+                   params = std::move(params),
+                   resolve = std::make_shared<jsi::Value>(rt, args[0]),
+                   reject = std::make_shared<jsi::Value>(rt, args[1])]() {
         try {
 
 #ifdef OP_SQLITE_USE_LIBSQL
@@ -400,23 +378,14 @@ void DBHostObject::create_jsi_functions() {
 
           invoker->invokeAsync([&rt, status = std::move(status), resolve,
                                 reject] {
-            if (status.type == SQLiteOk) {
-              auto jsiResult = create_js_rows(rt, status);
-              resolve->asObject(rt).asFunction(rt).call(rt,
-                                                        std::move(jsiResult));
-            } else {
-              auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-              auto error = errorCtr.callAsConstructor(
-                  rt, jsi::String::createFromUtf8(rt, status.message));
-              reject->asObject(rt).asFunction(rt).call(rt, error);
-            }
+            auto jsiResult = create_js_rows(rt, status);
+            resolve->asObject(rt).asFunction(rt).call(rt, std::move(jsiResult));
           });
 
         } catch (std::exception &exc) {
           auto what = exc.what();
-          invoker->invokeAsync([&rt, what = std::move(what), reject] {
+          invoker->invokeAsync([&rt, what = std::string(what), reject] {
             auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-
             auto error = errorCtr.callAsConstructor(
                 rt, jsi::String::createFromAscii(rt, what));
             reject->asObject(rt).asFunction(rt).call(rt, error);
@@ -427,7 +396,7 @@ void DBHostObject::create_jsi_functions() {
       thread_pool->queueWork(task);
 
       return {};
-        }));
+    }));
 
     return promise;
   });
@@ -468,18 +437,10 @@ void DBHostObject::create_jsi_functions() {
               [&rt,
                results = std::make_shared<std::vector<DumbHostObject>>(results),
                metadata, status = std::move(status), resolve, reject] {
-                if (status.type == SQLiteOk) {
-                  auto jsiResult =
-                      create_result(rt, status, results.get(), metadata);
-                  resolve->asObject(rt).asFunction(rt).call(
-                      rt, std::move(jsiResult));
-                } else {
-                  auto errorCtr =
-                      rt.global().getPropertyAsFunction(rt, "Error");
-                  auto error = errorCtr.callAsConstructor(
-                      rt, jsi::String::createFromUtf8(rt, status.message));
-                  reject->asObject(rt).asFunction(rt).call(rt, error);
-                }
+                auto jsiResult =
+                    create_result(rt, status, results.get(), metadata);
+                resolve->asObject(rt).asFunction(rt).call(rt,
+                                                          std::move(jsiResult));
               });
 
         } catch (std::exception &exc) {
@@ -543,20 +504,13 @@ void DBHostObject::create_jsi_functions() {
             return;
           }
 
-          invoker->invokeAsync([&rt, batchResult = std::move(batchResult),
-                                resolve, reject] {
-            if (batchResult.type == SQLiteOk) {
-              auto res = jsi::Object(rt);
-              res.setProperty(rt, "rowsAffected",
-                              jsi::Value(batchResult.affectedRows));
-              resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
-            } else {
-              auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-              auto error = errorCtr.callAsConstructor(
-                  rt, jsi::String::createFromUtf8(rt, batchResult.message));
-              reject->asObject(rt).asFunction(rt).call(rt, error);
-            }
-          });
+          invoker->invokeAsync(
+              [&rt, batchResult = std::move(batchResult), resolve, reject] {
+                auto res = jsi::Object(rt);
+                res.setProperty(rt, "rowsAffected",
+                                jsi::Value(batchResult.affectedRows));
+                resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
+              });
         } catch (std::exception &exc) {
           auto what = exc.what();
           invoker->invokeAsync([&rt, what = std::move(what), reject] {
@@ -603,21 +557,14 @@ void DBHostObject::create_jsi_functions() {
         try {
           const auto result = import_sql_file(db, sqlFileName);
 
-          invoker->invokeAsync([&rt, result = std::move(result), resolve,
-                                reject] {
-            if (result.type == SQLiteOk) {
-              auto res = jsi::Object(rt);
-              res.setProperty(rt, "rowsAffected",
-                              jsi::Value(result.affectedRows));
-              res.setProperty(rt, "commands", jsi::Value(result.commands));
-              resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
-            } else {
-              auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-              auto error = errorCtr.callAsConstructor(
-                  rt, jsi::String::createFromUtf8(rt, result.message));
-              reject->asObject(rt).asFunction(rt).call(rt, error);
-            }
-          });
+          invoker->invokeAsync(
+              [&rt, result = std::move(result), resolve, reject] {
+                auto res = jsi::Object(rt);
+                res.setProperty(rt, "rowsAffected",
+                                jsi::Value(result.affectedRows));
+                res.setProperty(rt, "commands", jsi::Value(result.commands));
+                resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
+              });
         } catch (std::exception &exc) {
           auto what = exc.what();
           invoker->invokeAsync([&rt, what = std::move(what), reject] {

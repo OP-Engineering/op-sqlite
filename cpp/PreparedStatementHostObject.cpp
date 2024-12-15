@@ -60,26 +60,28 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
           auto status = opsqlite_libsql_execute_prepared_statement(
               _name, _stmt, &results, metadata);
 #else
-          auto status = opsqlite_execute_prepared_statement(_db, _stmt,
-                                                            &results, metadata);
-#endif
-          invoker->invokeAsync(
-              [&rt, status = std::move(status),
-               results = std::make_shared<std::vector<DumbHostObject>>(results),
-               metadata, resolve, reject] {
-                if (status.type == SQLiteOk) {
+          try {
+            auto status = opsqlite_execute_prepared_statement(
+                _db, _stmt, &results, metadata);
+            invoker->invokeAsync(
+                [&rt, status = std::move(status),
+                 results =
+                     std::make_shared<std::vector<DumbHostObject>>(results),
+                 metadata, resolve] {
                   auto jsiResult =
                       create_result(rt, status, results.get(), metadata);
                   resolve->asObject(rt).asFunction(rt).call(
                       rt, std::move(jsiResult));
-                } else {
-                  auto errorCtr =
-                      rt.global().getPropertyAsFunction(rt, "Error");
-                  auto error = errorCtr.callAsConstructor(
-                      rt, jsi::String::createFromUtf8(rt, status.message));
-                  reject->asObject(rt).asFunction(rt).call(rt, error);
-                }
-              });
+                });
+          } catch (std::exception &exc) {
+            invoker->invokeAsync([&rt, &exc, reject] {
+              auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+              auto error = errorCtr.callAsConstructor(
+                  rt, jsi::String::createFromUtf8(rt, exc.what()));
+              reject->asObject(rt).asFunction(rt).call(rt, error);
+            });
+          }
+#endif
         };
 
         _thread_pool->queueWork(task);
