@@ -9,6 +9,7 @@
 #include "utils.h"
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <unordered_map>
 #include <variant>
 
@@ -30,27 +31,29 @@ inline void opsqlite_bind_statement(sqlite3_stmt *statement,
     int stmt_index = ii + 1;
     JSVariant value = values->at(ii);
 
-    if (std::holds_alternative<bool>(value)) {
-      sqlite3_bind_int(statement, stmt_index,
-                       static_cast<int>(std::get<bool>(value)));
-    } else if (std::holds_alternative<int>(value)) {
-      sqlite3_bind_int(statement, stmt_index, std::get<int>(value));
-    } else if (std::holds_alternative<long long>(value)) {
-      sqlite3_bind_double(statement, stmt_index,
-                          static_cast<double>(std::get<long long>(value)));
-    } else if (std::holds_alternative<double>(value)) {
-      sqlite3_bind_double(statement, stmt_index, std::get<double>(value));
-    } else if (std::holds_alternative<std::string>(value)) {
-      std::string str = std::get<std::string>(value);
-      sqlite3_bind_text(statement, stmt_index, str.c_str(),
-                        static_cast<int>(str.length()), SQLITE_TRANSIENT);
-    } else if (std::holds_alternative<ArrayBuffer>(value)) {
-      ArrayBuffer buffer = std::get<ArrayBuffer>(value);
-      sqlite3_bind_blob(statement, stmt_index, buffer.data.get(),
-                        static_cast<int>(buffer.size), SQLITE_TRANSIENT);
-    } else {
-      sqlite3_bind_null(statement, stmt_index);
-    }
+    std::visit(
+        [&](auto &&v) {
+          using T = std::decay_t<decltype(v)>;
+
+          if constexpr (std::is_same_v<T, bool>) {
+            sqlite3_bind_int(statement, stmt_index, static_cast<int>(v));
+          } else if constexpr (std::is_same_v<T, int>) {
+            sqlite3_bind_int(statement, stmt_index, v);
+          } else if constexpr (std::is_same_v<T, long long>) {
+            sqlite3_bind_double(statement, stmt_index, static_cast<double>(v));
+          } else if constexpr (std::is_same_v<T, double>) {
+            sqlite3_bind_double(statement, stmt_index, v);
+          } else if constexpr (std::is_same_v<T, std::string>) {
+            sqlite3_bind_text(statement, stmt_index, v.c_str(),
+                              static_cast<int>(v.length()), SQLITE_TRANSIENT);
+          } else if constexpr (std::is_same_v<T, ArrayBuffer>) {
+            sqlite3_bind_blob(statement, stmt_index, v.data.get(),
+                              static_cast<int>(v.size), SQLITE_TRANSIENT);
+          } else {
+            sqlite3_bind_null(statement, stmt_index);
+          }
+        },
+        value);
   }
 }
 
@@ -68,24 +71,23 @@ std::string opsqlite_get_db_path(std::string const &db_name,
 }
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
-BridgeResult opsqlite_open(std::string const &name,
-                           std::string const &last_path,
+BridgeResult opsqlite_open(std::string const &name, std::string const &path,
                            std::string const &crsqlite_path,
                            std::string const &sqlite_vec_path,
                            std::string const &encryption_key) {
 #else
-sqlite3 *opsqlite_open(std::string const &name, std::string const &last_path,
+sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
                        [[maybe_unused]] std::string const &crsqlite_path,
-                       std::string const &sqlite_vec_path) {
+                       [[maybe_unused]] std::string const &sqlite_vec_path) {
 #endif
-  std::string final_path = opsqlite_get_db_path(name, last_path);
-
-  int sqlOpenFlags =
-      SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
-
+  std::string final_path = opsqlite_get_db_path(name, path);
+  char *errMsg;
   sqlite3 *db;
 
-  int status = sqlite3_open_v2(final_path.c_str(), &db, sqlOpenFlags, nullptr);
+  int flags =
+      SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
+
+  int status = sqlite3_open_v2(final_path.c_str(), &db, flags, nullptr);
 
   if (status != SQLITE_OK) {
     throw std::runtime_error(sqlite3_errmsg(db));
@@ -96,8 +98,6 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &last_path,
 #endif
 
   sqlite3_enable_load_extension(db, 1);
-
-  char *errMsg;
 
 #ifdef OP_SQLITE_USE_CRSQLITE
   const char *crsqliteEntryPoint = "sqlite3_crsqlite_init";
@@ -138,10 +138,8 @@ void opsqlite_attach(sqlite3 *db, std::string const &main_db_name,
                      std::string const &doc_path,
                      std::string const &secondary_db_name,
                      std::string const &alias) {
-  std::string secondary_db_path =
-      opsqlite_get_db_path(secondary_db_name, doc_path);
-  std::string statement =
-      "ATTACH DATABASE '" + secondary_db_path + "' AS " + alias;
+  auto secondary_db_path = opsqlite_get_db_path(secondary_db_name, doc_path);
+  auto statement = "ATTACH DATABASE '" + secondary_db_path + "' AS " + alias;
 
   opsqlite_execute(db, statement, nullptr);
 }
@@ -426,7 +424,7 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
 
   if (has_failed) {
     const char *message = sqlite3_errmsg(db);
-    throw std::runtime_error("[op-sqlite] SQL execution error: " +
+    throw std::runtime_error("[op-sqlite] statement execution error: " +
                              std::string(message));
   }
 
@@ -619,9 +617,9 @@ opsqlite_execute_raw(sqlite3 *db, std::string const &query,
 
     if (statementStatus != SQLITE_OK) {
       const char *message = sqlite3_errmsg(db);
-      throw std::runtime_error("[op-sqlite] SQL statement error:" +
-                               std::to_string(statementStatus) +
-                               " description:" + std::string(message));
+      throw std::runtime_error(
+          "[op-sqlite] SQL statement error:" + std::to_string(statementStatus) +
+          " description:" + std::string(message));
     }
 
     // The statement did not fail to parse but there is nothing to do, just
@@ -714,15 +712,15 @@ opsqlite_execute_raw(sqlite3 *db, std::string const &query,
            strcmp(remainingStatement, "") != 0 && !isFailed);
 
   if (isFailed) {
-    throw std::runtime_error("[op-sqlite] SQLite error code: " + std::to_string(step) +
-                             ", description: " + std::string(errorMessage));
+    throw std::runtime_error(
+        "[op-sqlite] SQLite error code: " + std::to_string(step) +
+        ", description: " + std::string(errorMessage));
   }
 
   int changedRowCount = sqlite3_changes(db);
   long long latestInsertRowId = sqlite3_last_insert_rowid(db);
 
-  return {
-          .affectedRows = changedRowCount,
+  return {.affectedRows = changedRowCount,
           .insertId = static_cast<double>(latestInsertRowId)};
 }
 
@@ -738,7 +736,7 @@ std::string operation_to_string(int operation_type) {
     return "UPDATE";
 
   default:
-    throw std::invalid_argument("Unknown SQLite operation on hook");
+    throw std::runtime_error("Unknown SQLite operation on hook");
   }
 }
 
@@ -890,9 +888,8 @@ BatchResult opsqlite_execute_batch(sqlite3 *db,
                                    std::vector<BatchArguments> *commands) {
   size_t commandCount = commands->size();
   if (commandCount <= 0) {
-    throw std::invalid_argument("No SQL commands provided");
+    throw std::runtime_error("No SQL commands provided");
   }
-
 
   int affectedRows = 0;
   opsqlite_execute(db, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
@@ -903,7 +900,7 @@ BatchResult opsqlite_execute_batch(sqlite3 *db,
     try {
       auto result = opsqlite_execute(db, command.sql, command.params.get());
       affectedRows += result.affectedRows;
-    } catch(std::exception &exc) {
+    } catch (std::exception &exc) {
       opsqlite_execute(db, "ROLLBACK", nullptr);
       throw exc;
     }

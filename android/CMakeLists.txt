@@ -2,15 +2,15 @@ project(OPSQLite)
 cmake_minimum_required(VERSION 3.9.0)
 
 set (PACKAGE_NAME "op-sqlite")
-set (CMAKE_VERBOSE_MAKEFILE ON)
-set (CMAKE_CXX_STANDARD 20)
-set (BUILD_DIR ${CMAKE_SOURCE_DIR}/build)
+#set (CMAKE_CXX_STANDARD_REQUIRED ON)
+#set (CMAKE_CXX_EXTENSIONS OFF)
+#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -fexceptions -frtti -stdlib=libc++")
+#set (BUILD_DIR ${CMAKE_SOURCE_DIR}/build)
 
  include_directories(
    ../cpp
    ../cpp/sqlcipher
    ../cpp/libsql
-#   ../example/c_sources
  )
 
 add_definitions(
@@ -61,13 +61,13 @@ if (USE_SQLITE_VEC)
     -DOP_SQLITE_USE_SQLITE_VEC=1
   )
 endif()
-
-set_target_properties(
-  ${PACKAGE_NAME} PROPERTIES
-  CXX_STANDARD 20
-  CXX_EXTENSIONS OFF
-  POSITION_INDEPENDENT_CODE ON
-)
+#
+#set_target_properties(
+#  ${PACKAGE_NAME} PROPERTIES
+#  CXX_STANDARD 20
+#  CXX_EXTENSIONS OFF
+#  POSITION_INDEPENDENT_CODE ON
+#)
 
 find_package(ReactAndroid REQUIRED CONFIG)
 find_package(fbjni REQUIRED CONFIG)
