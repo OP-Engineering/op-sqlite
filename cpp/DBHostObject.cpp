@@ -241,14 +241,10 @@ void DBHostObject::create_jsi_functions() {
     std::string dbName = args[0].asString(rt).utf8(rt);
     std::string alias = args[1].asString(rt).utf8(rt);
 #ifdef OP_SQLITE_USE_LIBSQL
-    BridgeResult result = opsqlite_libsql_detach(dbName, alias);
+    opsqlite_libsql_detach(dbName, alias);
 #else
-    BridgeResult result = opsqlite_detach(db, dbName, alias);
+    opsqlite_detach(db, dbName, alias);
 #endif
-
-    if (result.type == SQLiteError) {
-      throw jsi::JSError(rt, result.message.c_str());
-    }
 
     return {};
   });

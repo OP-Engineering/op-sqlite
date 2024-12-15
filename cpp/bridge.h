@@ -43,7 +43,7 @@ void opsqlite_attach(sqlite3 *db, std::string const &main_db_name,
                              std::string const &secondary_db_name,
                              std::string const &alias);
 
-BridgeResult opsqlite_detach(sqlite3 *db, std::string const &mainDBName,
+void opsqlite_detach(sqlite3 *db, std::string const &main_db_name,
                              std::string const &alias);
 
 BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
