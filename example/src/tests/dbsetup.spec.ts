@@ -181,4 +181,29 @@ export function dbSetupTests() {
       }
     });
   });
+
+  it('Can attach/dettach database', () => {
+    let db = open({
+      name: 'attachTest.sqlite',
+      encryptionKey: 'test',
+    });
+    let db2 = open({
+      name: 'attachTest2.sqlite',
+      encryptionKey: 'test',
+    });
+    db2.close();
+    db.attach('attachTest.sqlite', 'attachTest2.sqlite', 'attach2');
+    db.executeSync(
+      'CREATE TABLE IF NOT EXISTS attach2.test (id INTEGER PRIMARY KEY);',
+    );
+    let res = db.executeSync('INSERT INTO attach2.test (id) VALUES (1);');
+    expect(res).to.exist;
+    db.detach('attachTest2.sqlite', 'attach2');
+    db2 = open({
+      name: 'attachTest2.sqlite',
+      encryptionKey: 'test',
+    });
+    db2.close();
+    db2.delete();
+  });
 }
