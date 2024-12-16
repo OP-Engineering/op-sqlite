@@ -291,7 +291,7 @@ void DBHostObject::create_jsi_functions() {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-      auto task = [this, &rt, query, params = std::move(params), resolve,
+      auto task = [this, &rt, query, params, resolve,
                    reject]() {
         try {
           std::vector<std::vector<JSVariant>> results;
