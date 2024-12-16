@@ -23,15 +23,14 @@ public:
       std::shared_ptr<react::CallInvoker> js_call_invoker,
       std::shared_ptr<ThreadPool> thread_pool)
       : _name(name), _stmt(stmt), _js_call_invoker(js_call_invoker),
-        _thread_pool(thread_pool){};
+        _thread_pool(thread_pool) {};
 #else
   PreparedStatementHostObject(
-                              sqlite3 *db,
-      std::string name, sqlite3_stmt *stmt,
+      sqlite3 *db, std::string name, sqlite3_stmt *stmt,
       std::shared_ptr<react::CallInvoker> js_call_invoker,
       std::shared_ptr<ThreadPool> thread_pool)
       : _db(db), _name(name), _stmt(stmt), _js_call_invoker(js_call_invoker),
-        _thread_pool(thread_pool){};
+        _thread_pool(thread_pool) {};
 #endif
   virtual ~PreparedStatementHostObject();
 
