@@ -105,18 +105,20 @@ Pod::Spec.new do |s|
   }
 
   log_message.call("[OP-SQLITE] Configuration:")
+
+  exclude_files = []
   
   if use_sqlcipher then
     log_message.call("[OP-SQLITE] using SQLCipher 🔒")
-    s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h"
+    exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h"]
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_SQLCIPHER=1 HAVE_FULLFSYNC=1 SQLITE_HAS_CODEC SQLITE_TEMP_STORE=2"
     s.dependency "OpenSSL-Universal"    
   elsif use_libsql then
     log_message.call("[OP-SQLITE] using libsql 📘")
-    s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/bridge.h", "cpp/bridge.cpp"
+    exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/bridge.h", "cpp/bridge.cpp"]
   else
     log_message.call("[OP-SQLITE] using vanilla SQLite 📦")
-    s.exclude_files = "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h"
+    exclude_files += ["cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h"]
   end
   
   s.dependency "React-callinvoker"
@@ -144,7 +146,7 @@ Pod::Spec.new do |s|
   if phone_version then
     log_message.call("[OP-SQLITE] using iOS embedded SQLite 📱")
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_PHONE_VERSION=1"
-    s.exclude_files = "cpp/sqlite3.c", "cpp/sqlite3.h"
+    exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h"]
     s.library = "sqlite3"
   end
 
@@ -191,4 +193,5 @@ Pod::Spec.new do |s|
   xcconfig[:OTHER_CFLAGS] = other_cflags
   s.pod_target_xcconfig = xcconfig
   s.vendored_frameworks = frameworks
+  s.exclude_files = exclude_files
 end
