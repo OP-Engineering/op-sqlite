@@ -56,6 +56,9 @@ public:
   jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID);
   void set(jsi::Runtime &rt, const jsi::PropNameID &name,
            const jsi::Value &value);
+  void on_update(std::string table, std::string operation, int rowid);
+  void on_commit();
+  void on_rollback();
   void invalidate();
   ~DBHostObject();
 

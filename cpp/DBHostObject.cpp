@@ -49,10 +49,72 @@ void DBHostObject::flush_pending_reactive_queries(
       [this, resolve]() { resolve->asObject(rt).asFunction(rt).call(rt, {}); });
 }
 
+void DBHostObject::on_commit() {
+  invoker->invokeAsync([this] {
+    commit_hook_callback->asObject(rt).asFunction(rt).call(rt);
+  });
+}
+  
+  void DBHostObject::on_rollback() {
+    invoker->invokeAsync([this] {
+      rollback_hook_callback->asObject(rt).asFunction(rt).call(rt);
+    });
+  }
+
+void DBHostObject::on_update(std::string table, std::string operation,
+                             int rowid) {
+  if (update_hook_callback != nullptr) {
+    invoker->invokeAsync([this, callback = update_hook_callback, table,
+                          operation = std::move(operation), rowid] {
+      auto res = jsi::Object(rt);
+      res.setProperty(rt, "table", jsi::String::createFromUtf8(rt, table));
+      res.setProperty(rt, "operation",
+                      jsi::String::createFromUtf8(rt, operation));
+      res.setProperty(rt, "rowId", jsi::Value(rowid));
+
+      callback->asObject(rt).asFunction(rt).call(rt, res);
+    });
+  }
+
+  for (const auto &query_ptr : reactive_queries) {
+    auto query = query_ptr.get();
+    if (query->discriminators.empty()) {
+      continue;
+    }
+
+    bool shouldFire = false;
+
+    for (const auto &discriminator : query->discriminators) {
+      // Tables don't match then skip
+      if (discriminator.table != table) {
+        continue;
+      }
+
+      // If no ids are specified, then we should fire
+      if (discriminator.ids.size() == 0) {
+        shouldFire = true;
+        break;
+      }
+
+      // If ids are specified, then we should check if the rowId matches
+      for (const auto &discrimator_id : discriminator.ids) {
+        if (rowid == discrimator_id) {
+          shouldFire = true;
+          break;
+        }
+      }
+    }
+
+    if (shouldFire) {
+      pending_reactive_queries.insert(query_ptr);
+    }
+  }
+}
+
 void DBHostObject::auto_register_update_hook() {
   if (update_hook_callback == nullptr && reactive_queries.empty() &&
       is_update_hook_registered) {
-    opsqlite_deregister_update_hook(db_name);
+    opsqlite_deregister_update_hook(db);
     is_update_hook_registered = false;
     return;
   }
@@ -61,58 +123,7 @@ void DBHostObject::auto_register_update_hook() {
     return;
   }
 
-  auto hook = [this](std::string name, std::string table_name,
-                     std::string operation, int rowid) {
-    if (update_hook_callback != nullptr) {
-      invoker->invokeAsync([this, callback = update_hook_callback, table_name,
-                            operation = std::move(operation), rowid] {
-        auto res = jsi::Object(rt);
-        res.setProperty(rt, "table",
-                        jsi::String::createFromUtf8(rt, table_name));
-        res.setProperty(rt, "operation",
-                        jsi::String::createFromUtf8(rt, operation));
-        res.setProperty(rt, "rowId", jsi::Value(rowid));
-
-        callback->asObject(rt).asFunction(rt).call(rt, res);
-      });
-    }
-
-    for (const auto &query_ptr : reactive_queries) {
-      auto query = query_ptr.get();
-      if (query->discriminators.empty()) {
-        continue;
-      }
-
-      bool shouldFire = false;
-
-      for (const auto &discriminator : query->discriminators) {
-        // Tables don't match then skip
-        if (discriminator.table != table_name) {
-          continue;
-        }
-
-        // If no ids are specified, then we should fire
-        if (discriminator.ids.size() == 0) {
-          shouldFire = true;
-          break;
-        }
-
-        // If ids are specified, then we should check if the rowId matches
-        for (const auto &discrimator_id : discriminator.ids) {
-          if (rowid == discrimator_id) {
-            shouldFire = true;
-            break;
-          }
-        }
-      }
-
-      if (shouldFire) {
-        pending_reactive_queries.insert(query_ptr);
-      }
-    }
-  };
-
-  opsqlite_register_update_hook(db_name, std::move(hook));
+  opsqlite_register_update_hook(db, this);
   is_update_hook_registered = true;
 }
 #endif
@@ -165,8 +176,9 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
                            std::string &crsqlite_path,
                            std::string &sqlite_vec_path,
                            std::string &encryption_key)
-    : base_path(base_path), invoker(std::move(invoker)), db_name(db_name), rt(rt) {
-      _thread_pool = std::make_shared<ThreadPool>();
+    : base_path(base_path), invoker(std::move(invoker)), db_name(db_name),
+      rt(rt) {
+  _thread_pool = std::make_shared<ThreadPool>();
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
   BridgeResult result = opsqlite_open(db_name, path, crsqlite_path,
@@ -290,8 +302,7 @@ void DBHostObject::create_jsi_functions() {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-      auto task = [this, &rt, query, params, resolve,
-                   reject]() {
+      auto task = [this, &rt, query, params, resolve, reject]() {
         try {
           std::vector<std::vector<JSVariant>> results;
 
@@ -312,13 +323,13 @@ void DBHostObject::create_jsi_functions() {
             resolve->asObject(rt).asFunction(rt).call(rt, std::move(jsiResult));
           });
         } catch (std::runtime_error &e) {
-            auto what = e.what();
-            invoker->invokeAsync([&rt, what = std::string(what), reject] {
-                auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-                auto error = errorCtr.callAsConstructor(
-                        rt, jsi::String::createFromAscii(rt, what));
-                reject->asObject(rt).asFunction(rt).call(rt, error);
-            });
+          auto what = e.what();
+          invoker->invokeAsync([&rt, what = std::string(what), reject] {
+            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto error = errorCtr.callAsConstructor(
+                rt, jsi::String::createFromAscii(rt, what));
+            reject->asObject(rt).asFunction(rt).call(rt, error);
+          });
         } catch (std::exception &exc) {
           auto what = exc.what();
           invoker->invokeAsync([&rt, what = std::move(what), reject] {
@@ -459,13 +470,13 @@ void DBHostObject::create_jsi_functions() {
                                                           std::move(jsiResult));
               });
         } catch (std::runtime_error &e) {
-            auto what = e.what();
-            invoker->invokeAsync([&rt, what = std::string(what), reject] {
-                auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-                auto error = errorCtr.callAsConstructor(
-                        rt, jsi::String::createFromAscii(rt, what));
-                reject->asObject(rt).asFunction(rt).call(rt, error);
-            });
+          auto what = e.what();
+          invoker->invokeAsync([&rt, what = std::string(what), reject] {
+            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto error = errorCtr.callAsConstructor(
+                rt, jsi::String::createFromAscii(rt, what));
+            reject->asObject(rt).asFunction(rt).call(rt, error);
+          });
         } catch (std::exception &exc) {
           auto what = exc.what();
           invoker->invokeAsync([&rt, what = std::move(what), reject] {
@@ -535,13 +546,13 @@ void DBHostObject::create_jsi_functions() {
                 resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
               });
         } catch (std::runtime_error &e) {
-            auto what = e.what();
-            invoker->invokeAsync([&rt, what = std::string(what), reject] {
-                auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-                auto error = errorCtr.callAsConstructor(
-                        rt, jsi::String::createFromAscii(rt, what));
-                reject->asObject(rt).asFunction(rt).call(rt, error);
-            });
+          auto what = e.what();
+          invoker->invokeAsync([&rt, what = std::string(what), reject] {
+            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto error = errorCtr.callAsConstructor(
+                rt, jsi::String::createFromAscii(rt, what));
+            reject->asObject(rt).asFunction(rt).call(rt, error);
+          });
         } catch (std::exception &exc) {
           auto what = exc.what();
           invoker->invokeAsync([&rt, what = std::move(what), reject] {
@@ -597,13 +608,13 @@ void DBHostObject::create_jsi_functions() {
                 resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
               });
         } catch (std::runtime_error &e) {
-            auto what = e.what();
-            invoker->invokeAsync([&rt, what = std::string(what), reject] {
-                auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-                auto error = errorCtr.callAsConstructor(
-                        rt, jsi::String::createFromAscii(rt, what));
-                reject->asObject(rt).asFunction(rt).call(rt, error);
-            });
+          auto what = e.what();
+          invoker->invokeAsync([&rt, what = std::string(what), reject] {
+            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto error = errorCtr.callAsConstructor(
+                rt, jsi::String::createFromAscii(rt, what));
+            reject->asObject(rt).asFunction(rt).call(rt, error);
+          });
         } catch (std::exception &exc) {
           auto what = exc.what();
           invoker->invokeAsync([&rt, what = std::string(what), reject] {
@@ -629,6 +640,7 @@ void DBHostObject::create_jsi_functions() {
     } else {
       update_hook_callback = callback;
     }
+
     auto_register_update_hook();
     return {};
   });
@@ -641,17 +653,11 @@ void DBHostObject::create_jsi_functions() {
 
     auto callback = std::make_shared<jsi::Value>(rt, args[0]);
     if (callback->isUndefined() || callback->isNull()) {
-      opsqlite_deregister_commit_hook(db_name);
+      opsqlite_deregister_commit_hook(db);
       return {};
     }
     commit_hook_callback = callback;
-
-    auto hook = [&rt, this, callback](std::string dbName) {
-      invoker->invokeAsync(
-          [&rt, callback] { callback->asObject(rt).asFunction(rt).call(rt); });
-    };
-
-    opsqlite_register_commit_hook(db_name, std::move(hook));
+    opsqlite_register_commit_hook(db, this);
 
     return {};
   });
@@ -659,23 +665,17 @@ void DBHostObject::create_jsi_functions() {
   auto rollback_hook = HOSTFN("rollbackHook") {
     if (sizeof(args) < 1) {
       throw std::runtime_error("[op-sqlite][rollbackHook] callback needed");
-      return {};
     }
 
     auto callback = std::make_shared<jsi::Value>(rt, args[0]);
 
     if (callback->isUndefined() || callback->isNull()) {
-      opsqlite_deregister_rollback_hook(db_name);
+      opsqlite_deregister_rollback_hook(db);
       return {};
     }
     rollback_hook_callback = callback;
 
-    auto hook = [&rt, this, callback](std::string db_name) {
-      invoker->invokeAsync(
-          [&rt, callback] { callback->asObject(rt).asFunction(rt).call(rt); });
-    };
-
-    opsqlite_register_rollback_hook(db_name, std::move(hook));
+    opsqlite_register_rollback_hook(db, this);
     return {};
   });
 
@@ -872,12 +872,15 @@ void DBHostObject::set(jsi::Runtime &rt, const jsi::PropNameID &name,
 
 void DBHostObject::invalidate() {
   invalidated = true;
+//  opsqlite_deregister_commit_hook(db);
+//  opsqlite_deregister_update_hook(db);
+//  opsqlite_deregister_rollback_hook(db);
+  _thread_pool->restartPool();
   opsqlite_close(db);
 }
 
 DBHostObject::~DBHostObject() {
-  invalidated = true;
-  opsqlite_close(db);
+  invalidate();
 }
 
 } // namespace opsqlite

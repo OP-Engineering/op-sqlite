@@ -61,15 +61,12 @@ BridgeResult opsqlite_execute_raw(sqlite3 *db, std::string const &query,
                                   const std::vector<JSVariant> *params,
                                   std::vector<std::vector<JSVariant>> *results);
 
-BridgeResult opsqlite_register_update_hook(std::string const &dbName,
-                                           const UpdateCallback &callback);
-BridgeResult opsqlite_deregister_update_hook(std::string const &dbName);
-BridgeResult opsqlite_register_commit_hook(std::string const &dbName,
-                                           const CommitCallback &callback);
-BridgeResult opsqlite_deregister_commit_hook(std::string const &dbName);
-BridgeResult opsqlite_register_rollback_hook(std::string const &dbName,
-                                             const RollbackCallback &callback);
-BridgeResult opsqlite_deregister_rollback_hook(std::string const &dbName);
+void opsqlite_register_update_hook(sqlite3 *db, void *db_host_object_ptr);
+void opsqlite_deregister_update_hook(sqlite3 *db);
+void opsqlite_register_commit_hook(sqlite3 *db, void *db_host_object_ptr);
+void opsqlite_deregister_commit_hook(sqlite3 *db);
+void opsqlite_register_rollback_hook(sqlite3 *db, void *db_host_object_ptr);
+void opsqlite_deregister_rollback_hook(sqlite3 *db);
 
 sqlite3_stmt *opsqlite_prepare_statement(sqlite3 *db, std::string const &query);
 
