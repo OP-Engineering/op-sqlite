@@ -22,7 +22,6 @@ namespace jsi = facebook::jsi;
 std::string _base_path;
 std::string _crsqlite_path;
 std::string _sqlite_vec_path;
-std::shared_ptr<ThreadPool> thread_pool = std::make_shared<ThreadPool>();
 std::vector<std::shared_ptr<DBHostObject>> dbs;
 
 // React native will try to clean the module on JS context invalidation
@@ -37,7 +36,7 @@ void clearState() {
   invalidated = true;
 
   // We then join all the threads before the context gets invalidated
-  thread_pool->restartPool();
+//  thread_pool->restartPool();
 }
 
 void install(jsi::Runtime &rt,
@@ -83,7 +82,7 @@ void install(jsi::Runtime &rt,
     }
 
     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-        rt, path, invoker, thread_pool, name, path, _crsqlite_path,
+        rt, path, invoker, name, path, _crsqlite_path,
         _sqlite_vec_path, encryptionKey);
     dbs.emplace_back(db);
     return jsi::Object::createFromHostObject(rt, db);
@@ -146,7 +145,7 @@ void install(jsi::Runtime &rt,
     }
 
     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-        rt, invoker, thread_pool, name, path, url, auth_token, sync_interval);
+        rt, invoker, name, path, url, auth_token, sync_interval);
     return jsi::Object::createFromHostObject(rt, db);
   });
 #endif

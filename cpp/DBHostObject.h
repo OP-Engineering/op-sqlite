@@ -36,9 +36,9 @@ public:
   // Constructor for local databases
   DBHostObject(jsi::Runtime &rt, std::string &base_path,
                std::shared_ptr<react::CallInvoker> invoker,
-               std::shared_ptr<ThreadPool> thread_pool, std::string &db_name,
-               std::string &path, std::string &crsqlite_path,
-               std::string &sqlite_vec_path, std::string &encryption_key);
+               std::string &db_name, std::string &path,
+               std::string &crsqlite_path, std::string &sqlite_vec_path,
+               std::string &encryption_key);
 
 #ifdef OP_SQLITE_USE_LIBSQL
   // Constructor for remoteOpen, purely for remote databases
@@ -48,9 +48,8 @@ public:
 
   // Constructor for a local database with remote sync
   DBHostObject(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
-               std::shared_ptr<ThreadPool> thread_pool, std::string &db_name,
-               std::string &path, std::string &url, std::string &auth_token,
-               int sync_interval);
+               std::string &db_name, std::string &path, std::string &url,
+               std::string &auth_token, int sync_interval);
 #endif
 
   std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt);
@@ -70,7 +69,7 @@ private:
   std::string base_path;
   std::shared_ptr<jsi::Value> update_hook;
   std::shared_ptr<react::CallInvoker> invoker;
-  std::shared_ptr<ThreadPool> thread_pool;
+  std::shared_ptr<ThreadPool> _thread_pool;
   std::string db_name;
   std::shared_ptr<jsi::Value> update_hook_callback;
   std::shared_ptr<jsi::Value> commit_hook_callback;
@@ -80,7 +79,12 @@ private:
   std::vector<PendingReactiveInvocation> pending_reactive_invocations;
   bool is_update_hook_registered = false;
   bool invalidated = false;
+#ifdef OP_SQLITE_USE_LIBSQL
+  libsql_database_t db;
+  libsql_connection_t c;
+#else
   sqlite3 *db;
+#endif
 };
 
 } // namespace opsqlite
