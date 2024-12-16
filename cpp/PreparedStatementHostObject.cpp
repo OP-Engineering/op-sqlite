@@ -56,13 +56,14 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
           std::vector<DumbHostObject> results;
           std::shared_ptr<std::vector<SmartHostObject>> metadata =
               std::make_shared<std::vector<SmartHostObject>>();
-#ifdef OP_SQLITE_USE_LIBSQL
-          auto status = opsqlite_libsql_execute_prepared_statement(
-              _name, _stmt, &results, metadata);
-#else
           try {
+#ifdef OP_SQLITE_USE_LIBSQL
+            auto status = opsqlite_libsql_execute_prepared_statement(
+                _name, _stmt, &results, metadata);
+#else
             auto status = opsqlite_execute_prepared_statement(
                 _db, _stmt, &results, metadata);
+#endif
             invoker->invokeAsync(
                 [&rt, status = std::move(status),
                  results =
@@ -81,7 +82,6 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
               reject->asObject(rt).asFunction(rt).call(rt, error);
             });
           }
-#endif
         };
 
         _thread_pool->queueWork(task);
