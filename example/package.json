@@ -70,11 +70,11 @@
     "crsqlite": false,
     "performanceMode": true,
     "sqliteFlags": "-DSQLITE_TEMP_STORE=2",
-    "iosSqlite": true,
-    "fts5": false,
-    "rtree": false,
+    "iosSqlite": false,
+    "fts5": true,
+    "rtree": true,
+    "sqliteVec": true,
     "libsql": false,
-    "sqliteVec": false,
     "tokenizers": [
       "wordtokenizer",
       "porter"
