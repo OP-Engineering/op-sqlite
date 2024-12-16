@@ -93,8 +93,10 @@ BridgeResult opsqlite_open(std::string const &name,
   opsqlite_execute(name, "PRAGMA key = '" + encryptionKey + "'", nullptr);
 #endif
 
+#ifndef OP_SQLITE_USE_PHONE_VERSION
   sqlite3_enable_load_extension(db, 1);
-
+#endif
+  
   char *errMsg;
 
 #ifdef OP_SQLITE_USE_CRSQLITE
