@@ -25,25 +25,18 @@ std::string _sqlite_vec_path;
 std::vector<std::shared_ptr<DBHostObject>> dbs;
 
 // React native will try to clean the module on JS context invalidation
-// (CodePush/Hot Reload) The clearState function is called and we use this flag
-// to prevent any ongoing operations from continuing work and can return early
-bool invalidated = false;
-
+// (CodePush/Hot Reload) The clearState function is called
 void clearState() {
   for (const auto &db : dbs) {
     db->invalidate();
   }
-  invalidated = true;
-
-  // We then join all the threads before the context gets invalidated
-//  thread_pool->restartPool();
+  dbs.clear();
 }
 
 void install(jsi::Runtime &rt,
              const std::shared_ptr<react::CallInvoker> &invoker,
              const char *base_path, const char *crsqlite_path,
              const char *sqlite_vec_path) {
-  invalidated = false;
   _base_path = std::string(base_path);
   _crsqlite_path = std::string(crsqlite_path);
   _sqlite_vec_path = std::string(sqlite_vec_path);

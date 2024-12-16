@@ -41,10 +41,10 @@ export default function App() {
       queriesTests,
       dbSetupTests,
       blobTests,
-      // registerHooksTests,
+      registerHooksTests,
       preparedStatementsTests,
       constantsTests,
-      // reactiveTests,
+      reactiveTests,
       tokenizerTests,
     )
       .then(results => {

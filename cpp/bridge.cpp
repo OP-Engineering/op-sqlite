@@ -3,6 +3,7 @@
 // so that threading operations are safe and contained within DBHostObject
 
 #include "bridge.h"
+#include "DBHostObject.h"
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
 #include "logs.h"
@@ -740,120 +741,47 @@ std::string operation_to_string(int operation_type) {
   }
 }
 
-void update_callback(void *dbName, int operation_type,
+void update_callback(void *db_host_object_ptr, int operation_type,
                      [[maybe_unused]] char const *database, char const *table,
                      sqlite3_int64 row_id) {
-  //  std::string &strDbName = *(static_cast<std::string *>(dbName));
-  //  auto callback = updateCallbackMap[strDbName];
-  //  callback(strDbName, std::string(table),
-  //  operation_to_string(operation_type),
-  //           static_cast<int>(row_id));
+  auto db_host_object = reinterpret_cast<DBHostObject *>(db_host_object_ptr);
+  db_host_object->on_update(std::string(table),
+                            operation_to_string(operation_type), row_id);
 }
 
-BridgeResult opsqlite_register_update_hook(std::string const &dbName,
-                                           UpdateCallback const &callback) {
-  //  check_db_open(dbName);
-  //
-  //  sqlite3 *db = dbMap[dbName];
-  //  updateCallbackMap[dbName] = callback;
-  //  const std::string *key = nullptr;
-  //
-  //  // TODO find a more elegant way to retrieve a reference to the key
-  //  for (auto const &element : dbMap) {
-  //    if (element.first == dbName) {
-  //      key = &element.first;
-  //    }
-  //  }
-  //
-  //  sqlite3_update_hook(db, &update_callback, (void *)key);
-
-  return {};
+void opsqlite_register_update_hook(sqlite3 *db, void *db_host_object) {
+  sqlite3_update_hook(db, &update_callback, (void *)db_host_object);
 }
 
-BridgeResult opsqlite_deregister_update_hook(std::string const &dbName) {
-  //  check_db_open(dbName);
-  //
-  //  sqlite3 *db = dbMap[dbName];
-  //  updateCallbackMap.erase(dbName);
-  //
-  //  sqlite3_update_hook(db, nullptr, nullptr);
-
-  return {};
+void opsqlite_deregister_update_hook(sqlite3 *db) {
+  sqlite3_update_hook(db, nullptr, nullptr);
 }
 
-int commit_callback(void *dbName) {
-  //  std::string &strDbName = *(static_cast<std::string *>(dbName));
-  //  auto callback = commitCallbackMap[strDbName];
-  //  callback(strDbName);
-  // You need to return 0 to allow commits to continue
+int commit_callback(void *db_host_object_ptr) {
+  auto db_host_object = reinterpret_cast<DBHostObject *>(db_host_object_ptr);
+  db_host_object->on_commit();
   return 0;
 }
 
-BridgeResult opsqlite_register_commit_hook(std::string const &dbName,
-                                           CommitCallback const &callback) {
-  //  check_db_open(dbName);
-  //
-  //  sqlite3 *db = dbMap[dbName];
-  //  commitCallbackMap[dbName] = callback;
-  //  const std::string *key = nullptr;
-  //
-  //  // TODO find a more elegant way to retrieve a reference to the key
-  //  for (auto const &element : dbMap) {
-  //    if (element.first == dbName) {
-  //      key = &element.first;
-  //    }
-  //  }
-  //
-  //  sqlite3_commit_hook(db, &commit_callback, (void *)key);
-
-  return {};
+void opsqlite_register_commit_hook(sqlite3 *db, void *db_host_object_ptr) {
+  sqlite3_commit_hook(db, &commit_callback, db_host_object_ptr);
 }
 
-BridgeResult opsqlite_deregister_commit_hook(std::string const &dbName) {
-  //  check_db_open(dbName);
-  //
-  //  sqlite3 *db = dbMap[dbName];
-  //  commitCallbackMap.erase(dbName);
-  //  sqlite3_commit_hook(db, nullptr, nullptr);
-
-  return {};
+void opsqlite_deregister_commit_hook(sqlite3 *db) {
+  sqlite3_commit_hook(db, nullptr, nullptr);
 }
 
-void rollback_callback(void *dbName) {
-  //  std::string &strDbName = *(static_cast<std::string *>(dbName));
-  //  auto callback = rollbackCallbackMap[strDbName];
-  //  callback(strDbName);
+void rollback_callback(void *db_host_object_ptr) {
+  auto db_host_object = reinterpret_cast<DBHostObject *>(db_host_object_ptr);
+  db_host_object->on_rollback();
 }
 
-BridgeResult opsqlite_register_rollback_hook(std::string const &dbName,
-                                             RollbackCallback const &callback) {
-  //  check_db_open(dbName);
-  //
-  //  sqlite3 *db = dbMap[dbName];
-  //  rollbackCallbackMap[dbName] = callback;
-  //  const std::string *key = nullptr;
-  //
-  //  // TODO find a more elegant way to retrieve a reference to the key
-  //  for (auto const &element : dbMap) {
-  //    if (element.first == dbName) {
-  //      key = &element.first;
-  //    }
-  //  }
-  //
-  //  sqlite3_rollback_hook(db, &rollback_callback, (void *)key);
-
-  return {};
+void opsqlite_register_rollback_hook(sqlite3 *db, void *db_host_object_ptr) {
+  sqlite3_rollback_hook(db, &rollback_callback, db_host_object_ptr);
 }
 
-BridgeResult opsqlite_deregister_rollback_hook(std::string const &dbName) {
-  //  check_db_open(dbName);
-  //
-  //  sqlite3 *db = dbMap[dbName];
-  //  rollbackCallbackMap.erase(dbName);
-  //
-  //  sqlite3_rollback_hook(db, nullptr, nullptr);
-
-  return {};
+void opsqlite_deregister_rollback_hook(sqlite3 *db) {
+  sqlite3_rollback_hook(db, nullptr, nullptr);
 }
 
 void opsqlite_load_extension(sqlite3 *db, std::string &path,
