@@ -161,13 +161,12 @@ DBHostObject::DBHostObject(jsi::Runtime &rt,
 
 DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
                            std::shared_ptr<react::CallInvoker> invoker,
-                           std::shared_ptr<ThreadPool> thread_pool,
                            std::string &db_name, std::string &path,
                            std::string &crsqlite_path,
                            std::string &sqlite_vec_path,
                            std::string &encryption_key)
-    : base_path(base_path), invoker(std::move(invoker)),
-      thread_pool(std::move(thread_pool)), db_name(db_name), rt(rt) {
+    : base_path(base_path), invoker(std::move(invoker)), db_name(db_name), rt(rt) {
+      _thread_pool = std::make_shared<ThreadPool>();
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
   BridgeResult result = opsqlite_open(db_name, path, crsqlite_path,
@@ -331,7 +330,7 @@ void DBHostObject::create_jsi_functions() {
         }
       };
 
-      thread_pool->queueWork(task);
+      _thread_pool->queueWork(task);
 
       return {};
      }));
@@ -410,7 +409,7 @@ void DBHostObject::create_jsi_functions() {
         }
       };
 
-      thread_pool->queueWork(task);
+      _thread_pool->queueWork(task);
 
       return {};
     }));
@@ -478,7 +477,7 @@ void DBHostObject::create_jsi_functions() {
         }
       };
 
-      thread_pool->queueWork(task);
+      _thread_pool->queueWork(task);
 
       return {};
       }));
@@ -553,7 +552,7 @@ void DBHostObject::create_jsi_functions() {
           });
         }
       };
-      thread_pool->queueWork(task);
+      _thread_pool->queueWork(task);
 
       return {};
             }));
@@ -615,7 +614,7 @@ void DBHostObject::create_jsi_functions() {
           });
         }
       };
-      thread_pool->queueWork(task);
+      _thread_pool->queueWork(task);
       return {};
                }));
 
@@ -775,7 +774,7 @@ void DBHostObject::create_jsi_functions() {
 #endif
     auto preparedStatementHostObject =
         std::make_shared<PreparedStatementHostObject>(db, db_name, statement,
-                                                      invoker, thread_pool);
+                                                      invoker, _thread_pool);
 
     return jsi::Object::createFromHostObject(rt, preparedStatementHostObject);
   });
@@ -813,7 +812,7 @@ void DBHostObject::create_jsi_functions() {
         flush_pending_reactive_queries(resolve);
       };
 
-      thread_pool->queueWork(task);
+      _thread_pool->queueWork(task);
 
       return {};
               }));

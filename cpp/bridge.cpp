@@ -94,7 +94,7 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
   }
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
-  opsqlite_execute(name, "PRAGMA key = '" + encryption_key + "'", nullptr);
+  opsqlite_execute(db, "PRAGMA key = '" + encryption_key + "'", nullptr);
 #endif
 
   sqlite3_enable_load_extension(db, 1);
