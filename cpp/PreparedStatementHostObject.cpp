@@ -30,13 +30,45 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
 
       const jsi::Value &js_params = args[0];
       std::vector<JSVariant> params = to_variant_vec(rt, js_params);
-#ifdef OP_SQLITE_USE_LIBSQL
-      opsqlite_libsql_bind_statement(_stmt, &params);
-#else
-      opsqlite_bind_statement(_stmt, &params);
-#endif
 
-      return {};
+      auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
+      auto promise = promiseCtr.callAsConstructor(
+          rt, HOSTFN("executor") {
+        auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
+        auto reject = std::make_shared<jsi::Value>(rt, args[1]);
+        auto task = [&rt, this, resolve, reject,
+                     invoker = this->_js_call_invoker, params]() {
+          try {
+#ifdef OP_SQLITE_USE_LIBSQL
+            opsqlite_libsql_bind_statement(_stmt, &params);
+#else
+            opsqlite_bind_statement(_stmt, &params);
+#endif
+            invoker->invokeAsync([&rt, resolve] {
+              resolve->asObject(rt).asFunction(rt).call(rt, {});
+            });
+          } catch (const std::runtime_error &e) {
+            invoker->invokeAsync([&rt, e, reject] {
+              auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+              auto error = errorCtr.callAsConstructor(
+                  rt, jsi::String::createFromUtf8(rt, e.what()));
+              reject->asObject(rt).asFunction(rt).call(rt, error);
+            });
+          } catch (const std::exception &e) {
+            invoker->invokeAsync([&rt, e, reject] {
+              auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+              auto error = errorCtr.callAsConstructor(
+                  rt, jsi::String::createFromUtf8(rt, e.what()));
+              reject->asObject(rt).asFunction(rt).call(rt, error);
+            });
+          }
+        };
+
+        _thread_pool->queueWork(task);
+
+        return {};
+          }));
+      return promise;
     });
   }
 
