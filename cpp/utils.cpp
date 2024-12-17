@@ -155,7 +155,7 @@ jsi::Value create_js_rows(jsi::Runtime &rt, const BridgeResult &status) {
 }
 
 jsi::Value
-create_result(jsi::Runtime &rt, BridgeResult status,
+create_result(jsi::Runtime &rt, const BridgeResult &status,
               std::vector<DumbHostObject> *results,
               std::shared_ptr<std::vector<SmartHostObject>> metadata) {
   jsi::Object res = jsi::Object(rt);
@@ -191,7 +191,7 @@ create_result(jsi::Runtime &rt, BridgeResult status,
 }
 
 jsi::Value
-create_raw_result(jsi::Runtime &rt, BridgeResult status,
+create_raw_result(jsi::Runtime &rt, const BridgeResult &status,
                   const std::vector<std::vector<JSVariant>> *results) {
   size_t row_count = results->size();
   jsi::Array res = jsi::Array(rt, row_count);
@@ -294,16 +294,6 @@ bool file_exists(const std::string &path) {
 int mkdir(std::string const &path) {
   std::filesystem::create_directories(path);
   return 0;
-}
-
-std::vector<std::string> parse_string_list(const std::string &str) {
-  std::vector<std::string> result;
-  std::istringstream stream(str);
-  std::string token;
-  while (std::getline(stream, token, ',')) {
-    result.emplace_back(token);
-  }
-  return result;
 }
 
 } // namespace opsqlite
