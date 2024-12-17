@@ -60,7 +60,7 @@ export async function querySingleRecordOnLargeDB() {
 export async function queryLargeDB() {
   let largeDb = open(DB_CONFIG);
 
-  // largeDb.execute('PRAGMA mmap_size=268435456');
+  largeDb.execute('PRAGMA mmap_size=268435456');
 
   let times: {
     loadFromDb: number[];
