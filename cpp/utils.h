@@ -2,12 +2,12 @@
 
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
-#include "sqlite3.h"
 #include "types.h"
 #include <any>
 #include <jsi/jsi.h>
 #include <jsi/jsilib.h>
 #include <map>
+#include <sqlite3.h>
 #include <string>
 #include <vector>
 
