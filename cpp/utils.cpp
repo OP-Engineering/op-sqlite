@@ -14,34 +14,64 @@ namespace opsqlite {
 namespace jsi = facebook::jsi;
 
 jsi::Value toJSI(jsi::Runtime &rt, const JSVariant &value) {
-  return std::visit(
-      [&](auto &&v) -> jsi::Value {
-        using T = std::decay_t<decltype(v)>;
-        if constexpr (std::is_same_v<T, bool>) {
-          return jsi::Value(v);
-        } else if constexpr (std::is_same_v<T, int>) {
-          return jsi::Value(v);
-        } else if constexpr (std::is_same_v<T, long long>) {
-          return jsi::Value(
-              static_cast<double>(v)); // JSI doesn't support long long
-        } else if constexpr (std::is_same_v<T, double>) {
-          return jsi::Value(v);
-        } else if constexpr (std::is_same_v<T, std::string>) {
-          return jsi::String::createFromUtf8(rt, v);
-        } else if constexpr (std::is_same_v<T, ArrayBuffer>) {
-          static jsi::Function array_buffer_ctor =
-              rt.global().getPropertyAsFunction(rt, "ArrayBuffer");
-          jsi::Object o =
-              array_buffer_ctor.callAsConstructor(rt, static_cast<int>(v.size))
-                  .getObject(rt);
-          jsi::ArrayBuffer buf = o.getArrayBuffer(rt);
-          memcpy(buf.data(rt), v.data.get(), v.size);
-          return o;
-        } else {
-          return jsi::Value::null();
-        }
-      },
-      value);
+  if (std::holds_alternative<bool>(value)) {
+    return std::get<bool>(value);
+  } else if (std::holds_alternative<int>(value)) {
+    return jsi::Value(std::get<int>(value));
+  } else if (std::holds_alternative<long long>(value)) {
+    return jsi::Value(static_cast<double>(std::get<long long>(value)));
+  } else if (std::holds_alternative<double>(value)) {
+    return jsi::Value(std::get<double>(value));
+  } else if (std::holds_alternative<std::string>(value)) {
+    auto str = std::get<std::string>(value);
+    return jsi::String::createFromUtf8(rt, str);
+  } else if (std::holds_alternative<ArrayBuffer>(value)) {
+    auto jsBuffer = std::get<ArrayBuffer>(value);
+    jsi::Function array_buffer_ctor =
+        rt.global().getPropertyAsFunction(rt, "ArrayBuffer");
+    jsi::Object o = array_buffer_ctor.callAsConstructor(rt, (int)jsBuffer.size)
+                        .getObject(rt);
+    jsi::ArrayBuffer buf = o.getArrayBuffer(rt);
+    memcpy(buf.data(rt), jsBuffer.data.get(), jsBuffer.size);
+    return o;
+  }
+
+  return jsi::Value::null();
+
+  // I wanted to use the visitor pattern here but on the ArrayBuffer case it is
+  // somehow throwing a pointer exception Somehow the v.size or v.data.get() is
+  // loosing the data when called from the lambda I'm guessing the I created the
+  // shared pointer wrong and the memory is being freed before the lambda is
+  // called
+  //  return std::visit(
+  //      [&](auto &&v) -> jsi::Value {
+  //        using T = std::decay_t<decltype(v)>;
+  //        if constexpr (std::is_same_v<T, bool>) {
+  //          return jsi::Value(v);
+  //        } else if constexpr (std::is_same_v<T, int>) {
+  //          return jsi::Value(v);
+  //        } else if constexpr (std::is_same_v<T, long long>) {
+  //          return jsi::Value(
+  //              static_cast<double>(v)); // JSI doesn't support long long
+  //        } else if constexpr (std::is_same_v<T, double>) {
+  //          return jsi::Value(v);
+  //        } else if constexpr (std::is_same_v<T, std::string>) {
+  //          return jsi::String::createFromUtf8(rt, v);
+  //        } else if constexpr (std::is_same_v<T, ArrayBuffer>) {
+  //          static jsi::Function buffer_constructor =
+  //              rt.global().getPropertyAsFunction(rt, "ArrayBuffer");
+  //          jsi::Object o =
+  //              buffer_constructor.callAsConstructor(rt,
+  //              static_cast<int>(v.size))
+  //                  .getObject(rt);
+  //          jsi::ArrayBuffer buf = o.getArrayBuffer(rt);
+  //          memcpy(buf.data(rt), v.data.get(), v.size);
+  //          return o;
+  //        } else {
+  //          return jsi::Value::null();
+  //        }
+  //      },
+  //      value);
 }
 
 JSVariant toVariant(jsi::Runtime &rt, const jsi::Value &value) {

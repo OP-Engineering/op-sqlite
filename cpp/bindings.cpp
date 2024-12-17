@@ -26,10 +26,13 @@ std::vector<std::shared_ptr<DBHostObject>> dbs;
 
 // React native will try to clean the module on JS context invalidation
 // (CodePush/Hot Reload) The clearState function is called
-void clearState() {
+void invalidate() {
   for (const auto &db : dbs) {
     db->invalidate();
   }
+
+  // Clear our existing vector of shared pointers so they can be garbage
+  // collected
   dbs.clear();
 }
 
@@ -75,8 +78,8 @@ void install(jsi::Runtime &rt,
     }
 
     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-        rt, path, invoker, name, path, _crsqlite_path,
-        _sqlite_vec_path, encryptionKey);
+        rt, path, invoker, name, path, _crsqlite_path, _sqlite_vec_path,
+        encryptionKey);
     dbs.emplace_back(db);
     return jsi::Object::createFromHostObject(rt, db);
   });

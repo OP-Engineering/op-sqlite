@@ -9,9 +9,10 @@ namespace opsqlite {
 namespace jsi = facebook::jsi;
 namespace react = facebook::react;
 
-void install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker>& invoker,
+void install(jsi::Runtime &rt,
+             const std::shared_ptr<react::CallInvoker> &invoker,
              const char *base_path, const char *crsqlite_path,
              const char *sqlite_vec_path);
-void clearState();
+void invalidate();
 
 } // namespace opsqlite

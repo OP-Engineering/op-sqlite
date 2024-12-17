@@ -106,7 +106,7 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextB
 
     override fun invalidate() {
         super.invalidate()
-        OPSQLiteBridge.instance.clearState()
+        OPSQLiteBridge.instance.invalidate()
     }
 
     companion object {
