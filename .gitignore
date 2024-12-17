@@ -84,4 +84,4 @@ android/gradle/
 !.yarn/versions
 
 android/c_sources
-c_sources
+c_sources/
