@@ -192,11 +192,11 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
 void DBHostObject::create_jsi_functions() {
   auto attach = HOSTFN("attach") {
     if (count < 3) {
-      throw jsi::runtime_error(
+      throw std::runtime_error(
           "[op-sqlite][attach] Incorrect number of arguments");
     }
     if (!args[0].isString() || !args[1].isString() || !args[2].isString()) {
-      throw jsi::runtime_error(
+      throw std::runtime_error(
           "dbName, databaseToAttach and alias must be strings");
       return {};
     }
@@ -515,7 +515,7 @@ void DBHostObject::create_jsi_functions() {
     to_batch_arguments(rt, batchParams, &commands);
 
     auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
-     auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor") {
+    auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor") {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
@@ -563,9 +563,9 @@ void DBHostObject::create_jsi_functions() {
       _thread_pool->queueWork(task);
 
       return {};
-            }));
+    }));
 
-     return promise;
+    return promise;
   });
 
 #ifdef OP_SQLITE_USE_LIBSQL
@@ -587,8 +587,7 @@ void DBHostObject::create_jsi_functions() {
     const std::string sqlFileName = args[0].asString(rt).utf8(rt);
 
     auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
-        auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor")
-        {
+    auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor") {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
@@ -624,9 +623,9 @@ void DBHostObject::create_jsi_functions() {
       };
       _thread_pool->queueWork(task);
       return {};
-               }));
+    }));
 
-        return promise;
+    return promise;
   });
 
   auto update_hook = HOSTFN("updateHook") {
@@ -689,15 +688,6 @@ void DBHostObject::create_jsi_functions() {
 
   auto reactive_execute = HOSTFN("reactiveExecute") {
     auto query = args[0].asObject(rt);
-    // if (!query.hasProperty(rt, "query") || !query.hasProperty(rt, "args")
-    // ||
-    //     !query.hasProperty(rt, "tables") || !query.hasProperty(rt,
-    //     "rowIds")
-    //     || !query.hasProperty(rt, "callback")) {
-    //   throw std::runtime_error(
-    //       "[op-sqlite][reactiveExecute] Query object must have query, args,
-    //       " "tables, rowIds and callback properties");
-    // }
 
     const std::string query_str =
         query.getProperty(rt, "query").asString(rt).utf8(rt);
@@ -711,14 +701,6 @@ void DBHostObject::create_jsi_functions() {
 
     auto callback =
         std::make_shared<jsi::Value>(query.getProperty(rt, "callback"));
-
-    // std::vector<JSVariant> query_args = to_variant_vec(rt, argsArray);
-    // std::vector<std::string> tables = to_string_vec(rt, tablesArray);
-    // std::vector<int> rowIds;
-    // if (query.hasProperty(rt, "rowIds")) {
-    //   auto rowIdsArray = query.getProperty(rt, "rowIds");
-    //   rowIds = to_int_vec(rt, rowIdsArray);
-    // }
 
     std::vector<TableRowDiscriminator> discriminators;
 
@@ -759,7 +741,6 @@ void DBHostObject::create_jsi_functions() {
 
     return unsubscribe;
   });
-
 #endif
 
   auto prepare_statement = HOSTFN("prepareStatement") {
@@ -778,31 +759,28 @@ void DBHostObject::create_jsi_functions() {
 
   auto get_db_path = HOSTFN("getDbPath") {
     std::string path = std::string(base_path);
-    if (count == 1 && !args[0].isUndefined() && !args[0].isNull()) {
-      if (!args[0].isString()) {
-        throw std::runtime_error(
-            "[op-sqlite][open] database location must be a string");
-      }
+    if (count == 1 && !args[0].isString()) {
+      throw std::runtime_error(
+          "[op-sqlite][open] database location must be a string");
+    }
 
-      std::string lastPath = args[0].asString(rt).utf8(rt);
+    std::string last_path = args[0].asString(rt).utf8(rt);
 
-      if (lastPath == ":memory:") {
-        path = ":memory:";
-      } else if (lastPath.rfind("/", 0) == 0) {
-        path = lastPath;
-      } else {
-        path = path + "/" + lastPath;
-      }
+    if (last_path == ":memory:") {
+      path = ":memory:";
+    } else if (last_path.rfind("/", 0) == 0) {
+      path = last_path;
+    } else {
+      path = path + "/" + last_path;
     }
 
     auto result = opsqlite_get_db_path(db_name, path);
     return jsi::String::createFromUtf8(rt, result);
   });
 
-  auto flush_pending_reactive_queries_js =
-      HOSTFN("flushPendingReactiveQueries") {
+  auto flush_reactives = HOSTFN("flushPendingReactiveQueries") {
     auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
-          auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor") {
+    auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor") {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
 
       auto task = [&rt, this, resolve]() {
@@ -812,9 +790,9 @@ void DBHostObject::create_jsi_functions() {
       _thread_pool->queueWork(task);
 
       return {};
-              }));
+    }));
 
-          return promise;
+    return promise;
   });
 
   function_map["attach"] = std::move(attach);
@@ -828,8 +806,7 @@ void DBHostObject::create_jsi_functions() {
   function_map["executeBatch"] = std::move(execute_batch);
   function_map["prepareStatement"] = std::move(prepare_statement);
   function_map["getDbPath"] = std::move(get_db_path);
-  function_map["flushPendingReactiveQueries"] =
-      std::move(flush_pending_reactive_queries_js);
+  function_map["flushPendingReactiveQueries"] = std::move(flush_reactives);
 #ifdef OP_SQLITE_USE_LIBSQL
   function_map["sync"] = std::move(sync);
 #else
@@ -844,7 +821,6 @@ void DBHostObject::create_jsi_functions() {
 
 std::vector<jsi::PropNameID> DBHostObject::getPropertyNames(jsi::Runtime &rt) {
   std::vector<jsi::PropNameID> keys;
-
   return keys;
 }
 
@@ -869,9 +845,6 @@ void DBHostObject::set(jsi::Runtime &rt, const jsi::PropNameID &name,
 
 void DBHostObject::invalidate() {
   invalidated = true;
-  //  opsqlite_deregister_commit_hook(db);
-  //  opsqlite_deregister_update_hook(db);
-  //  opsqlite_deregister_rollback_hook(db);
   _thread_pool->restartPool();
   opsqlite_close(db);
 }
