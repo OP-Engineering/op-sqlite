@@ -24,7 +24,7 @@ void DBHostObject::flush_pending_reactive_queries(
 }
 #else
 void DBHostObject::flush_pending_reactive_queries(
-    std::shared_ptr<jsi::Value> resolve) {
+    const std::shared_ptr<jsi::Value> &resolve) {
   for (const auto &query_ptr : pending_reactive_queries) {
     auto query = query_ptr.get();
 
@@ -59,19 +59,19 @@ void DBHostObject::on_rollback() {
       [this] { rollback_hook_callback->asObject(rt).asFunction(rt).call(rt); });
 }
 
-void DBHostObject::on_update(std::string table, std::string operation,
-                             int rowid) {
+void DBHostObject::on_update(const std::string &table,
+                             const std::string &operation, int row_id) {
   if (update_hook_callback != nullptr) {
-    invoker->invokeAsync([this, callback = update_hook_callback, table,
-                          operation = std::move(operation), rowid] {
-      auto res = jsi::Object(rt);
-      res.setProperty(rt, "table", jsi::String::createFromUtf8(rt, table));
-      res.setProperty(rt, "operation",
-                      jsi::String::createFromUtf8(rt, operation));
-      res.setProperty(rt, "rowId", jsi::Value(rowid));
+    invoker->invokeAsync(
+        [this, callback = update_hook_callback, table, operation, row_id] {
+          auto res = jsi::Object(rt);
+          res.setProperty(rt, "table", jsi::String::createFromUtf8(rt, table));
+          res.setProperty(rt, "operation",
+                          jsi::String::createFromUtf8(rt, operation));
+          res.setProperty(rt, "rowId", jsi::Value(row_id));
 
-      callback->asObject(rt).asFunction(rt).call(rt, res);
-    });
+          callback->asObject(rt).asFunction(rt).call(rt, res);
+        });
   }
 
   for (const auto &query_ptr : reactive_queries) {
@@ -89,14 +89,14 @@ void DBHostObject::on_update(std::string table, std::string operation,
       }
 
       // If no ids are specified, then we should fire
-      if (discriminator.ids.size() == 0) {
+      if (discriminator.ids.empty()) {
         shouldFire = true;
         break;
       }
 
       // If ids are specified, then we should check if the rowId matches
       for (const auto &discrimator_id : discriminator.ids) {
-        if (rowid == discrimator_id) {
+        if (row_id == discrimator_id) {
           shouldFire = true;
           break;
         }
@@ -322,7 +322,7 @@ void DBHostObject::create_jsi_functions() {
           });
         } catch (std::runtime_error &e) {
           auto what = e.what();
-          invoker->invokeAsync([&rt, what = std::string(what), reject] {
+          invoker->invokeAsync([&rt, what, reject] {
             auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
             auto error = errorCtr.callAsConstructor(
                 rt, jsi::String::createFromAscii(rt, what));
@@ -330,7 +330,7 @@ void DBHostObject::create_jsi_functions() {
           });
         } catch (std::exception &exc) {
           auto what = exc.what();
-          invoker->invokeAsync([&rt, what = std::move(what), reject] {
+          invoker->invokeAsync([&rt, what, reject] {
             auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
             auto error = errorCtr.callAsConstructor(
                 rt, jsi::String::createFromAscii(rt, what));
@@ -364,7 +364,7 @@ void DBHostObject::create_jsi_functions() {
   });
 
   auto execute = HOSTFN("execute") {
-    std::string query = args[0].asString(rt).utf8(rt);
+    const std::string query = args[0].asString(rt).utf8(rt);
     std::vector<JSVariant> params;
 
     if (count == 2) {
@@ -374,8 +374,7 @@ void DBHostObject::create_jsi_functions() {
     auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
     auto promise = promiseCtr.callAsConstructor(rt,
  HOSTFN("executor") {
-      auto task = [this, &rt, query = std::move(query),
-                   params = std::move(params),
+      auto task = [this, &rt, query, params,
                    resolve = std::make_shared<jsi::Value>(rt, args[0]),
                    reject = std::make_shared<jsi::Value>(rt, args[1])]() {
         try {
@@ -439,8 +438,7 @@ void DBHostObject::create_jsi_functions() {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-      auto task = [&rt, this, query, params = std::move(params), resolve,
-                   reject, invoker = this->invoker]() {
+      auto task = [&rt, this, query, params, resolve, reject]() {
         try {
           std::vector<DumbHostObject> results;
           std::shared_ptr<std::vector<SmartHostObject>> metadata =
@@ -476,7 +474,7 @@ void DBHostObject::create_jsi_functions() {
           });
         } catch (std::exception &exc) {
           auto what = exc.what();
-          invoker->invokeAsync([&rt, what = std::move(what), reject] {
+          invoker->invokeAsync([&rt, what, reject] {
             auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
             auto error = errorCtr.callAsConstructor(
                 rt, jsi::String::createFromAscii(rt, what));
@@ -544,7 +542,7 @@ void DBHostObject::create_jsi_functions() {
               });
         } catch (std::runtime_error &e) {
           auto what = e.what();
-          invoker->invokeAsync([&rt, what = std::string(what), reject] {
+          invoker->invokeAsync([&rt, what, reject] {
             auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
             auto error = errorCtr.callAsConstructor(
                 rt, jsi::String::createFromAscii(rt, what));
@@ -552,7 +550,7 @@ void DBHostObject::create_jsi_functions() {
           });
         } catch (std::exception &exc) {
           auto what = exc.what();
-          invoker->invokeAsync([&rt, what = std::move(what), reject] {
+          invoker->invokeAsync([&rt, what, reject] {
             auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
             auto error = errorCtr.callAsConstructor(
                 rt, jsi::String::createFromAscii(rt, what));
@@ -578,7 +576,7 @@ void DBHostObject::create_jsi_functions() {
   });
 #else
   auto load_file = HOSTFN("loadFile") {
-    if (sizeof(args) < 1) {
+    if (count < 1) {
       throw std::runtime_error(
           "[op-sqlite][loadFile] Incorrect parameter count");
       return {};
@@ -595,14 +593,13 @@ void DBHostObject::create_jsi_functions() {
         try {
           const auto result = import_sql_file(db, sqlFileName);
 
-          invoker->invokeAsync(
-              [&rt, result = std::move(result), resolve, reject] {
-                auto res = jsi::Object(rt);
-                res.setProperty(rt, "rowsAffected",
-                                jsi::Value(result.affectedRows));
-                res.setProperty(rt, "commands", jsi::Value(result.commands));
-                resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
-              });
+          invoker->invokeAsync([&rt, result, resolve, reject] {
+            auto res = jsi::Object(rt);
+            res.setProperty(rt, "rowsAffected",
+                            jsi::Value(result.affectedRows));
+            res.setProperty(rt, "commands", jsi::Value(result.commands));
+            resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
+          });
         } catch (std::runtime_error &e) {
           auto what = e.what();
           invoker->invokeAsync([&rt, what = std::string(what), reject] {
@@ -642,9 +639,8 @@ void DBHostObject::create_jsi_functions() {
   });
 
   auto commit_hook = HOSTFN("commitHook") {
-    if (sizeof(args) < 1) {
+    if (count < 1) {
       throw std::runtime_error("[op-sqlite][commitHook] callback needed");
-      return {};
     }
 
     auto callback = std::make_shared<jsi::Value>(rt, args[0]);
@@ -659,7 +655,7 @@ void DBHostObject::create_jsi_functions() {
   });
 
   auto rollback_hook = HOSTFN("rollbackHook") {
-    if (sizeof(args) < 1) {
+    if (count < 1) {
       throw std::runtime_error("[op-sqlite][rollbackHook] callback needed");
     }
 
@@ -677,7 +673,7 @@ void DBHostObject::create_jsi_functions() {
 
   auto load_extension = HOSTFN("loadExtension") {
     auto path = args[0].asString(rt).utf8(rt);
-    std::string entry_point = "";
+    std::string entry_point;
     if (count > 1 && args[1].isString()) {
       entry_point = args[1].asString(rt).utf8(rt);
     }
@@ -828,7 +824,7 @@ jsi::Value DBHostObject::get(jsi::Runtime &rt,
                              const jsi::PropNameID &propNameID) {
   auto name = propNameID.utf8(rt);
   if (function_map.count(name) != 1) {
-    return HOSTFN(name.c_str()) {
+    return HOST_STATIC_FN(name.c_str()) {
       throw std::runtime_error(
           "[op-sqlite] Function " + name +
           " not implemented for current backend (libsql or sqlcipher)");
