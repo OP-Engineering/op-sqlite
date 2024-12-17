@@ -1,5 +1,4 @@
-#ifndef bridge_h
-#define bridge_h
+#pragma once
 
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
@@ -81,5 +80,3 @@ void opsqlite_load_extension(sqlite3 *db, std::string &path,
                              std::string &entry_point);
 
 } // namespace opsqlite
-
-#endif /* bridge_h */

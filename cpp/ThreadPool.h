@@ -1,5 +1,4 @@
-#ifndef ThreadPool_h
-#define ThreadPool_h
+#pragma once
 
 #include <condition_variable>
 #include <exception>
@@ -43,5 +42,3 @@ private:
 };
 
 } // namespace opsqlite
-
-#endif /* ThreadPool_h */
