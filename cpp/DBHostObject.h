@@ -1,11 +1,11 @@
 #pragma once
 
 #include "ThreadPool.h"
-#include "sqlite3.h"
 #include "types.h"
 #include <ReactCommon/CallInvoker.h>
 #include <jsi/jsi.h>
 #include <set>
+#include <sqlite3.h>
 #include <unordered_map>
 #include <vector>
 

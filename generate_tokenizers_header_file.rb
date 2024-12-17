@@ -12,7 +12,7 @@ def generate_tokenizers_header_file(names, file_path)
     file.puts
     file.puts "#define TOKENIZER_LIST #{tokenizer_list}"
     file.puts
-    file.puts "#include \"sqlite3.h\""
+    file.puts "#include <sqlite3.h>"
     file.puts
     file.puts "namespace opsqlite {"
     file.puts
