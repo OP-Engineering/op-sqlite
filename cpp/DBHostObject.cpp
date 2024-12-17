@@ -197,8 +197,7 @@ void DBHostObject::create_jsi_functions() {
     }
     if (!args[0].isString() || !args[1].isString() || !args[2].isString()) {
       throw std::runtime_error(
-          "dbName, databaseToAttach and alias must be strings");
-      return {};
+          "[op-sqlite] name, database to attach and alias must be strings");
     }
 
     std::string secondary_db_path = std::string(base_path);
@@ -764,7 +763,7 @@ void DBHostObject::create_jsi_functions() {
 
     if (last_path == ":memory:") {
       path = ":memory:";
-    } else if (last_path.rfind("/", 0) == 0) {
+    } else if (last_path.rfind('/', 0) == 0) {
       path = last_path;
     } else {
       path = path + "/" + last_path;
@@ -815,12 +814,12 @@ void DBHostObject::create_jsi_functions() {
 #endif
 }
 
-std::vector<jsi::PropNameID> DBHostObject::getPropertyNames(jsi::Runtime &rt) {
+std::vector<jsi::PropNameID> DBHostObject::getPropertyNames(jsi::Runtime &_rt) {
   std::vector<jsi::PropNameID> keys;
   return keys;
 }
 
-jsi::Value DBHostObject::get(jsi::Runtime &rt,
+jsi::Value DBHostObject::get(jsi::Runtime &_rt,
                              const jsi::PropNameID &propNameID) {
   auto name = propNameID.utf8(rt);
   if (function_map.count(name) != 1) {
@@ -831,10 +830,10 @@ jsi::Value DBHostObject::get(jsi::Runtime &rt,
     });
   }
 
-  return jsi::Value(rt, function_map[name]);
+  return {rt, function_map[name]};
 }
 
-void DBHostObject::set(jsi::Runtime &rt, const jsi::PropNameID &name,
+void DBHostObject::set(jsi::Runtime &_rt, const jsi::PropNameID &name,
                        const jsi::Value &value) {
   throw std::runtime_error("You cannot write to this object!");
 }
