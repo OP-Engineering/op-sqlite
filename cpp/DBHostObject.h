@@ -33,7 +33,7 @@ struct ReactiveQuery {
 
 class JSI_EXPORT DBHostObject : public jsi::HostObject {
 public:
-  // Constructor for local databases
+  // Normal constructor shared between all backends
   DBHostObject(jsi::Runtime &rt, std::string &base_path,
                std::shared_ptr<react::CallInvoker> invoker,
                std::string &db_name, std::string &path,
@@ -70,7 +70,6 @@ private:
 
   std::unordered_map<std::string, jsi::Value> function_map;
   std::string base_path;
-  std::shared_ptr<jsi::Value> update_hook;
   std::shared_ptr<react::CallInvoker> invoker;
   std::shared_ptr<ThreadPool> _thread_pool;
   std::string db_name;
