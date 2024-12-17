@@ -98,7 +98,9 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
   opsqlite_execute(db, "PRAGMA key = '" + encryption_key + "'", nullptr);
 #endif
 
+#ifndef OP_SQLITE_USE_PHONE_VERSION
   sqlite3_enable_load_extension(db, 1);
+#endif
 
 #ifdef OP_SQLITE_USE_CRSQLITE
   const char *crsqliteEntryPoint = "sqlite3_crsqlite_init";
