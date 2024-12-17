@@ -841,7 +841,10 @@ void DBHostObject::set(jsi::Runtime &_rt, const jsi::PropNameID &name,
 void DBHostObject::invalidate() {
   invalidated = true;
   _thread_pool->restartPool();
-  opsqlite_close(db);
+  if (db != nullptr) {
+    opsqlite_close(db);
+    db = nullptr;
+  }
 }
 
 DBHostObject::~DBHostObject() { invalidate(); }
