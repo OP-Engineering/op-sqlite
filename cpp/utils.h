@@ -26,14 +26,14 @@ std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt, jsi::Value const &xs);
 std::vector<int> to_int_vec(jsi::Runtime &rt, jsi::Value const &xs);
 
 jsi::Value
-create_result(jsi::Runtime &rt, BridgeResult status,
+create_result(jsi::Runtime &rt, const BridgeResult &status,
               std::vector<DumbHostObject> *results,
               std::shared_ptr<std::vector<SmartHostObject>> metadata);
 
 jsi::Value create_js_rows(jsi::Runtime &rt, const BridgeResult &status);
 
 jsi::Value
-create_raw_result(jsi::Runtime &rt, BridgeResult status,
+create_raw_result(jsi::Runtime &rt, const BridgeResult &status,
                   const std::vector<std::vector<JSVariant>> *results);
 
 void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batch_params,
@@ -46,7 +46,5 @@ int mkdir(const std::string &path);
 bool folder_exists(const std::string &name);
 
 bool file_exists(const std::string &path);
-
-std::vector<std::string> parse_string_list(const std::string &str);
 
 } // namespace opsqlite
