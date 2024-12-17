@@ -1,5 +1,4 @@
-#ifndef utils_h
-#define utils_h
+#pragma once
 
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
@@ -51,5 +50,3 @@ bool file_exists(const std::string &path);
 std::vector<std::string> parse_string_list(const std::string &str);
 
 } // namespace opsqlite
-
-#endif /* utils_h */

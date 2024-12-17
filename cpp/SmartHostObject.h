@@ -1,5 +1,4 @@
-#ifndef SmartHostObject_h
-#define SmartHostObject_h
+#pragma once
 
 #include "types.h"
 #include <any>
@@ -12,7 +11,7 @@ namespace jsi = facebook::jsi;
 
 class JSI_EXPORT SmartHostObject : public jsi::HostObject {
 public:
-  SmartHostObject(){};
+  SmartHostObject() {};
 
   std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt);
 
@@ -22,5 +21,3 @@ public:
 };
 
 } // namespace opsqlite
-
-#endif /* SmartHostObject_h */

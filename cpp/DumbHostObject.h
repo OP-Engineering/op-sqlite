@@ -1,12 +1,10 @@
-#ifndef DumbHostObject_h
-#define DumbHostObject_h
-
-#include <stdio.h>
+#pragma once
 
 #include "SmartHostObject.h"
 #include "types.h"
 #include <any>
 #include <jsi/jsi.h>
+#include <stdio.h>
 #include <vector>
 
 namespace opsqlite {
@@ -15,7 +13,7 @@ namespace jsi = facebook::jsi;
 
 class JSI_EXPORT DumbHostObject : public jsi::HostObject {
 public:
-  DumbHostObject(){};
+  DumbHostObject() {};
 
   DumbHostObject(std::shared_ptr<std::vector<SmartHostObject>> metadata);
 
@@ -34,5 +32,3 @@ public:
 };
 
 } // namespace opsqlite
-
-#endif /* DumbHostObject_h */
