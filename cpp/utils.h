@@ -37,14 +37,14 @@ jsi::Value
 create_raw_result(jsi::Runtime &rt, BridgeResult status,
                   const std::vector<std::vector<JSVariant>> *results);
 
-void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batchParams,
+void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batch_params,
                         std::vector<BatchArguments> *commands);
 
-BatchResult import_sql_file(sqlite3 *db, std::string fileLocation);
+BatchResult import_sql_file(sqlite3 *db, std::string path);
 
 int mkdir(const std::string &path);
 
-bool folder_exists(const std::string &foldername);
+bool folder_exists(const std::string &name);
 
 bool file_exists(const std::string &path);
 

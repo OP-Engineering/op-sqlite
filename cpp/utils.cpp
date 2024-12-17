@@ -206,11 +206,11 @@ create_raw_result(jsi::Runtime &rt, BridgeResult status,
   return res;
 }
 
-void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batchParams,
+void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batch_params,
                         std::vector<BatchArguments> *commands) {
-  for (int i = 0; i < batchParams.length(rt); i++) {
+  for (int i = 0; i < batch_params.length(rt); i++) {
     const jsi::Array &command =
-        batchParams.getValueAtIndex(rt, i).asObject(rt).asArray(rt);
+        batch_params.getValueAtIndex(rt, i).asObject(rt).asArray(rt);
     if (command.length(rt) == 0) {
       continue;
     }
@@ -246,11 +246,11 @@ void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batchParams,
 }
 
 #ifndef OP_SQLITE_USE_LIBSQL
-BatchResult import_sql_file(sqlite3 *db, std::string fileLocation) {
+BatchResult import_sql_file(sqlite3 *db, std::string path) {
   std::string line;
-  std::ifstream sqFile(fileLocation);
+  std::ifstream sqFile(path);
   if (!sqFile.is_open()) {
-    throw std::runtime_error("Could not open file: " + fileLocation);
+    throw std::runtime_error("Could not open file: " + path);
   }
 
   try {
@@ -281,9 +281,9 @@ BatchResult import_sql_file(sqlite3 *db, std::string fileLocation) {
 }
 #endif
 
-bool folder_exists(const std::string &foldername) {
+bool folder_exists(const std::string &name) {
   struct stat buffer;
-  return (stat(foldername.c_str(), &buffer) == 0);
+  return (stat(name.c_str(), &buffer) == 0);
 }
 
 bool file_exists(const std::string &path) {
