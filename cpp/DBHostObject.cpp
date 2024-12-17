@@ -50,16 +50,14 @@ void DBHostObject::flush_pending_reactive_queries(
 }
 
 void DBHostObject::on_commit() {
-  invoker->invokeAsync([this] {
-    commit_hook_callback->asObject(rt).asFunction(rt).call(rt);
-  });
+  invoker->invokeAsync(
+      [this] { commit_hook_callback->asObject(rt).asFunction(rt).call(rt); });
 }
-  
-  void DBHostObject::on_rollback() {
-    invoker->invokeAsync([this] {
-      rollback_hook_callback->asObject(rt).asFunction(rt).call(rt);
-    });
-  }
+
+void DBHostObject::on_rollback() {
+  invoker->invokeAsync(
+      [this] { rollback_hook_callback->asObject(rt).asFunction(rt).call(rt); });
+}
 
 void DBHostObject::on_update(std::string table, std::string operation,
                              int rowid) {
@@ -194,12 +192,12 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
 void DBHostObject::create_jsi_functions() {
   auto attach = HOSTFN("attach") {
     if (count < 3) {
-      throw jsi::JSError(rt,
-                         "[op-sqlite][attach] Incorrect number of arguments");
+      throw jsi::runtime_error(
+          "[op-sqlite][attach] Incorrect number of arguments");
     }
     if (!args[0].isString() || !args[1].isString() || !args[2].isString()) {
-      throw jsi::JSError(rt,
-                         "dbName, databaseToAttach and alias must be strings");
+      throw jsi::runtime_error(
+          "dbName, databaseToAttach and alias must be strings");
       return {};
     }
 
@@ -350,7 +348,6 @@ void DBHostObject::create_jsi_functions() {
   });
 
   auto execute_sync = HOSTFN("executeSync") {
-
     std::string query = args[0].asString(rt).utf8(rt);
     std::vector<JSVariant> params;
 
@@ -872,15 +869,13 @@ void DBHostObject::set(jsi::Runtime &rt, const jsi::PropNameID &name,
 
 void DBHostObject::invalidate() {
   invalidated = true;
-//  opsqlite_deregister_commit_hook(db);
-//  opsqlite_deregister_update_hook(db);
-//  opsqlite_deregister_rollback_hook(db);
+  //  opsqlite_deregister_commit_hook(db);
+  //  opsqlite_deregister_update_hook(db);
+  //  opsqlite_deregister_rollback_hook(db);
   _thread_pool->restartPool();
   opsqlite_close(db);
 }
 
-DBHostObject::~DBHostObject() {
-  invalidate();
-}
+DBHostObject::~DBHostObject() { invalidate(); }
 
 } // namespace opsqlite
