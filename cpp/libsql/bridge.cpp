@@ -125,8 +125,12 @@ DB opsqlite_libsql_open_remote(std::string const &url,
 }
 
 void opsqlite_libsql_close(DB const &db) {
-  libsql_disconnect(db.c);
-  libsql_close(db.db);
+  if (db.c != nullptr) {
+    libsql_disconnect(db.c);
+  }
+  if (db.db != nullptr) {
+    libsql_close(db.db);
+  }
 }
 
 void opsqlite_libsql_attach(DB const &db,
@@ -210,7 +214,7 @@ void opsqlite_libsql_bind_statement(libsql_stmt_t statement,
 
 BridgeResult opsqlite_libsql_execute_prepared_statement(
     DB const &db,
-    std::string const &name, libsql_stmt_t stmt,
+    libsql_stmt_t stmt,
     std::vector<DumbHostObject> *results,
     const std::shared_ptr<std::vector<SmartHostObject>> &metadatas) {
 
@@ -327,7 +331,7 @@ BridgeResult opsqlite_libsql_execute_prepared_statement(
           .insertId = static_cast<double>(insert_row_id)};
 }
 
-libsql_stmt_t opsqlite_libsql_prepare_statement(DB const &db, std::string const &name,
+libsql_stmt_t opsqlite_libsql_prepare_statement(DB const &db,
                                                 std::string const &query) {
   libsql_stmt_t stmt;
 
