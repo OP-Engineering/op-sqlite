@@ -811,6 +811,10 @@ void DBHostObject::create_jsi_functions() {
 
 std::vector<jsi::PropNameID> DBHostObject::getPropertyNames(jsi::Runtime &_rt) {
   std::vector<jsi::PropNameID> keys;
+  keys.reserve(function_map.size());
+  for (const auto &pair : function_map) {
+    keys.emplace_back(jsi::PropNameID::forUtf8(_rt, pair.first));
+  }
   return keys;
 }
 
