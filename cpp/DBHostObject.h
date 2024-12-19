@@ -52,21 +52,23 @@ public:
                std::string &auth_token, int sync_interval);
 #endif
 
-  std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt);
-  jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID);
+  std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt) override;
+  jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID) override;
   void set(jsi::Runtime &rt, const jsi::PropNameID &name,
-           const jsi::Value &value);
-  void on_update(const std::string& table, const std::string &operation, int row_id);
+           const jsi::Value &value) override;
+  void on_update(const std::string &table, const std::string &operation,
+                 long long row_id);
   void on_commit();
   void on_rollback();
   void invalidate();
-  ~DBHostObject();
+  ~DBHostObject() override;
 
 private:
   std::set<std::shared_ptr<ReactiveQuery>> pending_reactive_queries;
   void auto_register_update_hook();
   void create_jsi_functions();
-  void flush_pending_reactive_queries(const std::shared_ptr<jsi::Value>& resolve);
+  void
+  flush_pending_reactive_queries(const std::shared_ptr<jsi::Value> &resolve);
 
   std::unordered_map<std::string, jsi::Value> function_map;
   std::string base_path;
