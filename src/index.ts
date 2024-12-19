@@ -262,7 +262,7 @@ function enhanceDB(db: DB, options: any): DB {
     },
     executeWithHostObjects: async (
       query: string,
-      params?: any[] | undefined
+      params?: Scalar[]
     ): Promise<QueryResult> => {
       const sanitizedParams = params?.map((p) => {
         if (ArrayBuffer.isView(p)) {
@@ -272,14 +272,11 @@ function enhanceDB(db: DB, options: any): DB {
         return p;
       });
 
-      const result = await db.executeWithHostObjects(query, sanitizedParams);
-
-      return result;
+      return sanitizedParams
+        ? await db.executeWithHostObjects(query, sanitizedParams as Scalar[])
+        : await db.executeWithHostObjects(query);
     },
-    executeSync: (
-      query: string,
-      params?: Scalar[] | undefined
-    ): QueryResult => {
+    executeSync: (query: string, params?: Scalar[]): QueryResult => {
       const sanitizedParams = params?.map((p) => {
         if (ArrayBuffer.isView(p)) {
           return p.buffer;
@@ -288,10 +285,10 @@ function enhanceDB(db: DB, options: any): DB {
         return p;
       });
 
-      let intermediateResult = db.executeSync(
-        query,
-        sanitizedParams as Scalar[]
-      );
+      let intermediateResult = sanitizedParams
+        ? db.executeSync(query, sanitizedParams as Scalar[])
+        : db.executeSync(query);
+
       let rows: any[] = [];
       for (let i = 0; i < (intermediateResult.rawRows?.length ?? 0); i++) {
         let row: Record<string, Scalar> = {};

@@ -288,11 +288,9 @@ void DBHostObject::create_jsi_functions() {
 
   auto execute_raw = HOSTFN("executeRaw") {
     const std::string query = args[0].asString(rt).utf8(rt);
-    std::vector<JSVariant> params;
-
-    if (count == 2) {
-      params = to_variant_vec(rt, args[1]);
-    }
+    std::vector<JSVariant> params = count == 2 && args[1].isObject()
+                                        ? to_variant_vec(rt, args[1])
+                                        : std::vector<JSVariant>();
 
     auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
     auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor") {
@@ -364,11 +362,9 @@ void DBHostObject::create_jsi_functions() {
 
   auto execute = HOSTFN("execute") {
     const std::string query = args[0].asString(rt).utf8(rt);
-    std::vector<JSVariant> params;
-
-    if (count == 2) {
-      params = to_variant_vec(rt, args[1]);
-    }
+    std::vector<JSVariant> params = count == 2 && args[1].isObject()
+                                        ? to_variant_vec(rt, args[1])
+                                        : std::vector<JSVariant>();
 
     auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
     auto promise = promiseCtr.callAsConstructor(rt,
@@ -377,7 +373,6 @@ void DBHostObject::create_jsi_functions() {
                    resolve = std::make_shared<jsi::Value>(rt, args[0]),
                    reject = std::make_shared<jsi::Value>(rt, args[1])]() {
         try {
-
 #ifdef OP_SQLITE_USE_LIBSQL
           auto status = opsqlite_libsql_execute(db_name, query, &params);
 #else
@@ -533,7 +528,7 @@ void DBHostObject::create_jsi_functions() {
           }
 
           invoker->invokeAsync(
-              [&rt, batchResult = std::move(batchResult), resolve, reject] {
+              [&rt, batchResult = std::move(batchResult), resolve] {
                 auto res = jsi::Object(rt);
                 res.setProperty(rt, "rowsAffected",
                                 jsi::Value(batchResult.affectedRows));
@@ -592,7 +587,7 @@ void DBHostObject::create_jsi_functions() {
         try {
           const auto result = import_sql_file(db, sqlFileName);
 
-          invoker->invokeAsync([&rt, result, resolve, reject] {
+          invoker->invokeAsync([&rt, result, resolve] {
             auto res = jsi::Object(rt);
             res.setProperty(rt, "rowsAffected",
                             jsi::Value(result.affectedRows));

@@ -13,7 +13,7 @@ namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 
-jsi::Value toJSI(jsi::Runtime &rt, const JSVariant &value) {
+jsi::Value to_jsi(jsi::Runtime &rt, const JSVariant &value) {
   if (std::holds_alternative<bool>(value)) {
     return std::get<bool>(value);
   } else if (std::holds_alternative<int>(value)) {
@@ -74,7 +74,7 @@ jsi::Value toJSI(jsi::Runtime &rt, const JSVariant &value) {
   //      value);
 }
 
-JSVariant toVariant(jsi::Runtime &rt, const jsi::Value &value) {
+JSVariant to_variant(jsi::Runtime &rt, const jsi::Value &value) {
   if (value.isNull() || value.isUndefined()) {
     return JSVariant(nullptr);
   } else if (value.isBool()) {
@@ -107,10 +107,9 @@ JSVariant toVariant(jsi::Runtime &rt, const jsi::Value &value) {
 
     return JSVariant(ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
                                  .size = buffer.size(rt)});
-
-  } else {
-    throw std::runtime_error("Cannot convert JSI value to C++ Variant value");
   }
+
+  throw std::runtime_error("Cannot convert JSI value to C++ Variant value");
 }
 
 std::vector<std::string> to_string_vec(jsi::Runtime &rt, jsi::Value const &xs) {
@@ -135,16 +134,11 @@ std::vector<int> to_int_vec(jsi::Runtime &rt, jsi::Value const &xs) {
 
 std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt, jsi::Value const &xs) {
   std::vector<JSVariant> res;
-
-  if (xs.isNull() || xs.isUndefined()) {
-    return res;
-  }
-
   jsi::Array values = xs.asObject(rt).asArray(rt);
 
   for (int ii = 0; ii < values.length(rt); ii++) {
     jsi::Value value = values.getValueAtIndex(rt, ii);
-    res.emplace_back(toVariant(rt, value));
+    res.emplace_back(to_variant(rt, value));
   }
 
   return res;
@@ -166,7 +160,7 @@ jsi::Value create_js_rows(jsi::Runtime &rt, const BridgeResult &status) {
       auto row = jsi::Array(rt, status.column_names.size());
       std::vector<JSVariant> native_row = status.rows[i];
       for (int j = 0; j < native_row.size(); j++) {
-        auto value = toJSI(rt, native_row[j]);
+        auto value = to_jsi(rt, native_row[j]);
         row.setValueAtIndex(rt, j, value);
       }
       rows.setValueAtIndex(rt, i, row);
@@ -178,7 +172,7 @@ jsi::Value create_js_rows(jsi::Runtime &rt, const BridgeResult &status) {
   auto column_array = jsi::Array(rt, column_count);
   for (int i = 0; i < column_count; i++) {
     auto column = status.column_names.at(i);
-    column_array.setValueAtIndex(rt, i, toJSI(rt, column));
+    column_array.setValueAtIndex(rt, i, to_jsi(rt, column));
   }
   res.setProperty(rt, "columnNames", std::move(column_array));
   return res;
@@ -229,7 +223,7 @@ create_raw_result(jsi::Runtime &rt, const BridgeResult &status,
     auto row = results->at(i);
     auto array = jsi::Array(rt, row.size());
     for (int j = 0; j < row.size(); j++) {
-      array.setValueAtIndex(rt, j, toJSI(rt, row[j]));
+      array.setValueAtIndex(rt, j, to_jsi(rt, row[j]));
     }
     res.setValueAtIndex(rt, i, array);
   }

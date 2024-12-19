@@ -23,7 +23,7 @@ jsi::Value SmartHostObject::get(jsi::Runtime &rt,
   for (auto field : fields) {
     auto fieldName = field.first;
     if (fieldName == name) {
-      return toJSI(rt, field.second);
+      return to_jsi(rt, field.second);
     }
   }
 

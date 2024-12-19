@@ -33,13 +33,13 @@ jsi::Value DumbHostObject::get(jsi::Runtime &rt,
   for (int i = 0; i < fields->size(); i++) {
     auto fieldName = std::get<std::string>(fields->at(i).fields[0].second);
     if (fieldName == name) {
-      return toJSI(rt, values.at(i));
+      return to_jsi(rt, values.at(i));
     }
   }
 
   for (auto pairField : ownValues) {
     if (name == pairField.first) {
-      return toJSI(rt, pairField.second);
+      return to_jsi(rt, pairField.second);
     }
   }
 
@@ -53,19 +53,19 @@ void DumbHostObject::set(jsi::Runtime &rt, const jsi::PropNameID &name,
   for (int i = 0; i < fields->size(); i++) {
     auto fieldName = std::get<std::string>(fields->at(i).fields[0].second);
     if (fieldName == key) {
-      values[i] = toVariant(rt, value);
+      values[i] = to_variant(rt, value);
       return;
     }
   }
 
   for (auto pairField : ownValues) {
     if (key == pairField.first) {
-      pairField.second = toVariant(rt, value);
+      pairField.second = to_variant(rt, value);
       return;
     }
   }
 
-  ownValues.push_back(std::make_pair(key, toVariant(rt, value)));
+  ownValues.push_back(std::make_pair(key, to_variant(rt, value)));
 }
 
 } // namespace opsqlite
