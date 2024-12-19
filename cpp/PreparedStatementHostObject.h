@@ -10,6 +10,7 @@
 #endif
 #include "ThreadPool.h"
 #include <string>
+#include <utility>
 
 namespace opsqlite {
 namespace jsi = facebook::jsi;
@@ -29,26 +30,26 @@ public:
       sqlite3 *db, std::string name, sqlite3_stmt *stmt,
       std::shared_ptr<react::CallInvoker> js_call_invoker,
       std::shared_ptr<ThreadPool> thread_pool)
-      : _db(db), _name(name), _stmt(stmt), _js_call_invoker(js_call_invoker),
-        _thread_pool(thread_pool) {};
+      : _db(db), _name(std::move(name)), _stmt(stmt), _js_call_invoker(std::move(js_call_invoker)),
+        _thread_pool(std::move(thread_pool)) {};
 #endif
-  virtual ~PreparedStatementHostObject();
+  ~PreparedStatementHostObject() override;
 
-  std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt);
+  std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt) override;
 
-  jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID);
+  jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID) override;
 
 private:
-  std::shared_ptr<react::CallInvoker> _js_call_invoker;
-  std::shared_ptr<ThreadPool> _thread_pool;
-  std::string _name;
   sqlite3 *_db;
+  std::string _name;
 #ifdef OP_SQLITE_USE_LIBSQL
   libsql_stmt_t _stmt;
 #else
   // This shouldn't be de-allocated until sqlite3_finalize is called on it
   sqlite3_stmt *_stmt;
 #endif
+  std::shared_ptr<react::CallInvoker> _js_call_invoker;
+  std::shared_ptr<ThreadPool> _thread_pool;
 };
 
 } // namespace opsqlite

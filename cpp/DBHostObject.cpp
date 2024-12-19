@@ -60,7 +60,7 @@ void DBHostObject::on_rollback() {
 }
 
 void DBHostObject::on_update(const std::string &table,
-                             const std::string &operation, int row_id) {
+                             const std::string &operation, long long row_id) {
   if (update_hook_callback != nullptr) {
     invoker->invokeAsync(
         [this, callback = update_hook_callback, table, operation, row_id] {
@@ -68,7 +68,7 @@ void DBHostObject::on_update(const std::string &table,
           res.setProperty(rt, "table", jsi::String::createFromUtf8(rt, table));
           res.setProperty(rt, "operation",
                           jsi::String::createFromUtf8(rt, operation));
-          res.setProperty(rt, "rowId", jsi::Value(row_id));
+          res.setProperty(rt, "rowId", jsi::Value(static_cast<double>(row_id)));
 
           callback->asObject(rt).asFunction(rt).call(rt, res);
         });
