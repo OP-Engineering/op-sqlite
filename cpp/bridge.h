@@ -22,7 +22,7 @@ std::string opsqlite_get_db_path(std::string const &db_name,
                                  std::string const &location);
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
-BridgeResult opsqlite_open(std::string const &dbName, std::string const &path,
+sqlite3 *opsqlite_open(std::string const &dbName, std::string const &path,
                            std::string const &crsqlite_path,
                            std::string const &sqlite_vec_path,
                            std::string const &encryption_key);
