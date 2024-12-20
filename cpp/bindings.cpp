@@ -108,7 +108,7 @@ void install(jsi::Runtime &rt,
         options.getProperty(rt, "authToken").asString(rt).utf8(rt);
 
     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-        rt, url, auth_token, invoker, thread_pool);
+        rt, url, auth_token, invoker);
     return jsi::Object::createFromHostObject(rt, db);
   });
 
