@@ -1,5 +1,4 @@
-#ifndef utils_h
-#define utils_h
+#pragma once
 
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
@@ -8,6 +7,7 @@
 #include <jsi/jsi.h>
 #include <jsi/jsilib.h>
 #include <map>
+#include <sqlite3.h>
 #include <string>
 #include <vector>
 
@@ -15,9 +15,9 @@ namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 
-jsi::Value toJSI(jsi::Runtime &rt, const JSVariant &value);
+jsi::Value to_jsi(jsi::Runtime &rt, const JSVariant &value);
 
-JSVariant toVariant(jsi::Runtime &rt, jsi::Value const &value);
+JSVariant to_variant(jsi::Runtime &rt, jsi::Value const &value);
 
 std::vector<std::string> to_string_vec(jsi::Runtime &rt, jsi::Value const &xs);
 
@@ -26,29 +26,25 @@ std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt, jsi::Value const &xs);
 std::vector<int> to_int_vec(jsi::Runtime &rt, jsi::Value const &xs);
 
 jsi::Value
-create_result(jsi::Runtime &rt, BridgeResult status,
+create_result(jsi::Runtime &rt, const BridgeResult &status,
               std::vector<DumbHostObject> *results,
               std::shared_ptr<std::vector<SmartHostObject>> metadata);
 
 jsi::Value create_js_rows(jsi::Runtime &rt, const BridgeResult &status);
 
 jsi::Value
-create_raw_result(jsi::Runtime &rt, BridgeResult status,
+create_raw_result(jsi::Runtime &rt, const BridgeResult &status,
                   const std::vector<std::vector<JSVariant>> *results);
 
-void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batchParams,
+void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batch_params,
                         std::vector<BatchArguments> *commands);
 
-BatchResult importSQLFile(std::string dbName, std::string fileLocation);
+BatchResult import_sql_file(sqlite3 *db, std::string path);
 
 int mkdir(const std::string &path);
 
-bool folder_exists(const std::string &foldername);
+bool folder_exists(const std::string &name);
 
 bool file_exists(const std::string &path);
 
-std::vector<std::string> parse_string_list(const std::string &str);
-
 } // namespace opsqlite
-
-#endif /* utils_h */

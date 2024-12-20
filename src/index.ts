@@ -132,7 +132,7 @@ export interface PendingTransaction {
 }
 
 export type PreparedStatementObj = {
-  bind: (params: any[]) => void;
+  bind: (params: any[]) => Promise<void>;
   execute: () => Promise<QueryResult>;
 };
 
@@ -262,7 +262,7 @@ function enhanceDB(db: DB, options: any): DB {
     },
     executeWithHostObjects: async (
       query: string,
-      params?: any[] | undefined
+      params?: Scalar[]
     ): Promise<QueryResult> => {
       const sanitizedParams = params?.map((p) => {
         if (ArrayBuffer.isView(p)) {
@@ -272,14 +272,11 @@ function enhanceDB(db: DB, options: any): DB {
         return p;
       });
 
-      const result = await db.executeWithHostObjects(query, sanitizedParams);
-
-      return result;
+      return sanitizedParams
+        ? await db.executeWithHostObjects(query, sanitizedParams as Scalar[])
+        : await db.executeWithHostObjects(query);
     },
-    executeSync: (
-      query: string,
-      params?: Scalar[] | undefined
-    ): QueryResult => {
+    executeSync: (query: string, params?: Scalar[]): QueryResult => {
       const sanitizedParams = params?.map((p) => {
         if (ArrayBuffer.isView(p)) {
           return p.buffer;
@@ -288,7 +285,10 @@ function enhanceDB(db: DB, options: any): DB {
         return p;
       });
 
-      let intermediateResult = db.executeSync(query, sanitizedParams);
+      let intermediateResult = sanitizedParams
+        ? db.executeSync(query, sanitizedParams as Scalar[])
+        : db.executeSync(query);
+
       let rows: any[] = [];
       for (let i = 0; i < (intermediateResult.rawRows?.length ?? 0); i++) {
         let row: Record<string, Scalar> = {};
@@ -323,7 +323,10 @@ function enhanceDB(db: DB, options: any): DB {
         return p;
       });
 
-      let intermediateResult = await db.execute(query, sanitizedParams);
+      let intermediateResult = await db.execute(
+        query,
+        sanitizedParams as Scalar[]
+      );
 
       let rows: any[] = [];
       for (let i = 0; i < (intermediateResult.rawRows?.length ?? 0); i++) {
@@ -351,7 +354,7 @@ function enhanceDB(db: DB, options: any): DB {
       const stmt = db.prepareStatement(query);
 
       return {
-        bind: (params: any[]) => {
+        bind: async (params: any[]) => {
           const sanitizedParams = params.map((p) => {
             if (ArrayBuffer.isView(p)) {
               return p.buffer;
@@ -360,7 +363,7 @@ function enhanceDB(db: DB, options: any): DB {
             return p;
           });
 
-          stmt.bind(sanitizedParams);
+          await stmt.bind(sanitizedParams);
         },
         execute: stmt.execute,
       };

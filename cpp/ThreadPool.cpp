@@ -6,16 +6,17 @@ ThreadPool::ThreadPool() : done(false) {
   // This returns the number of threads supported by the system. If the
   // function can't figure out this information, it returns 0. 0 is not good,
   // so we create at least 1
-  auto numberOfThreads = std::thread::hardware_concurrency();
-  if (numberOfThreads == 0) {
-    numberOfThreads = 1;
-  }
+//  auto numberOfThreads = std::thread::hardware_concurrency();
+//  if (numberOfThreads == 0) {
+//    numberOfThreads = 1;
+//  }
 
+  auto numberOfThreads = 1;
   for (unsigned i = 0; i < numberOfThreads; ++i) {
     // The threads will execute the private member `doWork`. Note that we need
     // to pass a reference to the function (namespaced with the class name) as
     // the first argument, and the current object as second argument
-    threads.push_back(std::thread(&ThreadPool::doWork, this));
+    threads.emplace_back(&ThreadPool::doWork, this);
   }
 }
 
@@ -39,7 +40,7 @@ ThreadPool::~ThreadPool() {
 
 // This function will be called by the server every time there is a request
 // that needs to be processed by the thread pool
-void ThreadPool::queueWork(std::function<void(void)> task) {
+void ThreadPool::queueWork(const std::function<void(void)>& task) {
   // Grab the mutex
   std::lock_guard<std::mutex> g(workQueueMutex);
 
@@ -65,7 +66,7 @@ void ThreadPool::doWork() {
         return !workQueue.empty() || done;
       });
 
-      // If we are shutting down exit witout trying to process more work
+      // If we are shutting down exit without trying to process more work
       if (done) {
         break;
       }
@@ -109,7 +110,7 @@ void ThreadPool::restartPool() {
     // The threads will execute the private member `doWork`. Note that we need
     // to pass a reference to the function (namespaced with the class name) as
     // the first argument, and the current object as second argument
-    threads.push_back(std::thread(&ThreadPool::doWork, this));
+    threads.emplace_back(&ThreadPool::doWork, this);
   }
 
   done = false;

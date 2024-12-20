@@ -11,7 +11,6 @@ export function blobTests() {
     beforeEach(async () => {
       try {
         if (db) {
-          db.close();
           db.delete();
         }
 
@@ -31,12 +30,10 @@ export function blobTests() {
 
     afterAll(() => {
       if (db) {
-        db.close();
         db.delete();
-        // @ts-ignore
-        db = null;
       }
     });
+
     it('ArrayBuffer', async () => {
       const uint8 = new Uint8Array(2);
       uint8[0] = 42;
@@ -46,7 +43,7 @@ export function blobTests() {
         uint8.buffer,
       ]);
 
-      const result = await db.execute('SELECT content FROM BlobTable');
+      const result = await db.execute('SELECT content FROM BlobTable;');
 
       const finalUint8 = new Uint8Array(result.rows[0]!.content as any);
       expect(finalUint8[0]).to.equal(42);

@@ -17,7 +17,7 @@ const expectedVersion = isLibsql()
   ? '3.45.1'
   : isSQLCipher()
   ? '3.46.1'
-  : '3.46.1';
+  : '3.47.2';
 
 // const expectedSqliteVecVersion = 'v0.1.2-alpha.7';
 
@@ -180,5 +180,32 @@ export function dbSetupTests() {
         expect(e).to.exist;
       }
     });
+  });
+
+  it('Can attach/dettach database', () => {
+    let db = open({
+      name: 'attachTest.sqlite',
+      encryptionKey: 'test',
+    });
+    let db2 = open({
+      name: 'attachTest2.sqlite',
+      encryptionKey: 'test',
+    });
+    db2.close();
+    db.attach('attachTest.sqlite', 'attachTest2.sqlite', 'attach2');
+    db.executeSync('DROP TABLE IF EXISTS attach2.test;');
+    db.executeSync(
+      'CREATE TABLE IF NOT EXISTS attach2.test (id INTEGER PRIMARY KEY);',
+    );
+    let res = db.executeSync('INSERT INTO attach2.test (id) VALUES (1);');
+    expect(res).to.exist;
+    db.detach('attachTest2.sqlite', 'attach2');
+    db.delete();
+
+    db2 = open({
+      name: 'attachTest2.sqlite',
+      encryptionKey: 'test',
+    });
+    db2.delete();
   });
 }

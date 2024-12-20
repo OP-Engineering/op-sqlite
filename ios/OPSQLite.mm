@@ -149,7 +149,7 @@ RCT_EXPORT_METHOD(moveAssetsDatabase : (NSDictionary *)args resolve : (
 // #endif
 
 - (void)invalidate {
-  opsqlite::clearState();
+  opsqlite::invalidate();
 }
 
 @end

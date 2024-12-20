@@ -22,40 +22,29 @@ namespace jsi = facebook::jsi;
 std::string _base_path;
 std::string _crsqlite_path;
 std::string _sqlite_vec_path;
-std::shared_ptr<ThreadPool> thread_pool = std::make_shared<ThreadPool>();
 std::vector<std::shared_ptr<DBHostObject>> dbs;
 
 // React native will try to clean the module on JS context invalidation
-// (CodePush/Hot Reload) The clearState function is called and we use this flag
-// to prevent any ongoing operations from continuing work and can return early
-bool invalidated = false;
-
-void clearState() {
+// (CodePush/Hot Reload) The clearState function is called
+void invalidate() {
   for (const auto &db : dbs) {
     db->invalidate();
   }
-  invalidated = true;
 
-#ifdef OP_SQLITE_USE_LIBSQL
-  opsqlite_libsql_close_all();
-#else
-  opsqlite_close_all();
-#endif
-
-  // We then join all the threads before the context gets invalidated
-  thread_pool->restartPool();
+  // Clear our existing vector of shared pointers so they can be garbage
+  // collected
+  dbs.clear();
 }
 
 void install(jsi::Runtime &rt,
              const std::shared_ptr<react::CallInvoker> &invoker,
              const char *base_path, const char *crsqlite_path,
              const char *sqlite_vec_path) {
-  invalidated = false;
   _base_path = std::string(base_path);
   _crsqlite_path = std::string(crsqlite_path);
   _sqlite_vec_path = std::string(sqlite_vec_path);
 
-  auto open = HOSTFN("open") {
+  auto open = HOST_STATIC_FN("open") {
     jsi::Object options = args[0].asObject(rt);
     std::string name = options.getProperty(rt, "name").asString(rt).utf8(rt);
     std::string path = std::string(_base_path);
@@ -89,13 +78,13 @@ void install(jsi::Runtime &rt,
     }
 
     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-        rt, path, invoker, thread_pool, name, path, _crsqlite_path,
-        _sqlite_vec_path, encryptionKey);
+        rt, path, invoker, name, path, _crsqlite_path, _sqlite_vec_path,
+        encryptionKey);
     dbs.emplace_back(db);
     return jsi::Object::createFromHostObject(rt, db);
   });
 
-  auto is_sqlcipher = HOSTFN("isSQLCipher") {
+  auto is_sqlcipher = HOST_STATIC_FN("isSQLCipher") {
 #ifdef OP_SQLITE_USE_SQLCIPHER
     return true;
 #else
@@ -103,7 +92,7 @@ void install(jsi::Runtime &rt,
 #endif
   });
 
-  auto is_libsql = HOSTFN("isLibsql") {
+  auto is_libsql = HOST_STATIC_FN("isLibsql") {
 #ifdef OP_SQLITE_USE_LIBSQL
     return true;
 #else
@@ -112,18 +101,18 @@ void install(jsi::Runtime &rt,
   });
 
 #ifdef OP_SQLITE_USE_LIBSQL
-  auto open_remote = HOSTFN("openRemote") {
+  auto open_remote = HOST_STATIC_FN("openRemote") {
     jsi::Object options = args[0].asObject(rt);
     std::string url = options.getProperty(rt, "url").asString(rt).utf8(rt);
     std::string auth_token =
         options.getProperty(rt, "authToken").asString(rt).utf8(rt);
 
     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-        rt, url, auth_token, invoker, thread_pool);
+        rt, url, auth_token, invoker);
     return jsi::Object::createFromHostObject(rt, db);
   });
 
-  auto open_sync = HOSTFN("openSync") {
+  auto open_sync = HOST_STATIC_FN("openSync") {
     jsi::Object options = args[0].asObject(rt);
     std::string name = options.getProperty(rt, "name").asString(rt).utf8(rt);
     std::string path = std::string(_base_path);
@@ -152,7 +141,7 @@ void install(jsi::Runtime &rt,
     }
 
     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-        rt, invoker, thread_pool, name, path, url, auth_token, sync_interval);
+        rt, invoker, name, path, url, auth_token, sync_interval);
     return jsi::Object::createFromHostObject(rt, db);
   });
 #endif

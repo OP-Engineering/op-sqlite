@@ -13,7 +13,7 @@ namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 
-jsi::Value toJSI(jsi::Runtime &rt, const JSVariant &value) {
+inline jsi::Value to_jsi(jsi::Runtime &rt, const JSVariant &value) {
   if (std::holds_alternative<bool>(value)) {
     return std::get<bool>(value);
   } else if (std::holds_alternative<int>(value)) {
@@ -37,9 +37,44 @@ jsi::Value toJSI(jsi::Runtime &rt, const JSVariant &value) {
   }
 
   return jsi::Value::null();
+
+  // I wanted to use the visitor pattern here but on the ArrayBuffer case it is
+  // somehow throwing a pointer exception Somehow the v.size or v.data.get() is
+  // loosing the data when called from the lambda I'm guessing the I created the
+  // shared pointer wrong and the memory is being freed before the lambda is
+  // called
+  //  return std::visit(
+  //      [&](auto &&v) -> jsi::Value {
+  //        using T = std::decay_t<decltype(v)>;
+  //        if constexpr (std::is_same_v<T, bool>) {
+  //          return jsi::Value(v);
+  //        } else if constexpr (std::is_same_v<T, int>) {
+  //          return jsi::Value(v);
+  //        } else if constexpr (std::is_same_v<T, long long>) {
+  //          return jsi::Value(
+  //              static_cast<double>(v)); // JSI doesn't support long long
+  //        } else if constexpr (std::is_same_v<T, double>) {
+  //          return jsi::Value(v);
+  //        } else if constexpr (std::is_same_v<T, std::string>) {
+  //          return jsi::String::createFromUtf8(rt, v);
+  //        } else if constexpr (std::is_same_v<T, ArrayBuffer>) {
+  //          static jsi::Function buffer_constructor =
+  //              rt.global().getPropertyAsFunction(rt, "ArrayBuffer");
+  //          jsi::Object o =
+  //              buffer_constructor.callAsConstructor(rt,
+  //              static_cast<int>(v.size))
+  //                  .getObject(rt);
+  //          jsi::ArrayBuffer buf = o.getArrayBuffer(rt);
+  //          memcpy(buf.data(rt), v.data.get(), v.size);
+  //          return o;
+  //        } else {
+  //          return jsi::Value::null();
+  //        }
+  //      },
+  //      value);
 }
 
-JSVariant toVariant(jsi::Runtime &rt, const jsi::Value &value) {
+inline JSVariant to_variant(jsi::Runtime &rt, const jsi::Value &value) {
   if (value.isNull() || value.isUndefined()) {
     return JSVariant(nullptr);
   } else if (value.isBool()) {
@@ -62,7 +97,7 @@ JSVariant toVariant(jsi::Runtime &rt, const jsi::Value &value) {
     auto obj = value.asObject(rt);
 
     if (!obj.isArrayBuffer(rt)) {
-      throw std::invalid_argument(
+      throw std::runtime_error(
           "Object is not an ArrayBuffer, cannot bind to SQLite");
     }
 
@@ -72,11 +107,9 @@ JSVariant toVariant(jsi::Runtime &rt, const jsi::Value &value) {
 
     return JSVariant(ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
                                  .size = buffer.size(rt)});
-
-  } else {
-    throw std::invalid_argument(
-        "Cannot convert JSI value to C++ Variant value");
   }
+
+  throw std::runtime_error("Cannot convert JSI value to C++ Variant value");
 }
 
 std::vector<std::string> to_string_vec(jsi::Runtime &rt, jsi::Value const &xs) {
@@ -101,26 +134,17 @@ std::vector<int> to_int_vec(jsi::Runtime &rt, jsi::Value const &xs) {
 
 std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt, jsi::Value const &xs) {
   std::vector<JSVariant> res;
-
-  if (xs.isNull() || xs.isUndefined()) {
-    return res;
-  }
-
   jsi::Array values = xs.asObject(rt).asArray(rt);
 
   for (int ii = 0; ii < values.length(rt); ii++) {
     jsi::Value value = values.getValueAtIndex(rt, ii);
-    res.emplace_back(toVariant(rt, value));
+    res.emplace_back(to_variant(rt, value));
   }
 
   return res;
 }
 
 jsi::Value create_js_rows(jsi::Runtime &rt, const BridgeResult &status) {
-  if (status.type == SQLiteError) {
-    throw std::invalid_argument(status.message);
-  }
-
   jsi::Object res = jsi::Object(rt);
 
   res.setProperty(rt, "rowsAffected", status.affectedRows);
@@ -136,7 +160,7 @@ jsi::Value create_js_rows(jsi::Runtime &rt, const BridgeResult &status) {
       auto row = jsi::Array(rt, status.column_names.size());
       std::vector<JSVariant> native_row = status.rows[i];
       for (int j = 0; j < native_row.size(); j++) {
-        auto value = toJSI(rt, native_row[j]);
+        auto value = to_jsi(rt, native_row[j]);
         row.setValueAtIndex(rt, j, value);
       }
       rows.setValueAtIndex(rt, i, row);
@@ -148,14 +172,14 @@ jsi::Value create_js_rows(jsi::Runtime &rt, const BridgeResult &status) {
   auto column_array = jsi::Array(rt, column_count);
   for (int i = 0; i < column_count; i++) {
     auto column = status.column_names.at(i);
-    column_array.setValueAtIndex(rt, i, toJSI(rt, column));
+    column_array.setValueAtIndex(rt, i, to_jsi(rt, column));
   }
   res.setProperty(rt, "columnNames", std::move(column_array));
   return res;
 }
 
 jsi::Value
-create_result(jsi::Runtime &rt, BridgeResult status,
+create_result(jsi::Runtime &rt, const BridgeResult &status,
               std::vector<DumbHostObject> *results,
               std::shared_ptr<std::vector<SmartHostObject>> metadata) {
   jsi::Object res = jsi::Object(rt);
@@ -191,7 +215,7 @@ create_result(jsi::Runtime &rt, BridgeResult status,
 }
 
 jsi::Value
-create_raw_result(jsi::Runtime &rt, BridgeResult status,
+create_raw_result(jsi::Runtime &rt, const BridgeResult &status,
                   const std::vector<std::vector<JSVariant>> *results) {
   size_t row_count = results->size();
   jsi::Array res = jsi::Array(rt, row_count);
@@ -199,18 +223,18 @@ create_raw_result(jsi::Runtime &rt, BridgeResult status,
     auto row = results->at(i);
     auto array = jsi::Array(rt, row.size());
     for (int j = 0; j < row.size(); j++) {
-      array.setValueAtIndex(rt, j, toJSI(rt, row[j]));
+      array.setValueAtIndex(rt, j, to_jsi(rt, row[j]));
     }
     res.setValueAtIndex(rt, i, array);
   }
   return res;
 }
 
-void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batchParams,
+void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batch_params,
                         std::vector<BatchArguments> *commands) {
-  for (int i = 0; i < batchParams.length(rt); i++) {
+  for (int i = 0; i < batch_params.length(rt); i++) {
     const jsi::Array &command =
-        batchParams.getValueAtIndex(rt, i).asObject(rt).asArray(rt);
+        batch_params.getValueAtIndex(rt, i).asObject(rt).asArray(rt);
     if (command.length(rt) == 0) {
       continue;
     }
@@ -246,47 +270,44 @@ void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batchParams,
 }
 
 #ifndef OP_SQLITE_USE_LIBSQL
-BatchResult importSQLFile(std::string dbName, std::string fileLocation) {
+BatchResult import_sql_file(sqlite3 *db, std::string path) {
   std::string line;
-  std::ifstream sqFile(fileLocation);
-  if (sqFile.is_open()) {
-    try {
-      int affectedRows = 0;
-      int commands = 0;
-      opsqlite_execute(dbName, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
-      while (std::getline(sqFile, line, '\n')) {
-        if (!line.empty()) {
-          BridgeResult result = opsqlite_execute(dbName, line, nullptr);
-          if (result.type == SQLiteError) {
-            opsqlite_execute(dbName, "ROLLBACK", nullptr);
-            sqFile.close();
-            return {SQLiteError, result.message, 0, commands};
-          } else {
-            affectedRows += result.affectedRows;
-            commands++;
-          }
+  std::ifstream sqFile(path);
+  if (!sqFile.is_open()) {
+    throw std::runtime_error("Could not open file: " + path);
+  }
+
+  try {
+    int affectedRows = 0;
+    int commands = 0;
+    opsqlite_execute(db, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
+    while (std::getline(sqFile, line, '\n')) {
+      if (!line.empty()) {
+        try {
+          auto result = opsqlite_execute(db, line, nullptr);
+          affectedRows += result.affectedRows;
+          commands++;
+        } catch (std::exception &exc) {
+          opsqlite_execute(db, "ROLLBACK", nullptr);
+          sqFile.close();
+          throw exc;
         }
       }
-      sqFile.close();
-      opsqlite_execute(dbName, "COMMIT", nullptr);
-      return {SQLiteOk, "", affectedRows, commands};
-    } catch (...) {
-      sqFile.close();
-      opsqlite_execute(dbName, "ROLLBACK", nullptr);
-      return {SQLiteError,
-              "[op-sqlite][loadSQLFile] Unexpected error, transaction was "
-              "rolledback",
-              0, 0};
     }
-  } else {
-    return {SQLiteError, "[op-sqlite][loadSQLFile] Could not open file", 0, 0};
+    sqFile.close();
+    opsqlite_execute(db, "COMMIT", nullptr);
+    return {"", affectedRows, commands};
+  } catch (std::exception &exc) {
+    sqFile.close();
+    opsqlite_execute(db, "ROLLBACK", nullptr);
+    throw exc;
   }
 }
 #endif
 
-bool folder_exists(const std::string &foldername) {
+bool folder_exists(const std::string &name) {
   struct stat buffer;
-  return (stat(foldername.c_str(), &buffer) == 0);
+  return (stat(name.c_str(), &buffer) == 0);
 }
 
 bool file_exists(const std::string &path) {
@@ -297,16 +318,6 @@ bool file_exists(const std::string &path) {
 int mkdir(std::string const &path) {
   std::filesystem::create_directories(path);
   return 0;
-}
-
-std::vector<std::string> parse_string_list(const std::string &str) {
-  std::vector<std::string> result;
-  std::istringstream stream(str);
-  std::string token;
-  while (std::getline(stream, token, ',')) {
-    result.emplace_back(token);
-  }
-  return result;
 }
 
 } // namespace opsqlite
