@@ -10,10 +10,6 @@ export function blobTests() {
   describe('Blobs', () => {
     beforeEach(async () => {
       try {
-        if (db) {
-          db.delete();
-        }
-
         db = open({
           name: 'blobs',
           encryptionKey: 'test',
@@ -29,9 +25,7 @@ export function blobTests() {
     });
 
     afterAll(() => {
-      if (db) {
-        db.delete();
-      }
+      db.delete();
     });
 
     it('ArrayBuffer', async () => {
@@ -86,7 +80,7 @@ export function blobTests() {
       const statement = db.prepareStatement(
         'INSERT OR REPLACE INTO BlobTable VALUES (?, ?);',
       );
-      statement.bind([1, uint8]);
+      await statement.bind([1, uint8]);
 
       await statement.execute();
 
@@ -103,7 +97,8 @@ export function blobTests() {
       const statement = db.prepareStatement(
         'INSERT OR REPLACE INTO BlobTable VALUES (?, ?);',
       );
-      statement.bind([1, uint8.buffer]);
+
+      await statement.bind([1, uint8.buffer]);
 
       await statement.execute();
 

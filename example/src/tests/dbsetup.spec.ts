@@ -208,4 +208,15 @@ export function dbSetupTests() {
     });
     db2.delete();
   });
+
+  it('Can get db path', () => {
+    let db = open({
+      name: 'pathTest.sqlite',
+      encryptionKey: 'test',
+    });
+
+    let path = db.getDbPath();
+    expect(path).to.exist;
+    db.close();
+  });
 }
