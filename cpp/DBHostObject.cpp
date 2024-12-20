@@ -738,19 +738,22 @@ void DBHostObject::create_jsi_functions() {
 
   function_map["getDbPath"] = HOSTFN("getDbPath") {
     std::string path = std::string(base_path);
-    if (count == 1 && !args[0].isString()) {
-      throw std::runtime_error(
-          "[op-sqlite][open] database location must be a string");
-    }
-
-    std::string last_path = args[0].asString(rt).utf8(rt);
-
-    if (last_path == ":memory:") {
-      path = ":memory:";
-    } else if (last_path.rfind('/', 0) == 0) {
-      path = last_path;
-    } else {
-      path = path + "/" + last_path;
+    
+    if (count == 1) {
+      if(!args[0].isString()) {
+        throw std::runtime_error(
+                                 "[op-sqlite][open] database location must be a string");
+      }
+      
+      std::string last_path = args[0].asString(rt).utf8(rt);
+      
+      if (last_path == ":memory:") {
+        path = ":memory:";
+      } else if (last_path.rfind('/', 0) == 0) {
+        path = last_path;
+      } else {
+        path = path + "/" + last_path;
+      }
     }
 
     auto result = opsqlite_get_db_path(db_name, path);
