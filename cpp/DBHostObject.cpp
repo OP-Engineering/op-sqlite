@@ -808,11 +808,7 @@ void DBHostObject::invalidate() {
   invalidated = true;
   _thread_pool->restartPool();
 #ifdef OP_SQLITE_USE_LIBSQL
-  if (db.db != nullptr and db.c != nullptr) {
     opsqlite_libsql_close(db);
-    db.db = nullptr;
-    db.c = nullptr;
-  }
 #else
   if (db != nullptr) {
     opsqlite_close(db);

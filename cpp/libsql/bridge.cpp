@@ -124,12 +124,14 @@ DB opsqlite_libsql_open_remote(std::string const &url,
   return {.db = db, .c = c};
 }
 
-void opsqlite_libsql_close(DB const &db) {
+void opsqlite_libsql_close(DB &db) {
   if (db.c != nullptr) {
     libsql_disconnect(db.c);
+    db.c = nullptr;
   }
   if (db.db != nullptr) {
     libsql_close(db.db);
+    db.db = nullptr;
   }
 }
 
@@ -161,7 +163,7 @@ void opsqlite_libsql_sync(DB const &db) {
 
 }
 
-void opsqlite_libsql_remove(DB const &db, std::string const &name,
+void opsqlite_libsql_remove(DB &db, std::string const &name,
                                     std::string const &path) {
   opsqlite_libsql_close(db);
 

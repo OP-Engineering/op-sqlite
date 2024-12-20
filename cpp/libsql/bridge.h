@@ -45,9 +45,9 @@ DB opsqlite_libsql_open_sync(std::string const &name,
                                        std::string const &auth_token,
                                        int sync_interval);
 
-void opsqlite_libsql_close(DB const &db);
+void opsqlite_libsql_close(DB &db);
 
-void opsqlite_libsql_remove(DB const &db, std::string const &name,
+void opsqlite_libsql_remove(DB &db, std::string const &name,
                                     std::string const &path);
 
 void opsqlite_libsql_attach(DB const &db,
