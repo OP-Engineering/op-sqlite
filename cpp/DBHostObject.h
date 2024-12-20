@@ -5,7 +5,11 @@
 #include <ReactCommon/CallInvoker.h>
 #include <jsi/jsi.h>
 #include <set>
+#ifdef OP_SQLITE_USE_LIBSQL
+#include "libsql/bridge.h"
+#else
 #include <sqlite3.h>
+#endif
 #include <unordered_map>
 #include <vector>
 
@@ -26,7 +30,9 @@ struct TableRowDiscriminator {
 };
 
 struct ReactiveQuery {
+#ifndef OP_SQLITE_USE_LIBSQL
   sqlite3_stmt *stmt;
+#endif
   std::vector<TableRowDiscriminator> discriminators;
   std::shared_ptr<jsi::Value> callback;
 };
@@ -43,8 +49,7 @@ public:
 #ifdef OP_SQLITE_USE_LIBSQL
   // Constructor for remoteOpen, purely for remote databases
   DBHostObject(jsi::Runtime &rt, std::string &url, std::string &auth_token,
-               std::shared_ptr<react::CallInvoker> invoker,
-               std::shared_ptr<ThreadPool> thread_pool);
+               std::shared_ptr<react::CallInvoker> invoker);
 
   // Constructor for a local database with remote sync
   DBHostObject(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
@@ -84,8 +89,7 @@ private:
   bool is_update_hook_registered = false;
   bool invalidated = false;
 #ifdef OP_SQLITE_USE_LIBSQL
-  libsql_database_t db;
-  libsql_connection_t c;
+  DB db;
 #else
   sqlite3 *db;
 #endif

@@ -4,6 +4,7 @@
 #include <jsi/jsi.h>
 #include <memory>
 #ifdef OP_SQLITE_USE_LIBSQL
+#include "libsql/bridge.h"
 #include "libsql.h"
 #else
 #include <sqlite3.h>
@@ -20,10 +21,10 @@ class PreparedStatementHostObject : public jsi::HostObject {
 public:
 #ifdef OP_SQLITE_USE_LIBSQL
   PreparedStatementHostObject(
-      std::string name, libsql_stmt_t stmt,
+      DB const &db, std::string name, libsql_stmt_t stmt,
       std::shared_ptr<react::CallInvoker> js_call_invoker,
       std::shared_ptr<ThreadPool> thread_pool)
-      : _name(name), _stmt(stmt), _js_call_invoker(js_call_invoker),
+      : _db(db), _name(std::move(name)), _stmt(stmt), _js_call_invoker(js_call_invoker),
         _thread_pool(thread_pool) {};
 #else
   PreparedStatementHostObject(
@@ -40,11 +41,12 @@ public:
   jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID) override;
 
 private:
-  sqlite3 *_db;
   std::string _name;
 #ifdef OP_SQLITE_USE_LIBSQL
+  DB _db;
   libsql_stmt_t _stmt;
 #else
+  sqlite3 *_db;
   // This shouldn't be de-allocated until sqlite3_finalize is called on it
   sqlite3_stmt *_stmt;
 #endif

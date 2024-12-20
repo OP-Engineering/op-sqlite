@@ -9,19 +9,6 @@
 
 namespace opsqlite {
 
-struct DB {
-  libsql_database_t db;
-  libsql_connection_t c;
-};
-
-std::unordered_map<std::string, DB> db_map =
-    std::unordered_map<std::string, DB>();
-
-inline void check_db_open(std::string const &db_name) {
-  if (db_map.count(db_name) == 0) {
-    throw std::runtime_error("[OP-SQLite] DB is not open");
-  }
-}
 //            _____ _____
 //      /\   |  __ \_   _|
 //     /  \  | |__) || |
@@ -42,7 +29,7 @@ std::string opsqlite_get_db_path(std::string const &db_name,
   return location + "/" + db_name;
 }
 
-BridgeResult opsqlite_libsql_open_sync(std::string const &name,
+DB opsqlite_libsql_open_sync(std::string const &name,
                                        std::string const &base_path,
                                        std::string const &url,
                                        std::string const &auth_token,
@@ -63,21 +50,19 @@ BridgeResult opsqlite_libsql_open_sync(std::string const &name,
                           .with_webpki = '1'};
   status = libsql_open_sync_with_config(config, &db, &err);
   if (status != 0) {
-    return {.type = SQLiteError, .message = err};
+      throw std::runtime_error(err);
   }
 
   status = libsql_connect(db, &c, &err);
 
   if (status != 0) {
-    return {.type = SQLiteError, .message = err};
+      throw std::runtime_error(err);
   }
 
-  db_map[name] = {.db = db, .c = c};
-
-  return {.type = SQLiteOk, .affectedRows = 0};
+  return {.db= db, .c= c };
 }
 
-BridgeResult opsqlite_libsql_open(std::string const &name,
+DB opsqlite_libsql_open(std::string const &name,
                                   std::string const &last_path,
                                   std::string const &crsqlitePath) {
   std::string path = opsqlite_get_db_path(name, last_path);
@@ -90,13 +75,13 @@ BridgeResult opsqlite_libsql_open(std::string const &name,
   status = libsql_open_file(path.c_str(), &db, &err);
 
   if (status != 0) {
-    return {.type = SQLiteError, .message = err};
+      throw std::runtime_error(err);
   }
 
   status = libsql_connect(db, &c, &err);
 
   if (status != 0) {
-    return {.type = SQLiteError, .message = err};
+      throw std::runtime_error(err);
   }
 
 #ifdef OP_SQLITE_USE_CRSQLITE
@@ -113,12 +98,10 @@ BridgeResult opsqlite_libsql_open(std::string const &name,
   }
 #endif
 
-  db_map[name] = {.db = db, .c = c};
-
-  return {.type = SQLiteOk, .affectedRows = 0};
+  return {.db = db, .c = c};
 }
 
-BridgeResult opsqlite_libsql_open_remote(std::string const &url,
+DB opsqlite_libsql_open_remote(std::string const &url,
                                          std::string const &auth_token) {
   int status;
   libsql_database_t db;
@@ -129,109 +112,68 @@ BridgeResult opsqlite_libsql_open_remote(std::string const &url,
                                           &err);
 
   if (status != 0) {
-    return {.type = SQLiteError, .message = err};
+      throw std::runtime_error(err);
   }
 
   status = libsql_connect(db, &c, &err);
 
   if (status != 0) {
-    return {.type = SQLiteError, .message = err};
+      throw std::runtime_error(err);
   }
 
-  db_map[url] = {.db = db, .c = c};
-
-  return {.type = SQLiteOk, .affectedRows = 0};
+  return {.db = db, .c = c};
 }
 
-BridgeResult opsqlite_libsql_close(std::string const &name) {
-
-  check_db_open(name);
-
-  DB db = db_map[name];
-
-  libsql_disconnect(db.c);
-  libsql_close(db.db);
-
-  db_map.erase(name);
-
-  return BridgeResult{
-      .type = SQLiteOk,
-  };
+void opsqlite_libsql_close(DB &db) {
+  if (db.c != nullptr) {
+    libsql_disconnect(db.c);
+    db.c = nullptr;
+  }
+  if (db.db != nullptr) {
+    libsql_close(db.db);
+    db.db = nullptr;
+  }
 }
 
-BridgeResult opsqlite_libsql_attach(std::string const &mainDBName,
+void opsqlite_libsql_attach(DB const &db,
                                     std::string const &docPath,
                                     std::string const &databaseToAttach,
                                     std::string const &alias) {
   std::string dbPath = opsqlite_get_db_path(databaseToAttach, docPath);
   std::string statement = "ATTACH DATABASE '" + dbPath + "' AS " + alias;
 
-  BridgeResult result = opsqlite_libsql_execute(mainDBName, statement, nullptr);
+  opsqlite_libsql_execute(db, statement, nullptr);
 
-  if (result.type == SQLiteError) {
-    return {
-        .type = SQLiteError,
-        .message = mainDBName + " was unable to attach another database: " +
-                   std::string(result.message),
-    };
-  }
-  return {
-      .type = SQLiteOk,
-  };
 }
 
-BridgeResult opsqlite_libsql_detach(std::string const &mainDBName,
+void opsqlite_libsql_detach(DB const &db,
                                     std::string const &alias) {
   std::string statement = "DETACH DATABASE " + alias;
-  BridgeResult result = opsqlite_libsql_execute(mainDBName, statement, nullptr);
-  if (result.type == SQLiteError) {
-    return BridgeResult{
-        .type = SQLiteError,
-        .message = mainDBName + "was unable to detach database: " +
-                   std::string(result.message),
-    };
-  }
-  return BridgeResult{
-      .type = SQLiteOk,
-  };
+  opsqlite_libsql_execute(db, statement, nullptr);
 }
 
-BridgeResult opsqlite_libsql_sync(std::string const &name) {
-  check_db_open(name);
-
-  auto db = db_map[name].db;
+void opsqlite_libsql_sync(DB const &db) {
   const char *err = nullptr;
 
-  int status = libsql_sync(db, &err);
+  int status = libsql_sync(db.db, &err);
 
   if (status != 0) {
-    return {.type = SQLiteError, .message = err};
+    throw std::runtime_error(err);
   }
 
-  return {.type = SQLiteOk};
 }
 
-BridgeResult opsqlite_libsql_remove(std::string const &name,
+void opsqlite_libsql_remove(DB &db, std::string const &name,
                                     std::string const &path) {
-  if (db_map.count(name) == 1) {
-    BridgeResult closeResult = opsqlite_libsql_close(name);
-    if (closeResult.type == SQLiteError) {
-      return closeResult;
-    }
-  }
+  opsqlite_libsql_close(db);
 
   std::string full_path = opsqlite_get_db_path(name, path);
 
   if (!file_exists(full_path)) {
-    return {.type = SQLiteError,
-            .message = "[op-sqlite]: Database file not found" + full_path};
+    throw std::runtime_error("[op-sqlite]: Database file not found" + full_path);
   }
 
   remove(full_path.c_str());
-
-  return {
-      .type = SQLiteOk,
-  };
 }
 
 void opsqlite_libsql_bind_statement(libsql_stmt_t statement,
@@ -273,13 +215,11 @@ void opsqlite_libsql_bind_statement(libsql_stmt_t statement,
 }
 
 BridgeResult opsqlite_libsql_execute_prepared_statement(
-    std::string const &name, libsql_stmt_t stmt,
+    DB const &db,
+    libsql_stmt_t stmt,
     std::vector<DumbHostObject> *results,
     const std::shared_ptr<std::vector<SmartHostObject>> &metadatas) {
 
-  check_db_open(name);
-
-  libsql_connection_t c = db_map[name].c;
   libsql_rows_t rows;
   libsql_row_t row;
 
@@ -289,7 +229,7 @@ BridgeResult opsqlite_libsql_execute_prepared_statement(
   status = libsql_query_stmt(stmt, &rows, &err);
 
   if (status != 0) {
-    return {.type = SQLiteError, .message = err};
+    throw std::runtime_error(err);
   }
 
   bool metadata_set = false;
@@ -384,22 +324,17 @@ BridgeResult opsqlite_libsql_execute_prepared_statement(
 
   libsql_free_rows(rows);
 
-  unsigned long long changes = libsql_changes(c);
-  long long insert_row_id = libsql_last_insert_rowid(c);
+  unsigned long long changes = libsql_changes(db.c);
+  long long insert_row_id = libsql_last_insert_rowid(db.c);
 
   libsql_reset_stmt(stmt, &err);
 
-  return {.type = SQLiteOk,
-          .affectedRows = static_cast<int>(changes),
+  return {.affectedRows = static_cast<int>(changes),
           .insertId = static_cast<double>(insert_row_id)};
 }
 
-libsql_stmt_t opsqlite_libsql_prepare_statement(std::string const &name,
+libsql_stmt_t opsqlite_libsql_prepare_statement(DB const &db,
                                                 std::string const &query) {
-  check_db_open(name);
-
-  DB db = db_map[name];
-
   libsql_stmt_t stmt;
 
   const char *err;
@@ -413,26 +348,23 @@ libsql_stmt_t opsqlite_libsql_prepare_statement(std::string const &name,
   return stmt;
 }
 
-BridgeResult opsqlite_libsql_execute(std::string const &name,
+BridgeResult opsqlite_libsql_execute(DB const &db,
                                      std::string const &query,
                                      const std::vector<JSVariant> *params) {
-
-  check_db_open(name);
 
   std::vector<std::string> column_names;
   std::vector<std::vector<JSVariant>> out_rows;
   std::vector<JSVariant> out_row;
-  libsql_connection_t c = db_map[name].c;
   libsql_rows_t rows;
   libsql_row_t row;
   libsql_stmt_t stmt;
   int status;
   const char *err = nullptr;
 
-  status = libsql_prepare(c, query.c_str(), &stmt, &err);
+  status = libsql_prepare(db.c, query.c_str(), &stmt, &err);
 
   if (status != 0) {
-    return {.type = SQLiteError, .message = err};
+      throw std::runtime_error(err);
   }
 
   if (params != nullptr && !params->empty()) {
@@ -442,7 +374,7 @@ BridgeResult opsqlite_libsql_execute(std::string const &name,
   status = libsql_query_stmt(stmt, &rows, &err);
 
   if (status != 0) {
-    return {.type = SQLiteError, .message = err};
+      throw std::runtime_error(err);
   }
 
   // Get the column names on the first pass
@@ -524,34 +456,30 @@ BridgeResult opsqlite_libsql_execute(std::string const &name,
   libsql_free_rows(rows);
   libsql_free_stmt(stmt);
 
-  unsigned long long changes = libsql_changes(c);
-  long long insert_row_id = libsql_last_insert_rowid(c);
+  unsigned long long changes = libsql_changes(db.c);
+  long long insert_row_id = libsql_last_insert_rowid(db.c);
 
-  return {.type = SQLiteOk,
-          .affectedRows = static_cast<int>(changes),
+  return {.affectedRows = static_cast<int>(changes),
           .insertId = static_cast<double>(insert_row_id),
           .rows = std::move(out_rows),
           .column_names = std::move(column_names)};
 }
 
 BridgeResult opsqlite_libsql_execute_with_host_objects(
-    std::string const &name, std::string const &query,
+    DB const &db, std::string const &query,
     const std::vector<JSVariant> *params, std::vector<DumbHostObject> *results,
     const std::shared_ptr<std::vector<SmartHostObject>> &metadatas) {
 
-  check_db_open(name);
-
-  libsql_connection_t c = db_map[name].c;
   libsql_rows_t rows;
   libsql_row_t row;
   libsql_stmt_t stmt;
   int status;
   const char *err = nullptr;
 
-  status = libsql_prepare(c, query.c_str(), &stmt, &err);
+  status = libsql_prepare(db.c, query.c_str(), &stmt, &err);
 
   if (status != 0) {
-    return {.type = SQLiteError, .message = err};
+    throw std::runtime_error(err);
   }
 
   if (params != nullptr && !params->empty()) {
@@ -561,7 +489,7 @@ BridgeResult opsqlite_libsql_execute_with_host_objects(
   status = libsql_query_stmt(stmt, &rows, &err);
 
   if (status != 0) {
-    return {.type = SQLiteError, .message = err};
+    throw std::runtime_error(err);
   }
 
   bool metadata_set = false;
@@ -657,34 +585,30 @@ BridgeResult opsqlite_libsql_execute_with_host_objects(
   libsql_free_rows(rows);
   libsql_free_stmt(stmt);
 
-  unsigned long long changes = libsql_changes(c);
-  long long insert_row_id = libsql_last_insert_rowid(c);
+  unsigned long long changes = libsql_changes(db.c);
+  long long insert_row_id = libsql_last_insert_rowid(db.c);
 
-  return {.type = SQLiteOk,
-          .affectedRows = static_cast<int>(changes),
+  return {.affectedRows = static_cast<int>(changes),
           .insertId = static_cast<double>(insert_row_id)};
 }
 
 /// Executes returning data in raw arrays, a small performance optimization
 /// for certain use cases
 BridgeResult
-opsqlite_libsql_execute_raw(std::string const &name, std::string const &query,
+opsqlite_libsql_execute_raw(DB const &db, std::string const &query,
                             const std::vector<JSVariant> *params,
                             std::vector<std::vector<JSVariant>> *results) {
 
-  check_db_open(name);
-
-  libsql_connection_t c = db_map[name].c;
   libsql_rows_t rows;
   libsql_row_t row;
   libsql_stmt_t stmt;
   int status;
   const char *err = nullptr;
 
-  status = libsql_prepare(c, query.c_str(), &stmt, &err);
+  status = libsql_prepare(db.c, query.c_str(), &stmt, &err);
 
   if (status != 0) {
-    return {.type = SQLiteError, .message = err};
+    throw std::runtime_error(err);
   }
 
   if (params != nullptr && !params->empty()) {
@@ -694,7 +618,7 @@ opsqlite_libsql_execute_raw(std::string const &name, std::string const &query,
   status = libsql_query_stmt(stmt, &rows, &err);
 
   if (status != 0) {
-    return {.type = SQLiteError, .message = err};
+    throw std::runtime_error(err);
   }
 
   int num_cols = libsql_column_count(rows);
@@ -771,54 +695,40 @@ opsqlite_libsql_execute_raw(std::string const &name, std::string const &query,
   libsql_free_rows(rows);
   libsql_free_stmt(stmt);
 
-  unsigned long long changes = libsql_changes(c);
-  long long insert_row_id = libsql_last_insert_rowid(c);
+  unsigned long long changes = libsql_changes(db.c);
+  long long insert_row_id = libsql_last_insert_rowid(db.c);
 
-  return {.type = SQLiteOk,
-          .affectedRows = static_cast<int>(changes),
+  return {.affectedRows = static_cast<int>(changes),
           .insertId = static_cast<double>(insert_row_id)};
 }
 
 BatchResult
-opsqlite_libsql_execute_batch(std::string const &name,
+opsqlite_libsql_execute_batch(DB const &db,
                               std::vector<BatchArguments> *commands) {
   size_t commandCount = commands->size();
   if (commandCount <= 0) {
-    return BatchResult{
-        .type = SQLiteError,
-        .message = "No SQL commands provided",
-    };
+    throw std::runtime_error("No SQL commands provided");
   }
 
   try {
     int affectedRows = 0;
-    opsqlite_libsql_execute(name, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
+    opsqlite_libsql_execute(db, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
     for (int i = 0; i < commandCount; i++) {
       auto command = commands->at(i);
       // We do not provide a datastructure to receive query data because we
       // don't need/want to handle this results in a batch execution
       auto result =
-          opsqlite_libsql_execute(name, command.sql, command.params.get());
-      if (result.type == SQLiteError) {
-        opsqlite_libsql_execute(name, "ROLLBACK", nullptr);
-        return BatchResult{
-            .type = SQLiteError,
-            .message = result.message,
-        };
-      } else {
+          opsqlite_libsql_execute(db, command.sql, command.params.get());
         affectedRows += result.affectedRows;
-      }
     }
-    opsqlite_libsql_execute(name, "COMMIT", nullptr);
+    opsqlite_libsql_execute(db, "COMMIT", nullptr);
     return BatchResult{
-        .type = SQLiteOk,
         .affectedRows = affectedRows,
         .commands = static_cast<int>(commandCount),
     };
   } catch (std::exception &exc) {
-    opsqlite_libsql_execute(name, "ROLLBACK", nullptr);
+    opsqlite_libsql_execute(db, "ROLLBACK", nullptr);
     return BatchResult{
-        .type = SQLiteError,
         .message = exc.what(),
     };
   }

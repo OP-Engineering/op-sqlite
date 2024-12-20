@@ -91,7 +91,7 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
           try {
 #ifdef OP_SQLITE_USE_LIBSQL
             auto status = opsqlite_libsql_execute_prepared_statement(
-                _name, _stmt, &results, metadata);
+                _db, _stmt, &results, metadata);
 #else
             auto status = opsqlite_execute_prepared_statement(
                 _db, _stmt, &results, metadata);

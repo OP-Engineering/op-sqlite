@@ -24,63 +24,68 @@ typedef std::function<void(std::string dbName, std::string table_name,
 typedef std::function<void(std::string dbName)> CommitCallback;
 typedef std::function<void(std::string dbName)> RollbackCallback;
 
+struct DB {
+  libsql_database_t db;
+  libsql_connection_t c;
+};
+
 std::string opsqlite_get_db_path(std::string const &name,
                                  std::string const &location);
 
-BridgeResult opsqlite_libsql_open(std::string const &name,
+DB opsqlite_libsql_open(std::string const &name,
                                   std::string const &path,
                                   std::string const &crsqlitePath);
 
-BridgeResult opsqlite_libsql_open_remote(std::string const &url,
+DB opsqlite_libsql_open_remote(std::string const &url,
                                          std::string const &auth_token);
 
-BridgeResult opsqlite_libsql_open_sync(std::string const &name,
+DB opsqlite_libsql_open_sync(std::string const &name,
                                        std::string const &path,
                                        std::string const &url,
                                        std::string const &auth_token,
                                        int sync_interval);
 
-BridgeResult opsqlite_libsql_close(std::string const &name);
+void opsqlite_libsql_close(DB &db);
 
-BridgeResult opsqlite_libsql_remove(std::string const &name,
+void opsqlite_libsql_remove(DB &db, std::string const &name,
                                     std::string const &path);
 
-BridgeResult opsqlite_libsql_attach(std::string const &mainDBName,
+void opsqlite_libsql_attach(DB const &db,
                                     std::string const &docPath,
                                     std::string const &databaseToAttach,
                                     std::string const &alias);
 
-BridgeResult opsqlite_libsql_detach(std::string const &mainDBName,
+void opsqlite_libsql_detach(DB const &db,
                                     std::string const &alias);
 
-BridgeResult opsqlite_libsql_sync(std::string const &name);
+void opsqlite_libsql_sync(DB const &db);
 
-BridgeResult opsqlite_libsql_execute(std::string const &name,
+BridgeResult opsqlite_libsql_execute(DB const &db,
                                      std::string const &query,
                                      const std::vector<JSVariant> *params);
 
 BridgeResult opsqlite_libsql_execute_with_host_objects(
-    std::string const &name, std::string const &query,
+    DB const &db, std::string const &query,
     const std::vector<JSVariant> *params, std::vector<DumbHostObject> *results,
     const std::shared_ptr<std::vector<SmartHostObject>> &metadatas);
 
 BridgeResult
-opsqlite_libsql_execute_raw(std::string const &dbName, std::string const &query,
+opsqlite_libsql_execute_raw(DB const &db, std::string const &query,
                             const std::vector<JSVariant> *params,
                             std::vector<std::vector<JSVariant>> *results);
 
 BatchResult
-opsqlite_libsql_execute_batch(std::string const &name,
+opsqlite_libsql_execute_batch(DB const &db,
                               std::vector<BatchArguments> *commands);
 
-libsql_stmt_t opsqlite_libsql_prepare_statement(std::string const &name,
+libsql_stmt_t opsqlite_libsql_prepare_statement(DB const &db,
                                                 std::string const &query);
 
 void opsqlite_libsql_bind_statement(libsql_stmt_t stmt,
                                     const std::vector<JSVariant> *params);
 
 BridgeResult opsqlite_libsql_execute_prepared_statement(
-    std::string const &name, libsql_stmt_t stmt,
+    DB const &db, libsql_stmt_t stmt,
     std::vector<DumbHostObject> *results,
     const std::shared_ptr<std::vector<SmartHostObject>> &metadatas);
 
