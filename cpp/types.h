@@ -1,5 +1,4 @@
-#ifndef types_h
-#define types_h
+#pragma once
 
 #include <memory>
 #include <string>
@@ -14,10 +13,7 @@ struct ArrayBuffer {
 using JSVariant = std::variant<nullptr_t, bool, int, double, long, long long,
                                std::string, ArrayBuffer>;
 
-enum ResultType { SQLiteOk, SQLiteError };
-
 struct BridgeResult {
-  ResultType type;
   std::string message;
   int affectedRows;
   double insertId;
@@ -26,7 +22,6 @@ struct BridgeResult {
 };
 
 struct BatchResult {
-  ResultType type;
   std::string message;
   int affectedRows;
   int commands;
@@ -36,5 +31,3 @@ struct BatchArguments {
   std::string sql;
   std::shared_ptr<std::vector<JSVariant>> params;
 };
-
-#endif /* types_h */

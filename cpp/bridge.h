@@ -1,5 +1,4 @@
-#ifndef bridge_h
-#define bridge_h
+#pragma once
 
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
@@ -23,72 +22,61 @@ std::string opsqlite_get_db_path(std::string const &db_name,
                                  std::string const &location);
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
-BridgeResult opsqlite_open(std::string const &dbName, std::string const &dbPath,
+sqlite3 *opsqlite_open(std::string const &dbName, std::string const &path,
                            std::string const &crsqlite_path,
                            std::string const &sqlite_vec_path,
-                           std::string const &encryptionKey);
+                           std::string const &encryption_key);
 #else
-BridgeResult opsqlite_open(std::string const &name, std::string const &path,
-                           [[maybe_unused]] std::string const &crsqlite_path,
-                           std::string const &sqlite_vec_path);
+sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
+                       [[maybe_unused]] std::string const &crsqlite_path,
+                       std::string const &sqlite_vec_path);
 #endif
 
-BridgeResult opsqlite_close(std::string const &name);
+void opsqlite_close(sqlite3 *db);
 
-BridgeResult opsqlite_remove(std::string const &dbName,
-                             std::string const &docPath);
+void opsqlite_remove(sqlite3 *db, std::string const &name,
+                     std::string const &doc_path);
 
-BridgeResult opsqlite_attach(std::string const &mainDBName,
-                             std::string const &docPath,
-                             std::string const &databaseToAttach,
-                             std::string const &alias);
+void opsqlite_attach(sqlite3 *db, std::string const &main_db_name,
+                     std::string const &doc_path,
+                     std::string const &secondary_db_name,
+                     std::string const &alias);
 
-BridgeResult opsqlite_detach(std::string const &mainDBName,
-                             std::string const &alias);
+void opsqlite_detach(sqlite3 *db, std::string const &main_db_name,
+                     std::string const &alias);
 
-BridgeResult opsqlite_execute(std::string const &name, std::string const &query,
+BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
                               const std::vector<JSVariant> *params);
 
 BridgeResult opsqlite_execute_host_objects(
-    std::string const &dbName, std::string const &query,
-    const std::vector<JSVariant> *params, std::vector<DumbHostObject> *results,
+    sqlite3 *db, std::string const &query, const std::vector<JSVariant> *params,
+    std::vector<DumbHostObject> *results,
     std::shared_ptr<std::vector<SmartHostObject>> &metadatas);
 
-BatchResult opsqlite_execute_batch(std::string &name,
+BatchResult opsqlite_execute_batch(sqlite3 *db,
                                    std::vector<BatchArguments> *commands);
 
-BridgeResult opsqlite_execute_raw(std::string const &dbName,
-                                  std::string const &query,
+BridgeResult opsqlite_execute_raw(sqlite3 *db, std::string const &query,
                                   const std::vector<JSVariant> *params,
                                   std::vector<std::vector<JSVariant>> *results);
 
-void opsqlite_close_all();
+void opsqlite_register_update_hook(sqlite3 *db, void *db_host_object_ptr);
+void opsqlite_deregister_update_hook(sqlite3 *db);
+void opsqlite_register_commit_hook(sqlite3 *db, void *db_host_object_ptr);
+void opsqlite_deregister_commit_hook(sqlite3 *db);
+void opsqlite_register_rollback_hook(sqlite3 *db, void *db_host_object_ptr);
+void opsqlite_deregister_rollback_hook(sqlite3 *db);
 
-BridgeResult opsqlite_register_update_hook(std::string const &dbName,
-                                           const UpdateCallback &callback);
-BridgeResult opsqlite_deregister_update_hook(std::string const &dbName);
-BridgeResult opsqlite_register_commit_hook(std::string const &dbName,
-                                           const CommitCallback &callback);
-BridgeResult opsqlite_deregister_commit_hook(std::string const &dbName);
-BridgeResult opsqlite_register_rollback_hook(std::string const &dbName,
-                                             const RollbackCallback &callback);
-BridgeResult opsqlite_deregister_rollback_hook(std::string const &dbName);
-
-sqlite3_stmt *opsqlite_prepare_statement(std::string const &dbName,
-                                         std::string const &query);
+sqlite3_stmt *opsqlite_prepare_statement(sqlite3 *db, std::string const &query);
 
 void opsqlite_bind_statement(sqlite3_stmt *statement,
                              const std::vector<JSVariant> *params);
 
 BridgeResult opsqlite_execute_prepared_statement(
-    std::string const &dbName, sqlite3_stmt *statement,
-    std::vector<DumbHostObject> *results,
+    sqlite3 *db, sqlite3_stmt *statement, std::vector<DumbHostObject> *results,
     std::shared_ptr<std::vector<SmartHostObject>> &metadatas);
 
-BridgeResult opsqlite_load_extension(std::string const &db_name,
-                                     std::string &path,
-                                     std::string &entry_point);
+void opsqlite_load_extension(sqlite3 *db, std::string &path,
+                             std::string &entry_point);
 
 } // namespace opsqlite
-
-#endif /* bridge_h */

@@ -27,7 +27,7 @@ class OPSQLiteBridge {
         )
     }
 
-    fun clearState() {
+    fun invalidate() {
         clearStateNativeJsi()
     }
 

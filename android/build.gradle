@@ -177,7 +177,7 @@ android {
               tokenizersHeaderPath = "../c_sources/tokenizers.h" 
             }
 
-            cppFlags "-O2", "-fexceptions", "-DONANDROID"
+            cppFlags "-O2 -frtti -fexceptions -Wall -fstack-protector-all"
             abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
             arguments "-DANDROID_STL=c++_shared",
               "-DSQLITE_FLAGS='$sqliteFlags'",

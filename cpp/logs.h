@@ -1,3 +1,5 @@
+#pragma once
+
 #ifdef ANDROID
 // LOGS ANDROID
 #include <android/log.h>

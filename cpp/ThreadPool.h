@@ -1,5 +1,4 @@
-#ifndef ThreadPool_h
-#define ThreadPool_h
+#pragma once
 
 #include <condition_variable>
 #include <exception>
@@ -15,12 +14,12 @@ class ThreadPool {
 public:
   ThreadPool();
   ~ThreadPool();
-  void queueWork(std::function<void(void)> task);
+  void queueWork(const std::function<void(void)>& task);
   void waitFinished();
   void restartPool();
 
 private:
-  unsigned int busy;
+  unsigned int busy{};
   // This condition variable is used for the threads to wait until there is work
   // to do
   std::condition_variable_any workQueueConditionVariable;
@@ -43,5 +42,3 @@ private:
 };
 
 } // namespace opsqlite
-
-#endif /* ThreadPool_h */

@@ -37,7 +37,7 @@ private:
   }
 
   static void clearStateNativeJsi(jni::alias_ref<jni::JObject> thiz) {
-    opsqlite::clearState();
+    opsqlite::invalidate();
   }
 };
 

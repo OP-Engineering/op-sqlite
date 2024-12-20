@@ -1,5 +1,4 @@
-#ifndef SmartHostObject_h
-#define SmartHostObject_h
+#pragma once
 
 #include "types.h"
 #include <any>
@@ -12,15 +11,13 @@ namespace jsi = facebook::jsi;
 
 class JSI_EXPORT SmartHostObject : public jsi::HostObject {
 public:
-  SmartHostObject(){};
+  SmartHostObject() = default;
 
-  std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt);
+  std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt) override;
 
-  jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID);
+  jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID) override;
 
   std::vector<std::pair<std::string, JSVariant>> fields;
 };
 
 } // namespace opsqlite
-
-#endif /* SmartHostObject_h */
