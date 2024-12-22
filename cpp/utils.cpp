@@ -320,4 +320,10 @@ int mkdir(std::string const &path) {
   return 0;
 }
 
+void log_to_console(jsi::Runtime &runtime, const std::string &message) {
+  auto console = runtime.global().getPropertyAsObject(runtime, "console");
+  auto log = console.getPropertyAsFunction(runtime, "log");
+  log.call(runtime, jsi::String::createFromUtf8(runtime, message));
+}
+
 } // namespace opsqlite
