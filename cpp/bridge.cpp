@@ -95,7 +95,9 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
   }
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
-  opsqlite_execute(db, "PRAGMA key = '" + encryption_key + "'", nullptr);
+  if(!encryption_key.empty()) {
+    opsqlite_execute(db, "PRAGMA key = '" + encryption_key + "'", nullptr);
+  }
 #endif
 
 #ifndef OP_SQLITE_USE_PHONE_VERSION
@@ -330,7 +332,7 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
 
     if (status != SQLITE_OK) {
       errorMessage = sqlite3_errmsg(db);
-      throw std::runtime_error("[op-sqlite] SQL prepare error: " +
+      throw std::runtime_error("[op-sqlite] sqlite query error: " +
                                std::string(errorMessage));
     }
 

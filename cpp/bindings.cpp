@@ -49,21 +49,20 @@ void install(jsi::Runtime &rt,
     std::string name = options.getProperty(rt, "name").asString(rt).utf8(rt);
     std::string path = std::string(_base_path);
     std::string location;
-    std::string encryptionKey;
+    std::string encryption_key;
 
     if (options.hasProperty(rt, "location")) {
       location = options.getProperty(rt, "location").asString(rt).utf8(rt);
     }
 
     if (options.hasProperty(rt, "encryptionKey")) {
-      encryptionKey =
+      encryption_key =
           options.getProperty(rt, "encryptionKey").asString(rt).utf8(rt);
     }
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
-    if (encryptionKey.empty()) {
-      throw std::runtime_error(
-          "[OP SQLite] using SQLCipher encryption key is required");
+    if (encryption_key.empty()) {
+      log_to_console(rt, "Encryption key is missing for SQLCipher");
     }
 #endif
 
@@ -79,7 +78,7 @@ void install(jsi::Runtime &rt,
 
     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
         rt, path, invoker, name, path, _crsqlite_path, _sqlite_vec_path,
-        encryptionKey);
+        encryption_key);
     dbs.emplace_back(db);
     return jsi::Object::createFromHostObject(rt, db);
   });
@@ -115,8 +114,8 @@ void install(jsi::Runtime &rt,
     std::string auth_token =
         options.getProperty(rt, "authToken").asString(rt).utf8(rt);
 
-    std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-        rt, url, auth_token, invoker);
+    std::shared_ptr<DBHostObject> db =
+        std::make_shared<DBHostObject>(rt, url, auth_token, invoker);
     return jsi::Object::createFromHostObject(rt, db);
   });
 
