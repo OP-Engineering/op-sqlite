@@ -47,4 +47,6 @@ bool folder_exists(const std::string &name);
 
 bool file_exists(const std::string &path);
 
+void log_to_console(jsi::Runtime &rt, const std::string &message);
+
 } // namespace opsqlite
