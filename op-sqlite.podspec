@@ -54,10 +54,6 @@ if phone_version then
     raise "CRSQLite is not supported with phone version"
   end
 
-  if fts5 then
-    raise "FTS5 is not supported with phone version"
-  end
-
   if rtree then
     raise "RTree is not supported with phone version"
   end

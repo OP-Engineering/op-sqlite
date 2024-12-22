@@ -131,9 +131,8 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
 }
 
 void opsqlite_close(sqlite3 *db) {
-
 #ifdef OP_SQLITE_USE_CRSQLITE
-  opsqlite_execute(name, "select crsql_finalize();", nullptr);
+  opsqlite_execute(db, "select crsql_finalize();", nullptr);
 #endif
 
   sqlite3_close_v2(db);
