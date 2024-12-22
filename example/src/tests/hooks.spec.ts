@@ -51,7 +51,6 @@ export function registerHooksTests() {
       });
 
       db.updateHook(data => {
-        console.log('UPDATE HOOK CALLED');
         promiseResolve(data);
       });
 
@@ -66,8 +65,6 @@ export function registerHooksTests() {
         );
       });
 
-      console.log('AWAITING UPDATE HOOK PROMISE');
-
       const data = await promise;
 
       expect(data.operation).to.equal('INSERT');
@@ -78,10 +75,7 @@ export function registerHooksTests() {
 
     it('remove update hook', async () => {
       const hookRes: string[] = [];
-      let db = open({
-        name: 'updateHookDb.sqlite',
-        encryptionKey: 'blah',
-      });
+
       db.updateHook(({operation}) => {
         hookRes.push(operation);
       });
@@ -90,19 +84,21 @@ export function registerHooksTests() {
       const name = chance.name();
       const age = chance.integer();
       const networth = chance.floating();
-      // await db.transaction(async tx => {
-      await db.execute(
-        'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
-        [id, name, age, networth],
-      );
-      // });
+      await db.transaction(async tx => {
+        await tx.execute(
+          'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+          [id, name, age, networth],
+        );
+      });
 
       db.updateHook(null);
 
-      await db.execute(
-        'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
-        [id + 1, name, age, networth],
-      );
+      await db.transaction(async tx => {
+        await tx.execute(
+          'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+          [id + 1, name, age, networth],
+        );
+      });
 
       await sleep(0);
 

@@ -264,16 +264,11 @@ jobs:
             ${{ runner.os }}-cocoapods-
 
       - name: Install cocoapods
-        # if: env.turbo_cache_hit != 1 && steps.cocoapods-cache.outputs.cache-hit != 'true'
         run: |
           cd example/ios
           bundle exec pod install
         env:
           NO_FLIPPER: 1
-
-      # - name: Build example for iOS
-      #   run: |
-      #     yarn turbo run run:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}"
 
       - name: run tests
         run: |
