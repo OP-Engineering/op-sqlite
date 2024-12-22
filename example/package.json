@@ -66,15 +66,15 @@
     "node": ">=18"
   },
   "op-sqlite": {
-    "sqlcipher": true,
-    "crsqlite": false,
-    "performanceMode": true,
     "sqliteFlags": "-DSQLITE_TEMP_STORE=2",
-    "iosSqlite": false,
-    "fts5": true,
-    "rtree": true,
-    "sqliteVec": true,
+    "sqlcipher": false,
     "libsql": false,
+    "performanceMode": true,
+    "iosSqlite": true,
+    "crsqlite": false,
+    "fts5": false,
+    "rtree": false,
+    "sqliteVec": false,
     "tokenizers": [
       "wordtokenizer",
       "porter"

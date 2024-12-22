@@ -157,6 +157,7 @@ void install(jsi::Runtime &rt,
   module.setProperty(rt, "open", std::move(open));
   module.setProperty(rt, "isSQLCipher", std::move(is_sqlcipher));
   module.setProperty(rt, "isLibsql", std::move(is_libsql));
+  module.setProperty(rt, "isIOSEmbedded", std::move(is_ios_embedded));
 #ifdef OP_SQLITE_USE_LIBSQL
   module.setProperty(rt, "openRemote", std::move(open_remote));
   module.setProperty(rt, "openSync", std::move(open_sync));
