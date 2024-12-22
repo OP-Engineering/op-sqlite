@@ -27,6 +27,6 @@ export function setServerResults(r: any[]) {
 }
 
 export function setServerError(e: any) {
-  console.log('Setting server error');
+  console.error(`Setting server error: ${e}`);
   results = e;
 }

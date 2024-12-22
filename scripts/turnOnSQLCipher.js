@@ -1,13 +1,12 @@
 const fs = require('fs');
 
-console.log('Current working directory:', process.cwd());
-
 // Read the package.json file
 const packageJson = JSON.parse(fs.readFileSync('./example/package.json'));
 
 // Modify the op-sqlite.sqlcipher key to true
 packageJson['op-sqlite']['sqlcipher'] = true;
 packageJson['op-sqlite']['libsql'] = false;
+packageJson['op-sqlite']['iosSqlite'] = false;
 
 // Save the updated package.json file
 fs.writeFileSync(

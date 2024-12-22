@@ -219,4 +219,13 @@ export function dbSetupTests() {
     expect(path).to.exist;
     db.close();
   });
+
+  if (isSQLCipher()) {
+    it('Can open without encryption key', () => {
+      let db = open({
+        name: 'pathTest.sqlite',
+      });
+      db.close();
+    });
+  }
 }
