@@ -86,18 +86,18 @@ export function dbSetupTests() {
       });
     }
 
-    it('Should load extension on runtime', async () => {
+    it('Should load extension', async () => {
       let db = open({
         name: 'extensionDb',
         encryptionKey: 'test',
       });
+
       try {
         db.loadExtension('path');
       } catch (e) {
         // TODO load a sample extension
         expect(e).to.exist;
       } finally {
-        db.close();
         db.delete();
       }
     });
@@ -108,7 +108,6 @@ export function dbSetupTests() {
         encryptionKey: 'test',
       });
 
-      db.close();
       db.delete();
     });
 
