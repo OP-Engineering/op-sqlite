@@ -2,6 +2,7 @@ import {
   ANDROID_DATABASE_PATH,
   ANDROID_EXTERNAL_FILES_PATH,
   IOS_LIBRARY_PATH,
+  isIOSEmbeeded,
   isLibsql,
   isSQLCipher,
   moveAssetsDatabase,
@@ -37,17 +38,21 @@ export function dbSetupTests() {
     //   db.close();
     // });
 
-    it(`Should match the sqlite expected version ${expectedVersion}`, async () => {
-      let db = open({
-        name: 'versionTest.sqlite',
-        encryptionKey: 'test',
+    // Using the embedded version, you can never be sure which version is used
+    // It will change from OS version to version
+    if (!isIOSEmbeeded()) {
+      it(`Should match the sqlite expected version ${expectedVersion}`, async () => {
+        let db = open({
+          name: 'versionTest.sqlite',
+          encryptionKey: 'test',
+        });
+
+        const res = await db.execute('select sqlite_version();');
+
+        expect(res.rows[0]!['sqlite_version()']).to.equal(expectedVersion);
+        db.close();
       });
-
-      const res = await db.execute('select sqlite_version();');
-
-      expect(res.rows[0]!['sqlite_version()']).to.equal(expectedVersion);
-      db.close();
-    });
+    }
 
     it('Create in memory DB', async () => {
       let inMemoryDb = open({

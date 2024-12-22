@@ -1,4 +1,4 @@
-import { NativeModules } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 
 declare global {
   function nativeCallSyncHook(): unknown;
@@ -207,6 +207,7 @@ type OPSQLiteProxy = {
   }) => DB;
   isSQLCipher: () => boolean;
   isLibsql: () => boolean;
+  isIOSEmbedded: () => boolean;
 };
 
 const locks: Record<
@@ -517,4 +518,12 @@ export const isSQLCipher = (): boolean => {
 
 export const isLibsql = (): boolean => {
   return OPSQLite.isLibsql();
+};
+
+export const isIOSEmbeeded = (): boolean => {
+  if (Platform.OS !== 'ios') {
+    return false;
+  }
+
+  return OPSQLite.isIOSEmbedded();
 };
