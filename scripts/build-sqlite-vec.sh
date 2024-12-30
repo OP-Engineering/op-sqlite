@@ -1,6 +1,8 @@
 #!/bin/sh -e
 
-SQLITEVEC_VERSION=0.1.6
+SQLITEVEC_VERSION=$1
+
+echo "SQLITEVEC_VERSION: $SQLITEVEC_VERSION"
 
 if [ ! -d sqlite-vec-$SQLITEVEC_VERSION ]; then
   wget -O sqlite-vec.tar.gz "https://github.com/asg017/sqlite-vec/archive/refs/tags/v$SQLITEVEC_VERSION.tar.gz"
@@ -64,3 +66,20 @@ install_name_tool -id @rpath/sqlitevec.framework/sqlitevec ../../ios/sqlitevec.x
 
 cp ./ios/sim_fat/sqlitevec ../../ios/sqlitevec.xcframework/ios-arm64_x86_64-simulator/sqlitevec.framework/
 install_name_tool -id @rpath/sqlitevec.framework/sqlitevec ../../ios/sqlitevec.xcframework/ios-arm64_x86_64-simulator/sqlitevec.framework/sqlitevec
+
+function download_sqlite_vec_android() {
+  local abi=$1
+  local arch=$2
+  local download_url="https://github.com/asg017/sqlite-vec/releases/download/v$SQLITEVEC_VERSION/sqlite-vec-$SQLITEVEC_VERSION-loadable-android-$arch.tar.gz"
+  if [ ! -f sqlite-vec-$SQLITEVEC_VERSION-loadable-android-$arch.tar.gz ]; then
+    wget -O sqlite-vec-$SQLITEVEC_VERSION-loadable-android-$arch.tar.gz $download_url
+    tar -xvf sqlite-vec-$SQLITEVEC_VERSION-loadable-android-$arch.tar.gz
+    mv vec0.so ../android/src/main/jniLibs/$abi/libsqlite_vec.so
+    rm sqlite-vec-$SQLITEVEC_VERSION-loadable-android-$arch.tar.gz
+  fi
+}
+
+download_sqlite_vec_android arm64-v8a aarch64
+download_sqlite_vec_android armeabi-v7a armv7a
+download_sqlite_vec_android x86 i686
+download_sqlite_vec_android x86_64 x86_64
