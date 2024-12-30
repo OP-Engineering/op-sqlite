@@ -86,3 +86,5 @@ android/gradle/
 android/c_sources
 # Android does not generate the sources on its own, leave this in for CI
 # c_sources/
+
+scripts/sqlite-vec-*
