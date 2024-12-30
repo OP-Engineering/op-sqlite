@@ -68,14 +68,16 @@ std::string opsqlite_get_db_path(std::string const &db_name,
   }
 
   mkdir(location);
-  return location + "/" + db_name;
+  char resolved_path[PATH_MAX];
+  realpath((location + "/" + db_name).c_str(), resolved_path);
+  return std::string(resolved_path);
 }
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
 sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
-                           std::string const &crsqlite_path,
-                           std::string const &sqlite_vec_path,
-                           std::string const &encryption_key) {
+                       std::string const &crsqlite_path,
+                       std::string const &sqlite_vec_path,
+                       std::string const &encryption_key) {
 #else
 sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
                        [[maybe_unused]] std::string const &crsqlite_path,
@@ -95,7 +97,7 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
   }
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
-  if(!encryption_key.empty()) {
+  if (!encryption_key.empty()) {
     opsqlite_execute(db, "PRAGMA key = '" + encryption_key + "'", nullptr);
   }
 #endif
