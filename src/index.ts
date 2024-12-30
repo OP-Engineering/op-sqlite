@@ -494,6 +494,10 @@ export const open = (options: {
   location?: string;
   encryptionKey?: string;
 }): DB => {
+  if (options.location?.startsWith('file://')) {
+    options.location = options.location.substring(7);
+  }
+
   const db = OPSQLite.open(options);
   const enhancedDb = enhanceDB(db, options);
 
