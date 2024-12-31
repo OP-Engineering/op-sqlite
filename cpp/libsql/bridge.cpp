@@ -3,6 +3,7 @@
 #include "SmartHostObject.h"
 #include "logs.h"
 #include "utils.h"
+#include <filesystem>
 #include <iostream>
 #include <unordered_map>
 #include <variant>
