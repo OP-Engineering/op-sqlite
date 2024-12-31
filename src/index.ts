@@ -141,13 +141,6 @@ type InternalDB = {
     }[];
     callback: (response: any) => void;
   }) => () => void;
-  /** This function is only available for libsql.
-   * Allows to trigger a sync the database with it's remote replica
-   * In order for this function to work you need to use openSync or openRemote functions
-   * with libsql: true in the package.json
-   *
-   * The database is hosted in turso
-   **/
   sync: () => void;
   flushPendingReactiveQueries: () => Promise<void>;
 };
@@ -162,6 +155,11 @@ export type DB = {
     location?: string
   ) => void;
   detach: (mainDbName: string, alias: string) => void;
+  /**
+   * Wraps all the executions into a transaction. If an error is thrown it will rollback all of the changes
+   *
+   * You need to use this if you are using reactive queries for the queries to fire after the transaction is done
+   */
   transaction: (fn: (tx: Transaction) => Promise<void>) => Promise<void>;
   /**
    * Sync version of the execute function
@@ -197,6 +195,8 @@ export type DB = {
    * If you are writing to the database YOU SHOULD BE USING TRANSACTIONS!
    * Transactions protect you from partial writes and ensure that your data is always in a consistent state
    *
+   * If you need a large amount of queries ran as fast as possible you should be using `executeBatch`, `executeRaw`, `loadFile` or `executeWithHostObjects`
+   *
    * @param query string of your SQL query
    * @param params a list of parameters to bind to the query, if any
    * @returns Promise<QueryResult> with the result of the query
@@ -216,7 +216,17 @@ export type DB = {
     query: string,
     params?: Scalar[]
   ) => Promise<QueryResult>;
+  /**
+   * Executes all the queries in the params inside a single transaction
+   *
+   * It's faster than executing single queries as data is sent to the native side only once
+   * @param commands
+   * @returns Promise<BatchQueryResult>
+   */
   executeBatch: (commands: SQLBatchTuple[]) => Promise<BatchQueryResult>;
+  /**
+   * Loads a SQLite Dump from disk. It will be the fastest way to execute a large set of queries as no JS is involved
+   */
   loadFile: (location: string) => Promise<FileLoadResult>;
   updateHook: (
     callback?:
@@ -241,9 +251,22 @@ export type DB = {
    * @returns Prepared statement object
    */
   prepareStatement: (query: string) => PreparedStatement;
+  /**
+   * Loads a runtime loadable sqlite extension. Libsql and iOS embedded version do not support loading extensions
+   */
   loadExtension: (path: string, entryPoint?: string) => void;
+  /**
+   * Same as `execute` except the results are not returned in objects but rather in arrays with just the values and not the keys
+   * It will be faster since a lot of repeated work is skipped and only the values you care about are returned
+   */
   executeRaw: (query: string, params?: Scalar[]) => Promise<any[]>;
+  /**
+   * Get's the absolute path to the db file. Useful for debugging on local builds and for attaching the DB from users devices
+   */
   getDbPath: (location?: string) => string;
+  /**
+   * Reactive execution of queries when data is written to the database. Check the docs for how to use them.
+   */
   reactiveExecute: (params: {
     query: string;
     arguments: any[];
