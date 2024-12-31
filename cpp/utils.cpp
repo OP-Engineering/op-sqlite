@@ -4,10 +4,7 @@
 #include "bridge.h"
 #endif
 #include <fstream>
-#include <iostream>
-#include <sstream>
 #include <sys/stat.h>
-#include <unistd.h>
 
 namespace opsqlite {
 
@@ -313,11 +310,6 @@ bool folder_exists(const std::string &name) {
 bool file_exists(const std::string &path) {
   struct stat buffer;
   return (stat(path.c_str(), &buffer) == 0);
-}
-
-int mkdir(std::string const &path) {
-  std::filesystem::create_directories(path);
-  return 0;
 }
 
 void log_to_console(jsi::Runtime &runtime, const std::string &message) {

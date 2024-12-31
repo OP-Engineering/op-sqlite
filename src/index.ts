@@ -495,6 +495,9 @@ export const open = (options: {
   encryptionKey?: string;
 }): DB => {
   if (options.location?.startsWith('file://')) {
+    console.warn(
+      "[op-sqlite] You are passing a path with 'file://' prefix, it's automatically removed"
+    );
     options.location = options.location.substring(7);
   }
 

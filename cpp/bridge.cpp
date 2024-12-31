@@ -8,6 +8,7 @@
 #include "SmartHostObject.h"
 #include "logs.h"
 #include "utils.h"
+#include <filesystem>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -66,11 +67,14 @@ std::string opsqlite_get_db_path(std::string const &db_name,
   if (location == ":memory:") {
     return location;
   }
+  char resolved_location[PATH_MAX];
+  realpath(location.c_str(), resolved_location);
+  std::string resolved_location_string = std::string(resolved_location);
 
-  mkdir(location);
-  char resolved_path[PATH_MAX];
-  realpath((location + "/" + db_name).c_str(), resolved_path);
-  return std::string(resolved_path);
+  // Will return false if the directory already exists, no need to check
+  std::filesystem::create_directories(resolved_location);
+
+  return resolved_location_string + "/" + db_name;
 }
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
