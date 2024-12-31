@@ -494,6 +494,13 @@ export const open = (options: {
   location?: string;
   encryptionKey?: string;
 }): DB => {
+  if (options.location?.startsWith('file://')) {
+    console.warn(
+      "[op-sqlite] You are passing a path with 'file://' prefix, it's automatically removed"
+    );
+    options.location = options.location.substring(7);
+  }
+
   const db = OPSQLite.open(options);
   const enhancedDb = enhanceDB(db, options);
 

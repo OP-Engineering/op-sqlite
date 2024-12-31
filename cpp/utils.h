@@ -3,10 +3,7 @@
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
 #include "types.h"
-#include <any>
 #include <jsi/jsi.h>
-#include <jsi/jsilib.h>
-#include <map>
 #include <sqlite3.h>
 #include <string>
 #include <vector>
@@ -40,8 +37,6 @@ void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batch_params,
                         std::vector<BatchArguments> *commands);
 
 BatchResult import_sql_file(sqlite3 *db, std::string path);
-
-int mkdir(const std::string &path);
 
 bool folder_exists(const std::string &name);
 
