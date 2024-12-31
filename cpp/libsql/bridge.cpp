@@ -29,10 +29,8 @@ std::string opsqlite_get_db_path(std::string const &db_name,
   realpath(location.c_str(), resolved_location);
   std::string resolved_location_string = std::string(resolved_location);
 
-  if (std::filesystem::create_directories(resolved_location)) {
-    throw std::runtime_error("Could not create directory: " +
-                             resolved_location_string);
-  }
+  // Will return false if the directory already exists, no need to check
+  std::filesystem::create_directories(resolved_location);
 
   return resolved_location_string + "/" + db_name;
 }
