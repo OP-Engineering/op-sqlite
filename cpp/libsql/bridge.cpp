@@ -3,6 +3,7 @@
 #include "SmartHostObject.h"
 #include "logs.h"
 #include "utils.h"
+#include <filesystem>
 #include <iostream>
 #include <unordered_map>
 #include <variant>
@@ -25,15 +26,20 @@ std::string opsqlite_get_db_path(std::string const &db_name,
     return location;
   }
 
-  mkdir(location);
-  return location + "/" + db_name;
+  char resolved_location[PATH_MAX];
+  realpath(location.c_str(), resolved_location);
+  std::string resolved_location_string = std::string(resolved_location);
+
+  // Will return false if the directory already exists, no need to check
+  std::filesystem::create_directories(resolved_location);
+
+  return resolved_location_string + "/" + db_name;
 }
 
 DB opsqlite_libsql_open_sync(std::string const &name,
-                                       std::string const &base_path,
-                                       std::string const &url,
-                                       std::string const &auth_token,
-                                       int sync_interval) {
+                             std::string const &base_path,
+                             std::string const &url,
+                             std::string const &auth_token, int sync_interval) {
   std::string path = opsqlite_get_db_path(name, base_path);
 
   int status;
@@ -50,21 +56,20 @@ DB opsqlite_libsql_open_sync(std::string const &name,
                           .with_webpki = '1'};
   status = libsql_open_sync_with_config(config, &db, &err);
   if (status != 0) {
-      throw std::runtime_error(err);
+    throw std::runtime_error(err);
   }
 
   status = libsql_connect(db, &c, &err);
 
   if (status != 0) {
-      throw std::runtime_error(err);
+    throw std::runtime_error(err);
   }
 
-  return {.db= db, .c= c };
+  return {.db = db, .c = c};
 }
 
-DB opsqlite_libsql_open(std::string const &name,
-                                  std::string const &last_path,
-                                  std::string const &crsqlitePath) {
+DB opsqlite_libsql_open(std::string const &name, std::string const &last_path,
+                        std::string const &crsqlitePath) {
   std::string path = opsqlite_get_db_path(name, last_path);
 
   int status;
@@ -75,13 +80,13 @@ DB opsqlite_libsql_open(std::string const &name,
   status = libsql_open_file(path.c_str(), &db, &err);
 
   if (status != 0) {
-      throw std::runtime_error(err);
+    throw std::runtime_error(err);
   }
 
   status = libsql_connect(db, &c, &err);
 
   if (status != 0) {
-      throw std::runtime_error(err);
+    throw std::runtime_error(err);
   }
 
 #ifdef OP_SQLITE_USE_CRSQLITE
@@ -102,7 +107,7 @@ DB opsqlite_libsql_open(std::string const &name,
 }
 
 DB opsqlite_libsql_open_remote(std::string const &url,
-                                         std::string const &auth_token) {
+                               std::string const &auth_token) {
   int status;
   libsql_database_t db;
   libsql_connection_t c;
@@ -112,13 +117,13 @@ DB opsqlite_libsql_open_remote(std::string const &url,
                                           &err);
 
   if (status != 0) {
-      throw std::runtime_error(err);
+    throw std::runtime_error(err);
   }
 
   status = libsql_connect(db, &c, &err);
 
   if (status != 0) {
-      throw std::runtime_error(err);
+    throw std::runtime_error(err);
   }
 
   return {.db = db, .c = c};
@@ -135,19 +140,16 @@ void opsqlite_libsql_close(DB &db) {
   }
 }
 
-void opsqlite_libsql_attach(DB const &db,
-                                    std::string const &docPath,
-                                    std::string const &databaseToAttach,
-                                    std::string const &alias) {
+void opsqlite_libsql_attach(DB const &db, std::string const &docPath,
+                            std::string const &databaseToAttach,
+                            std::string const &alias) {
   std::string dbPath = opsqlite_get_db_path(databaseToAttach, docPath);
   std::string statement = "ATTACH DATABASE '" + dbPath + "' AS " + alias;
 
   opsqlite_libsql_execute(db, statement, nullptr);
-
 }
 
-void opsqlite_libsql_detach(DB const &db,
-                                    std::string const &alias) {
+void opsqlite_libsql_detach(DB const &db, std::string const &alias) {
   std::string statement = "DETACH DATABASE " + alias;
   opsqlite_libsql_execute(db, statement, nullptr);
 }
@@ -160,17 +162,17 @@ void opsqlite_libsql_sync(DB const &db) {
   if (status != 0) {
     throw std::runtime_error(err);
   }
-
 }
 
 void opsqlite_libsql_remove(DB &db, std::string const &name,
-                                    std::string const &path) {
+                            std::string const &path) {
   opsqlite_libsql_close(db);
 
   std::string full_path = opsqlite_get_db_path(name, path);
 
   if (!file_exists(full_path)) {
-    throw std::runtime_error("[op-sqlite]: Database file not found" + full_path);
+    throw std::runtime_error("[op-sqlite]: Database file not found" +
+                             full_path);
   }
 
   remove(full_path.c_str());
@@ -215,9 +217,7 @@ void opsqlite_libsql_bind_statement(libsql_stmt_t statement,
 }
 
 BridgeResult opsqlite_libsql_execute_prepared_statement(
-    DB const &db,
-    libsql_stmt_t stmt,
-    std::vector<DumbHostObject> *results,
+    DB const &db, libsql_stmt_t stmt, std::vector<DumbHostObject> *results,
     const std::shared_ptr<std::vector<SmartHostObject>> &metadatas) {
 
   libsql_rows_t rows;
@@ -348,8 +348,7 @@ libsql_stmt_t opsqlite_libsql_prepare_statement(DB const &db,
   return stmt;
 }
 
-BridgeResult opsqlite_libsql_execute(DB const &db,
-                                     std::string const &query,
+BridgeResult opsqlite_libsql_execute(DB const &db, std::string const &query,
                                      const std::vector<JSVariant> *params) {
 
   std::vector<std::string> column_names;
@@ -364,7 +363,7 @@ BridgeResult opsqlite_libsql_execute(DB const &db,
   status = libsql_prepare(db.c, query.c_str(), &stmt, &err);
 
   if (status != 0) {
-      throw std::runtime_error(err);
+    throw std::runtime_error(err);
   }
 
   if (params != nullptr && !params->empty()) {
@@ -374,7 +373,7 @@ BridgeResult opsqlite_libsql_execute(DB const &db,
   status = libsql_query_stmt(stmt, &rows, &err);
 
   if (status != 0) {
-      throw std::runtime_error(err);
+    throw std::runtime_error(err);
   }
 
   // Get the column names on the first pass
@@ -719,7 +718,7 @@ opsqlite_libsql_execute_batch(DB const &db,
       // don't need/want to handle this results in a batch execution
       auto result =
           opsqlite_libsql_execute(db, command.sql, command.params.get());
-        affectedRows += result.affectedRows;
+      affectedRows += result.affectedRows;
     }
     opsqlite_libsql_execute(db, "COMMIT", nullptr);
     return BatchResult{
