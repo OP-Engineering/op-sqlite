@@ -1,51 +1,12 @@
 import { NativeModules, Platform } from 'react-native';
 
-declare global {
-  function nativeCallSyncHook(): unknown;
-  var __OPSQLiteProxy: object | undefined;
-}
-
-if (global.__OPSQLiteProxy == null) {
-  if (NativeModules.OPSQLite == null) {
-    throw new Error('Base module not found. Maybe try rebuilding the app.');
-  }
-
-  if (NativeModules.OPSQLite.install == null) {
-    throw new Error(
-      'Failed to install op-sqlite: React Native is not running on-device. OPSQLite can only be used when synchronous method invocations (JSI) are possible. If you are using a remote debugger (e.g. Chrome), switch to an on-device debugger (e.g. Flipper) instead.'
-    );
-  }
-
-  // Call the synchronous blocking install() function
-  const result = NativeModules.OPSQLite.install();
-  if (result !== true) {
-    throw new Error(
-      `Failed to install op-sqlite: The native OPSQLite Module could not be installed! Looks like something went wrong when installing JSI bindings, check the native logs for more info`
-    );
-  }
-
-  // Check again if the constructor now exists. If not, throw an error.
-  if (global.__OPSQLiteProxy == null) {
-    throw new Error(
-      'Failed to install op-sqlite, the native initializer function does not exist. Are you trying to use OPSQLite from different JS Runtimes?'
-    );
-  }
-}
-
-const proxy = global.__OPSQLiteProxy;
-export const OPSQLite = proxy as OPSQLiteProxy;
-
-export const {
-  IOS_DOCUMENT_PATH,
-  IOS_LIBRARY_PATH,
-  ANDROID_DATABASE_PATH,
-  ANDROID_FILES_PATH,
-  ANDROID_EXTERNAL_FILES_PATH,
-} = !!NativeModules.OPSQLite.getConstants
-  ? NativeModules.OPSQLite.getConstants()
-  : NativeModules.OPSQLite;
-
-type Scalar = string | number | boolean | null | ArrayBuffer | ArrayBufferView;
+export type Scalar =
+  | string
+  | number
+  | boolean
+  | null
+  | ArrayBuffer
+  | ArrayBufferView;
 
 /**
  * Object returned by SQL Query executions {
@@ -108,17 +69,17 @@ export type BatchQueryResult = {
  * Result of loading a file and executing every line as a SQL command
  * Similar to BatchQueryResult
  */
-export interface FileLoadResult extends BatchQueryResult {
+export type FileLoadResult = BatchQueryResult & {
   commands?: number;
-}
+};
 
-export interface Transaction {
+export type Transaction = {
   commit: () => Promise<QueryResult>;
   execute: (query: string, params?: Scalar[]) => Promise<QueryResult>;
   rollback: () => Promise<QueryResult>;
-}
+};
 
-export interface PendingTransaction {
+type PendingTransaction = {
   /*
    * The start function should not throw or return a promise because the
    * queue just calls it and does not monitor for failures or completions.
@@ -129,14 +90,14 @@ export interface PendingTransaction {
    * It should also automatically commit or rollback the transaction if needed
    */
   start: () => void;
-}
+};
 
-export type PreparedStatementObj = {
+export type PreparedStatement = {
   bind: (params: any[]) => Promise<void>;
   execute: () => Promise<QueryResult>;
 };
 
-export type DB = {
+type InternalDB = {
   close: () => void;
   delete: (location?: string) => void;
   attach: (
@@ -167,10 +128,145 @@ export type DB = {
   ) => void;
   commitHook: (callback?: (() => void) | null) => void;
   rollbackHook: (callback?: (() => void) | null) => void;
-  prepareStatement: (query: string) => PreparedStatementObj;
+  prepareStatement: (query: string) => PreparedStatement;
   loadExtension: (path: string, entryPoint?: string) => void;
   executeRaw: (query: string, params?: Scalar[]) => Promise<any[]>;
   getDbPath: (location?: string) => string;
+  reactiveExecute: (params: {
+    query: string;
+    arguments: any[];
+    fireOn: {
+      table: string;
+      ids?: number[];
+    }[];
+    callback: (response: any) => void;
+  }) => () => void;
+  sync: () => void;
+  flushPendingReactiveQueries: () => Promise<void>;
+};
+
+export type DB = {
+  close: () => void;
+  delete: (location?: string) => void;
+  attach: (
+    mainDbName: string,
+    dbNameToAttach: string,
+    alias: string,
+    location?: string
+  ) => void;
+  detach: (mainDbName: string, alias: string) => void;
+  /**
+   * Wraps all the executions into a transaction. If an error is thrown it will rollback all of the changes
+   *
+   * You need to use this if you are using reactive queries for the queries to fire after the transaction is done
+   */
+  transaction: (fn: (tx: Transaction) => Promise<void>) => Promise<void>;
+  /**
+   * Sync version of the execute function
+   * It will block the JS thread and therefore your UI and should be used with caution
+   *
+   * When writing your queries, you can use the ? character as a placeholder for parameters
+   * The parameters will be automatically escaped and sanitized
+   *
+   * Example:
+   * db.executeSync('SELECT * FROM table WHERE id = ?', [1]);
+   *
+   * If you are writing a query that doesn't require parameters, you can omit the second argument
+   *
+   * If you are writing to the database YOU SHOULD BE USING TRANSACTIONS!
+   * Transactions protect you from partial writes and ensure that your data is always in a consistent state
+   *
+   * @param query
+   * @param params
+   * @returns QueryResult
+   */
+  executeSync: (query: string, params?: Scalar[]) => QueryResult;
+  /**
+   * Basic query execution function, it is async don't forget to await it
+   *
+   * When writing your queries, you can use the ? character as a placeholder for parameters
+   * The parameters will be automatically escaped and sanitized
+   *
+   * Example:
+   * await db.execute('SELECT * FROM table WHERE id = ?', [1]);
+   *
+   * If you are writing a query that doesn't require parameters, you can omit the second argument
+   *
+   * If you are writing to the database YOU SHOULD BE USING TRANSACTIONS!
+   * Transactions protect you from partial writes and ensure that your data is always in a consistent state
+   *
+   * If you need a large amount of queries ran as fast as possible you should be using `executeBatch`, `executeRaw`, `loadFile` or `executeWithHostObjects`
+   *
+   * @param query string of your SQL query
+   * @param params a list of parameters to bind to the query, if any
+   * @returns Promise<QueryResult> with the result of the query
+   */
+  execute: (query: string, params?: Scalar[]) => Promise<QueryResult>;
+  /**
+   * Similar to the execute function but returns the response in HostObjects
+   * Read more about HostObjects in the documentation and their pitfalls
+   *
+   * Will be a lot faster than the normal execute functions when returning data but you will pay when accessing the fields
+   * as the conversion is done the moment you access any field
+   * @param query
+   * @param params
+   * @returns
+   */
+  executeWithHostObjects: (
+    query: string,
+    params?: Scalar[]
+  ) => Promise<QueryResult>;
+  /**
+   * Executes all the queries in the params inside a single transaction
+   *
+   * It's faster than executing single queries as data is sent to the native side only once
+   * @param commands
+   * @returns Promise<BatchQueryResult>
+   */
+  executeBatch: (commands: SQLBatchTuple[]) => Promise<BatchQueryResult>;
+  /**
+   * Loads a SQLite Dump from disk. It will be the fastest way to execute a large set of queries as no JS is involved
+   */
+  loadFile: (location: string) => Promise<FileLoadResult>;
+  updateHook: (
+    callback?:
+      | ((params: {
+          table: string;
+          operation: UpdateHookOperation;
+          row?: any;
+          rowId: number;
+        }) => void)
+      | null
+  ) => void;
+  commitHook: (callback?: (() => void) | null) => void;
+  rollbackHook: (callback?: (() => void) | null) => void;
+  /**
+   * Constructs a prepared statement from the query string
+   * The statement can be re-bound with parameters and executed
+   * The performance gain is significant when the same query is executed multiple times, NOT when the query is executed (once)
+   * The cost lies in the preparation of the statement as it is compiled and optimized by the sqlite engine, the params can then rebound
+   * but the query itself is already optimized
+   *
+   * @param query string of your SQL query
+   * @returns Prepared statement object
+   */
+  prepareStatement: (query: string) => PreparedStatement;
+  /**
+   * Loads a runtime loadable sqlite extension. Libsql and iOS embedded version do not support loading extensions
+   */
+  loadExtension: (path: string, entryPoint?: string) => void;
+  /**
+   * Same as `execute` except the results are not returned in objects but rather in arrays with just the values and not the keys
+   * It will be faster since a lot of repeated work is skipped and only the values you care about are returned
+   */
+  executeRaw: (query: string, params?: Scalar[]) => Promise<any[]>;
+  /**
+   * Get's the absolute path to the db file. Useful for debugging on local builds and for attaching the DB from users devices
+   */
+  getDbPath: (location?: string) => string;
+  /**
+   * Reactive execution of queries when data is written to the database. Check the docs for how to use them.
+   */
   reactiveExecute: (params: {
     query: string;
     arguments: any[];
@@ -188,34 +284,70 @@ export type DB = {
    * The database is hosted in turso
    **/
   sync: () => void;
-  flushPendingReactiveQueries: () => Promise<void>;
 };
 
-type OPSQLiteProxy = {
+export type DBParams = {
+  url?: string;
+  authToken?: string;
+  name?: string;
+  location?: string;
+  syncInterval?: number;
+};
+
+export type OPSQLiteProxy = {
   open: (options: {
     name: string;
     location?: string;
     encryptionKey?: string;
-  }) => DB;
-  openRemote: (options: { url: string; authToken: string }) => DB;
-  openSync: (options: {
-    url: string;
-    authToken: string;
-    name: string;
-    location?: string;
-    syncInterval?: number;
-  }) => DB;
+  }) => InternalDB;
+  openRemote: (options: { url: string; authToken: string }) => InternalDB;
+  openSync: (options: DBParams) => InternalDB;
   isSQLCipher: () => boolean;
   isLibsql: () => boolean;
   isIOSEmbedded: () => boolean;
 };
 
-const locks: Record<
-  string,
-  { queue: PendingTransaction[]; inProgress: boolean }
-> = {};
+declare global {
+  var __OPSQLiteProxy: object | undefined;
+}
 
-function enhanceDB(db: DB, options: any): DB {
+if (global.__OPSQLiteProxy == null) {
+  if (NativeModules.OPSQLite == null) {
+    throw new Error(
+      'Base module not found. Did you do a pod install/clear the gradle cache?'
+    );
+  }
+
+  // Call the synchronous blocking install() function
+  const installed = NativeModules.OPSQLite.install();
+  if (!installed) {
+    throw new Error(
+      `Failed to install op-sqlite: The native OPSQLite Module could not be installed! Looks like something went wrong when installing JSI bindings, check the native logs for more info`
+    );
+  }
+
+  // Check again if the constructor now exists. If not, throw an error.
+  if (global.__OPSQLiteProxy == null) {
+    throw new Error(
+      'OPSqlite native object is not available. Something is wrong. Check the native logs for more information.'
+    );
+  }
+}
+
+const proxy = global.__OPSQLiteProxy;
+export const OPSQLite = proxy as OPSQLiteProxy;
+
+export const {
+  IOS_DOCUMENT_PATH,
+  IOS_LIBRARY_PATH,
+  ANDROID_DATABASE_PATH,
+  ANDROID_FILES_PATH,
+  ANDROID_EXTERNAL_FILES_PATH,
+} = !!NativeModules.OPSQLite.getConstants
+  ? NativeModules.OPSQLite.getConstants()
+  : NativeModules.OPSQLite;
+
+function enhanceDB(db: InternalDB, options: DBParams): DB {
   const lock = {
     queue: [] as PendingTransaction[],
     inProgress: false,
@@ -241,7 +373,8 @@ function enhanceDB(db: DB, options: any): DB {
     }
   };
 
-  // spreading the object is not working, so we need to do it manually
+  // spreading the object does not work with HostObjects (db)
+  // We need to manually assign the fields
   let enhancedDb = {
     delete: db.delete,
     attach: db.attach,
@@ -256,11 +389,7 @@ function enhanceDB(db: DB, options: any): DB {
     getDbPath: db.getDbPath,
     reactiveExecute: db.reactiveExecute,
     sync: db.sync,
-    flushPendingReactiveQueries: db.flushPendingReactiveQueries,
-    close: () => {
-      db.close();
-      delete locks[options.url];
-    },
+    close: db.close,
     executeWithHostObjects: async (
       query: string,
       params?: Scalar[]
@@ -290,7 +419,7 @@ function enhanceDB(db: DB, options: any): DB {
         ? db.executeSync(query, sanitizedParams as Scalar[])
         : db.executeSync(query);
 
-      let rows: any[] = [];
+      let rows: Record<string, Scalar>[] = [];
       for (let i = 0; i < (intermediateResult.rawRows?.length ?? 0); i++) {
         let row: Record<string, Scalar> = {};
         let rawRow = intermediateResult.rawRows![i]!;
@@ -329,9 +458,9 @@ function enhanceDB(db: DB, options: any): DB {
         sanitizedParams as Scalar[]
       );
 
-      let rows: any[] = [];
+      let rows: Record<string, Scalar>[] = [];
       for (let i = 0; i < (intermediateResult.rawRows?.length ?? 0); i++) {
-        let row: any = {};
+        let row: Record<string, Scalar> = {};
         let rawRow = intermediateResult.rawRows![i]!;
         for (let j = 0; j < intermediateResult.columnNames!.length; j++) {
           let columnName = intermediateResult.columnNames![j]!;
@@ -355,7 +484,7 @@ function enhanceDB(db: DB, options: any): DB {
       const stmt = db.prepareStatement(query);
 
       return {
-        bind: async (params: any[]) => {
+        bind: async (params: Scalar[]) => {
           const sanitizedParams = params.map((p) => {
             if (ArrayBuffer.isView(p)) {
               return p.buffer;
@@ -374,10 +503,12 @@ function enhanceDB(db: DB, options: any): DB {
     ): Promise<void> => {
       let isFinalized = false;
 
-      const execute = async (query: string, params?: any[] | undefined) => {
+      const execute = async (query: string, params?: Scalar[]) => {
         if (isFinalized) {
           throw Error(
-            `OP-Sqlite Error: Database: ${options.url}. Cannot execute query on finalized transaction`
+            `OP-Sqlite Error: Database: ${
+              options.name || options.url
+            }. Cannot execute query on finalized transaction`
           );
         }
         return await enhancedDb.execute(query, params);
@@ -386,12 +517,14 @@ function enhanceDB(db: DB, options: any): DB {
       const commit = async (): Promise<QueryResult> => {
         if (isFinalized) {
           throw Error(
-            `OP-Sqlite Error: Database: ${options.url}. Cannot execute query on finalized transaction`
+            `OP-Sqlite Error: Database: ${
+              options.name || options.url
+            }. Cannot execute query on finalized transaction`
           );
         }
         const result = await enhancedDb.execute('COMMIT;');
 
-        await enhancedDb.flushPendingReactiveQueries();
+        await db.flushPendingReactiveQueries();
 
         isFinalized = true;
         return result;
@@ -400,7 +533,9 @@ function enhanceDB(db: DB, options: any): DB {
       const rollback = async (): Promise<QueryResult> => {
         if (isFinalized) {
           throw Error(
-            `OP-Sqlite Error: Database: ${options.url}. Cannot execute query on finalized transaction`
+            `OP-Sqlite Error: Database: ${
+              options.name || options.url
+            }. Cannot execute query on finalized transaction`
           );
         }
         const result = await enhancedDb.execute('ROLLBACK;');
@@ -422,7 +557,6 @@ function enhanceDB(db: DB, options: any): DB {
             await commit();
           }
         } catch (executionError) {
-          // console.warn('transaction error', executionError);
           if (!isFinalized) {
             try {
               await rollback();
@@ -455,10 +589,11 @@ function enhanceDB(db: DB, options: any): DB {
   return enhancedDb;
 }
 
-/** Open a replicating connection via libsql to a turso db
+/**
+ * Open a replicating connection via libsql to a turso db
  * libsql needs to be enabled on your package.json
  */
-export const openSync = (options: {
+export const openSync = (params: {
   url: string;
   authToken: string;
   name: string;
@@ -469,44 +604,56 @@ export const openSync = (options: {
     throw new Error('This function is only available for libsql');
   }
 
-  const db = OPSQLite.openSync(options);
-  const enhancedDb = enhanceDB(db, options);
+  const db = OPSQLite.openSync(params);
+  const enhancedDb = enhanceDB(db, params);
 
   return enhancedDb;
 };
 
-/** Open a remote connection via libsql to a turso db
+/**
+ * Open a remote connection via libsql to a turso db
  * libsql needs to be enabled on your package.json
  */
-export const openRemote = (options: { url: string; authToken: string }): DB => {
+export const openRemote = (params: { url: string; authToken: string }): DB => {
   if (!isLibsql()) {
     throw new Error('This function is only available for libsql');
   }
 
-  const db = OPSQLite.openRemote(options);
-  const enhancedDb = enhanceDB(db, options);
+  const db = OPSQLite.openRemote(params);
+  const enhancedDb = enhanceDB(db, params);
 
   return enhancedDb;
 };
 
-export const open = (options: {
+/**
+ * Open a connection to a local sqlite or sqlcipher database
+ * If you want libsql remote or sync connections, use openSync or openRemote
+ */
+export const open = (params: {
   name: string;
   location?: string;
   encryptionKey?: string;
 }): DB => {
-  if (options.location?.startsWith('file://')) {
+  if (params.location?.startsWith('file://')) {
     console.warn(
       "[op-sqlite] You are passing a path with 'file://' prefix, it's automatically removed"
     );
-    options.location = options.location.substring(7);
+    params.location = params.location.substring(7);
   }
 
-  const db = OPSQLite.open(options);
-  const enhancedDb = enhanceDB(db, options);
+  const db = OPSQLite.open(params);
+  const enhancedDb = enhanceDB(db, params);
 
   return enhancedDb;
 };
 
+/**
+ * Moves the database from the assets folder to the default path (check the docs) or to a custom path
+ * It DOES NOT OVERWRITE the database if it already exists in the destination path
+ * if you want to overwrite the database, you need to pass the overwrite flag as true
+ * @param args object with the parameters for the operaiton
+ * @returns promise, rejects if failed to move the database, resolves if the operation was successful
+ */
 export const moveAssetsDatabase = async (args: {
   filename: string;
   path?: string;
@@ -515,6 +662,14 @@ export const moveAssetsDatabase = async (args: {
   return NativeModules.OPSQLite.moveAssetsDatabase(args);
 };
 
+/**
+ * Used to load a dylib file that contains a sqlite 3 extension/plugin
+ * It returns the raw path to the actual file which then needs to be passed to the loadExtension function
+ * Check the docs for more information
+ * @param bundle the iOS bundle identifier of the .framework
+ * @param name the file name of the dylib file
+ * @returns
+ */
 export const getDylibPath = (bundle: string, name: string): string => {
   return NativeModules.OPSQLite.getDylibPath(bundle, name);
 };
