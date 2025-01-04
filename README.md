@@ -4,7 +4,7 @@ Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider sponso
 
 OP-SQLite has grown large to cover a lot of plugins, sqlite versions and APIs. Please read the full documentation before opening an issue.
 
-[Open the docs](https://ospfranco.notion.site/OP-SQLite-Documentation-a279a52102464d0cb13c3fa230d2f2dc?pvs=4)
+[Open the docs](https://op-engineering.github.io/op-sqlite/)
 
 Join the Discord:
 
