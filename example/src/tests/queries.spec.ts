@@ -706,5 +706,11 @@ export function queriesTests() {
       await db.execute('SELECT 1; ', []);
       await db.execute('SELECT ?; ', [1]);
     });
+
+    it('Pragma user_version', () => {
+      const res = db.executeSync('PRAGMA user_version');
+      console.warn(res.rows);
+      expect(res.rows).to.eql([{user_version: 0}]);
+    });
   });
 }
