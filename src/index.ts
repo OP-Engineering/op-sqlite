@@ -335,7 +335,7 @@ if (global.__OPSQLiteProxy == null) {
 }
 
 const proxy = global.__OPSQLiteProxy;
-export const OPSQLite = proxy as OPSQLiteProxy;
+const OPSQLite = proxy as OPSQLiteProxy;
 
 export const {
   IOS_DOCUMENT_PATH,
