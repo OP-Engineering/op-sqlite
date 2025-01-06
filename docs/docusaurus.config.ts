@@ -66,7 +66,7 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          href: 'https://github.com/OP-Engineering/op-sqite',
+          href: 'https://github.com/OP-Engineering/op-sqlite',
           label: 'GitHub',
           position: 'right',
         },
