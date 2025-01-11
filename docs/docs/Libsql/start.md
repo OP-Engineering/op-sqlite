@@ -2,7 +2,7 @@
 sidebar_position: 6
 ---
 
-# Libsql Support
+# Getting Started
 
 Libsql is supported as a “sqlite” implementation. You can just turn it on by modifying your package.json:
 
