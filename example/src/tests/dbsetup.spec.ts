@@ -122,6 +122,16 @@ export function dbSetupTests() {
       db.delete();
     });
 
+    it('Should create db in custom folder', async () => {
+      let db = open({
+        name: 'customFolderTest.sqlite',
+        encryptionKey: 'test',
+        location: 'myFolder',
+      });
+
+      db.delete();
+    });
+
     it('Moves assets database simple', async () => {
       const copied = await moveAssetsDatabase({filename: 'sample.sqlite'});
 
