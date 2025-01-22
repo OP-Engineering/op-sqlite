@@ -143,7 +143,7 @@ void install(jsi::Runtime &rt,
       } else if (location.rfind("/", 0) == 0) {
         path = location;
       } else {
-        path = path + location;
+        path = path + "/" + location;
       }
     }
 
