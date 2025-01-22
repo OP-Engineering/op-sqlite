@@ -67,14 +67,11 @@ std::string opsqlite_get_db_path(std::string const &db_name,
   if (location == ":memory:") {
     return location;
   }
-  char resolved_location[PATH_MAX];
-  realpath(location.c_str(), resolved_location);
-  std::string resolved_location_string = std::string(resolved_location);
 
   // Will return false if the directory already exists, no need to check
-  std::filesystem::create_directories(resolved_location);
+  std::filesystem::create_directories(location);
 
-  return resolved_location_string + "/" + db_name;
+  return location + "/" + db_name;
 }
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
