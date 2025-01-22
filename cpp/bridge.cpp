@@ -75,7 +75,7 @@ std::string opsqlite_get_db_path(std::string const &db_name,
     return location + "/" + db_name;
   }
 
-  return location + "/" + db_name;
+  return location + db_name;
 }
 
 #ifdef OP_SQLITE_USE_SQLCIPHER

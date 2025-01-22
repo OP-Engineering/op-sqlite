@@ -33,7 +33,7 @@ std::string opsqlite_get_db_path(std::string const &db_name,
     return location + "/" + db_name;
   }
 
-  return location;
+  return location + db_name;
 }
 
 DB opsqlite_libsql_open_sync(std::string const &name,
