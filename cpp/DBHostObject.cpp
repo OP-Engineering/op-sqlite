@@ -238,6 +238,8 @@ void DBHostObject::create_jsi_functions() {
   });
 
   function_map["close"] = HOSTFN("close") {
+    invalidated = true;
+    
 #ifdef OP_SQLITE_USE_LIBSQL
     opsqlite_libsql_close(db);
 #else
@@ -248,6 +250,8 @@ void DBHostObject::create_jsi_functions() {
   });
 
   function_map["delete"] = HOSTFN("delete") {
+    invalidated = true;
+    
     std::string path = std::string(base_path);
 
     if (count == 1) {
@@ -808,6 +812,10 @@ void DBHostObject::set(jsi::Runtime &_rt, const jsi::PropNameID &name,
 }
 
 void DBHostObject::invalidate() {
+  if(invalidated) {
+    return;
+  }
+  
   invalidated = true;
   _thread_pool->restartPool();
 #ifdef OP_SQLITE_USE_LIBSQL
