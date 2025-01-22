@@ -90,7 +90,7 @@ void install(jsi::Runtime &rt,
     return false;
 #endif
   });
-  
+
   auto is_ios_embedded = HOST_STATIC_FN("isIOSEmbedded") {
 #ifdef OP_SQLITE_USE_PHONE_VERSION
     return true;
@@ -143,7 +143,7 @@ void install(jsi::Runtime &rt,
       } else if (location.rfind("/", 0) == 0) {
         path = location;
       } else {
-        path = path + "/" + location;
+        path = path + location;
       }
     }
 
