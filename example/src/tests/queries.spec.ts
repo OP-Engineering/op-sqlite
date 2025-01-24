@@ -596,7 +596,7 @@ export function queriesTests() {
         ],
         [
           'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
-          [id2, name2, age2, networth2],
+          [[id2, name2, age2, networth2]],
         ],
       ];
 
