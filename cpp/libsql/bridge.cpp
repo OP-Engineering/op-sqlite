@@ -703,7 +703,7 @@ opsqlite_libsql_execute_raw(DB const &db, std::string const &query,
 
 BatchResult
 opsqlite_libsql_execute_batch(DB const &db,
-                              std::vector<BatchArguments> *commands) {
+                              const std::vector<BatchArguments> *commands) {
   size_t commandCount = commands->size();
   if (commandCount <= 0) {
     throw std::runtime_error("No SQL commands provided");
@@ -717,7 +717,7 @@ opsqlite_libsql_execute_batch(DB const &db,
       // We do not provide a datastructure to receive query data because we
       // don't need/want to handle this results in a batch execution
       auto result =
-          opsqlite_libsql_execute(db, command.sql, command.params.get());
+          opsqlite_libsql_execute(db, command.sql, &command.params);
       affectedRows += result.affectedRows;
     }
     opsqlite_libsql_execute(db, "COMMIT", nullptr);

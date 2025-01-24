@@ -52,7 +52,9 @@ export type ColumnMetadata = {
  * If a single query must be executed many times with different arguments, its preferred
  * to declare it a single time, and use an array of array parameters.
  */
-export type SQLBatchTuple = [string] | [string, Array<any> | Array<Array<any>>];
+export type SQLBatchTuple =
+  | [string]
+  | [string, Array<Scalar> | Array<Array<Scalar>>];
 
 export type UpdateHookOperation = 'INSERT' | 'DELETE' | 'UPDATE';
 

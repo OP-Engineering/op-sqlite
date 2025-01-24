@@ -29,5 +29,5 @@ struct BatchResult {
 
 struct BatchArguments {
   std::string sql;
-  std::shared_ptr<std::vector<JSVariant>> params;
+  std::vector<JSVariant> params;
 };
