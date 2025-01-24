@@ -238,9 +238,6 @@ export function queriesTests() {
 
       const countRes = await db.execute('SELECT COUNT(*) as count FROM User');
 
-      // console.log(countRes);
-
-      // expect(countRes.metadata?.[0]?.type).to.equal('UNKNOWN');
       expect(countRes.rows?.length).to.equal(1);
       expect(countRes.rows?.[0]?.count).to.equal(1);
 
@@ -257,18 +254,14 @@ export function queriesTests() {
 
       const sumRes = await db.execute('SELECT SUM(age) as sum FROM User;');
 
-      // expect(sumRes.metadata?.[0]?.type).to.equal('UNKNOWN');
       expect(sumRes.rows[0]!.sum).to.equal(age + age2);
 
-      // MAX(networth), MIN(networth)
       const maxRes = await db.execute(
         'SELECT MAX(networth) as `max` FROM User;',
       );
       const minRes = await db.execute(
         'SELECT MIN(networth) as `min` FROM User;',
       );
-      // expect(maxRes.metadata?.[0]?.type).to.equal('UNKNOWN');
-      // expect(minRes.metadata?.[0]?.type).to.equal('UNKNOWN');
       const maxNetworth = Math.max(networth, networth2);
       const minNetworth = Math.min(networth, networth2);
 
@@ -707,6 +700,32 @@ export function queriesTests() {
       await db.execute('SELECT 1       ');
       await db.execute('SELECT 1; ', []);
       await db.execute('SELECT ?; ', [1]);
+    });
+
+    it('Handles concurrent transactions correctly', async () => {
+      const id = chance.integer();
+      const name = chance.name();
+      const age = chance.integer();
+      const networth = chance.floating();
+
+      const transaction1 = db.transaction(async tx => {
+        await tx.execute(
+          'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+          [id, name, age, networth],
+        );
+      });
+
+      const transaction2 = db.transaction(async tx => {
+        await tx.execute(
+          'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+          [id + 1, name, age, networth],
+        );
+      });
+
+      await Promise.all([transaction1, transaction2]);
+
+      const res = await db.execute('SELECT * FROM User');
+      expect(res.rows.length).to.equal(2);
     });
 
     it('Pragma user_version', () => {
