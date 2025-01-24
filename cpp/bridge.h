@@ -54,7 +54,7 @@ BridgeResult opsqlite_execute_host_objects(
     std::shared_ptr<std::vector<SmartHostObject>> &metadatas);
 
 BatchResult opsqlite_execute_batch(sqlite3 *db,
-                                   std::vector<BatchArguments> *commands);
+                                   const std::vector<BatchArguments> *commands);
 
 BridgeResult opsqlite_execute_raw(sqlite3 *db, std::string const &query,
                                   const std::vector<JSVariant> *params,
