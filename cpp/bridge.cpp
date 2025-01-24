@@ -823,7 +823,7 @@ void opsqlite_load_extension(sqlite3 *db, std::string &path,
 }
 
 BatchResult opsqlite_execute_batch(sqlite3 *db,
-                                   std::vector<BatchArguments> *commands) {
+                                   const std::vector<BatchArguments> *commands) {
   size_t commandCount = commands->size();
   if (commandCount <= 0) {
     throw std::runtime_error("No SQL commands provided");
@@ -836,7 +836,7 @@ BatchResult opsqlite_execute_batch(sqlite3 *db,
     // We do not provide a datastructure to receive query data because we
     // don't need/want to handle this results in a batch execution
     try {
-      auto result = opsqlite_execute(db, command.sql, command.params.get());
+      auto result = opsqlite_execute(db, command.sql, &command.params);
       affectedRows += result.affectedRows;
     } catch (std::exception &exc) {
       opsqlite_execute(db, "ROLLBACK", nullptr);

@@ -588,6 +588,8 @@ export function queriesTests() {
       const networth2 = chance.floating();
 
       const commands: SQLBatchTuple[] = [
+        ['SELECT * FROM "User"', []],
+        ['SELECT * FROM "User"'],
         [
           'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
           [id1, name1, age1, networth1],
