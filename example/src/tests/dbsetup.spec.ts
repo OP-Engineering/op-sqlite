@@ -82,10 +82,26 @@ export function dbSetupTests() {
           'CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL) STRICT;',
         );
 
-        await androidDb.close();
+        androidDb.close();
+      });
+
+      it('Creates db in external nested directory on Android', async () => {
+        let androidDb = open({
+          name: 'AndroidSDCardDB.sqlite',
+          location: `${ANDROID_EXTERNAL_FILES_PATH}/nested`,
+          encryptionKey: 'test',
+        });
+
+        await androidDb.execute('DROP TABLE IF EXISTS User;');
+        await androidDb.execute(
+          'CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL) STRICT;',
+        );
+
+        androidDb.close();
       });
     }
 
+    // Currently this only tests the function is there
     it('Should load extension', async () => {
       let db = open({
         name: 'extensionDb',
@@ -112,12 +128,15 @@ export function dbSetupTests() {
     });
 
     it('Should delete db with absolute path', async () => {
+      let location =
+        Platform.OS === 'ios' ? IOS_LIBRARY_PATH : ANDROID_DATABASE_PATH;
       let db = open({
         name: 'deleteTest',
         encryptionKey: 'test',
-        location:
-          Platform.OS === 'ios' ? IOS_LIBRARY_PATH : ANDROID_DATABASE_PATH,
+        location,
       });
+
+      expect(db.getDbPath()).to.contain(location);
 
       db.delete();
     });
@@ -129,6 +148,20 @@ export function dbSetupTests() {
         location: 'myFolder',
       });
 
+      let path = db.getDbPath();
+      expect(path).to.contain('myFolder');
+      db.delete();
+    });
+
+    it('Should create nested folders', async () => {
+      let db = open({
+        name: 'nestedFolderTest.sqlite',
+        encryptionKey: 'test',
+        location: 'myFolder/nested',
+      });
+
+      let path = db.getDbPath();
+      expect(path).to.contain('myFolder/nested');
       db.delete();
     });
 
@@ -155,18 +188,17 @@ export function dbSetupTests() {
       });
 
       expect(copied).to.equal(true);
-    });
 
-    // it('Should fail creating in-memory with non-bool arg', async () => {
-    //   try {
-    //     open({
-    //       name: 'inMemoryTest',
-    //     });
-    //     expect.fail('Should throw');
-    //   } catch (e) {
-    //     expect(!!e).to.equal(true);
-    //   }
-    // });
+      let db = open({
+        name: 'sample2.sqlite',
+        encryptionKey: 'test',
+        location: 'sqlite',
+      });
+
+      let path = db.getDbPath();
+      expect(path).to.contain('sqlite/sample2.sqlite');
+      db.delete();
+    });
 
     it('Creates new connections per query and closes them', async () => {
       for (let i = 0; i < 100; i++) {
@@ -235,10 +267,11 @@ export function dbSetupTests() {
   });
 
   if (isSQLCipher()) {
-    it('Can open without encryption key', () => {
+    it('Can open SQLCipher db without encryption key', () => {
       let db = open({
         name: 'pathTest.sqlite',
       });
+
       db.close();
     });
   }
