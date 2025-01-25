@@ -26,6 +26,7 @@ import {blobTests, dbSetupTests, queriesTests, runTests} from './tests/index';
 import {preparedStatementsTests} from './tests/preparedStatements.spec';
 import {reactiveTests} from './tests/reactive.spec';
 import {tokenizerTests} from './tests/tokenizer.spec';
+import {storageTests} from './tests/storage.spec';
 
 export default function App() {
   const [times, setTimes] = useState<number[]>([]);
@@ -46,6 +47,7 @@ export default function App() {
       constantsTests,
       reactiveTests,
       tokenizerTests,
+      storageTests,
     )
       .then(results => {
         setServerResults(results as any);
