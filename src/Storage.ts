@@ -16,7 +16,7 @@ export class Storage {
     this.db = open({ ...options, name: '__opsqlite_storage' });
     this.db.executeSync('PRAGMA mmap_size=268435456');
     this.db.executeSync(
-      'CREATE TABLE IF NOT EXISTS storage (key TEXT PRIMARY KEY, value TEXT) STRICT WITHOUT ROWID'
+      'CREATE TABLE IF NOT EXISTS storage (key TEXT PRIMARY KEY, value TEXT) WITHOUT ROWID'
     );
   }
 

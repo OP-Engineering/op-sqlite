@@ -51,7 +51,7 @@ export function storageTests() {
     it('can clear sync', async () => {
       storage.setItemSync('quack', 'bark');
       storage.setItemSync('quack2', 'bark');
-      storage.clear();
+      storage.clearSync();
       const res = storage.getItemSync('quack');
       expect(res).to.equal(undefined);
     });
