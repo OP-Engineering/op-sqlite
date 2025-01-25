@@ -16,39 +16,48 @@ export class Storage {
     this.db = open({ ...options, name: '__opsqlite_storage' });
     this.db.executeSync('PRAGMA mmap_size=268435456');
     this.db.executeSync(
-      'CREATE TABLE IF NOT EXISTS storage (key TEXT PRIMARY KEY, value TEXT) STRICT'
+      'CREATE TABLE IF NOT EXISTS storage (key TEXT PRIMARY KEY, value TEXT) STRICT WITHOUT ROWID'
     );
   }
 
-  async getItem(key: string) {
+  async getItem(key: string): Promise<string | undefined> {
     const result = await this.db.execute(
       'SELECT value FROM storage WHERE key = ?',
       [key]
     );
 
-    return result.rows[0]?.value;
+    let value = result.rows[0]?.value;
+    if (typeof value !== 'undefined' && typeof value !== 'string') {
+      throw new Error('Value must be a string or undefined');
+    }
+    return value;
   }
 
-  getItemSync(key: string) {
+  getItemSync(key: string): string | undefined {
     const result = this.db.executeSync(
       'SELECT value FROM storage WHERE key = ?',
       [key]
     );
 
-    return result.rows[0]?.value;
+    let value = result.rows[0]?.value;
+    if (typeof value !== 'undefined' && typeof value !== 'string') {
+      throw new Error('Value must be a string or undefined');
+    }
+
+    return value;
   }
 
   async setItem(key: string, value: string) {
     await this.db.execute(
       'INSERT OR REPLACE INTO storage (key, value) VALUES (?, ?)',
-      [key, value]
+      [key, value.toString()]
     );
   }
 
   setItemSync(key: string, value: string) {
     this.db.executeSync(
       'INSERT OR REPLACE INTO storage (key, value) VALUES (?, ?)',
-      [key, value]
+      [key, value.toString()]
     );
   }
 
@@ -66,5 +75,11 @@ export class Storage {
 
   clearSync() {
     this.db.executeSync('DELETE FROM storage');
+  }
+
+  getAllKeys() {
+    return this.db
+      .executeSync('SELECT key FROM storage')
+      .rows.map((row: any) => row.key);
   }
 }
