@@ -183,8 +183,8 @@ void DBHostObject::create_jsi_functions() {
           "[op-sqlite][attach] Incorrect number of arguments");
     }
     if (!args[0].isString() || !args[1].isString() || !args[2].isString()) {
-      throw std::runtime_error(
-          "[op-sqlite] name, database to attach and alias must be strings");
+      throw std::runtime_error("[op-sqlite] name, database to attach and "
+                               "alias must be strings");
     }
 
     std::string secondary_db_path = std::string(base_path);
@@ -264,641 +264,559 @@ void DBHostObject::create_jsi_functions() {
         } else {
           path = path + "/" + location;
         }
-
-        std::string secondary_db_path = std::string(base_path);
-        if (count > 3) {
-          if (!args[3].isString()) {
-            throw std::runtime_error(
-                "[op-sqlite][attach] database location must be a string");
-          }
-
-          secondary_db_path += "/" + args[3].asString(rt).utf8(rt);
-        }
-
-        std::string main_db_name = args[0].asString(rt).utf8(rt);
-        std::string secondary_db_name = args[1].asString(rt).utf8(rt);
-        std::string alias = args[2].asString(rt).utf8(rt);
-#ifdef OP_SQLITE_USE_LIBSQL
-        opsqlite_libsql_attach(db, secondary_db_path, secondary_db_name, alias);
-#else
-        opsqlite_attach(db, main_db_name, secondary_db_path, secondary_db_name,
-                        alias);
-#endif
-
-        return {};
-      });
-
-      function_map["detach"] = HOSTFN("detach") {
-        if (count < 2) {
-          throw std::runtime_error(
-              "[op-sqlite][detach] Incorrect number of arguments");
-        }
-        if (!args[0].isString() || !args[1].isString()) {
-          throw std::runtime_error(
-              "[op-sqlite] database name and alias must be a strings");
-        }
-
-        std::string dbName = args[0].asString(rt).utf8(rt);
-        std::string alias = args[1].asString(rt).utf8(rt);
-#ifdef OP_SQLITE_USE_LIBSQL
-        opsqlite_libsql_detach(db, alias);
-#else
-        opsqlite_detach(db, dbName, alias);
-#endif
-
-        return {};
-      });
-
-      function_map["close"] = HOSTFN("close") {
-#ifdef OP_SQLITE_USE_LIBSQL
-        opsqlite_libsql_close(db);
-#else
-        opsqlite_close(db);
-#endif
-
-        return {};
-      });
-
-      function_map["delete"] = HOSTFN("delete") {
-        std::string path = std::string(base_path);
-
-        if (count == 1) {
-          if (!args[1].isString()) {
-            throw std::runtime_error(
-                "[op-sqlite][open] database location must be a string");
-          }
-
-          std::string location = args[1].asString(rt).utf8(rt);
-
-          if (!location.empty()) {
-            if (location == ":memory:") {
-              path = ":memory:";
-            } else if (location.rfind('/', 0) == 0) {
-              path = location;
-            } else {
-              path = path + "/" + location;
-            }
-          }
-        }
+      }
+    }
 
 #ifdef OP_SQLITE_USE_LIBSQL
-        opsqlite_libsql_remove(db, db_name, path);
+    opsqlite_libsql_remove(db, db_name, path);
 #else
-        opsqlite_remove(db, db_name, path);
+    opsqlite_remove(db, db_name, path);
 #endif
 
-        return {};
-      });
+    return {};
+  });
 
-      function_map["executeRaw"] = HOSTFN("executeRaw") {
-        const std::string query = args[0].asString(rt).utf8(rt);
-        std::vector<JSVariant> params = count == 2 && args[1].isObject()
-                                            ? to_variant_vec(rt, args[1])
-                                            : std::vector<JSVariant>();
+  function_map["executeRaw"] = HOSTFN("executeRaw") {
+    const std::string query = args[0].asString(rt).utf8(rt);
+    std::vector<JSVariant> params = count == 2 && args[1].isObject()
+                                        ? to_variant_vec(rt, args[1])
+                                        : std::vector<JSVariant>();
 
-        auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
+    auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
     auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor") {
-          auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
-          auto reject = std::make_shared<jsi::Value>(rt, args[1]);
+      auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
+      auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-          auto task = [this, &rt, query, params, resolve, reject]() {
-            try {
-              std::vector<std::vector<JSVariant>> results;
+      auto task = [this, &rt, query, params, resolve, reject]() {
+        try {
+          std::vector<std::vector<JSVariant>> results;
 
 #ifdef OP_SQLITE_USE_LIBSQL
-              auto status =
-                  opsqlite_libsql_execute_raw(db, query, &params, &results);
+          auto status =
+              opsqlite_libsql_execute_raw(db, query, &params, &results);
 #else
-              auto status = opsqlite_execute_raw(db, query, &params, &results);
+          auto status = opsqlite_execute_raw(db, query, &params, &results);
 #endif
 
-              if (invalidated) {
-                return;
-              }
+          if (invalidated) {
+            return;
+          }
 
-              invoker->invokeAsync([&rt, results = std::move(results),
-                                    status = std::move(status), resolve,
-                                    reject] {
-                auto jsiResult = create_raw_result(rt, status, &results);
-                resolve->asObject(rt).asFunction(rt).call(rt,
-                                                          std::move(jsiResult));
-              });
-            } catch (std::runtime_error &e) {
-              auto what = e.what();
-              invoker->invokeAsync([&rt, what, reject] {
-                auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-                auto error = errorCtr.callAsConstructor(
-                    rt, jsi::String::createFromAscii(rt, what));
-                reject->asObject(rt).asFunction(rt).call(rt, error);
-              });
-            } catch (std::exception &exc) {
-              auto what = exc.what();
-              invoker->invokeAsync([&rt, what, reject] {
-                auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-                auto error = errorCtr.callAsConstructor(
-                    rt, jsi::String::createFromAscii(rt, what));
-                reject->asObject(rt).asFunction(rt).call(rt, error);
-              });
-            }
-          };
+          invoker->invokeAsync([&rt, results = std::move(results),
+                                status = std::move(status), resolve, reject] {
+            auto jsiResult = create_raw_result(rt, status, &results);
+            resolve->asObject(rt).asFunction(rt).call(rt, std::move(jsiResult));
+          });
+        } catch (std::runtime_error &e) {
+          auto what = e.what();
+          invoker->invokeAsync([&rt, what, reject] {
+            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto error = errorCtr.callAsConstructor(
+                rt, jsi::String::createFromAscii(rt, what));
+            reject->asObject(rt).asFunction(rt).call(rt, error);
+          });
+        } catch (std::exception &exc) {
+          auto what = exc.what();
+          invoker->invokeAsync([&rt, what, reject] {
+            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto error = errorCtr.callAsConstructor(
+                rt, jsi::String::createFromAscii(rt, what));
+            reject->asObject(rt).asFunction(rt).call(rt, error);
+          });
+        }
+      };
 
-          _thread_pool->queueWork(task);
+      _thread_pool->queueWork(task);
 
-          return {};
+      return {};
      }));
 
     return promise;
-      });
+  });
 
-      function_map["executeSync"] = HOSTFN("executeSync") {
-        std::string query = args[0].asString(rt).utf8(rt);
-        std::vector<JSVariant> params;
+  function_map["executeSync"] = HOSTFN("executeSync") {
+    std::string query = args[0].asString(rt).utf8(rt);
+    std::vector<JSVariant> params;
 
-        if (count == 2) {
-          params = to_variant_vec(rt, args[1]);
-        }
+    if (count == 2) {
+      params = to_variant_vec(rt, args[1]);
+    }
 #ifdef OP_SQLITE_USE_LIBSQL
-        auto status = opsqlite_libsql_execute(db, query, &params);
+    auto status = opsqlite_libsql_execute(db, query, &params);
 #else
-        auto status = opsqlite_execute(db, query, &params);
+    auto status = opsqlite_execute(db, query, &params);
 #endif
 
-        return create_js_rows(rt, status);
-      });
+    return create_js_rows(rt, status);
+  });
 
-      function_map["execute"] = HOSTFN("execute") {
-        const std::string query = args[0].asString(rt).utf8(rt);
-        std::vector<JSVariant> params = count == 2 && args[1].isObject()
-                                            ? to_variant_vec(rt, args[1])
-                                            : std::vector<JSVariant>();
+  function_map["execute"] = HOSTFN("execute") {
+    const std::string query = args[0].asString(rt).utf8(rt);
+    std::vector<JSVariant> params = count == 2 && args[1].isObject()
+                                        ? to_variant_vec(rt, args[1])
+                                        : std::vector<JSVariant>();
 
-        auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
+    auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
     auto promise = promiseCtr.callAsConstructor(rt,
  HOSTFN("executor") {
-          auto task = [this, &rt, query, params,
-                       resolve = std::make_shared<jsi::Value>(rt, args[0]),
-                       reject = std::make_shared<jsi::Value>(rt, args[1])]() {
-            try {
+      auto task = [this, &rt, query, params,
+                   resolve = std::make_shared<jsi::Value>(rt, args[0]),
+                   reject = std::make_shared<jsi::Value>(rt, args[1])]() {
+        try {
 #ifdef OP_SQLITE_USE_LIBSQL
-              auto status = opsqlite_libsql_execute(db, query, &params);
+          auto status = opsqlite_libsql_execute(db, query, &params);
 #else
-              auto status = opsqlite_execute(db, query, &params);
+          auto status = opsqlite_execute(db, query, &params);
 #endif
 
-              if (invalidated) {
-                return;
-              }
+          if (invalidated) {
+            return;
+          }
 
-              invoker->invokeAsync([&rt, status = std::move(status), resolve,
-                                    reject] {
-                auto jsiResult = create_js_rows(rt, status);
-                resolve->asObject(rt).asFunction(rt).call(rt,
-                                                          std::move(jsiResult));
-              });
-              // On Android RN is broken and does not correctly match
-              // runtime_error to the generic exception We have to
-              // explicitly catch it
-              // https://github.com/facebook/react-native/issues/48027
-            } catch (std::runtime_error &e) {
-              auto what = e.what();
-              invoker->invokeAsync([&rt, what = std::string(what), reject] {
-                auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-                auto error = errorCtr.callAsConstructor(
-                    rt, jsi::String::createFromAscii(rt, what));
-                reject->asObject(rt).asFunction(rt).call(rt, error);
-              });
-            } catch (std::exception &exc) {
-              auto what = exc.what();
-              invoker->invokeAsync([&rt, what = std::string(what), reject] {
-                auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-                auto error = errorCtr.callAsConstructor(
-                    rt, jsi::String::createFromAscii(rt, what));
-                reject->asObject(rt).asFunction(rt).call(rt, error);
-              });
-            }
-          };
+          invoker->invokeAsync([&rt, status = std::move(status), resolve,
+                                reject] {
+            auto jsiResult = create_js_rows(rt, status);
+            resolve->asObject(rt).asFunction(rt).call(rt, std::move(jsiResult));
+          });
+          // On Android RN is broken and does not correctly match
+          // runtime_error to the generic exception We have to
+          // explicitly catch it
+          // https://github.com/facebook/react-native/issues/48027
+        } catch (std::runtime_error &e) {
+          auto what = e.what();
+          invoker->invokeAsync([&rt, what = std::string(what), reject] {
+            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto error = errorCtr.callAsConstructor(
+                rt, jsi::String::createFromAscii(rt, what));
+            reject->asObject(rt).asFunction(rt).call(rt, error);
+          });
+        } catch (std::exception &exc) {
+          auto what = exc.what();
+          invoker->invokeAsync([&rt, what = std::string(what), reject] {
+            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto error = errorCtr.callAsConstructor(
+                rt, jsi::String::createFromAscii(rt, what));
+            reject->asObject(rt).asFunction(rt).call(rt, error);
+          });
+        }
+      };
 
-          _thread_pool->queueWork(task);
+      _thread_pool->queueWork(task);
 
-          return {};
+      return {};
     }));
 
     return promise;
-      });
+  });
 
-      function_map["executeWithHostObjects"] =
-          HOSTFN("executeWithHostObjects") {
-        const std::string query = args[0].asString(rt).utf8(rt);
-        std::vector<JSVariant> params;
+  function_map["executeWithHostObjects"] = HOSTFN("executeWithHostObjects") {
+    const std::string query = args[0].asString(rt).utf8(rt);
+    std::vector<JSVariant> params;
 
-        if (count == 2) {
-          const jsi::Value &originalParams = args[1];
-          params = to_variant_vec(rt, originalParams);
-        }
+    if (count == 2) {
+      const jsi::Value &originalParams = args[1];
+      params = to_variant_vec(rt, originalParams);
+    }
 
-        auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
+    auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
     auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor") {
-          auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
-          auto reject = std::make_shared<jsi::Value>(rt, args[1]);
+      auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
+      auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-          auto task = [&rt, this, query, params, resolve, reject]() {
-            try {
-              std::vector<DumbHostObject> results;
-              std::shared_ptr<std::vector<SmartHostObject>> metadata =
-                  std::make_shared<std::vector<SmartHostObject>>();
+      auto task = [&rt, this, query, params, resolve, reject]() {
+        try {
+          std::vector<DumbHostObject> results;
+          std::shared_ptr<std::vector<SmartHostObject>> metadata =
+              std::make_shared<std::vector<SmartHostObject>>();
 #ifdef OP_SQLITE_USE_LIBSQL
-              auto status = opsqlite_libsql_execute_with_host_objects(
-                  db, query, &params, &results, metadata);
+          auto status = opsqlite_libsql_execute_with_host_objects(
+              db, query, &params, &results, metadata);
 #else
-              auto status = opsqlite_execute_host_objects(db, query, &params,
-                                                          &results, metadata);
+          auto status = opsqlite_execute_host_objects(db, query, &params,
+                                                      &results, metadata);
 #endif
 
-              if (invalidated) {
-                return;
-              }
+          if (invalidated) {
+            return;
+          }
 
-              invoker->invokeAsync(
-                  [&rt,
-                   results =
-                       std::make_shared<std::vector<DumbHostObject>>(results),
-                   metadata, status = std::move(status), resolve, reject] {
-                    auto jsiResult =
-                        create_result(rt, status, results.get(), metadata);
-                    resolve->asObject(rt).asFunction(rt).call(
-                        rt, std::move(jsiResult));
-                  });
-            } catch (std::runtime_error &e) {
-              auto what = e.what();
-              invoker->invokeAsync([&rt, what = std::string(what), reject] {
-                auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-                auto error = errorCtr.callAsConstructor(
-                    rt, jsi::String::createFromAscii(rt, what));
-                reject->asObject(rt).asFunction(rt).call(rt, error);
+          invoker->invokeAsync(
+              [&rt,
+               results = std::make_shared<std::vector<DumbHostObject>>(results),
+               metadata, status = std::move(status), resolve, reject] {
+                auto jsiResult =
+                    create_result(rt, status, results.get(), metadata);
+                resolve->asObject(rt).asFunction(rt).call(rt,
+                                                          std::move(jsiResult));
               });
-            } catch (std::exception &exc) {
-              auto what = exc.what();
-              invoker->invokeAsync([&rt, what, reject] {
-                auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-                auto error = errorCtr.callAsConstructor(
-                    rt, jsi::String::createFromAscii(rt, what));
-                reject->asObject(rt).asFunction(rt).call(rt, error);
-              });
-            }
-          };
+        } catch (std::runtime_error &e) {
+          auto what = e.what();
+          invoker->invokeAsync([&rt, what = std::string(what), reject] {
+            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto error = errorCtr.callAsConstructor(
+                rt, jsi::String::createFromAscii(rt, what));
+            reject->asObject(rt).asFunction(rt).call(rt, error);
+          });
+        } catch (std::exception &exc) {
+          auto what = exc.what();
+          invoker->invokeAsync([&rt, what, reject] {
+            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto error = errorCtr.callAsConstructor(
+                rt, jsi::String::createFromAscii(rt, what));
+            reject->asObject(rt).asFunction(rt).call(rt, error);
+          });
+        }
+      };
 
-          _thread_pool->queueWork(task);
+      _thread_pool->queueWork(task);
 
-          return {};
+      return {};
       }));
 
     return promise;
-      });
+  });
 
-      function_map["executeBatch"] = HOSTFN("executeBatch") {
-        if (count < 1) {
-          throw std::runtime_error(
-              "[op-sqlite][executeAsyncBatch] Incorrect parameter count");
-        }
+  function_map["executeBatch"] = HOSTFN("executeBatch") {
+    if (count < 1) {
+      throw std::runtime_error(
+          "[op-sqlite][executeAsyncBatch] Incorrect parameter count");
+    }
 
-        const jsi::Value &params = args[0];
+    const jsi::Value &params = args[0];
 
-        if (params.isNull() || params.isUndefined()) {
-          throw std::runtime_error(
-              "[op-sqlite][executeAsyncBatch] - An array of SQL "
-              "commands or parameters is needed");
-        }
+    if (params.isNull() || params.isUndefined()) {
+      throw std::runtime_error(
+          "[op-sqlite][executeAsyncBatch] - An array of SQL "
+          "commands or parameters is needed");
+    }
 
-        const jsi::Array &batchParams = params.asObject(rt).asArray(rt);
+    const jsi::Array &batchParams = params.asObject(rt).asArray(rt);
 
-        std::vector<BatchArguments> commands;
-        to_batch_arguments(rt, batchParams, &commands);
+    std::vector<BatchArguments> commands;
+    to_batch_arguments(rt, batchParams, &commands);
 
-        auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
+    auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
             auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor") {
-          auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
-          auto reject = std::make_shared<jsi::Value>(rt, args[1]);
+      auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
+      auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-          auto task = [this, &rt, commands, resolve, reject]() {
-            try {
+      auto task = [this, &rt, commands, resolve, reject]() {
+        try {
 #ifdef OP_SQLITE_USE_LIBSQL
-              auto batchResult = opsqlite_libsql_execute_batch(db, &commands);
+          auto batchResult = opsqlite_libsql_execute_batch(db, &commands);
 #else
-              auto batchResult = opsqlite_execute_batch(db, &commands);
+          auto batchResult = opsqlite_execute_batch(db, &commands);
 #endif
 
-              if (invalidated) {
-                return;
-              }
+          if (invalidated) {
+            return;
+          }
 
-              invoker->invokeAsync([&rt, batchResult = std::move(batchResult),
-                                    resolve] {
+          invoker->invokeAsync(
+              [&rt, batchResult = std::move(batchResult), resolve] {
                 auto res = jsi::Object(rt);
                 res.setProperty(rt, "rowsAffected",
                                 jsi::Value(batchResult.affectedRows));
                 resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
               });
-            } catch (std::runtime_error &e) {
-              auto what = e.what();
-              invoker->invokeAsync([&rt, what, reject] {
-                auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-                auto error = errorCtr.callAsConstructor(
-                    rt, jsi::String::createFromAscii(rt, what));
-                reject->asObject(rt).asFunction(rt).call(rt, error);
-              });
-            } catch (std::exception &exc) {
-              auto what = exc.what();
-              invoker->invokeAsync([&rt, what, reject] {
-                auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-                auto error = errorCtr.callAsConstructor(
-                    rt, jsi::String::createFromAscii(rt, what));
-                reject->asObject(rt).asFunction(rt).call(rt, error);
-              });
-            }
-          };
-          _thread_pool->queueWork(task);
+        } catch (std::runtime_error &e) {
+          auto what = e.what();
+          invoker->invokeAsync([&rt, what, reject] {
+            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto error = errorCtr.callAsConstructor(
+                rt, jsi::String::createFromAscii(rt, what));
+            reject->asObject(rt).asFunction(rt).call(rt, error);
+          });
+        } catch (std::exception &exc) {
+          auto what = exc.what();
+          invoker->invokeAsync([&rt, what, reject] {
+            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto error = errorCtr.callAsConstructor(
+                rt, jsi::String::createFromAscii(rt, what));
+            reject->asObject(rt).asFunction(rt).call(rt, error);
+          });
+        }
+      };
+      _thread_pool->queueWork(task);
 
-          return {};
+      return {};
     }));
 
             return promise;
-      });
+  });
 
 #ifdef OP_SQLITE_USE_LIBSQL
-      function_map["sync"] = HOSTFN("sync") {
-        opsqlite_libsql_sync(db);
-        return {};
-      });
+  function_map["sync"] = HOSTFN("sync") {
+    opsqlite_libsql_sync(db);
+    return {};
+  });
 #else
-      function_map["loadFile"] = HOSTFN("loadFile") {
-        if (count < 1) {
-          throw std::runtime_error(
-              "[op-sqlite][loadFile] Incorrect parameter count");
-          return {};
-        }
+  function_map["loadFile"] = HOSTFN("loadFile") {
+    if (count < 1) {
+      throw std::runtime_error(
+          "[op-sqlite][loadFile] Incorrect parameter count");
+      return {};
+    }
 
-        const std::string sqlFileName = args[0].asString(rt).utf8(rt);
+    const std::string sqlFileName = args[0].asString(rt).utf8(rt);
 
-        auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
+    auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
     auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor") {
-          auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
-          auto reject = std::make_shared<jsi::Value>(rt, args[1]);
+      auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
+      auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-          auto task = [&rt, this, sqlFileName, resolve, reject]() {
-            try {
-              const auto result = import_sql_file(db, sqlFileName);
+      auto task = [&rt, this, sqlFileName, resolve, reject]() {
+        try {
+          const auto result = import_sql_file(db, sqlFileName);
 
-              invoker->invokeAsync([&rt, result, resolve] {
-                auto res = jsi::Object(rt);
-                res.setProperty(rt, "rowsAffected",
-                                jsi::Value(result.affectedRows));
-                res.setProperty(rt, "commands", jsi::Value(result.commands));
-                resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
-              });
-            } catch (std::runtime_error &e) {
-              auto what = e.what();
-              invoker->invokeAsync([&rt, what = std::string(what), reject] {
-                auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-                auto error = errorCtr.callAsConstructor(
-                    rt, jsi::String::createFromAscii(rt, what));
-                reject->asObject(rt).asFunction(rt).call(rt, error);
-              });
-            } catch (std::exception &exc) {
-              auto what = exc.what();
-              invoker->invokeAsync([&rt, what = std::string(what), reject] {
-                auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-                auto error = errorCtr.callAsConstructor(
-                    rt, jsi::String::createFromAscii(rt, what));
-                reject->asObject(rt).asFunction(rt).call(rt, error);
-              });
-            }
-          };
-          _thread_pool->queueWork(task);
-          return {};
+          invoker->invokeAsync([&rt, result, resolve] {
+            auto res = jsi::Object(rt);
+            res.setProperty(rt, "rowsAffected",
+                            jsi::Value(result.affectedRows));
+            res.setProperty(rt, "commands", jsi::Value(result.commands));
+            resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
+          });
+        } catch (std::runtime_error &e) {
+          auto what = e.what();
+          invoker->invokeAsync([&rt, what = std::string(what), reject] {
+            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto error = errorCtr.callAsConstructor(
+                rt, jsi::String::createFromAscii(rt, what));
+            reject->asObject(rt).asFunction(rt).call(rt, error);
+          });
+        } catch (std::exception &exc) {
+          auto what = exc.what();
+          invoker->invokeAsync([&rt, what = std::string(what), reject] {
+            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+            auto error = errorCtr.callAsConstructor(
+                rt, jsi::String::createFromAscii(rt, what));
+            reject->asObject(rt).asFunction(rt).call(rt, error);
+          });
+        }
+      };
+      _thread_pool->queueWork(task);
+      return {};
     }));
 
     return promise;
-      });
+  });
 
-      function_map["updateHook"] = HOSTFN("updateHook") {
-        auto callback = std::make_shared<jsi::Value>(rt, args[0]);
+  function_map["updateHook"] = HOSTFN("updateHook") {
+    auto callback = std::make_shared<jsi::Value>(rt, args[0]);
 
-        if (callback->isUndefined() || callback->isNull()) {
-          update_hook_callback = nullptr;
-        } else {
-          update_hook_callback = callback;
+    if (callback->isUndefined() || callback->isNull()) {
+      update_hook_callback = nullptr;
+    } else {
+      update_hook_callback = callback;
+    }
+
+    auto_register_update_hook();
+    return {};
+  });
+
+  function_map["commitHook"] = HOSTFN("commitHook") {
+    if (count < 1) {
+      throw std::runtime_error("[op-sqlite][commitHook] callback needed");
+    }
+
+    auto callback = std::make_shared<jsi::Value>(rt, args[0]);
+    if (callback->isUndefined() || callback->isNull()) {
+      opsqlite_deregister_commit_hook(db);
+      return {};
+    }
+    commit_hook_callback = callback;
+    opsqlite_register_commit_hook(db, this);
+
+    return {};
+  });
+
+  function_map["rollbackHook"] = HOSTFN("rollbackHook") {
+    if (count < 1) {
+      throw std::runtime_error("[op-sqlite][rollbackHook] callback needed");
+    }
+
+    auto callback = std::make_shared<jsi::Value>(rt, args[0]);
+
+    if (callback->isUndefined() || callback->isNull()) {
+      opsqlite_deregister_rollback_hook(db);
+      return {};
+    }
+    rollback_hook_callback = callback;
+
+    opsqlite_register_rollback_hook(db, this);
+    return {};
+  });
+
+  function_map["loadExtension"] = HOSTFN("loadExtension") {
+    auto path = args[0].asString(rt).utf8(rt);
+    std::string entry_point;
+    if (count > 1 && args[1].isString()) {
+      entry_point = args[1].asString(rt).utf8(rt);
+    }
+
+    opsqlite_load_extension(db, path, entry_point);
+    return {};
+  });
+
+  function_map["reactiveExecute"] = HOSTFN("reactiveExecute") {
+    auto query = args[0].asObject(rt);
+
+    const std::string query_str =
+        query.getProperty(rt, "query").asString(rt).utf8(rt);
+    auto js_args = query.getProperty(rt, "arguments");
+    auto js_discriminators =
+        query.getProperty(rt, "fireOn").asObject(rt).asArray(rt);
+    auto variant_args = to_variant_vec(rt, js_args);
+
+    sqlite3_stmt *stmt = opsqlite_prepare_statement(db, query_str);
+    opsqlite_bind_statement(stmt, &variant_args);
+
+    auto callback =
+        std::make_shared<jsi::Value>(query.getProperty(rt, "callback"));
+
+    std::vector<TableRowDiscriminator> discriminators;
+
+    for (size_t i = 0; i < js_discriminators.length(rt); i++) {
+      auto js_discriminator =
+          js_discriminators.getValueAtIndex(rt, i).asObject(rt);
+      std::string table =
+          js_discriminator.getProperty(rt, "table").asString(rt).utf8(rt);
+      std::vector<int> ids;
+      if (js_discriminator.hasProperty(rt, "ids")) {
+        auto js_ids =
+            js_discriminator.getProperty(rt, "ids").asObject(rt).asArray(rt);
+        for (size_t j = 0; j < js_ids.length(rt); j++) {
+          ids.push_back(
+              static_cast<int>(js_ids.getValueAtIndex(rt, j).asNumber()));
         }
+      }
+      discriminators.push_back({table, ids});
+    }
 
-        auto_register_update_hook();
-        return {};
-      });
+    std::shared_ptr<ReactiveQuery> reactiveQuery =
+        std::make_shared<ReactiveQuery>(
+            ReactiveQuery{stmt, discriminators, callback});
 
-      function_map["commitHook"] = HOSTFN("commitHook") {
-        if (count < 1) {
-          throw std::runtime_error("[op-sqlite][commitHook] callback needed");
-        }
+    reactive_queries.push_back(reactiveQuery);
 
-        auto callback = std::make_shared<jsi::Value>(rt, args[0]);
-        if (callback->isUndefined() || callback->isNull()) {
-          opsqlite_deregister_commit_hook(db);
-          return {};
-        }
-        commit_hook_callback = callback;
-        opsqlite_register_commit_hook(db, this);
+    auto_register_update_hook();
 
-        return {};
-      });
+    auto unsubscribe = HOSTFN("unsubscribe") {
+      auto it = std::find(reactive_queries.begin(), reactive_queries.end(),
+                          reactiveQuery);
+      if (it != reactive_queries.end()) {
+        reactive_queries.erase(it);
+      }
+      auto_register_update_hook();
+      return {};
+    });
 
-      function_map["rollbackHook"] = HOSTFN("rollbackHook") {
-        if (count < 1) {
-          throw std::runtime_error("[op-sqlite][rollbackHook] callback needed");
-        }
-
-        auto callback = std::make_shared<jsi::Value>(rt, args[0]);
-
-        if (callback->isUndefined() || callback->isNull()) {
-          opsqlite_deregister_rollback_hook(db);
-          return {};
-        }
-        rollback_hook_callback = callback;
-
-        opsqlite_register_rollback_hook(db, this);
-        return {};
-      });
-
-      function_map["loadExtension"] = HOSTFN("loadExtension") {
-        auto path = args[0].asString(rt).utf8(rt);
-        std::string entry_point;
-        if (count > 1 && args[1].isString()) {
-          entry_point = args[1].asString(rt).utf8(rt);
-        }
-
-        opsqlite_load_extension(db, path, entry_point);
-        return {};
-      });
-
-      function_map["reactiveExecute"] = HOSTFN("reactiveExecute") {
-        auto query = args[0].asObject(rt);
-
-        const std::string query_str =
-            query.getProperty(rt, "query").asString(rt).utf8(rt);
-        auto js_args = query.getProperty(rt, "arguments");
-        auto js_discriminators =
-            query.getProperty(rt, "fireOn").asObject(rt).asArray(rt);
-        auto variant_args = to_variant_vec(rt, js_args);
-
-        sqlite3_stmt *stmt = opsqlite_prepare_statement(db, query_str);
-        opsqlite_bind_statement(stmt, &variant_args);
-
-        auto callback =
-            std::make_shared<jsi::Value>(query.getProperty(rt, "callback"));
-
-        std::vector<TableRowDiscriminator> discriminators;
-
-        for (size_t i = 0; i < js_discriminators.length(rt); i++) {
-          auto js_discriminator =
-              js_discriminators.getValueAtIndex(rt, i).asObject(rt);
-          std::string table =
-              js_discriminator.getProperty(rt, "table").asString(rt).utf8(rt);
-          std::vector<int> ids;
-          if (js_discriminator.hasProperty(rt, "ids")) {
-            auto js_ids =
-                js_discriminator.getProperty(rt, "ids").asObject(rt).asArray(
-                    rt);
-            for (size_t j = 0; j < js_ids.length(rt); j++) {
-              ids.push_back(
-                  static_cast<int>(js_ids.getValueAtIndex(rt, j).asNumber()));
-            }
-          }
-          discriminators.push_back({table, ids});
-        }
-
-        std::shared_ptr<ReactiveQuery> reactiveQuery =
-            std::make_shared<ReactiveQuery>(
-                ReactiveQuery{stmt, discriminators, callback});
-
-        reactive_queries.push_back(reactiveQuery);
-
-        auto_register_update_hook();
-
-        auto unsubscribe = HOSTFN("unsubscribe") {
-          auto it = std::find(reactive_queries.begin(), reactive_queries.end(),
-                              reactiveQuery);
-          if (it != reactive_queries.end()) {
-            reactive_queries.erase(it);
-          }
-          auto_register_update_hook();
-          return {};
-        });
-
-        return unsubscribe;
-      });
+    return unsubscribe;
+  });
 #endif
 
-      function_map["prepareStatement"] = HOSTFN("prepareStatement") {
-        auto query = args[0].asString(rt).utf8(rt);
+  function_map["prepareStatement"] = HOSTFN("prepareStatement") {
+    auto query = args[0].asString(rt).utf8(rt);
 #ifdef OP_SQLITE_USE_LIBSQL
-        libsql_stmt_t statement = opsqlite_libsql_prepare_statement(db, query);
+    libsql_stmt_t statement = opsqlite_libsql_prepare_statement(db, query);
 #else
-        sqlite3_stmt *statement = opsqlite_prepare_statement(db, query);
+    sqlite3_stmt *statement = opsqlite_prepare_statement(db, query);
 #endif
-        auto preparedStatementHostObject =
-            std::make_shared<PreparedStatementHostObject>(
-                db, db_name, statement, invoker, _thread_pool);
+    auto preparedStatementHostObject =
+        std::make_shared<PreparedStatementHostObject>(db, db_name, statement,
+                                                      invoker, _thread_pool);
 
-        return jsi::Object::createFromHostObject(rt,
-                                                 preparedStatementHostObject);
-      });
+    return jsi::Object::createFromHostObject(rt, preparedStatementHostObject);
+  });
 
-      function_map["getDbPath"] = HOSTFN("getDbPath") {
-        std::string path = std::string(base_path);
+  function_map["getDbPath"] = HOSTFN("getDbPath") {
+    std::string path = std::string(base_path);
 
-        if (count == 1) {
-          if (!args[0].isString()) {
-            throw std::runtime_error(
-                "[op-sqlite][open] database location must be a string");
-          }
+    if (count == 1) {
+      if (!args[0].isString()) {
+        throw std::runtime_error(
+            "[op-sqlite][open] database location must be a string");
+      }
 
-          std::string last_path = args[0].asString(rt).utf8(rt);
+      std::string last_path = args[0].asString(rt).utf8(rt);
 
-          if (last_path == ":memory:") {
-            path = ":memory:";
-          } else if (last_path.rfind('/', 0) == 0) {
-            path = last_path;
-          } else {
-            path = path + "/" + last_path;
-          }
-        }
+      if (last_path == ":memory:") {
+        path = ":memory:";
+      } else if (last_path.rfind('/', 0) == 0) {
+        path = last_path;
+      } else {
+        path = path + "/" + last_path;
+      }
+    }
 
-        auto result = opsqlite_get_db_path(db_name, path);
-        return jsi::String::createFromUtf8(rt, result);
-      });
+    auto result = opsqlite_get_db_path(db_name, path);
+    return jsi::String::createFromUtf8(rt, result);
+  });
 
-      function_map["flushPendingReactiveQueries"] =
-          HOSTFN("flushPendingReactiveQueries") {
-        auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
+  function_map["flushPendingReactiveQueries"] =
+      HOSTFN("flushPendingReactiveQueries") {
+    auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
     auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor") {
-          auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
+      auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
 
-          auto task = [&rt, this, resolve]() {
-            flush_pending_reactive_queries(resolve);
-          };
+      auto task = [&rt, this, resolve]() {
+        flush_pending_reactive_queries(resolve);
+      };
 
-          _thread_pool->queueWork(task);
+      _thread_pool->queueWork(task);
 
-          return {};
+      return {};
     }));
 
     return promise;
-      });
-    }
+  });
+}
 
-    std::vector<jsi::PropNameID> DBHostObject::getPropertyNames(jsi::Runtime &
-                                                                _rt) {
-      std::vector<jsi::PropNameID> keys;
-      keys.reserve(function_map.size());
-      for (const auto &pair : function_map) {
-        keys.emplace_back(jsi::PropNameID::forUtf8(_rt, pair.first));
-      }
-      return keys;
-    }
+std::vector<jsi::PropNameID> DBHostObject::getPropertyNames(jsi::Runtime &_rt) {
+  std::vector<jsi::PropNameID> keys;
+  keys.reserve(function_map.size());
+  for (const auto &pair : function_map) {
+    keys.emplace_back(jsi::PropNameID::forUtf8(_rt, pair.first));
+  }
+  return keys;
+}
 
-    jsi::Value DBHostObject::get(jsi::Runtime & _rt,
-                                 const jsi::PropNameID &propNameID) {
-      auto name = propNameID.utf8(rt);
-      if (function_map.count(name) != 1) {
-        return HOST_STATIC_FN(name.c_str()) {
-          throw std::runtime_error(
-              "[op-sqlite] Function " + name +
-              " not implemented for current backend (libsql or sqlcipher)");
-        });
-      }
+jsi::Value DBHostObject::get(jsi::Runtime &_rt,
+                             const jsi::PropNameID &propNameID) {
+  auto name = propNameID.utf8(rt);
+  if (function_map.count(name) != 1) {
+    return HOST_STATIC_FN(name.c_str()) {
+      throw std::runtime_error(
+          "[op-sqlite] Function " + name +
+          " not implemented for current backend (libsql or sqlcipher)");
+    });
+  }
 
-      return {rt, function_map[name]};
-    }
+  return {rt, function_map[name]};
+}
 
-    void DBHostObject::set(jsi::Runtime & _rt, const jsi::PropNameID &name,
-                           const jsi::Value &value) {
-      throw std::runtime_error("You cannot write to this object!");
-    }
+void DBHostObject::set(jsi::Runtime &_rt, const jsi::PropNameID &name,
+                       const jsi::Value &value) {
+  throw std::runtime_error("You cannot write to this object!");
+}
 
-    void DBHostObject::invalidate() {
-      if (invalidated) {
-        return;
-      }
+void DBHostObject::invalidate() {
+  if (invalidated) {
+    return;
+  }
 
-      invalidated = true;
-      _thread_pool->restartPool();
+  invalidated = true;
+  _thread_pool->restartPool();
 #ifdef OP_SQLITE_USE_LIBSQL
-      opsqlite_libsql_close(db);
+  opsqlite_libsql_close(db);
 #else
-      if (db != nullptr) {
-        opsqlite_close(db);
-        db = nullptr;
-      }
+  if (db != nullptr) {
+    opsqlite_close(db);
+    db = nullptr;
+  }
 #endif
-    }
+}
 
-    DBHostObject::~DBHostObject() { invalidate(); }
+DBHostObject::~DBHostObject() { invalidate(); }
 
-  } // namespace opsqlite
+} // namespace opsqlite
