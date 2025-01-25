@@ -241,13 +241,13 @@ void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &tuples,
 
         const std::string query =
             tuple.getValueAtIndex(rt, 0).asString(rt).utf8(rt);
-        if(length == 1) {
+        if (length == 1) {
             commands->push_back({query});
             continue;
         }
-        
+
         const jsi::Value &tuple_params = tuple.getValueAtIndex(rt, 1);
-                                         
+
         if (!tuple_params.isUndefined() &&
             tuple_params.asObject(rt).isArray(rt) &&
             tuple_params.asObject(rt).asArray(rt).length(rt) > 0 &&
@@ -261,13 +261,12 @@ void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &tuples,
                 tuple_params.asObject(rt).asArray(rt);
             for (int x = 0; x < params_array.length(rt); x++) {
                 const jsi::Value &p = params_array.getValueAtIndex(rt, x);
-                auto params = std::vector<JSVariant>(
-                    to_variant_vec(rt, p));
+                auto params = std::vector<JSVariant>(to_variant_vec(rt, p));
                 commands->push_back({query, params});
             }
         } else {
-            auto params = std::vector<JSVariant>(
-                to_variant_vec(rt, tuple_params));
+            auto params =
+                std::vector<JSVariant>(to_variant_vec(rt, tuple_params));
             commands->push_back({query, params});
         }
     }
