@@ -1,4 +1,5 @@
 import { NativeModules, Platform } from 'react-native';
+export { Storage } from './Storage';
 
 export type Scalar =
   | string
