@@ -76,6 +76,8 @@ Some of the known offenders are:
 - `cozodb`
 - Any other package that might depend on sqlite
 
+## Expo Updates
+
 `expo-updates` now has a added a new way to avoid a hard dependency on sqlite. Adding `"expo.updates.useThirdPartySQLitePod": "true"` to `ios/Podfile.properties.json` fixes the duplicate symbols and header definition issues when `expo-updates` is the only conflicting package.
 
 An expo plugin can also be used:
@@ -108,6 +110,25 @@ Another workaround for `expo-updates` and `expo-sqlite` you can use the iOS embe
 ```
 
 This means however, you will be used whatever version the phone is running, which might be outdated and it also does not support extension loading. There is no way around this.
+
+## Libsql
+
+If you want to use expo-updates and libsql at the same time there is one more workaround you need to apply. On your `AppDelegate` (or wherever you initialize your RN view if it's a brownfield integration), you need to call `[OPSQLite expoUpdatesWorkaround];` before initializing the RN view. In case of a normal expo app modify the `AppDelegate.mm` as follows:
+
+```objective-c
+#import "OPSQLite.h" // Add the header
+
+@implementation AppDelegate
+
+-(BOOL)application: (UIApplication *)application didFinishLaunchingWithOptions: (NSDictionary *)launchOptions {
+  self moduleName = @"main";
+  self.initialProps = 0{};
+  [OPSQLite expoUpdatesWorkaround]; // Add the call to the workaround
+  return [super application:application didFinishLaunchingWithOptions:launchOptions];
+}
+```
+
+# Other
 
 For other conflicts and compilation errors there is no easy solution (Is there a solution?). You need to get rid of the double compilation by hand, either by patching the compilation of each package so that it still builds or removing the dependency on the package.
 

@@ -14,5 +14,6 @@ void install(jsi::Runtime &rt,
              const char *base_path, const char *crsqlite_path,
              const char *sqlite_vec_path);
 void invalidate();
+void expoUpdatesWorkaround(const char *base_path);
 
 } // namespace opsqlite

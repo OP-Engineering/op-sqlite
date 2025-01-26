@@ -1,16 +1,7 @@
-// #ifdef RCT_NEW_ARCH_ENABLED
-// #import <OPSQLiteSpec/OPSQLiteSpec.h>
-// #else
 #import <React/RCTBridge.h>
-// #endif
 
-@interface OPSQLite : NSObject
-// #ifdef RCT_NEW_ARCH_ENABLED
-//                                    <NativeOPSQLiteSpec>
-// #else
-                                   <RCTBridgeModule>
-// #endif
+@interface OPSQLite : NSObject <RCTBridgeModule>
 
 @property(nonatomic, assign) BOOL setBridgeOnMainQueue;
-
++ (void)expoUpdatesWorkaround;
 @end
