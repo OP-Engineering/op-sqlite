@@ -12,6 +12,10 @@ Drizzle works with op-sqlite. Follow their documentation to set up a new project
 
 https://orm.drizzle.team/docs/connect-op-sqlite
 
+Here is a working example
+
+https://github.com/OP-Engineering/op-sqlite-drizzle-example
+
 ## TypeORM
 
 TypeORM is not directly supported as in the past is was broken and people started opening issues on the repo. Here is an example driver you can adjust and pass to the driver param when creating a new TypeORM instance:
