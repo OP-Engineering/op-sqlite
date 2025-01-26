@@ -24,6 +24,8 @@ Some of the big supported features:
 - Load runtime extensions
 - JSONB support
 
+It also contains a simple [Key-Value store](https://op-engineering.github.io/op-sqlite/docs/key_value_storage) you can use without adding one more dependency to your app.
+
 # License
 
 MIT License.
