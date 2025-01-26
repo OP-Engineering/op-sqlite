@@ -170,4 +170,13 @@ void install(jsi::Runtime &rt,
     rt.global().setProperty(rt, "__OPSQLiteProxy", std::move(module));
 }
 
+void expoUpdatesWorkaround(const char *base_path) {
+#ifdef OP_SQLITE_USE_LIBSQL
+    std::string path = std::string(base_path);
+    // Open a DB before anything else so that expo-updates does not mess up the
+    // configuration
+    opsqlite_libsql_open("__dummy", path, "");
+#endif
+}
+
 } // namespace opsqlite
