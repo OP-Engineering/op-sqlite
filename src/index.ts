@@ -468,6 +468,12 @@ function enhanceDB(db: InternalDB, options: DBParams): DB {
 
       return res;
     },
+    executeAsync: async (
+      query: string,
+      params?: Scalar[] | undefined
+    ): Promise<QueryResult> => {
+      return db.execute(query, params);
+    },
     execute: async (
       query: string,
       params?: Scalar[] | undefined
