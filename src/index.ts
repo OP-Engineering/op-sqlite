@@ -388,7 +388,6 @@ function enhanceDB(db: InternalDB, options: DBParams): DB {
     commitHook: db.commitHook,
     rollbackHook: db.rollbackHook,
     loadExtension: db.loadExtension,
-    executeRaw: db.executeRaw,
     getDbPath: db.getDbPath,
     reactiveExecute: db.reactiveExecute,
     sync: db.sync,
@@ -408,6 +407,31 @@ function enhanceDB(db: InternalDB, options: DBParams): DB {
       return sanitizedParams
         ? await db.executeWithHostObjects(query, sanitizedParams as Scalar[])
         : await db.executeWithHostObjects(query);
+    },
+    executeRaw: async (query: string, params?: Scalar[]) => {
+      const sanitizedParams = params?.map((p) => {
+        if (ArrayBuffer.isView(p)) {
+          return p.buffer;
+        }
+
+        return p;
+      });
+
+      return db.executeRaw(query, sanitizedParams as Scalar[]);
+    },
+    // Wrapper for executeRaw, drizzleORM uses this function
+    // at some point I changed the API but they did not pin their dependency to a specific version
+    // so re-inserting this so it starts working again
+    executeRawAsync: async (query: string, params?: Scalar[]) => {
+      const sanitizedParams = params?.map((p) => {
+        if (ArrayBuffer.isView(p)) {
+          return p.buffer;
+        }
+
+        return p;
+      });
+
+      return db.executeRaw(query, sanitizedParams as Scalar[]);
     },
     executeSync: (query: string, params?: Scalar[]): QueryResult => {
       const sanitizedParams = params?.map((p) => {
