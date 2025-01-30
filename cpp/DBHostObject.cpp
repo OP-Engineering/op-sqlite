@@ -144,6 +144,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &url,
                            std::string &auth_token,
                            std::shared_ptr<react::CallInvoker> invoker)
     : db_name(url), invoker(std::move(invoker)), rt(rt) {
+    _thread_pool = std::make_shared<ThreadPool>();
     db = opsqlite_libsql_open_remote(url, auth_token);
 
     create_jsi_functions();
@@ -155,6 +156,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt,
                            std::string &url, std::string &auth_token,
                            int sync_interval)
     : db_name(db_name), invoker(std::move(invoker)), rt(rt) {
+    _thread_pool = std::make_shared<ThreadPool>();
     db = opsqlite_libsql_open_sync(db_name, path, url, auth_token,
                                    sync_interval);
 
@@ -371,7 +373,7 @@ void DBHostObject::create_jsi_functions() {
                                             : std::vector<JSVariant>();
 
         auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
-    auto promise = promiseCtr.callAsConstructor(rt,
+            auto promise = promiseCtr.callAsConstructor(rt,
  HOSTFN("executor") {
             auto task = [this, &rt, query, params,
                          resolve = std::make_shared<jsi::Value>(rt, args[0]),
@@ -425,7 +427,7 @@ void DBHostObject::create_jsi_functions() {
             return {};
     }));
 
-    return promise;
+            return promise;
     });
 
     function_map["executeWithHostObjects"] = HOSTFN("executeWithHostObjects") {
