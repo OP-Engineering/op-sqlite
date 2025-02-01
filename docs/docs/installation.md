@@ -10,6 +10,12 @@ Installing is easy
 npm i -s @op-engineering/op-sqlite && npx pod-install
 ```
 
+If you are using Expo, you cannot add this library on a expo-go app, you need to pre-build your app. There are no needed plugins, as long as pod install runs it's all you need:
+
+```
+npx expo install @op-engineering/op-sqlite && npx expo prebuild
+```
+
 # Configuration
 
 SQLite is very customizable on compilation level. op-sqlite also allows you add extensions or even change the base implementation. You can do this by adding the following to your `package.json`:
