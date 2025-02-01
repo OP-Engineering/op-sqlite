@@ -18,6 +18,8 @@ npx expo install @op-engineering/op-sqlite
 npx expo prebuild
 ```
 
+This package only runs on `iOS`, `Android` and `macOS`, same as `expo-sqlite`, this is a technical limitation as sqlite does not run on the browser.
+
 # Configuration
 
 SQLite is very customizable on compilation level. op-sqlite also allows you add extensions or even change the base implementation. You can do this by adding the following to your `package.json`:
