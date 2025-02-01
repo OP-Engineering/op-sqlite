@@ -6,14 +6,16 @@ sidebar_position: 1
 
 Installing is easy
 
-```tsx
-npm i -s @op-engineering/op-sqlite && npx pod-install
+```bash
+npm i -s @op-engineering/op-sqlite
+npx pod-install@latest
 ```
 
 If you are using Expo, you cannot add this library on a expo-go app, you need to pre-build your app. There are no needed plugins, as long as pod install runs it's all you need:
 
-```
-npx expo install @op-engineering/op-sqlite && npx expo prebuild
+```bash
+npx expo install @op-engineering/op-sqlite
+npx expo prebuild
 ```
 
 # Configuration
@@ -53,7 +55,9 @@ All keys are optional, only turn on the features you want:
 
 Some combination of features are not allowed. For example `sqlcipher` and `iosSqlite` since they are fundamentally different sources. In this cases you will get an error while doing a pod install or during the Android build.
 
-# 🚨🚨🚨 IOS PODS USE_FRAMEWORKS BREAKS OP-SQLITE 🚨🚨🚨
+# Conflicts
+
+## use_frameworks
 
 In case you are using `use_frameworks` (for example because you are using `react-native-firebase`), this will break the compilation process and force the compilation to use the embedded sqlite on iOS. One possible workaround is putting this in your `Podfile`:
 
@@ -69,20 +73,18 @@ pre_install do |installer|
 end
 ```
 
-It forces static compilation on `op-sqlite` only. Since everything is compiled from sources this _should_ work, however do it at your own risk since other compilation errors might arise. It is possible you will not get any error, but you will not be using the latest version of sqlite but rather the OS embedded one.
+It forces static compilation on `op-sqlite` only. Since everything is compiled from sources this _should_ work, however do it at your own risk since other compilation errors might arise.
 
-# Compilation Clashes
+## Compilation clashes
 
-If you have other packages that are dependent on sqlite you will have issues.
-
-Some of the known offenders are:
+If you have other packages that are dependent on sqlite you will have issues. Some of the known offenders are:
 
 - `expo-updates`
 - `expo-sqlite`
 - `cozodb`
-- Any other package that might depend on sqlite
+- Other packages that try to add/link sqlite (or the sqlite3 cocoapod)
 
-## Expo Updates
+### Expo Updates
 
 `expo-updates` now has a added a new way to avoid a hard dependency on sqlite. Adding `"expo.updates.useThirdPartySQLitePod": "true"` to `ios/Podfile.properties.json` fixes the duplicate symbols and header definition issues when `expo-updates` is the only conflicting package.
 
@@ -107,7 +109,7 @@ export default withUseThirdPartySQLitePod;
 
 If you cannot remove the dependency each of the packages will try to compile sqlite from sources or link it on build time. Even if they manage to compile, they might compile sqlite with different compilation flags and you might face runtime errors.
 
-Another workaround for `expo-updates` and `expo-sqlite` you can use the iOS embedded version of sqlite (they both use the OS version, that’s why they clash when op-sqlite compiles sqlite from sources), in your `package.json` use the following flags:
+Another workaround for the expo packages, is you can use the iOS embedded version of sqlite for op-sqlite, in your `package.json` turn on the `iosSqlite` flag:
 
 ```json
 "op-sqlite": {
@@ -117,28 +119,30 @@ Another workaround for `expo-updates` and `expo-sqlite` you can use the iOS embe
 
 This means however, you will be used whatever version the phone is running, which might be outdated and it also does not support extension loading. There is no way around this.
 
-## Libsql
+### Libsql and Expo Updates
 
-If you want to use expo-updates and libsql at the same time there is one more workaround you need to apply. On your `AppDelegate` (or wherever you initialize your RN view if it's a brownfield integration), you need to call `[OPSQLite expoUpdatesWorkaround];` before initializing the RN view. In case of a normal expo app modify the `AppDelegate.mm` as follows:
+If you want to use `expo-updates` and `libsql` at the same time there is one more workaround you need to apply. On your `AppDelegate` (or wherever you initialize your RN view if it's a brownfield integration), you need to call `[OPSQLite expoUpdatesWorkaround];` before initializing the RN view. In case of a normal expo app modify the `AppDelegate.mm` as follows:
 
 ```objective-c
 #import "OPSQLite.h" // Add the header
 
-@implementation AppDelegate
-
+// Modify the didFinishLaunchingWithOptions function
 -(BOOL)application: (UIApplication *)application didFinishLaunchingWithOptions: (NSDictionary *)launchOptions {
   self moduleName = @"main";
   self.initialProps = 0{};
-  [OPSQLite expoUpdatesWorkaround]; // Add the call to the workaround
+
+  // Add the call to the workaround
+  [OPSQLite expoUpdatesWorkaround];
+
   return [super application:application didFinishLaunchingWithOptions:launchOptions];
 }
 ```
 
 # Other
 
-For other conflicts and compilation errors there is no easy solution (Is there a solution?). You need to get rid of the double compilation by hand, either by patching the compilation of each package so that it still builds or removing the dependency on the package.
+For other conflicts and compilation errors there is no documented solutions. You need to get rid of the double compilation by hand, either by patching the compilation of each package so that it still builds or removing the dependency on the package.
 
-On Android you might be able to get away by just using a `pickFirst` strategy (here is an [article](https://ospfranco.com/how-to-resolve-duplicated-libraries-on-android/) on how to do that). On iOS depending on the build system you might be able to patch it via a post-build hook, something like:
+On Android you might be able to get away by just [using a `pickFirst` strategy](https://ospfranco.com/how-to-resolve-duplicated-libraries-on-android/). On iOS depending on the build system you might be able to patch it via a post-build hook, something like:
 
 ```ruby
 pre_install do |installer|
