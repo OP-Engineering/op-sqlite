@@ -10,7 +10,6 @@
 #include <sqlite3.h>
 #endif
 #include "OPThreadPool.h"
-         "
 #include <string>
 #include <utility>
 
