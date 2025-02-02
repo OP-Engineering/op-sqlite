@@ -18,7 +18,7 @@ add_library(
   SHARED
   ../cpp/bindings.cpp
   ../cpp/utils.cpp
-  ../cpp/ThreadPool.cpp
+  ../cpp/OPThreadPool.cpp
   ../cpp/SmartHostObject.cpp
   ../cpp/PreparedStatementHostObject.cpp
   ../cpp/DumbHostObject.cpp
