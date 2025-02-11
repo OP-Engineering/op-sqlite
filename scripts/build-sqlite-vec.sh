@@ -67,6 +67,55 @@ install_name_tool -id @rpath/sqlitevec.framework/sqlitevec ../../ios/sqlitevec.x
 cp ./ios/sim_fat/sqlitevec ../../ios/sqlitevec.xcframework/ios-arm64_x86_64-simulator/sqlitevec.framework/
 install_name_tool -id @rpath/sqlitevec.framework/sqlitevec ../../ios/sqlitevec.xcframework/ios-arm64_x86_64-simulator/sqlitevec.framework/sqlitevec
 
+TVOS_SDK_PATH=$(xcrun --sdk appletvos --show-sdk-path)
+TVOS_SIMULATOR_SDK_PATH=$(xcrun --sdk appletvsimulator --show-sdk-path)
+
+CC_tvos_arm64=$(xcrun --sdk appletvos --find clang)
+CC_tvos_x86_64=$(xcrun --sdk appletvsimulator --find clang)
+
+TVOS_CFLAGS="-Ivendor/ -I./ -O3 -fembed-bitcode -fPIC"
+TVOS_LDFLAGS="-Wl"
+TVOS_ARM64_FLAGS="-target arm64-apple-tvos$MIN_IOS_VERSION -mappletvos-version-min=$MIN_IOS_VERSION"
+TVOS_ARM64_SIM_FLAGS="-target arm64-apple-tvos-simulator$MIN_IOS_VERSION -mappletvsimulator-version-min=$MIN_IOS_VERSION"
+TVOS_X86_64_FLAGS="-target x86_64-apple-tvos-simulator$MIN_IOS_VERSION -mappletvsimulator-version-min=$MIN_IOS_VERSION"
+
+OUT_DIR_tvos_arm64=tvos/arm64
+OUT_DIR_tvos_x86_64=tvos/x86_64
+OUT_DIR_tvos_arm64_simulator=tvos/arm64_simulator
+
+mkdir -p $OUT_DIR_tvos_arm64
+mkdir -p $OUT_DIR_tvos_x86_64
+mkdir -p $OUT_DIR_tvos_arm64_simulator
+
+function build_tvos_arm64() {
+  $CC_tvos_arm64 $CFLAGS $TVOS_CFLAGS $TVOS_ARM64_FLAGS -isysroot $TVOS_SDK_PATH -c sqlite-vec.c -o $OUT_DIR_tvos_arm64/sqlite-vec.o
+  $CC_tvos_arm64 -dynamiclib -o $OUT_DIR_tvos_arm64/sqlitevec $OUT_DIR_tvos_arm64/sqlite-vec.o -isysroot $TVOS_SDK_PATH $TVOS_LDFLAGS
+}
+
+function build_tvos_x86_64() {
+  $CC_tvos_x86_64 $CFLAGS $TVOS_CFLAGS $TVOS_X86_64_FLAGS -isysroot $TVOS_SIMULATOR_SDK_PATH -c sqlite-vec.c -o $OUT_DIR_tvos_x86_64/sqlite-vec.o
+  $CC_tvos_x86_64 $TVOS_X86_64_FLAGS -dynamiclib -o $OUT_DIR_tvos_x86_64/sqlitevec $OUT_DIR_tvos_x86_64/sqlite-vec.o -isysroot $TVOS_SIMULATOR_SDK_PATH
+}
+
+function build_tvos_arm64_simulator() {
+  $CC_tvos_arm64 $CFLAGS $TVOS_CFLAGS $TVOS_ARM64_SIM_FLAGS -isysroot $TVOS_SIMULATOR_SDK_PATH -c sqlite-vec.c -o $OUT_DIR_tvos_arm64_simulator/sqlite-vec.o
+  $CC_tvos_arm64 -dynamiclib -o $OUT_DIR_tvos_arm64_simulator/sqlitevec $OUT_DIR_tvos_arm64_simulator/sqlite-vec.o -isysroot $TVOS_SIMULATOR_SDK_PATH
+}
+
+build_tvos_arm64
+build_tvos_x86_64
+build_tvos_arm64_simulator
+
+mkdir -p tvos/sim_fat/
+lipo -create ./tvos/x86_64/sqlitevec ./tvos/arm64_simulator/sqlitevec -output tvos/sim_fat/sqlitevec
+
+cp ./tvos/arm64/sqlitevec ../../ios/sqlitevec.xcframework/tvos-arm64/sqlitevec.framework/
+install_name_tool -id @rpath/sqlitevec.framework/sqlitevec ../../ios/sqlitevec.xcframework/tvos-arm64/sqlitevec.framework/sqlitevec
+
+cp ./tvos/sim_fat/sqlitevec ../../ios/sqlitevec.xcframework/tvos-arm64_x86_64-simulator/sqlitevec.framework/
+install_name_tool -id @rpath/sqlitevec.framework/sqlitevec ../../ios/sqlitevec.xcframework/tvos-arm64_x86_64-simulator/sqlitevec.framework/sqlitevec
+
+cd ..
 function download_sqlite_vec_android() {
   local abi=$1
   local arch=$2
