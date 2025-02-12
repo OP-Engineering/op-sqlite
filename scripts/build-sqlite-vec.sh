@@ -17,6 +17,23 @@ fi
 
 MIN_IOS_VERSION=13.0
 
+function verify_framework() {
+    local framework_path=$1
+    echo "Verifying $framework_path"
+
+    # Check minimum OS version
+    MIN_OS_VERSION=$(otool -l "$framework_path" | grep "minos")
+    CHECK_VERSION=$MIN_IOS_VERSION
+    # NOTE: arm64 simulator minos is 14.0
+    if [[ "$framework_path" == *"arm64_simulator"* ]]; then
+        CHECK_VERSION=14.0
+    fi
+    if [[ "$MIN_OS_VERSION" != *"$CHECK_VERSION"* ]]; then
+        echo "Error: $platform framework is not $CHECK_VERSION ($framework_path)"
+        exit 1
+    fi
+}
+
 IOS_SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
 IOS_SIMULATOR_SDK_PATH=$(xcrun --sdk iphonesimulator --show-sdk-path)
 
@@ -51,7 +68,7 @@ function build_ios_x86_64() {
 
 function build_ios_arm64_simulator() {
   $CC_ios_arm64 $CFLAGS $IOS_CFLAGS $IOS_ARM64_SIM_FLAGS -isysroot $IOS_SIMULATOR_SDK_PATH -c sqlite-vec.c -o $OUT_DIR_ios_arm64_simulator/sqlite-vec.o
-  $CC_ios_arm64 -dynamiclib -o $OUT_DIR_ios_arm64_simulator/sqlitevec $OUT_DIR_ios_arm64_simulator/sqlite-vec.o -isysroot $IOS_SIMULATOR_SDK_PATH
+  $CC_ios_arm64 $IOS_ARM64_SIM_FLAGS -dynamiclib -o $OUT_DIR_ios_arm64_simulator/sqlitevec $OUT_DIR_ios_arm64_simulator/sqlite-vec.o -isysroot $IOS_SIMULATOR_SDK_PATH
 }
 
 build_ios_arm64
@@ -67,6 +84,10 @@ install_name_tool -id @rpath/sqlitevec.framework/sqlitevec ../../ios/sqlitevec.x
 cp ./ios/sim_fat/sqlitevec ../../ios/sqlitevec.xcframework/ios-arm64_x86_64-simulator/sqlitevec.framework/
 install_name_tool -id @rpath/sqlitevec.framework/sqlitevec ../../ios/sqlitevec.xcframework/ios-arm64_x86_64-simulator/sqlitevec.framework/sqlitevec
 
+verify_framework ./ios/arm64/sqlitevec
+verify_framework ./ios/x86_64/sqlitevec
+verify_framework ./ios/arm64_simulator/sqlitevec
+
 TVOS_SDK_PATH=$(xcrun --sdk appletvos --show-sdk-path)
 TVOS_SIMULATOR_SDK_PATH=$(xcrun --sdk appletvsimulator --show-sdk-path)
 
@@ -74,7 +95,6 @@ CC_tvos_arm64=$(xcrun --sdk appletvos --find clang)
 CC_tvos_x86_64=$(xcrun --sdk appletvsimulator --find clang)
 
 TVOS_CFLAGS="-Ivendor/ -I./ -O3 -fembed-bitcode -fPIC"
-TVOS_LDFLAGS="-Wl"
 TVOS_ARM64_FLAGS="-target arm64-apple-tvos$MIN_IOS_VERSION -mappletvos-version-min=$MIN_IOS_VERSION"
 TVOS_ARM64_SIM_FLAGS="-target arm64-apple-tvos-simulator$MIN_IOS_VERSION -mappletvsimulator-version-min=$MIN_IOS_VERSION"
 TVOS_X86_64_FLAGS="-target x86_64-apple-tvos-simulator$MIN_IOS_VERSION -mappletvsimulator-version-min=$MIN_IOS_VERSION"
@@ -89,7 +109,7 @@ mkdir -p $OUT_DIR_tvos_arm64_simulator
 
 function build_tvos_arm64() {
   $CC_tvos_arm64 $CFLAGS $TVOS_CFLAGS $TVOS_ARM64_FLAGS -isysroot $TVOS_SDK_PATH -c sqlite-vec.c -o $OUT_DIR_tvos_arm64/sqlite-vec.o
-  $CC_tvos_arm64 -dynamiclib -o $OUT_DIR_tvos_arm64/sqlitevec $OUT_DIR_tvos_arm64/sqlite-vec.o -isysroot $TVOS_SDK_PATH $TVOS_LDFLAGS
+  $CC_tvos_arm64 $TVOS_ARM64_FLAGS -dynamiclib -o $OUT_DIR_tvos_arm64/sqlitevec $OUT_DIR_tvos_arm64/sqlite-vec.o -isysroot $TVOS_SDK_PATH
 }
 
 function build_tvos_x86_64() {
@@ -99,7 +119,7 @@ function build_tvos_x86_64() {
 
 function build_tvos_arm64_simulator() {
   $CC_tvos_arm64 $CFLAGS $TVOS_CFLAGS $TVOS_ARM64_SIM_FLAGS -isysroot $TVOS_SIMULATOR_SDK_PATH -c sqlite-vec.c -o $OUT_DIR_tvos_arm64_simulator/sqlite-vec.o
-  $CC_tvos_arm64 -dynamiclib -o $OUT_DIR_tvos_arm64_simulator/sqlitevec $OUT_DIR_tvos_arm64_simulator/sqlite-vec.o -isysroot $TVOS_SIMULATOR_SDK_PATH
+  $CC_tvos_arm64 $TVOS_ARM64_SIM_FLAGS -dynamiclib -o $OUT_DIR_tvos_arm64_simulator/sqlitevec $OUT_DIR_tvos_arm64_simulator/sqlite-vec.o -isysroot $TVOS_SIMULATOR_SDK_PATH
 }
 
 build_tvos_arm64
@@ -114,6 +134,10 @@ install_name_tool -id @rpath/sqlitevec.framework/sqlitevec ../../ios/sqlitevec.x
 
 cp ./tvos/sim_fat/sqlitevec ../../ios/sqlitevec.xcframework/tvos-arm64_x86_64-simulator/sqlitevec.framework/
 install_name_tool -id @rpath/sqlitevec.framework/sqlitevec ../../ios/sqlitevec.xcframework/tvos-arm64_x86_64-simulator/sqlitevec.framework/sqlitevec
+
+verify_framework ./tvos/arm64/sqlitevec
+verify_framework ./tvos/x86_64/sqlitevec
+verify_framework ./tvos/arm64_simulator/sqlitevec
 
 cd ..
 function download_sqlite_vec_android() {
