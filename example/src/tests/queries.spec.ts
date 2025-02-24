@@ -2,10 +2,12 @@ import Chance from 'chance';
 import {
   isLibsql,
   open,
+  openRemote,
+  openSync,
   type DB,
   type SQLBatchTuple,
 } from '@op-engineering/op-sqlite';
-import {afterEach, beforeEach, describe, it} from './MochaRNAdapter';
+import {afterEach, beforeEach, describe, it, itOnly} from './MochaRNAdapter';
 import chai from 'chai';
 
 const expect = chai.expect;
@@ -21,12 +23,12 @@ export function queriesTests() {
         encryptionKey: 'test',
       });
 
-      await db.execute('DROP TABLE IF EXISTS User;');
-      await db.execute('DROP TABLE IF EXISTS T1;');
-      await db.execute('DROP TABLE IF EXISTS T2;');
-      await db.execute(
-        'CREATE TABLE User (id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL, nickname TEXT) STRICT;',
-      );
+      // await db.execute('DROP TABLE IF EXISTS User;');
+      // await db.execute('DROP TABLE IF EXISTS T1;');
+      // await db.execute('DROP TABLE IF EXISTS T2;');
+      // await db.execute(
+      //   'CREATE TABLE User (id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL, nickname TEXT) STRICT;',
+      // );
     });
 
     afterEach(() => {
@@ -36,35 +38,37 @@ export function queriesTests() {
         db = null;
       }
     });
-    // if (isLibsql()) {
-    //   it('Remote open a turso database', async () => {
-    //     const remoteDb = openRemote({
-    //       url: 'libsql://foo-ospfranco.turso.io',
-    //       authToken:
-    //         'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3MTY5NTc5OTUsImlkIjoiZmJkNzZmMjYtZTliYy00MGJiLTlmYmYtMDczZjFmMjdjOGY4In0.U3cAWBOvcdiqoPN3MB81sco7x8CGOjjtZ1ZEf30uo2iPcAmOuJzcnAznmDlZ6SpQd4qzuJxE4mAIoRlOkpzgBQ',
-    //     });
+    if (isLibsql()) {
+      itOnly('Remote open a turso database', async () => {
+        const remoteDb = openRemote({
+          url: 'libsql://foo-ospfranco.turso.io',
+          authToken:
+            'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3MTY5NTc5OTUsImlkIjoiZmJkNzZmMjYtZTliYy00MGJiLTlmYmYtMDczZjFmMjdjOGY4In0.U3cAWBOvcdiqoPN3MB81sco7x8CGOjjtZ1ZEf30uo2iPcAmOuJzcnAznmDlZ6SpQd4qzuJxE4mAIoRlOkpzgBQ',
+        });
 
-    //     const res = await remoteDb.execute('SELECT 1');
+        console.log('Running select 1');
+        const res = await remoteDb.execute('SELECT 1');
+        console.log('after select 1;');
 
-    //     expect(res.rowsAffected).to.equal(0);
-    //   });
+        expect(res.rowsAffected).to.equal(0);
+      });
 
-    //   it('Open a libsql database replicated to turso', async () => {
-    //     const remoteDb = openSync({
-    //       url: 'libsql://foo-ospfranco.turso.io',
-    //       authToken:
-    //         'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3MTY5NTc5OTUsImlkIjoiZmJkNzZmMjYtZTliYy00MGJiLTlmYmYtMDczZjFmMjdjOGY4In0.U3cAWBOvcdiqoPN3MB81sco7x8CGOjjtZ1ZEf30uo2iPcAmOuJzcnAznmDlZ6SpQd4qzuJxE4mAIoRlOkpzgBQ',
-    //       name: 'my replica',
-    //       syncInterval: 1000,
-    //     });
+      // it('Open a libsql database replicated to turso', async () => {
+      //   const remoteDb = openSync({
+      //     url: 'libsql://foo-ospfranco.turso.io',
+      //     authToken:
+      //       'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3MTY5NTc5OTUsImlkIjoiZmJkNzZmMjYtZTliYy00MGJiLTlmYmYtMDczZjFmMjdjOGY4In0.U3cAWBOvcdiqoPN3MB81sco7x8CGOjjtZ1ZEf30uo2iPcAmOuJzcnAznmDlZ6SpQd4qzuJxE4mAIoRlOkpzgBQ',
+      //     name: 'my replica',
+      //     syncInterval: 1000,
+      //   });
 
-    //     const res = await remoteDb.execute('SELECT 1');
+      //   const res = await remoteDb.execute('SELECT 1');
 
-    //     remoteDb.sync();
+      //   remoteDb.sync();
 
-    //     expect(res.rowsAffected).to.equal(0);
-    //   });
-    // }
+      //   expect(res.rowsAffected).to.equal(0);
+      // });
+    }
 
     it('Can create multiple connections to same db', async () => {
       const db2 = open({
