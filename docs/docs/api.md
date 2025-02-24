@@ -61,6 +61,32 @@ The example of querying 300k objects from a database uses this api. Just be care
 let res = await db.executeWithHostObjects('select * from USERS');
 ```
 
+## Prepared statements
+
+A lot of the work when executing queries is not iterating through the result set itself but, sometimes, planning the execution. If you have a query which is expensive but you can re-use it (even if you have to change the arguments) you can use a `prepared statement`. Bear in mind most of the benefit of a prepared statement is in the querying, joining and planning on how to retrieve the data, for writes the impact is minimal.
+
+```tsx
+const statement = db.prepareStatement('SELECT * FROM User WHERE name = ?;');
+
+// bind the variables in the order they appear
+statement.bind(['Oscar']);
+let results1 = await statement.execute();
+
+statement.bind(['Carlos']);
+let results2 = await statement.execute();
+```
+
+You only pay the price of parsing the query once, and each subsequent execution should be faster.
+
+## Raw execution
+
+If you don't care about the keys you can use a simplified execution that will return an array of scalars. This should be a lot faster than the regular operation since objects with the same keys don’t need to be created.
+
+```tsx
+let result = await db.executeRaw('SELECT * FROM Users;');
+// result = [[123, 'Katie', ...]]
+```
+
 ### Multiple Statements
 
 You can execute multiple statements in a single operation. The API however is not really thought for this use case and the results (and their metadata) will be mangled, so you can discard it. This is not supported in libsql, due to the library itself not supporting this use case.
@@ -85,7 +111,7 @@ let res = db.executeSync('SELECT 1');
 
 Wraps the code inside in a transaction. Any error thrown inside of the transaction body function will ROLLBACK the transaction.
 
-If you want to execute a large set of commands as fast as possible you should use the `executeBatch` method, it wraps all the commands in a transaction for you and has less overhead.
+If you want to execute a large set of commands as fast as possible you should use the `executeBatch` method, it wraps all the commands in a transaction for you and has less overhead. Using prepared statements for writes inside a transaction is discouraged, you gain very little performance when writting to the database and they are not part of the internal lock mechanism of op-sqlite.
 
 ```tsx
 await db.transaction((tx) => {
@@ -106,7 +132,7 @@ await db.transaction((tx) => {
 
 ## Batch Execution
 
-Batch execution allows the transactional execution of a set of commands
+Allows to execute a batch of commands in a single call. The entire call is wrapped within a transaction, so if any of the statements fail, they all get rolled back.
 
 ```tsx
 const commands = [
@@ -151,32 +177,6 @@ const result = await db.execute('SELECT content FROM BlobTable');
 const finalUint8 = new Uint8Array(result.rows[0].content);
 ```
 
-## Prepared statements
-
-A lot of the work when executing queries is not iterating through the result set itself but, sometimes, planning the execution. If you have a query which is expensive but you can re-use it (even if you have to change the arguments) you can use a `prepared statement`:
-
-```tsx
-const statement = db.prepareStatement('SELECT * FROM User WHERE name = ?;');
-
-// bind the variables in the order they appear
-statement.bind(['Oscar']);
-let results1 = await statement.execute();
-
-statement.bind(['Carlos']);
-let results2 = await statement.execute();
-```
-
-You only pay the price of parsing the query once, and each subsequent execution should be faster.
-
-## Raw execution
-
-If you don't care about the keys you can use a simplified execution that will return an array of scalars. This should be a lot faster than the regular operation since objects with the same keys don’t need to be created.
-
-```tsx
-let result = await db.executeRaw('SELECT * FROM Users;');
-// result = [[123, 'Katie', ...]]
-```
-
 # Attach or Detach other databases
 
 SQLite supports attaching or detaching other database files into your main database connection through an alias. You can do any operation you like on this attached database like JOIN results across tables in different schemas, or update data or objects. These databases can have different configurations, like journal modes, and cache settings.
@@ -203,7 +203,7 @@ if (!detachResult.status) {
 
 ## Loading SQL Dump Files
 
-If you have a SQL dump file, you can load it directly, with low memory consumption:
+If you are trying to load a large set of statements (the larger the more benefit you will see, talking about hundreds of thousands of rows here) or restoring a database backup the fastest way possible will be loading a sqlite dump file. it will be the fastest as there is no back and forth between JS and C++ and SQLite doing all the heavy lifting.
 
 ```tsx
 const { rowsAffected, commands } = await db.loadFile(
