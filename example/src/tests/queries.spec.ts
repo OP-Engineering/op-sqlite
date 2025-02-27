@@ -3,7 +3,7 @@ import {
   isLibsql,
   open,
   openRemote,
-  openSync,
+  // openSync,
   type DB,
   type SQLBatchTuple,
 } from '@op-engineering/op-sqlite';
