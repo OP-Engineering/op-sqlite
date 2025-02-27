@@ -23,12 +23,12 @@ export function queriesTests() {
         encryptionKey: 'test',
       });
 
-      // await db.execute('DROP TABLE IF EXISTS User;');
-      // await db.execute('DROP TABLE IF EXISTS T1;');
-      // await db.execute('DROP TABLE IF EXISTS T2;');
-      // await db.execute(
-      //   'CREATE TABLE User (id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL, nickname TEXT) STRICT;',
-      // );
+      await db.execute('DROP TABLE IF EXISTS User;');
+      await db.execute('DROP TABLE IF EXISTS T1;');
+      await db.execute('DROP TABLE IF EXISTS T2;');
+      await db.execute(
+        'CREATE TABLE User (id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL, nickname TEXT) STRICT;',
+      );
     });
 
     afterEach(() => {
