@@ -1,4 +1,4 @@
-import { open, type DB } from '.';
+import { open, type DB } from './index';
 
 type StorageOptions = {
   location?: string;
