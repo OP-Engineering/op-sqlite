@@ -75,6 +75,8 @@ pre_install do |installer|
 end
 ```
 
+Or can also continue to support Expo CNG with the `expo-plugin-ios-static-libraries` plugin, see [its' installation and usage steps](https://github.com/jonshaffer/expo-plugin-ios-static-libraries?tab=readme-ov-file#installation).
+
 It forces static compilation on `op-sqlite` only. Since everything is compiled from sources this _should_ work, however do it at your own risk since other compilation errors might arise.
 
 ## Compilation clashes
