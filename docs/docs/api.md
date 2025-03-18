@@ -69,10 +69,10 @@ A lot of the work when executing queries is not iterating through the result set
 const statement = db.prepareStatement('SELECT * FROM User WHERE name = ?;');
 
 // bind the variables in the order they appear
-statement.bind(['Oscar']);
+await statement.bind(['Oscar']);
 let results1 = await statement.execute();
 
-statement.bind(['Carlos']);
+await statement.bind(['Carlos']);
 let results2 = await statement.execute();
 ```
 
