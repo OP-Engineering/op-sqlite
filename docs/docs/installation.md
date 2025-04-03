@@ -61,7 +61,7 @@ Some combination of features are not allowed. For example `sqlcipher` and `iosSq
 
 ## use_frameworks
 
-In case you are using `use_frameworks` (for example because you are using `react-native-firebase`), this will break the compilation process and force the compilation to use the embedded sqlite on iOS. One possible workaround is putting this in your `Podfile`:
+In case you are using `use_frameworks` (for example if you are using `react-native-firebase`), this will break the compilation process and force the compilation to use the embedded sqlite on iOS. One possible workaround is forcing `op-sqlite` to be compiled statically, you can modify the `Podfile` as:
 
 ```ruby
 pre_install do |installer|
@@ -75,7 +75,7 @@ pre_install do |installer|
 end
 ```
 
-Or can also continue to support Expo CNG with the `expo-plugin-ios-static-libraries` plugin, see [its' installation and usage steps](https://github.com/jonshaffer/expo-plugin-ios-static-libraries?tab=readme-ov-file#installation).
+If you are using Expo CNG you can use the [`expo-plugin-ios-static-libraries`](https://github.com/jonshaffer/expo-plugin-ios-static-libraries?tab=readme-ov-file#installation) plugin to automate adding the static setting for op-sqlite
 
 It forces static compilation on `op-sqlite` only. Since everything is compiled from sources this _should_ work, however do it at your own risk since other compilation errors might arise.
 
