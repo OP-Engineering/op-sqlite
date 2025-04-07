@@ -9,7 +9,7 @@ rm -f ./cpp/sqlcipher/sqlite3.h
 cd ../sqlcipher
 
 # Add the include directory for OpenSSL headers
-./configure --with-tempstore=yes CFLAGS="-DSQLITE_HAS_CODEC -DSQLITE_EXTRA_INIT=sqlcipher_extra_init -DSQLITE_EXTRA_SHUTDOWN=sqlcipher_extra_shutdown -I/opt/homebrew/include" LDFLAGS="-L/opt/homebrew/lib/ -lcrypto"
+./configure --with-tempstore=yes CFLAGS="-DSQLITE_HAS_CODEC -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_EXTRA_INIT=sqlcipher_extra_init -DSQLITE_EXTRA_SHUTDOWN=sqlcipher_extra_shutdown -I/opt/homebrew/include" LDFLAGS="-L/opt/homebrew/lib/ -lcrypto"
 
 make
 
