@@ -19,6 +19,7 @@ const expectedVersion = isLibsql()
   : isSQLCipher()
   ? '4.7.0'
   : '3.49.1';
+const flavor = isLibsql() ? 'libsql' : isSQLCipher() ? 'sqlcipher' : 'sqlite';
 
 // const expectedSqliteVecVersion = 'v0.1.2-alpha.7';
 
@@ -41,7 +42,7 @@ export function dbSetupTests() {
     // Using the embedded version, you can never be sure which version is used
     // It will change from OS version to version
     if (!isIOSEmbeeded()) {
-      it(`Should match the sqlite expected version ${expectedVersion}`, async () => {
+      it(`Should match the sqlite flavor ${flavor} expected version ${expectedVersion}`, async () => {
         let db = open({
           name: 'versionTest.sqlite',
           encryptionKey: 'test',
