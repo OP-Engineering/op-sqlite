@@ -108,7 +108,7 @@ type InternalDB = {
     alias: string;
     location?: string;
   }) => void;
-  detach: (mainDbName: string, alias: string) => void;
+  detach: (alias: string) => void;
   transaction: (fn: (tx: Transaction) => Promise<void>) => Promise<void>;
   executeSync: (query: string, params?: Scalar[]) => QueryResult;
   execute: (query: string, params?: Scalar[]) => Promise<QueryResult>;
@@ -155,7 +155,7 @@ export type DB = {
     alias: string;
     location?: string;
   }) => void;
-  detach: (mainDbName: string, alias: string) => void;
+  detach: (alias: string) => void;
   /**
    * Wraps all the executions into a transaction. If an error is thrown it will rollback all of the changes
    *

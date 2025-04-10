@@ -193,17 +193,17 @@ void DBHostObject::create_jsi_functions() {
         auto obj_params = args[0].asObject(rt);
 
         std::string secondary_db_name =
-            obj_params.getProperty(rt, "secondaryDbFileName").asString(rt).utf8(rt);
+            obj_params.getProperty(rt, "secondaryDbFileName")
+                .asString(rt)
+                .utf8(rt);
         std::string alias =
             obj_params.getProperty(rt, "alias").asString(rt).utf8(rt);
-      
-      if(obj_params.hasProperty(rt, "location")) {
-        std::string location = obj_params
-          .getProperty(rt, "location")
-          .asString(rt)
-          .utf8(rt);
-        secondary_db_path = secondary_db_path + location;
-      }
+
+        if (obj_params.hasProperty(rt, "location")) {
+            std::string location =
+                obj_params.getProperty(rt, "location").asString(rt).utf8(rt);
+            secondary_db_path = secondary_db_path + location;
+        }
 
 #ifdef OP_SQLITE_USE_LIBSQL
         opsqlite_libsql_attach(db, secondary_db_path, secondary_db_name, alias);
@@ -215,21 +215,16 @@ void DBHostObject::create_jsi_functions() {
     });
 
     function_map["detach"] = HOSTFN("detach") {
-        if (count < 2) {
-            throw std::runtime_error(
-                "[op-sqlite][detach] Incorrect number of arguments");
-        }
-        if (!args[0].isString() || !args[1].isString()) {
-            throw std::runtime_error(
-                "[op-sqlite] database name and alias must be a strings");
+
+        if (!args[0].isString()) {
+            throw std::runtime_error("[op-sqlite] alias must be a strings");
         }
 
-        std::string dbName = args[0].asString(rt).utf8(rt);
-        std::string alias = args[1].asString(rt).utf8(rt);
+        std::string alias = args[0].asString(rt).utf8(rt);
 #ifdef OP_SQLITE_USE_LIBSQL
         opsqlite_libsql_detach(db, alias);
 #else
-        opsqlite_detach(db, dbName, alias);
+        opsqlite_detach(db, alias);
 #endif
 
         return {};

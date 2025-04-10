@@ -250,7 +250,9 @@ export function dbSetupTests() {
     );
     let res = db.executeSync('INSERT INTO attach2.test (id) VALUES (1);');
     expect(res).to.exist;
-    db.detach('attachTest2.sqlite', 'attach2');
+
+    db.detach('attach2');
+
     db.delete();
 
     db2 = open({
