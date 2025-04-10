@@ -199,7 +199,8 @@ const res = await db.execute(
 );
 
 // You can detach databases at any moment
-db.detach('mainDatabase', 'stats');
+db.detach('stats');
+
 if (!detachResult.status) {
   // Database de-attached
 }

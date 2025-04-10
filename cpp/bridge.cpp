@@ -159,8 +159,7 @@ void opsqlite_attach(sqlite3 *db, std::string const &doc_path,
     opsqlite_execute(db, statement, nullptr);
 }
 
-void opsqlite_detach(sqlite3 *db, std::string const &main_db_name,
-                     std::string const &alias) {
+void opsqlite_detach(sqlite3 *db, std::string const &alias) {
     std::string statement = "DETACH DATABASE " + alias;
     opsqlite_execute(db, statement, nullptr);
 }
