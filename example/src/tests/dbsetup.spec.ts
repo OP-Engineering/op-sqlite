@@ -238,7 +238,12 @@ export function dbSetupTests() {
       encryptionKey: 'test',
     });
     db2.close();
-    db.attach('attachTest.sqlite', 'attachTest2.sqlite', 'attach2');
+
+    db.attach({
+      secondaryDbFileName: 'attachTest2.sqlite',
+      alias: 'attach2',
+    });
+
     db.executeSync('DROP TABLE IF EXISTS attach2.test;');
     db.executeSync(
       'CREATE TABLE IF NOT EXISTS attach2.test (id INTEGER PRIMARY KEY);',

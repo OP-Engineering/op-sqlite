@@ -150,8 +150,7 @@ void opsqlite_close(sqlite3 *db) {
     sqlite3_close_v2(db);
 }
 
-void opsqlite_attach(sqlite3 *db, std::string const &main_db_name,
-                     std::string const &doc_path,
+void opsqlite_attach(sqlite3 *db, std::string const &doc_path,
                      std::string const &secondary_db_name,
                      std::string const &alias) {
     auto secondary_db_path = opsqlite_get_db_path(secondary_db_name, doc_path);
