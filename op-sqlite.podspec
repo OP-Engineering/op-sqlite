@@ -14,7 +14,7 @@ parent_folder_name = File.basename(__dir__)
 app_package = nil
 # When installed on user node_modules lives inside node_modules/@op-engineering/op-sqlite
 if is_user_app
-  app_package = JSON.parse(File.read(File.join(__dir__, "..", "..", "..", "package.json")))
+  app_package = JSON.parse(File.read(File.expand_path("../../../../../package.json", __dir__)))
 # When running on the example app
 else
   app_package = JSON.parse(File.read(File.join(__dir__, "example", "package.json")))
