@@ -17,7 +17,7 @@ let expect = chai.expect;
 const expectedVersion = isLibsql()
   ? '3.45.1'
   : isSQLCipher()
-  ? '4.7.0'
+  ? '3.46.1'
   : '3.49.1';
 const flavor = isLibsql() ? 'libsql' : isSQLCipher() ? 'sqlcipher' : 'sqlite';
 
