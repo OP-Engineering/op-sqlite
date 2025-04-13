@@ -188,17 +188,19 @@ SQLite has a limit for attached databases: A default of 10, and a global max of 
 SQLite docs for [Attach](https://www.sqlite.org/lang_attach.html) - [Detach](https://www.sqlite.org/lang_detach.html)
 
 ```tsx
-db.attach('mainDatabase', 'statistics', 'stats', '../databases');
+// Follows similar API to the `open` call
+db.attach({
+  secondaryDbFileName: 'statistics.sqlite', // Filename of the database (JUST THE FILENAME)
+  alias: 'stats', // Alias to be applied to the db
+  location: '../databases', // Path to be prepended to secondaryFileName, in this case full db path: ../databases/statistics.sqlite
+});
 
 const res = await db.execute(
   'SELECT * FROM some_table_from_mainschema a INNER JOIN stats.some_table b on a.id_column = b.id_column'
 );
 
 // You can detach databases at any moment
-db.detach('mainDatabase', 'stats');
-if (!detachResult.status) {
-  // Database de-attached
-}
+db.detach('stats');
 ```
 
 ## Loading SQL Dump Files
