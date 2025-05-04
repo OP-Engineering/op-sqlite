@@ -12,11 +12,33 @@ fabric_enabled = ENV['RCT_NEW_ARCH_ENABLED'] == '1'
 
 parent_folder_name = File.basename(__dir__)
 app_package = nil
+package_json_path = nil
+
 # When installed on user node_modules lives inside node_modules/@op-engineering/op-sqlite
 if is_user_app
-  app_package = JSON.parse(File.read(File.join(__dir__, "..", "..", "..", "package.json")))
+  current_dir = File.expand_path(__dir__)
+  # Move one level up to the parent directory
+  current_dir = File.dirname(current_dir)
+  
+  # Find the package.json by searching up through parent directories
+  loop do
+    package_path = File.join(current_dir, "package.json")
+    if File.exist?(package_path)
+      package_json_path = package_path
+      break
+    end
+
+    parent_dir = File.dirname(current_dir)
+    break if parent_dir == current_dir  # reached filesystem root
+    current_dir = parent_dir
+  end
+  
+  raise "package.json not found" if package_json_path.nil?
+  
+  app_package = JSON.parse(File.read(package_json_path))
 # When running on the example app
 else
+  package_json_path = File.join(__dir__, "example", "package.json")
   app_package = JSON.parse(File.read(File.join(__dir__, "example", "package.json")))
 end
 
@@ -100,8 +122,8 @@ Pod::Spec.new do |s|
     :CLANG_CXX_LANGUAGE_STANDARD => "c++17",
   }
 
-  log_message.call("[OP-SQLITE] Configuration:")
-
+  log_message.call("[OP-SQLITE] Configuration found at #{package_json_path}")
+  
   exclude_files = []
   
   if use_sqlcipher then
