@@ -67,13 +67,12 @@
   },
   "op-sqlite": {
     "libsql": false,
-    "sqlcipher": false,
+    "sqlcipher": true,
     "iosSqlite": false,
     "fts5": true,
     "rtree": true,
     "crsqlite": false,
     "sqliteVec": false,
-    "sqliteFlags": "-DSQLITE_TEMP_STORE=2",
     "performanceMode": true,
     "tokenizers": [
       "wordtokenizer",
