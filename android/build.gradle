@@ -238,7 +238,7 @@ dependencies {
   implementation 'com.facebook.react:react-native'
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
   if (useSQLCipher) {
-    implementation('com.android.ndk.thirdparty:openssl:1.1.1q-beta-1')
+    implementation('io.github.ronickg:openssl:3.3.2')
   }
 }
 
