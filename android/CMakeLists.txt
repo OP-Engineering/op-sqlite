@@ -33,6 +33,8 @@ if (USE_SQLCIPHER)
     -DOP_SQLITE_USE_SQLCIPHER=1
     -DSQLITE_HAS_CODEC
     -DSQLITE_TEMP_STORE=2
+    -DSQLITE_EXTRA_INIT=sqlcipher_extra_init
+    -DSQLITE_EXTRA_SHUTDOWN=sqlcipher_extra_shutdown
   )
   
   find_package(openssl REQUIRED CONFIG)
