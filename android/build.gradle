@@ -109,6 +109,11 @@ def getExtOrDefault(name) {
   return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties["OPSQLite" + name]
 }
 
+def reactNativeArchitectures() {
+  def value = project.getProperties().get("reactNativeArchitectures")
+  return value ? value.split(",") : ["armeabi-v7a", "x86", "x86_64", "arm64-v8a"]
+}
+
 android {
   
   compileSdkVersion safeExtGet("compileSdkVersion", 33)
@@ -178,7 +183,7 @@ android {
             }
 
             cppFlags "-O2 -frtti -fexceptions -Wall -fstack-protector-all"
-            abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+            abiFilters(*reactNativeArchitectures())
             arguments "-DANDROID_STL=c++_shared",
               "-DSQLITE_FLAGS='$sqliteFlags'",
               "-DUSE_SQLCIPHER=${useSQLCipher ? 1 : 0}",
