@@ -600,7 +600,7 @@ export function queriesTests() {
       await db.executeBatch(commands);
 
       const res = await db.execute('SELECT * FROM User');
-      // console.log(res);
+
       expect(res.rows).to.eql([
         {id: id1, name: name1, age: age1, networth: networth1, nickname: null},
         {
@@ -611,6 +611,45 @@ export function queriesTests() {
           nickname: null,
         },
       ]);
+    });
+
+    it('Batch execute with BLOB', async () => {
+      let db = open({
+        name: 'queries.sqlite',
+        encryptionKey: 'test',
+      });
+
+      await db.execute('DROP TABLE IF EXISTS User;');
+      await db.execute(
+        'CREATE TABLE IF NOT EXISTS User (id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL, age INT, networth BLOB, nickname TEXT) STRICT;',
+      );
+      const id1 = '1';
+      const name1 = 'name1';
+      const age1 = 12;
+      const networth1 = new Uint8Array([1, 2, 3]);
+
+      const id2 = '2';
+      const name2 = 'name2';
+      const age2 = 17;
+      const networth2 = new Uint8Array([3, 2, 1]);
+
+      const commands: SQLBatchTuple[] = [
+        [
+          'INSERT OR REPLACE INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+          [id1, name1, age1, networth1],
+        ],
+        [
+          'INSERT OR REPLACE INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+          [[id2, name2, age2, networth2]],
+        ],
+      ];
+
+      console.log('' + JSON.stringify(commands));
+      // bomb~  (NOBRIDGE) ERROR  Error: Exception in HostFunction: <unknown>
+      await db.executeBatch(commands);
+
+      const res = await db.execute('SELECT * FROM User');
+      console.log('res:' + JSON.stringify(res));
     });
 
     it('DumbHostObject allows to write known props', async () => {
