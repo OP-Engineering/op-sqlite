@@ -374,13 +374,45 @@ function enhanceDB(db: InternalDB, options: DBParams): DB {
     }
   };
 
+  function sanitizeArrayBuffersInArray(
+    params?: any[] | any[][]
+  ): any[] | undefined {
+    if (!params) {
+      return params;
+    }
+
+    return params.map((p) => {
+      if (Array.isArray(p)) {
+        return sanitizeArrayBuffersInArray(p);
+      }
+
+      if (ArrayBuffer.isView(p)) {
+        return p.buffer;
+      }
+
+      return p;
+    });
+  }
+
   // spreading the object does not work with HostObjects (db)
   // We need to manually assign the fields
   let enhancedDb = {
     delete: db.delete,
     attach: db.attach,
     detach: db.detach,
-    executeBatch: db.executeBatch,
+    executeBatch: async (
+      commands: SQLBatchTuple[]
+    ): Promise<BatchQueryResult> => {
+      const sanitizedCommands = commands.map(([query, params]) => {
+        if (params) {
+          return [query, sanitizeArrayBuffersInArray(params)];
+        }
+
+        return [query];
+      });
+
+      return db.executeBatch(sanitizedCommands as any[]);
+    },
     loadFile: db.loadFile,
     updateHook: db.updateHook,
     commitHook: db.commitHook,
@@ -394,26 +426,14 @@ function enhanceDB(db: InternalDB, options: DBParams): DB {
       query: string,
       params?: Scalar[]
     ): Promise<QueryResult> => {
-      const sanitizedParams = params?.map((p) => {
-        if (ArrayBuffer.isView(p)) {
-          return p.buffer;
-        }
-
-        return p;
-      });
+      const sanitizedParams = sanitizeArrayBuffersInArray(params);
 
       return sanitizedParams
         ? await db.executeWithHostObjects(query, sanitizedParams as Scalar[])
         : await db.executeWithHostObjects(query);
     },
     executeRaw: async (query: string, params?: Scalar[]) => {
-      const sanitizedParams = params?.map((p) => {
-        if (ArrayBuffer.isView(p)) {
-          return p.buffer;
-        }
-
-        return p;
-      });
+      const sanitizedParams = sanitizeArrayBuffersInArray(params);
 
       return db.executeRaw(query, sanitizedParams as Scalar[]);
     },
@@ -421,24 +441,12 @@ function enhanceDB(db: InternalDB, options: DBParams): DB {
     // at some point I changed the API but they did not pin their dependency to a specific version
     // so re-inserting this so it starts working again
     executeRawAsync: async (query: string, params?: Scalar[]) => {
-      const sanitizedParams = params?.map((p) => {
-        if (ArrayBuffer.isView(p)) {
-          return p.buffer;
-        }
-
-        return p;
-      });
+      const sanitizedParams = sanitizeArrayBuffersInArray(params);
 
       return db.executeRaw(query, sanitizedParams as Scalar[]);
     },
     executeSync: (query: string, params?: Scalar[]): QueryResult => {
-      const sanitizedParams = params?.map((p) => {
-        if (ArrayBuffer.isView(p)) {
-          return p.buffer;
-        }
-
-        return p;
-      });
+      const sanitizedParams = sanitizeArrayBuffersInArray(params);
 
       let intermediateResult = sanitizedParams
         ? db.executeSync(query, sanitizedParams as Scalar[])
@@ -476,13 +484,7 @@ function enhanceDB(db: InternalDB, options: DBParams): DB {
       query: string,
       params?: Scalar[] | undefined
     ): Promise<QueryResult> => {
-      const sanitizedParams = params?.map((p) => {
-        if (ArrayBuffer.isView(p)) {
-          return p.buffer;
-        }
-
-        return p;
-      });
+      const sanitizedParams = sanitizeArrayBuffersInArray(params);
 
       let intermediateResult = await db.execute(
         query,
