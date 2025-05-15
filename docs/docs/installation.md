@@ -24,6 +24,12 @@ This package only runs on `iOS`, `Android` and `macOS`, same as `expo-sqlite`, t
 
 SQLite is very customizable on compilation level. op-sqlite also allows you add extensions or even change the base implementation. You can do this by adding the following to your `package.json`:
 
+> [!IMPORTANT]
+> When using a monorepo, be sure to add the "op-sqlite" config to the monorepo root `package.json` file.
+> This is necessary because the `node_modules/@op-engineering/op-sqlite/op-sqlite.podspec` will search for first the `package.json` file in a parent directory.
+> Alternative, you may be able to solve this by blocking this package from being hoisted to the root `node_modules`.
+> Check your ios/Podfile.lock to see where it's being installed.
+
 ```json
 {
   // ... the rest of your package.json
