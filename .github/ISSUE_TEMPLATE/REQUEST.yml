@@ -5,6 +5,6 @@ body:
   - type: textarea
     attributes:
       label: What do you need?
-      placeholder: Please be specific, also bear in mind depending on your requirement a paid sponsorship might be necessary.
+      placeholder: - Depending on your requirement a paid sponsorship might be necessary.\n- Be specific\n- Make sure you already updated to the latest version and checked the documentation
     validations:
       required: true
