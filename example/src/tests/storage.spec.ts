@@ -1,6 +1,6 @@
 import {Storage} from '@op-engineering/op-sqlite';
 import chai from 'chai';
-import {afterEach, beforeEach, describe, it} from './MochaRNAdapter';
+import {beforeEach, describe, it} from './MochaRNAdapter';
 
 const expect = chai.expect;
 
@@ -11,8 +11,6 @@ export function storageTests() {
     beforeEach(async () => {
       storage = new Storage({encryptionKey: 'test'});
     });
-
-    afterEach(() => {});
 
     it('Can set and get sync', async () => {
       storage.setItemSync('foo', 'bar');
