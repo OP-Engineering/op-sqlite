@@ -129,18 +129,23 @@ void install(jsi::Runtime &rt,
         std::string url = options.getProperty(rt, "url").asString(rt).utf8(rt);
         std::string auth_token =
             options.getProperty(rt, "authToken").asString(rt).utf8(rt);
+
         int sync_interval = 0;
-        if (options.hasProperty(rt, "syncInterval")) {
+        if (options.hasProperty(rt, "libsqlSyncInterval")) {
             sync_interval = static_cast<int>(
                 options.getProperty(rt, "syncInterval").asNumber());
         }
-        std::string location;
 
+        bool offline = false;
+        if (options.hasProperty(rt, "libsqlOffline")) {
+            offline = options.getProperty(rt, "libsqlOffline").asBool();
+        }
+
+        std::string location;
         if (options.hasProperty(rt, "location")) {
             location =
                 options.getProperty(rt, "location").asString(rt).utf8(rt);
         }
-
         if (!location.empty()) {
             if (location == ":memory:") {
                 path = ":memory:";
@@ -152,7 +157,7 @@ void install(jsi::Runtime &rt,
         }
 
         std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-            rt, invoker, name, path, url, auth_token, sync_interval);
+            rt, invoker, name, path, url, auth_token, sync_interval, offline);
         return jsi::Object::createFromHostObject(rt, db);
     });
 #endif
