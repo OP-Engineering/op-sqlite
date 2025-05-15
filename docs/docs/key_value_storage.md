@@ -4,7 +4,7 @@ sidebar_position: 8
 
 # Key-Value Storage
 
-OP-SQLite provides a simple key-value storage API compatible with react-native-async-storage. It should be much faster than async-storage (whilst slower than MMKV) but comes with the convenience of not having to add one more dependency to your app. For convenience it also has sync versions of the methods. If you use SQLCipher the data inside will also be encrypted.
+OP-SQLite provides a simple key-value storage API compatible with react-native-async-storage. Mostly as a convenience, use at your own caution. It uses sqlite as a simple text storage, so it might be slower than using other key-value packages or writing data to disk. If you use SQLCipher the data inside will also be encrypted.
 
 ```ts
 import { Storage } from '@op-engineering/op-sqlite';
