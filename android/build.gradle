@@ -116,7 +116,7 @@ def reactNativeArchitectures() {
 
 android {
   
-  compileSdkVersion safeExtGet("compileSdkVersion", 33)
+  compileSdkVersion safeExtGet("compileSdkVersion", 35)
   namespace "com.op.sqlite"
   
   // Used to override the NDK path/version on internal CI or by allowing
@@ -191,7 +191,8 @@ android {
               "-DUSE_LIBSQL=${useLibsql ? 1 : 0}",
               "-DUSE_SQLITE_VEC=${useSqliteVec ? 1 : 0}",
               "-DUSER_DEFINED_SOURCE_FILES=${sourceFiles}",
-              "-DUSER_DEFINED_TOKENIZERS_HEADER_PATH='${tokenizersHeaderPath}'"
+              "-DUSER_DEFINED_TOKENIZERS_HEADER_PATH='${tokenizersHeaderPath}'",
+              "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
         }
     }
 
