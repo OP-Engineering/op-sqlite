@@ -82,5 +82,21 @@ export function preparedStatementsTests() {
       await statement.bind([5, 'Pedro']);
       await statement.execute();
     });
+
+    it('prepared statement, bindsync', async () => {
+      const statement = db.prepareStatement(
+        'INSERT INTO "User" (id, name) VALUES(?,?);',
+      );
+
+      statement.bindSync([4, 'Juan']);
+      await statement.execute();
+
+      statement.bind([5, 'Pedro']);
+      await statement.execute();
+
+      const selectStatement = db.prepareStatement('SELECT * FROM User;');
+      let results = await selectStatement.execute();
+      expect(results.rows.length).to.equal(5);
+    });
   });
 }
