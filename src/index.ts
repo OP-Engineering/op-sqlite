@@ -97,6 +97,7 @@ type PendingTransaction = {
 
 export type PreparedStatement = {
   bind: (params: any[]) => Promise<void>;
+  bindSync: (params: any[]) => void;
   execute: () => Promise<QueryResult>;
 };
 
@@ -517,16 +518,15 @@ function enhanceDB(db: InternalDB, options: DBParams): DB {
       const stmt = db.prepareStatement(query);
 
       return {
+        bindSync: (params: Scalar[]) => {
+          const sanitizedParams = sanitizeArrayBuffersInArray(params);
+
+          stmt.bindSync(sanitizedParams!);
+        },
         bind: async (params: Scalar[]) => {
-          const sanitizedParams = params.map((p) => {
-            if (ArrayBuffer.isView(p)) {
-              return p.buffer;
-            }
+          const sanitizedParams = sanitizeArrayBuffersInArray(params);
 
-            return p;
-          });
-
-          await stmt.bind(sanitizedParams);
+          await stmt.bind(sanitizedParams!);
         },
         execute: stmt.execute,
       };
