@@ -75,24 +75,26 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
     }
 
     if (name == "bindSync") {
+      return HOSTFN("bindSync") {
         if (_stmt == nullptr) {
-            throw std::runtime_error("statement has been freed");
+          throw std::runtime_error("statement has been freed");
         }
-
+        
         const jsi::Value &js_params = args[0];
         std::vector<JSVariant> params = to_variant_vec(rt, js_params);
         try {
 #ifdef OP_SQLITE_USE_LIBSQL
-            opsqlite_libsql_bind_statement(_stmt, &params);
+          opsqlite_libsql_bind_statement(_stmt, &params);
 #else
-            opsqlite_bind_statement(_stmt, &params);
+          opsqlite_bind_statement(_stmt, &params);
 #endif
         } catch (const std::runtime_error &e) {
-            throw std::runtime_error(e.what());
+          throw std::runtime_error(e.what());
         } catch (const std::exception &e) {
-            throw std::runtime_error(e.what());
+          throw std::runtime_error(e.what());
         }
         return {};
+      });
     }
 
     if (name == "execute") {

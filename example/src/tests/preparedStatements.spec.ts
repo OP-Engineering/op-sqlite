@@ -83,10 +83,11 @@ export function preparedStatementsTests() {
       await statement.execute();
     });
 
-    it('prepared statementm, bindsync', async () => {
+    it('prepared statement, bindsync', async () => {
       const statement = db.prepareStatement(
         'INSERT INTO "User" (id, name) VALUES(?,?);',
       );
+
       statement.bindSync([4, 'Juan']);
       await statement.execute();
 
