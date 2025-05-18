@@ -70,6 +70,8 @@ const statement = db.prepareStatement('SELECT * FROM User WHERE name = ?;');
 
 // bind the variables in the order they appear
 await statement.bind(['Oscar']);
+// Or use the bindsync version
+statement.bindSync(['Luis']);
 let results1 = await statement.execute();
 
 await statement.bind(['Carlos']);
