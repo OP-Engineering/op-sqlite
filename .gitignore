@@ -41,6 +41,7 @@ local.properties
 example/.cxx/
 *.keystore
 !debug.keystore
+.kotlin/
 
 # Bundle
 #

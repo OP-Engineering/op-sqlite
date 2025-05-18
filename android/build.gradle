@@ -192,7 +192,7 @@ android {
               "-DUSE_SQLITE_VEC=${useSqliteVec ? 1 : 0}",
               "-DUSER_DEFINED_SOURCE_FILES=${sourceFiles}",
               "-DUSER_DEFINED_TOKENIZERS_HEADER_PATH='${tokenizersHeaderPath}'",
-              "-DANDROID_SUPOPRT_FLEXIBLE_PAGE_SIZES=ON"
+              "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
         }
     }
 
