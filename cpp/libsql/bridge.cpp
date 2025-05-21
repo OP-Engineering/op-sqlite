@@ -100,7 +100,7 @@ DB opsqlite_libsql_open(std::string const &name, std::string const &last_path,
                                    &errMsg);
 
     if (status != 0) {
-        return {.type = SQLiteError, .message = errMsg};
+        throw std::runtime_error(errMsg);
     } else {
         LOGI("Loaded CRSQlite successfully");
     }
