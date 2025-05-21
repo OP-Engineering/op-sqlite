@@ -340,12 +340,12 @@ await db.execute('INSERT INTO states VALUES (?)', [
 
 ## Loading Extensions
 
-You can also load runtime extensions to an open database. First you need compile your extension to the correct architecture. Each extension has different build process, so you need to figure how to compile it yourself.
+Loading runtime extensions is supported. You need compile your extension to the correct architecture. Each extension has different build process, so you need to figure how to compile it yourself.
 
-A high-level step by step guide:
+### Android
 
-- Compile your extension as runtime loadable extension (`.so` android. A `dylib` with no extension on iOS, packed as an `.xcframework` that contains multiple `.framework` folders).
-- For android you will need to generate 4 versions, each for each common Android architecture, then place them in a folder `[PROJECT ROOT]/android/app/src/main/jniLibs`. That path is special and will automatically be packaged inside your app. It will look something like this:
+- Compile your extension to a dynamic library (.so)
+- Compile for each common Android architecture, then place them in a folder `[PROJECT ROOT]/android/app/src/main/jniLibs`. That path is special and will automatically be packaged inside your app. It will look something like this:
 
   ```text
   /android
@@ -363,24 +363,29 @@ A high-level step by step guide:
               libcrsqlite.so
   ```
 
-- For compiling and packaging your library on iOS I’ve wrote [how to do it here](https://ospfranco.com/generating-a-xcframework-with-dylibs-for-ios/).
-- On iOS you sqlite cannot load the dylib for you automatically, you need to first call `getDylibPath` to get the runtime path of the dylib you created.
-- On android this `getDylibPath` is a no-op and you just need to pass the canonical name of the library. You can then finally call the `loadExtension` function on your database:
+### iOS
 
-```tsx
-import {open, getDylibPath} from '@op-sqlite/op-engineering';
+- Follow the [Guide to generating iOS dynamic libraries](https://ospfranco.com/generating-a-xcframework-with-dylibs-for-ios/). The process is far more complex, so make sure you follow the steps in detail and create a correct `.xcframework`
+- Unlike Android, iOS does not load the dylib for you automatically, you need to first call `getDylibPath` to get the runtime path of the dylib you created.
 
-const db = open(...);
-let path = "libcrsqlite" // in Android it will be the name of the .so
-if (Platform.os == "ios") {
-	path = getDylibPath("io.vlcn.crsqlite", "crsqlite"); // You need to get the bundle name from the .framework/plist.info inside of the .xcframework you created and then the canonical name inside the same plist
-}
-// Extensions usually have a default entry point to be loaded, if the documentation says nothing, you should assume no entry point change
-db.loadExtension(path);
+### Loading the extension
 
-// Others might need a different entry point function, you can pass it as a second argument
-db.loadExtension(path, "entry_function_of_the_extension");
-```
+- On android `getDylibPath` is a no-op and you just need to pass the canonical name of the library. You can then finally call the `loadExtension` function on your database:
+
+  ```tsx
+  import {open, getDylibPath} from '@op-sqlite/op-engineering';
+
+  const db = open(...);
+  let path = "libcrsqlite" // in Android it will be the name of the .so
+  if (Platform.os == "ios") {
+    path = getDylibPath("io.vlcn.crsqlite", "crsqlite"); // You need to get the bundle name from the .framework/plist.info inside of the .xcframework you created and then the canonical name inside the same plist
+  }
+  // Extensions usually have a default entry point to be loaded, if the documentation says nothing, you should assume no entry point change
+  db.loadExtension(path);
+
+  // Others might need a different entry point function, you can pass it as a second argument
+  db.loadExtension(path, "entry_function_of_the_extension");
+  ```
 
 ## Reactive Queries
 
