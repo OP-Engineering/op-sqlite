@@ -133,7 +133,7 @@ void install(jsi::Runtime &rt,
         int sync_interval = 0;
         if (options.hasProperty(rt, "libsqlSyncInterval")) {
             sync_interval = static_cast<int>(
-                options.getProperty(rt, "syncInterval").asNumber());
+                options.getProperty(rt, "libsqlSyncInterval").asNumber());
         }
 
         bool offline = false;
