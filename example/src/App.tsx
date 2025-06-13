@@ -1,4 +1,4 @@
-import {getDylibPath, open} from '@op-engineering/op-sqlite';
+import {getDylibPath, isLibsql, open} from '@op-engineering/op-sqlite';
 import clsx from 'clsx';
 import {useEffect, useState} from 'react';
 import {
@@ -208,6 +208,11 @@ export default function App() {
             ms
           </Text>
         )}
+        <View className="p-2">
+          <Text className="text-white">
+            is libsql: {isLibsql() ? 'YES' : 'NO'}
+          </Text>
+        </View>
         <Text
           className={clsx('font-bold flex-1 text-white p-2 mt-4', {
             'bg-green-500': allTestsPassed,
