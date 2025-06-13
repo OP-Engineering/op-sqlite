@@ -39,8 +39,11 @@ const remoteDb = openSync({
   url: 'url',
   authToken: 'token',
   syncInterval: 1, // Optional, in seconds
+  encryptionKey: 'my encryption key', // Optional, will encrypt the database on device. Will add overhead to your queries
 });
 ```
+
+Be careful when setting an encryption key as you need to keep your key secure. [Read more about React Native security](https://ospfranco.com/react-native-security-guide/).
 
 ## Sync Database
 

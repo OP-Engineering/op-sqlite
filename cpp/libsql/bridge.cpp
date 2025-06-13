@@ -40,7 +40,7 @@ DB opsqlite_libsql_open_sync(std::string const &name,
                              std::string const &base_path,
                              std::string const &url,
                              std::string const &auth_token, int sync_interval,
-                             bool offline) {
+                             bool offline, std::string const &encryption_key) {
     std::string path = opsqlite_get_db_path(name, base_path);
 
     int status;
@@ -52,7 +52,7 @@ DB opsqlite_libsql_open_sync(std::string const &name,
                             .primary_url = url.c_str(),
                             .auth_token = auth_token.c_str(),
                             .read_your_writes = '1',
-                            .encryption_key = nullptr,
+                            .encryption_key = encryption_key.c_str(),
                             .sync_interval = sync_interval,
                             .with_webpki = '1',
                             .offline = offline};
