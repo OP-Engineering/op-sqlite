@@ -1,5 +1,11 @@
 import { TurboModuleRegistry, type TurboModule } from 'react-native';
 
+type MoveAssetsDatabaseParams = {
+  filename: string;
+  path?: string;
+  overwrite?: boolean;
+};
+
 export interface Spec extends TurboModule {
   getConstants: () => {
     IOS_DOCUMENT_PATH: string;
@@ -9,9 +15,10 @@ export interface Spec extends TurboModule {
     ANDROID_EXTERNAL_FILES_PATH: string;
   };
 
-  install(): boolean;
+  install(): string | undefined;
 
-  moveAssetsDatabase(name: string, extension: string): boolean;
+  moveAssetsDatabase(params: MoveAssetsDatabaseParams): Promise<boolean>;
+  getDylibPath(bundleId: string, resourceName: string): string;
 }
 
 export default TurboModuleRegistry.getEnforcing<Spec>('OPSQLite');

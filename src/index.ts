@@ -321,11 +321,9 @@ if (global.__OPSQLiteProxy == null) {
   }
 
   // Call the synchronous blocking install() function
-  const installed = NativeModules.OPSQLite.install();
-  if (!installed) {
-    throw new Error(
-      `Failed to install op-sqlite: The native OPSQLite Module could not be installed! Looks like something went wrong when installing JSI bindings, check the native logs for more info`
-    );
+  const error = NativeModules.OPSQLite.install();
+  if (error != null) {
+    throw new Error(`Failed to initialize op-sqlite: ${error}`);
   }
 
   // Check again if the constructor now exists. If not, throw an error.

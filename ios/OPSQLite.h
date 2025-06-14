@@ -1,7 +1,5 @@
-#import <React/RCTBridge.h>
+#import <RNOpSqliteSpec/RNOpSqliteSpec.h>
 
-@interface OPSQLite : NSObject <RCTBridgeModule>
-
-@property(nonatomic, assign) BOOL setBridgeOnMainQueue;
+@interface OPSQLite : NSObject <NativeOPSQLiteSpec>
 + (void)expoUpdatesWorkaround;
 @end

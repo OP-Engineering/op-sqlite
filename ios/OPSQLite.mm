@@ -1,20 +1,16 @@
-#import "OPSQLite.h"
+#import "OpSqlite.h"
 #import "../cpp/bindings.h"
-#import <React/RCTBridge+Private.h>
-#import <React/RCTLog.h>
-#import <React/RCTUtils.h>
-#import <ReactCommon/RCTTurboModule.h>
-#import <jsi/jsi.h>
+#import <ReactCommon/CallInvoker.h>
+#import <ReactCommon/RCTTurboModuleWithJSIBindings.h>
 
-@implementation OPSQLite
+using namespace facebook;
 
-@synthesize bridge = _bridge;
+@implementation OPSQLite {
+    bool _didInstall;
+    std::weak_ptr<facebook::react::CallInvoker> _callInvoker;
+}
 
 RCT_EXPORT_MODULE()
-
-+ (BOOL)requiresMainQueueSetup {
-    return YES;
-}
 
 - (NSDictionary *)constantsToExport {
     NSArray *libraryPaths = NSSearchPathForDirectoriesInDomains(
@@ -34,19 +30,12 @@ RCT_EXPORT_MODULE()
     return [self constantsToExport];
 }
 
-RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
-    RCTCxxBridge *cxxBridge = (RCTCxxBridge *)_bridge;
-    if (cxxBridge == nil) {
-        return @false;
+// Taken from @mrousavy's libraries to initialize JSI bindings directly
+- (void)installJSIBindingsWithRuntime:(jsi::Runtime &)runtime {
+    auto callInvoker = _callInvoker.lock();
+    if (callInvoker == nullptr) {
+        throw std::runtime_error("CallInvoker is missing");
     }
-
-    auto jsiRuntime = (facebook::jsi::Runtime *)cxxBridge.runtime;
-    if (jsiRuntime == nil) {
-        return @false;
-    }
-
-    auto &runtime = *jsiRuntime;
-    auto callInvoker = _bridge.jsCallInvoker;
 
     // Get appGroupID value from Info.plist using key "AppGroup"
     NSString *appGroupID =
@@ -64,7 +53,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
                   @"value of "
                   @"\"AppGroup\" in your Info.plist file",
                   appGroupID);
-            return @false;
+            return;
         }
 
         documentPath = [storeUrl path];
@@ -93,23 +82,34 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 
     opsqlite::install(runtime, callInvoker, [documentPath UTF8String],
                       [crsqlite_path UTF8String], [sqlite_vec_path UTF8String]);
-    return @true;
+    _didInstall = true;
 }
 
-RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(getDylibPath : (
-    NSString *)bundleId andResource : (NSString *)resourceName) {
+- (NSString *)install {
+    if (_didInstall) {
+        // installJSIBindingsWithRuntime ran successfully.
+        return nil;
+    } else {
+        return @"JSI Bindings could not be installed!";
+    }
+}
+
+- (nonnull NSString *)getDylibPath:(nonnull NSString *)bundleId
+                      resourceName:(nonnull NSString *)resourceName {
     NSBundle *bundle = [NSBundle bundleWithIdentifier:bundleId];
     NSString *path = [bundle pathForResource:resourceName ofType:@""];
     return path;
 }
 
-RCT_EXPORT_METHOD(moveAssetsDatabase : (NSDictionary *)args resolve : (
-    RCTPromiseResolveBlock)resolve reject : (RCTPromiseRejectBlock)reject) {
+- (void)moveAssetsDatabase:
+            (JS::NativeOPSQLite::MoveAssetsDatabaseParams &)params
+                   resolve:(nonnull RCTPromiseResolveBlock)resolve
+                    reject:(nonnull RCTPromiseRejectBlock)reject {
     NSString *documentPath = [NSSearchPathForDirectoriesInDomains(
         NSLibraryDirectory, NSUserDomainMask, true) objectAtIndex:0];
 
-    NSString *filename = args[@"filename"];
-    BOOL overwrite = args[@"overwrite"];
+    NSString *filename = params.filename();
+    std::optional<bool> overwrite = params.overwrite();
 
     NSString *sourcePath = [[NSBundle mainBundle] pathForResource:filename
                                                            ofType:nil];
@@ -140,7 +140,6 @@ RCT_EXPORT_METHOD(moveAssetsDatabase : (NSDictionary *)args resolve : (
         return;
     }
     resolve(@true);
-    return;
 }
 
 - (void)invalidate {
@@ -152,6 +151,12 @@ RCT_EXPORT_METHOD(moveAssetsDatabase : (NSDictionary *)args resolve : (
         NSLibraryDirectory, NSUserDomainMask, true);
     NSString *documentPath = [paths objectAtIndex:0];
     opsqlite::expoUpdatesWorkaround([documentPath UTF8String]);
+}
+
+- (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
+    (const facebook::react::ObjCTurboModule::InitParams &)params {
+    _callInvoker = params.jsInvoker;
+    return std::make_shared<facebook::react::NativeOPSQLiteSpecJSI>(params);
 }
 
 @end
