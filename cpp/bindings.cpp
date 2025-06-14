@@ -112,12 +112,15 @@ void install(jsi::Runtime &rt,
 #ifdef OP_SQLITE_USE_LIBSQL
     auto open_remote = HOST_STATIC_FN("openRemote") {
         jsi::Object options = args[0].asObject(rt);
+      
         std::string url = options.getProperty(rt, "url").asString(rt).utf8(rt);
+      
         std::string auth_token =
             options.getProperty(rt, "authToken").asString(rt).utf8(rt);
-
-        std::shared_ptr<DBHostObject> db =
-            std::make_shared<DBHostObject>(rt, url, auth_token, invoker);
+      
+        std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
+            rt, url, auth_token, invoker);
+      
         return jsi::Object::createFromHostObject(rt, db);
     });
 
@@ -141,6 +144,12 @@ void install(jsi::Runtime &rt,
             offline = options.getProperty(rt, "libsqlOffline").asBool();
         }
 
+        std::string encryption_key;
+        if (options.hasProperty(rt, "encryptionKey")) {
+            encryption_key =
+                options.getProperty(rt, "encryptionKey").asString(rt).utf8(rt);
+        }
+
         std::string location;
         if (options.hasProperty(rt, "location")) {
             location =
@@ -157,7 +166,7 @@ void install(jsi::Runtime &rt,
         }
 
         std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-            rt, invoker, name, path, url, auth_token, sync_interval, offline);
+            rt, invoker, name, path, url, auth_token, sync_interval, offline, encryption_key);
         return jsi::Object::createFromHostObject(rt, db);
     });
 #endif

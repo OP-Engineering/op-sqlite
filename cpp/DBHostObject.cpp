@@ -140,6 +140,7 @@ void DBHostObject::auto_register_update_hook() {
 //  | |___| (_) | | | \__ \ |_| |  | |_| | (__| || (_) | |
 //   \_____\___/|_| |_|___/\__|_|   \__,_|\___|\__\___/|_|
 #ifdef OP_SQLITE_USE_LIBSQL
+// Remote connection constructor
 DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &url,
                            std::string &auth_token,
                            std::shared_ptr<react::CallInvoker> invoker)
@@ -150,15 +151,19 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &url,
     create_jsi_functions();
 }
 
+// Sync connection constructor
 DBHostObject::DBHostObject(jsi::Runtime &rt,
                            std::shared_ptr<react::CallInvoker> invoker,
                            std::string &db_name, std::string &path,
                            std::string &url, std::string &auth_token,
-                           int sync_interval, bool offline)
+                           int sync_interval, bool offline,
+                           std::string &encryption_key)
     : db_name(db_name), invoker(std::move(invoker)), rt(rt) {
+
     _thread_pool = std::make_shared<ThreadPool>();
+
     db = opsqlite_libsql_open_sync(db_name, path, url, auth_token,
-                                   sync_interval, offline);
+                                   sync_interval, offline, encryption_key);
 
     create_jsi_functions();
 }
