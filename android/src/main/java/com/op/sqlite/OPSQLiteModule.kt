@@ -12,7 +12,6 @@ import java.io.InputStream
 import java.io.OutputStream
 import com.facebook.react.util.RNLog;
 
-//@ReactModule(name = OPSQLiteModule.NAME)
 internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextBaseJavaModule(context) {
     override fun getName(): String {
         return NAME
@@ -40,19 +39,20 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextB
     }
 
     @ReactMethod(isBlockingSynchronousMethod = true)
-    fun install(): Boolean {
+    fun install(): String? {
         return try {
             OPSQLiteBridge.instance.install(reactApplicationContext)
-            true
+            return null
         } catch (exception: Exception) {
             Log.e(NAME, "Install exception: $exception")
-            false
+            return exception.toString()
         }
     }
 
     @ReactMethod(isBlockingSynchronousMethod = true)
-    fun getDylibPath(bundleId: String, name: String) {
+    fun getDylibPath(bundleId: String, name: String): Boolean {
         throw Exception("Do not call getDylibPath on Android")
+        return true
     }
 
     @ReactMethod
@@ -64,7 +64,6 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextB
         val assetsManager = context.assets
 
         try {
-
             val databasesFolder =
                     context.getDatabasePath("defaultDatabase")
                             .absolutePath
