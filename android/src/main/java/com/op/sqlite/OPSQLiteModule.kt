@@ -51,8 +51,9 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextB
     }
 
     @ReactMethod(isBlockingSynchronousMethod = true)
-    fun getDylibPath(bundleId: String, name: String) {
+    fun getDylibPath(bundleId: String, name: String): Boolean {
         throw Exception("Do not call getDylibPath on Android")
+        return true
     }
 
     @ReactMethod
