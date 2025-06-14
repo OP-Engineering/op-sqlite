@@ -54,7 +54,8 @@ class JSI_EXPORT DBHostObject : public jsi::HostObject {
     // Constructor for a local database with remote sync
     DBHostObject(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
                  std::string &db_name, std::string &path, std::string &url,
-                 std::string &auth_token, int sync_interval, bool offline);
+                 std::string &auth_token, int sync_interval, bool offline,
+                 std::string &encryption_key);
 #endif
 
     std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt) override;
