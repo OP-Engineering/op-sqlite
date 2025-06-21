@@ -7,7 +7,7 @@
 #include "libsql.h"
 #include "libsql/bridge.h"
 #else
-#include "sqlite3.h"
+#include <sqlite3.h>
 #endif
 #include "OPThreadPool.h"
 #include <string>
