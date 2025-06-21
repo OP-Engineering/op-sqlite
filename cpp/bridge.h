@@ -2,9 +2,9 @@
 
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
-#include "sqlite3.h"
 #include "types.h"
 #include "utils.h"
+#include <sqlite3.h>
 #include <vector>
 
 namespace opsqlite {
