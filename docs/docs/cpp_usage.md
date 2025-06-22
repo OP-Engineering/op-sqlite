@@ -4,11 +4,11 @@ sidebar_position: 10
 
 # C++ Usage
 
-In certain scenarios, you may prefer direct access to SQLite C++ code, allowing efficient database operations directly from C++ in a React Native environment, independent of JavaScript.
+It's possible to access the native C++ functions in case you want to directly call the underlaying API without React-Native/JavaScript. This is useful in case you have native code and need to access sqlite functionality.
 
-## Android CMake Integration
+## Android
 
-The package supports prefab publishing for Android, which allows you to access it from within your CMakeLists.txt file.
+The package supports prefab publishing for Android, which allows you to access it from within your `CMakeLists.txt` file.
 
 Add the following to your `CMakeLists.txt`:
 
@@ -24,11 +24,9 @@ target_link_libraries(
 )
 ```
 
-## Header File Inclusion
+## Add header to your native code
 
 Due to platform differences, you need to include the SQLite header differently for Android and iOS:
-
-### Example on how to include the headers in C++
 
 ```cpp
 #ifdef __ANDROID__
@@ -39,3 +37,5 @@ Due to platform differences, you need to include the SQLite header differently f
 #include <op-sqlite/bridge.h>
 #endif
 ```
+
+If you are wondering how to use C++ code, on Android it's achieved via JNI/NDK code, on iOS you can use any Objective-C++ (`.mm`) file and import it directly. Swift integration might not work and will require setting the min swift version to `5.9`, it's not covered in this guide.
