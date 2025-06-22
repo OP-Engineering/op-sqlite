@@ -4,7 +4,11 @@
 #include "SmartHostObject.h"
 #include "types.h"
 #include "utils.h"
+#ifdef __ANDROID__
+#include "sqlite3.h"
+#else
 #include <sqlite3.h>
+#endif
 #include <vector>
 
 namespace opsqlite {
