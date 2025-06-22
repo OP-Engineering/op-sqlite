@@ -7,7 +7,11 @@
 #include "libsql.h"
 #include "libsql/bridge.h"
 #else
+#ifdef __ANDROID__
+#include "sqlite3.h"
+#else
 #include <sqlite3.h>
+#endif
 #endif
 #include "OPThreadPool.h"
 #include <string>
