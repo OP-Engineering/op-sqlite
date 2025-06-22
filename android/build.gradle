@@ -115,10 +115,9 @@ def reactNativeArchitectures() {
 }
 
 android {
-  
+
   compileSdkVersion safeExtGet("compileSdkVersion", 35)
   namespace "com.op.sqlite"
-  
   // Used to override the NDK path/version on internal CI or by allowing
   // users to customize the NDK path/version from their root project (e.g. for M1 support)
   if (rootProject.hasProperty("ndkPath")) {
@@ -130,6 +129,13 @@ android {
 
   buildFeatures {
     prefab true
+    prefabPublishing true
+  }
+
+  prefab {
+    "op-sqlite" {
+      headers "${project.buildDir}/headers/op-sqlite/"
+    }
   }
 
   defaultConfig {
@@ -137,7 +143,7 @@ android {
     targetSdkVersion safeExtGet('targetSdkVersion', 35)
     versionCode 1
     versionName "1.0"
-    
+
     externalNativeBuild {
         cmake {
             if(useSQLCipher) {
@@ -179,7 +185,7 @@ android {
                 include "**/*.cpp", "**/*.h"
               }
               sourceFiles = fileTree(dir: destDir, include: ["**/*.cpp", "**/*.h"]).files.join(";")
-              tokenizersHeaderPath = "../c_sources/tokenizers.h" 
+              tokenizersHeaderPath = "../c_sources/tokenizers.h"
             }
 
             cppFlags "-O2 -frtti -fexceptions -Wall -fstack-protector-all"
@@ -209,9 +215,8 @@ android {
               "**/libreactnative.so",
       ]
     }
-    
   }
-  
+
   compileOptions {
     sourceCompatibility JavaVersion.VERSION_17
     targetCompatibility JavaVersion.VERSION_17
@@ -247,6 +252,15 @@ dependencies {
     implementation('io.github.ronickg:openssl:3.3.2')
   }
 }
+
+task prepareHeaders(type: Copy) {
+  from('../cpp')
+  include "**/*.h"
+  into "${project.buildDir}/headers/op-sqlite/op-engineering_op-sqlite/"
+  includeEmptyDirs = false
+}
+
+preBuild.dependsOn(prepareHeaders)
 
 // Resolves "LOCAL_SRC_FILES points to a missing file, Check that libfb.so exists or that its path is correct".
 tasks.whenTaskAdded { task ->
