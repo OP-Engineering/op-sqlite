@@ -8,7 +8,11 @@
 #ifdef OP_SQLITE_USE_LIBSQL
 #include "libsql/bridge.h"
 #else
+#ifdef __ANDROID__
+#include "sqlite3.h"
+#else
 #include <sqlite3.h>
+#endif
 #endif
 #include <unordered_map>
 #include <vector>
