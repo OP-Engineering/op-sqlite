@@ -37,19 +37,37 @@ def useSqliteVec = false
 def enableRtree = false
 def tokenizers = []
 
-def isInsideNodeModules = rootDir.absolutePath.contains("node_modules")
-def packageJson
+// On the example app, the package.json is located at the root of the project
+// On the user app, the package.json is located at the root of the node_modules directory
+def isUserApp = rootDir.absolutePath.contains("node_modules")
+def packageJsonFile
 
-if ( isInsideNodeModules ) {
-  def packageJsonFile = new File("$rootDir/../../../package.json")
-  packageJson = new JsonSlurper().parseText(packageJsonFile.text)
+if (isUserApp) {
+  // Start from the root + 1 level up (to avoid detecting the op-sqlite/package.json) and traverse upwards to find the first package.json
+  File currentDir = new File("$rootDir/../")
+  packageJsonFile = null
+  
+  // Try to find package.json by traversing upwards
+  while (currentDir != null) {
+    File potential = new File(currentDir, "package.json")
+    if (potential.exists()) {
+      packageJsonFile = potential
+      break
+    }
+    currentDir = currentDir.parentFile
+  }
 } else {
-  def packageJsonFile = new File("$rootDir/../package.json")
-  packageJson = new JsonSlurper().parseText(packageJsonFile.text)
+  packageJsonFile = new File("$rootDir/../package.json")
 }
 
+
+def packageJson = new JsonSlurper().parseText(packageJsonFile.text)
+
 def opsqliteConfig = packageJson["op-sqlite"]
+
 if(opsqliteConfig) {
+println "[OP-SQLITE] Detected op-sqlite config from package.json at: " + packageJsonFile.absolutePath
+
   useSQLCipher = opsqliteConfig["sqlcipher"]
   useCRSQLite = opsqliteConfig["crsqlite"]
   useSqliteVec = opsqliteConfig["sqliteVec"]
@@ -177,7 +195,7 @@ android {
             // def tokenizerInitStrings = 0
             def tokenizersHeaderPath = 0
             if (!tokenizers.isEmpty()) {
-              def sourceDir = isInsideNodeModules ? file("$rootDir/../../../c_sources") : file("$rootDir/../c_sources")
+              def sourceDir = isUserApp ? file("$rootDir/../../../c_sources") : file("$rootDir/../c_sources")
               def destDir = file("$buildscript.sourceFile.parentFile/c_sources")
               copy {
                 from sourceDir
