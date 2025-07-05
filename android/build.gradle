@@ -280,7 +280,7 @@ dependencies {
   }
 }
 
-task prepareHeaders(type: Copy) {
+tasks.register('prepareHeaders', Copy) {
   from('../cpp')
   include "**/*.h"
   into "${project.buildDir}/headers/op-sqlite/op-engineering_op-sqlite/"
@@ -290,7 +290,7 @@ task prepareHeaders(type: Copy) {
 preBuild.dependsOn(prepareHeaders)
 
 // Resolves "LOCAL_SRC_FILES points to a missing file, Check that libfb.so exists or that its path is correct".
-tasks.whenTaskAdded { task ->
+tasks.configureEach { task ->
   if (task.name.contains("configureCMakeDebug")) {
     rootProject.getTasksByName("packageReactNdkDebugLibs", true).forEach {
       task.dependsOn(it)
