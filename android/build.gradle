@@ -254,6 +254,15 @@ android {
         srcDirs += 'src/paper/java'
       // }
     }
+    jniLibs {
+      srcDirs = []
+      if (useCRSQLite) {
+        srcDirs += 'src/main/libcrsqlite'
+      }
+      if (useSqliteVec) {
+        srcDirs += 'src/main/libsqlitevec'
+      }
+    }
   }
 }
 
