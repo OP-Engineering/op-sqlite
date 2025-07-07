@@ -4,6 +4,7 @@
 #include <string>
 #include <variant>
 #include <vector>
+#include <unordered_set>
 
 struct ArrayBuffer {
     std::shared_ptr<uint8_t> data;
@@ -25,6 +26,7 @@ struct BatchResult {
     std::string message;
     int affectedRows;
     int commands;
+    std::unordered_set<std::string> modifiedTables;
 };
 
 struct BatchArguments {

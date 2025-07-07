@@ -716,9 +716,14 @@ opsqlite_libsql_execute_batch(DB const &db,
 
     try {
         int affectedRows = 0;
+        std::unordered_set<std::string> modifiedTables;
         opsqlite_libsql_execute(db, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
         for (int i = 0; i < commandCount; i++) {
             auto command = commands->at(i);
+            auto maybeTable = extract_modified_table(command.sql);
+            if (maybeTable.has_value()) {
+                modifiedTables.insert(*maybeTable);
+            }
             // We do not provide a datastructure to receive query data because
             // we don't need/want to handle this results in a batch execution
             auto result =
@@ -729,6 +734,7 @@ opsqlite_libsql_execute_batch(DB const &db,
         return BatchResult{
             .affectedRows = affectedRows,
             .commands = static_cast<int>(commandCount),
+            .modifiedTables = std::move(modifiedTables),
         };
     } catch (std::exception &exc) {
         opsqlite_libsql_execute(db, "ROLLBACK", nullptr);

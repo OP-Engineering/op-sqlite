@@ -18,14 +18,14 @@ namespace react = facebook::react;
 
 #ifdef OP_SQLITE_USE_LIBSQL
 void DBHostObject::flush_pending_reactive_queries(
-    const std::shared_ptr<jsi::Value> &resolve) {
+    const std::shared_ptr<jsi::Value> &resolve, std::optional<int> rowsAffected) {
     invoker->invokeAsync([this, resolve]() {
         resolve->asObject(rt).asFunction(rt).call(rt, {});
     });
 }
 #else
 void DBHostObject::flush_pending_reactive_queries(
-    const std::shared_ptr<jsi::Value> &resolve) {
+    const std::shared_ptr<jsi::Value> &resolve, std::optional<int> rowsAffected) {
     for (const auto &query_ptr : pending_reactive_queries) {
         auto query = query_ptr.get();
 
@@ -36,14 +36,13 @@ void DBHostObject::flush_pending_reactive_queries(
         auto status = opsqlite_execute_prepared_statement(db, query->stmt,
                                                           &results, metadata);
 
-        invoker->invokeAsync(
-            [this,
-             results = std::make_shared<std::vector<DumbHostObject>>(results),
-             callback = query->callback, metadata, status = std::move(status)] {
-                auto jsiResult =
-                    create_result(rt, status, results.get(), metadata);
-                callback->asObject(rt).asFunction(rt).call(rt, jsiResult);
-            });
+        invoker->invokeAsync([this, resolve, rowsAffected]() {
+            auto res = jsi::Object(rt);
+            if (rowsAffected.has_value()) {
+                res.setProperty(rt, "rowsAffected", jsi::Value(rowsAffected.value()));
+            }
+            resolve->asObject(rt).asFunction(rt).call(rt, std::move(res));
+        });
     }
 
     pending_reactive_queries.clear();
@@ -530,19 +529,15 @@ void DBHostObject::create_jsi_functions() {
                     auto batchResult = opsqlite_execute_batch(db, &commands);
 #endif
 
+                    for (const auto& table : batchResult.modifiedTables) {
+                        on_update(table, "UNKNOWN", -1);
+                    }
+
                     if (invalidated) {
                         return;
                     }
 
-                    invoker->invokeAsync([&rt,
-                                          batchResult = std::move(batchResult),
-                                          resolve] {
-                        auto res = jsi::Object(rt);
-                        res.setProperty(rt, "rowsAffected",
-                                        jsi::Value(batchResult.affectedRows));
-                        resolve->asObject(rt).asFunction(rt).call(
-                            rt, std::move(res));
-                    });
+                    flush_pending_reactive_queries(resolve, batchResult.affectedRows);
                 } catch (std::runtime_error &e) {
                     auto what = e.what();
                     invoker->invokeAsync([&rt, what, reject] {
