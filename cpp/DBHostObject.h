@@ -79,7 +79,7 @@ class JSI_EXPORT DBHostObject : public jsi::HostObject {
     void auto_register_update_hook();
     void create_jsi_functions();
     void
-    flush_pending_reactive_queries(const std::shared_ptr<jsi::Value> &resolve);
+    flush_pending_reactive_queries(const std::shared_ptr<jsi::Value> &resolve, std::optional<int> rowsAffected);
 
     std::unordered_map<std::string, jsi::Value> function_map;
     std::string base_path;
