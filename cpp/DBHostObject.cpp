@@ -790,7 +790,7 @@ void DBHostObject::create_jsi_functions() {
             auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
 
             auto task = [&rt, this, resolve]() {
-                flush_pending_reactive_queries(resolve);
+                flush_pending_reactive_queries(resolve, std::nullopt);
             };
 
             _thread_pool->queueWork(task);
