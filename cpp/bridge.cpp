@@ -850,12 +850,17 @@ opsqlite_execute_batch(sqlite3 *db,
     }
 
     int affectedRows = 0;
+    std::unordered_set<std::string> modifiedTables;
     opsqlite_execute(db, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
     for (int i = 0; i < commandCount; i++) {
         const auto &command = commands->at(i);
         // We do not provide a datastructure to receive query data because we
         // don't need/want to handle this results in a batch execution
         try {
+            auto maybeTable = extract_modified_table(command.sql);
+            if (maybeTable.has_value()) {
+                modifiedTables.insert(*maybeTable);
+            }
             auto result = opsqlite_execute(db, command.sql, &command.params);
             affectedRows += result.affectedRows;
         } catch (std::exception &exc) {
@@ -867,6 +872,7 @@ opsqlite_execute_batch(sqlite3 *db,
     return BatchResult{
         .affectedRows = affectedRows,
         .commands = static_cast<int>(commandCount),
+        .modifiedTables = std::move(modifiedTables),
     };
 }
 

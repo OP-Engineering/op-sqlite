@@ -5,6 +5,7 @@
 #endif
 #include <fstream>
 #include <sys/stat.h>
+#include <sstream>
 
 namespace opsqlite {
 
@@ -323,5 +324,45 @@ void log_to_console(jsi::Runtime &runtime, const std::string &message) {
     auto log = console.getPropertyAsFunction(runtime, "log");
     log.call(runtime, jsi::String::createFromUtf8(runtime, message));
 }
+
+
+std::optional<std::string> extract_modified_table(const std::string &sql) {
+    std::istringstream stream(sql);
+    std::string token;
+    std::string table;
+
+    while (stream >> token) {
+        std::string upper = token;
+        std::transform(upper.begin(), upper.end(), upper.begin(), ::toupper);
+
+        if (upper == "INTO" || upper == "UPDATE" || upper == "FROM") {
+            // Next token should be the table name
+            if (stream >> table) {
+                table.erase(std::remove_if(table.begin(), table.end(), [](char c) {
+                    return c == '`' || c == '"' || c == '\'' || c == '(';
+                }), table.end());
+                return table;
+            }
+        }
+
+        // Early exit for UPDATE statements
+        if (upper == "UPDATE") {
+            if (stream >> table) {
+                table.erase(std::remove_if(table.begin(), table.end(), [](char c) {
+                    return c == '`' || c == '"' || c == '\'' || c == '(';
+                }), table.end());
+                return table;
+            }
+        }
+
+        // When we reach a semicolon, we can stop processing
+        if (token.find(';') != std::string::npos) {
+            break;
+        }
+    }
+
+    return std::nullopt;
+}
+
 
 } // namespace opsqlite

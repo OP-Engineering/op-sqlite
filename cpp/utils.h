@@ -48,4 +48,6 @@ bool file_exists(const std::string &path);
 
 void log_to_console(jsi::Runtime &rt, const std::string &message);
 
+std::optional<std::string> extract_modified_table(std::string const& sql);
+
 } // namespace opsqlite
