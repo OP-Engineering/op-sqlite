@@ -3,7 +3,7 @@
 
 #define TOKENIZER_LIST opsqlite_wordtokenizer_init(db,&errMsg,nullptr);opsqlite_porter_init(db,&errMsg,nullptr);
 
-#include "sqlite3.h"
+#include <sqlite3.h>
 
 namespace opsqlite {
 

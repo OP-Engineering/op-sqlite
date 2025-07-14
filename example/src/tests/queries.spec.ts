@@ -772,5 +772,73 @@ export function queriesTests() {
       console.warn(res.rows);
       expect(res.rows).to.eql([{user_version: 0}]);
     });
+
+    it('Can create, update and delete a row', async () => {
+      // Create a row
+      const id = chance.integer();
+      const name = chance.name();
+      const age = chance.integer();
+      const networth = chance.floating();
+
+      const insertRes = await db.execute(
+        'INSERT INTO User (id, name, age, networth) VALUES(?, ?, ?, ?)',
+        [id, name, age, networth],
+      );
+
+      expect(insertRes.rowsAffected).to.equal(1);
+      expect(insertRes.insertId).to.equal(1);
+
+      // Check the result is there
+      const selectRes = await db.execute('SELECT * FROM User WHERE id = ?', [
+        id,
+      ]);
+      expect(selectRes.rows.length).to.equal(1);
+      expect(selectRes.rows[0]).to.eql({
+        id,
+        name,
+        age,
+        networth,
+        nickname: null,
+      });
+
+      // Update the row
+      const newName = chance.name();
+      const newAge = chance.integer();
+      const updateRes = await db.execute(
+        'UPDATE User SET name = ?, age = ? WHERE id = ?',
+        [newName, newAge, id],
+      );
+
+      // Check the affected rows result
+      expect(updateRes.rowsAffected).to.equal(1);
+
+      // Check the result itself
+      const selectAfterUpdateRes = await db.execute(
+        'SELECT * FROM User WHERE id = ?',
+        [id],
+      );
+      expect(selectAfterUpdateRes.rows.length).to.equal(1);
+      expect(selectAfterUpdateRes.rows[0]).to.eql({
+        id,
+        name: newName,
+        age: newAge,
+        networth,
+        nickname: null,
+      });
+
+      // Delete the row
+      const deleteRes = await db.execute('DELETE FROM User WHERE id = ?', [id]);
+      expect(deleteRes.rowsAffected).to.equal(1);
+
+      // Check the table state again
+      const selectAfterDeleteRes = await db.execute(
+        'SELECT * FROM User WHERE id = ?',
+        [id],
+      );
+      expect(selectAfterDeleteRes.rows.length).to.equal(0);
+
+      const allRowsRes = await db.execute('SELECT * FROM User');
+      expect(allRowsRes.rows.length).to.equal(0);
+    });
   });
 }
