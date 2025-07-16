@@ -79,7 +79,7 @@ export type FileLoadResult = BatchQueryResult & {
 export type Transaction = {
   commit: () => Promise<QueryResult>;
   execute: (query: string, params?: Scalar[]) => Promise<QueryResult>;
-  rollback: () => Promise<QueryResult>;
+  rollback: () => QueryResult;
 };
 
 type PendingTransaction = {
@@ -412,7 +412,39 @@ function enhanceDB(db: InternalDB, options: DBParams): DB {
         return [query];
       });
 
-      return db.executeBatch(sanitizedCommands as any[]);
+      async function run() {
+        try {
+          enhancedDb.executeSync('BEGIN TRANSACTION;');
+
+          let res = await db.executeBatch(sanitizedCommands as any[]);
+
+          enhancedDb.executeSync('COMMIT;');
+
+          return res;
+        } catch (executionError) {
+          try {
+            enhancedDb.executeSync('ROLLBACK;');
+          } catch (rollbackError) {
+            throw rollbackError;
+          }
+
+          throw executionError;
+        } finally {
+          lock.inProgress = false;
+          startNextTransaction();
+        }
+      }
+
+      return await new Promise((resolve, reject) => {
+        const tx: PendingTransaction = {
+          start: () => {
+            run().then(resolve).catch(reject);
+          },
+        };
+
+        lock.queue.push(tx);
+        startNextTransaction();
+      });
     },
     loadFile: db.loadFile,
     updateHook: db.updateHook,
@@ -555,7 +587,7 @@ function enhanceDB(db: InternalDB, options: DBParams): DB {
             }. Cannot execute query on finalized transaction`
           );
         }
-        const result = await enhancedDb.execute('COMMIT;');
+        const result = enhancedDb.executeSync('COMMIT;');
 
         await db.flushPendingReactiveQueries();
 
@@ -563,7 +595,7 @@ function enhanceDB(db: InternalDB, options: DBParams): DB {
         return result;
       };
 
-      const rollback = async (): Promise<QueryResult> => {
+      const rollback = (): QueryResult => {
         if (isFinalized) {
           throw Error(
             `OP-Sqlite Error: Database: ${
@@ -571,14 +603,14 @@ function enhanceDB(db: InternalDB, options: DBParams): DB {
             }. Cannot execute query on finalized transaction`
           );
         }
-        const result = await enhancedDb.execute('ROLLBACK;');
+        const result = enhancedDb.executeSync('ROLLBACK;');
         isFinalized = true;
         return result;
       };
 
       async function run() {
         try {
-          await enhancedDb.execute('BEGIN TRANSACTION;');
+          enhancedDb.executeSync('BEGIN TRANSACTION;');
 
           await fn({
             commit,
@@ -587,12 +619,12 @@ function enhanceDB(db: InternalDB, options: DBParams): DB {
           });
 
           if (!isFinalized) {
-            await commit();
+            commit();
           }
         } catch (executionError) {
           if (!isFinalized) {
             try {
-              await rollback();
+              rollback();
             } catch (rollbackError) {
               throw rollbackError;
             }
