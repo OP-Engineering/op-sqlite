@@ -850,7 +850,7 @@ opsqlite_execute_batch(sqlite3 *db,
     }
 
     int affectedRows = 0;
-    opsqlite_execute(db, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
+    // opsqlite_execute(db, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
     for (int i = 0; i < commandCount; i++) {
         const auto &command = commands->at(i);
         // We do not provide a datastructure to receive query data because we
@@ -863,7 +863,7 @@ opsqlite_execute_batch(sqlite3 *db,
             throw exc;
         }
     }
-    opsqlite_execute(db, "COMMIT", nullptr);
+    // opsqlite_execute(db, "COMMIT", nullptr);
     return BatchResult{
         .affectedRows = affectedRows,
         .commands = static_cast<int>(commandCount),
