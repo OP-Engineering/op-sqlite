@@ -41,7 +41,8 @@ DB opsqlite_libsql_open_remote(std::string const &url,
 DB opsqlite_libsql_open_sync(std::string const &name, std::string const &path,
                              std::string const &url,
                              std::string const &auth_token, int sync_interval,
-                             bool offline, std::string const &encryption_key);
+                             bool offline, std::string const &encryption_key,
+                             std::string const &remote_encryption_key);
 
 void opsqlite_libsql_close(DB &db);
 
