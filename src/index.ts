@@ -666,6 +666,7 @@ export const openSync = (params: {
   libsqlSyncInterval?: number;
   libsqlOffline?: boolean;
   encryptionKey?: string;
+  remoteEncryptionKey?: string;
 }): DB => {
   if (!isLibsql()) {
     throw new Error('This function is only available for libsql');
