@@ -150,6 +150,12 @@ void install(jsi::Runtime &rt,
                 options.getProperty(rt, "encryptionKey").asString(rt).utf8(rt);
         }
 
+        std::string remote_encryption_key;
+        if (options.hasProperty(rt, "remoteEncryptionKey")) {
+            encryption_key =
+                options.getProperty(rt, "remoteEncryptionKey").asString(rt).utf8(rt);
+        }
+
         std::string location;
         if (options.hasProperty(rt, "location")) {
             location =
@@ -166,7 +172,7 @@ void install(jsi::Runtime &rt,
         }
 
         std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-            rt, invoker, name, path, url, auth_token, sync_interval, offline, encryption_key);
+            rt, invoker, name, path, url, auth_token, sync_interval, offline, encryption_key, remote_encryption_key);
         return jsi::Object::createFromHostObject(rt, db);
     });
 #endif

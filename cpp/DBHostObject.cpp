@@ -157,13 +157,15 @@ DBHostObject::DBHostObject(jsi::Runtime &rt,
                            std::string &db_name, std::string &path,
                            std::string &url, std::string &auth_token,
                            int sync_interval, bool offline,
-                           std::string &encryption_key)
+                           std::string &encryption_key,
+                           std::string &remote_encryption_key)
     : db_name(db_name), invoker(std::move(invoker)), rt(rt) {
 
     _thread_pool = std::make_shared<ThreadPool>();
 
     db = opsqlite_libsql_open_sync(db_name, path, url, auth_token,
-                                   sync_interval, offline, encryption_key);
+                                   sync_interval, offline, encryption_key,
+                                   remote_encryption_key);
 
     create_jsi_functions();
 }
