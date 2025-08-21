@@ -134,6 +134,7 @@ type InternalDB = {
   prepareStatement: (query: string) => PreparedStatement;
   loadExtension: (path: string, entryPoint?: string) => void;
   executeRaw: (query: string, params?: Scalar[]) => Promise<any[]>;
+  executeRawSync: (query: string, params?: Scalar[]) => any[];
   getDbPath: (location?: string) => string;
   reactiveExecute: (params: {
     query: string;
@@ -485,10 +486,7 @@ function enhanceDB(db: InternalDB, options: DBParams): DB {
     },
     executeRawSync: (query: string, params?: Scalar[]) => {
       const sanitizedParams = sanitizeArrayBuffersInArray(params);
-      let res = sanitizedParams
-        ? db.executeSync(query, sanitizedParams as Scalar[])
-        : db.executeSync(query);
-      return res.rawRows as any[];
+      return db.executeRawSync(query, sanitizedParams as Scalar[]);
     },
     executeSync: (query: string, params?: Scalar[]): QueryResult => {
       const sanitizedParams = sanitizeArrayBuffersInArray(params);

@@ -361,6 +361,23 @@ void DBHostObject::create_jsi_functions() {
 
         return create_js_rows(rt, status);
     });
+    
+    function_map["executeRawSync"] = HOSTFN("executeRawSync") {
+        const std::string query = args[0].asString(rt).utf8(rt);
+        std::vector<JSVariant> params = count == 2 && args[1].isObject()
+                                            ? to_variant_vec(rt, args[1])
+                                            : std::vector<JSVariant>();
+
+        std::vector<std::vector<JSVariant>> results;
+
+#ifdef OP_SQLITE_USE_LIBSQL
+        auto status = opsqlite_libsql_execute_raw(db, query, &params, &results);
+#else
+        auto status = opsqlite_execute_raw(db, query, &params, &results);
+#endif
+
+        return create_raw_result(rt, status, &results);
+    });
 
     function_map["execute"] = HOSTFN("execute") {
         const std::string query = args[0].asString(rt).utf8(rt);
