@@ -263,6 +263,11 @@ export type DB = {
    */
   executeRaw: (query: string, params?: Scalar[]) => Promise<any[]>;
   /**
+   * Same as `executeRaw` but it will block the JS thread and therefore your UI and should be used with caution
+   * It will return an array of arrays with just the values and not the keys
+   */
+  executeRawSync: (query: string, params?: Scalar[]) => any[];
+  /**
    * Get's the absolute path to the db file. Useful for debugging on local builds and for attaching the DB from users devices
    */
   getDbPath: (location?: string) => string;
@@ -477,6 +482,13 @@ function enhanceDB(db: InternalDB, options: DBParams): DB {
       const sanitizedParams = sanitizeArrayBuffersInArray(params);
 
       return db.executeRaw(query, sanitizedParams as Scalar[]);
+    },
+    executeRawSync: (query: string, params?: Scalar[]) => {
+      const sanitizedParams = sanitizeArrayBuffersInArray(params);
+      let res = sanitizedParams
+        ? db.executeSync(query, sanitizedParams as Scalar[])
+        : db.executeSync(query);
+      return res.rawRows as any[];
     },
     executeSync: (query: string, params?: Scalar[]): QueryResult => {
       const sanitizedParams = sanitizeArrayBuffersInArray(params);
