@@ -11,21 +11,14 @@ import {
   View,
 } from 'react-native';
 // import RNRestart from 'react-native-restart';
-import 'reflect-metadata';
 import {createLargeDB, queryLargeDB} from './Database';
-import {
-  setServerError,
-  setServerResults,
-  startServer,
-  stopServer,
-} from './server';
-import {constantsTests} from './tests/constants.spec';
-import {registerHooksTests} from './tests/hooks.spec';
-import {blobTests, dbSetupTests, queriesTests, runTests} from './tests/index';
-import {preparedStatementsTests} from './tests/preparedStatements.spec';
-import {reactiveTests} from './tests/reactive.spec';
-import {tokenizerTests} from './tests/tokenizer.spec';
-import {storageTests} from './tests/storage.spec';
+// import {
+//   setServerError,
+//   setServerResults,
+//   startServer,
+//   stopServer,
+// } from './server';
+import {runTests} from '@op-engineering/op-test';
 
 export default function App() {
   const [times, setTimes] = useState<number[]>([]);
@@ -37,29 +30,19 @@ export default function App() {
   const [rawExecutionTimes, setRawExecutionTimes] = useState<number[]>([]);
   const [results, setResults] = useState<any>([]);
   useEffect(() => {
-    runTests(
-      queriesTests,
-      dbSetupTests,
-      blobTests,
-      registerHooksTests,
-      preparedStatementsTests,
-      constantsTests,
-      reactiveTests,
-      tokenizerTests,
-      storageTests,
-    )
+    runTests()
       .then(results => {
-        setServerResults(results as any);
+        // setServerResults(results as any);
         setResults(results);
       })
       .catch(e => {
-        setServerError(e);
+        // setServerError(e);
       });
 
-    startServer();
+    // startServer();
 
     return () => {
-      stopServer();
+      // stopServer();
     };
   }, []);
 

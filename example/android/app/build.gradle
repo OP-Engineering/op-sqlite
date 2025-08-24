@@ -28,7 +28,7 @@ def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
-    compileSdkVersion rootProject.ext.compileSdkVersion
+    compileSdk rootProject.ext.compileSdkVersion
 
     namespace "com.op.sqlite.example"
     defaultConfig {
@@ -38,14 +38,11 @@ android {
         versionCode 1
         versionName "1.0"
     }
-    // https://stackoverflow.com/questions/75548548/duplicate-class-com-facebook-found-in-modules-jetified-react-android-0-71-debu
-    configurations {
-        all*.exclude group: "com.facebook.react", module: "react-native"
-    }
 
     packagingOptions {
         pickFirst '**/libcrypto.so'
     }
+    
     signingConfigs {
         debug {
             storeFile file('debug.keystore')

@@ -7,7 +7,7 @@ import {
   type DB,
   type SQLBatchTuple,
 } from '@op-engineering/op-sqlite';
-import {afterEach, beforeEach, describe, it} from './MochaRNAdapter';
+import {afterEach, beforeEach, describe, it} from '@op-engineering/op-test';
 import chai from 'chai';
 
 const expect = chai.expect;
