@@ -38,6 +38,11 @@ android {
         versionCode 1
         versionName "1.0"
     }
+    // https://stackoverflow.com/questions/75548548/duplicate-class-com-facebook-found-in-modules-jetified-react-android-0-71-debu
+    configurations {
+        all*.exclude group: "com.facebook.react", module: "react-native"
+    }
+
     packagingOptions {
         pickFirst '**/libcrypto.so'
     }
