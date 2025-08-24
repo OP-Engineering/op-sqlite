@@ -22,11 +22,9 @@ export function stopServer() {
 }
 
 export function setServerResults(r: any[]) {
-  console.log('Setting server results');
   results = r;
 }
 
 export function setServerError(e: any) {
-  console.error(`Setting server error: ${e}`);
   results = e;
 }

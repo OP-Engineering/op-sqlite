@@ -1,3 +1,6 @@
+ENV['RCT_USE_RN_DEP'] = '1'
+ENV['RCT_USE_PREBUILT_RNCORE'] = '1'
+
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(
     "react-native/scripts/react_native_pods.rb",

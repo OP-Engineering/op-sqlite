@@ -95,7 +95,6 @@ export function queriesTests() {
         // @ts-ignore
         await db.execute('SELECT ?', [{foo: 'bar'}]);
       } catch (e: any) {
-        console.log(e);
         expect(e.message).to.include(
           'Exception in HostFunction: Object is not an ArrayBuffer, cannot bind to SQLite',
         );
@@ -640,12 +639,8 @@ export function queriesTests() {
         ],
       ];
 
-      console.log('' + JSON.stringify(commands));
       // bomb~  (NOBRIDGE) ERROR  Error: Exception in HostFunction: <unknown>
       await db.executeBatch(commands);
-
-      const res = await db.execute('SELECT * FROM User');
-      console.log('res:' + JSON.stringify(res));
     });
 
     it('DumbHostObject allows to write known props', async () => {
@@ -769,7 +764,6 @@ export function queriesTests() {
 
     it('Pragma user_version', () => {
       const res = db.executeSync('PRAGMA user_version');
-      console.warn(res.rows);
       expect(res.rows).to.eql([{user_version: 0}]);
     });
   });
