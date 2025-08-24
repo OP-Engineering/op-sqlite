@@ -1,6 +1,6 @@
 import {Storage} from '@op-engineering/op-sqlite';
 import chai from 'chai';
-import {beforeEach, describe, it, afterEach} from './MochaRNAdapter';
+import {beforeEach, describe, it, afterEach} from '@op-engineering/op-test';
 
 const expect = chai.expect;
 

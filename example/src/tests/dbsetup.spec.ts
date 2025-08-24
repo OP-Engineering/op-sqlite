@@ -9,7 +9,7 @@ import {
   open,
 } from '@op-engineering/op-sqlite';
 import chai from 'chai';
-import {describe, it} from './MochaRNAdapter';
+import {describe, it} from '@op-engineering/op-test';
 import {Platform} from 'react-native';
 
 let expect = chai.expect;

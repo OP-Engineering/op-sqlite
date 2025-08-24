@@ -2,7 +2,7 @@ import Chance from 'chance';
 
 import {type DB, open, isLibsql} from '@op-engineering/op-sqlite';
 import chai from 'chai';
-import {describe, it, beforeEach, afterEach} from './MochaRNAdapter';
+import {describe, it, beforeEach, afterEach} from '@op-engineering/op-test';
 import {sleep} from './utils';
 
 const expect = chai.expect;

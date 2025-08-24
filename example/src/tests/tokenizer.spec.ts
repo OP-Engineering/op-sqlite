@@ -1,6 +1,6 @@
 import {isLibsql, open, type DB} from '@op-engineering/op-sqlite';
 import chai from 'chai';
-import {afterEach, beforeEach, describe, it} from './MochaRNAdapter';
+import {afterEach, beforeEach, describe, it} from '@op-engineering/op-test';
 
 const expect = chai.expect;
 
