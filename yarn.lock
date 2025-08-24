@@ -4079,6 +4079,8 @@ __metadata:
   dependencies:
     clang-format: "npm:^1.8.0"
     lefthook: "npm:^1.5.5"
+    react: "npm:19.1.1"
+    react-native: "npm:0.81.0"
     react-native-builder-bob: "npm:^0.40.13"
     typescript: "npm:5.8.3"
   peerDependencies:

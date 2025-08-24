@@ -60,6 +60,8 @@
   "devDependencies": {
     "clang-format": "^1.8.0",
     "lefthook": "^1.5.5",
+    "react": "19.1.1",
+    "react-native": "0.81.0",
     "react-native-builder-bob": "^0.40.13",
     "typescript": "5.8.3"
   },
