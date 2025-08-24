@@ -694,8 +694,9 @@ export const openRemote = (params: { url: string; authToken: string }): DB => {
 };
 
 /**
- * Open a connection to a local sqlite or sqlcipher database
- * If you want libsql remote or sync connections, use openSync or openRemote
+ * Open a connection to a local sqlite, sqlcipher or libsql database.
+ *
+ * If you want libsql remote or sync connections, use openSync or openRemote.
  */
 export const open = (params: {
   name: string;

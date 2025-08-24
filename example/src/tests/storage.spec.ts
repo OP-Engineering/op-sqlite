@@ -1,6 +1,6 @@
 import {Storage} from '@op-engineering/op-sqlite';
 import chai from 'chai';
-import {beforeEach, describe, it} from './MochaRNAdapter';
+import {beforeEach, describe, it, afterEach} from './MochaRNAdapter';
 
 const expect = chai.expect;
 
@@ -8,8 +8,12 @@ export function storageTests() {
   let storage: Storage;
 
   describe('Queries tests', () => {
-    beforeEach(async () => {
+    beforeEach(() => {
       storage = new Storage({encryptionKey: 'test'});
+    });
+
+    afterEach(() => {
+      storage.delete();
     });
 
     it('Can set and get sync', async () => {
