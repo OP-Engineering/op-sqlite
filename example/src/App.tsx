@@ -11,7 +11,6 @@ import {
   View,
 } from 'react-native';
 import RNRestart from 'react-native-restart';
-import Share from 'react-native-share';
 import 'reflect-metadata';
 import {createLargeDB, queryLargeDB} from './Database';
 import {
@@ -78,27 +77,25 @@ export default function App() {
   }, true);
 
   const shareDb = async () => {
-    try {
-      const db = open({
-        name: 'shareableDb.sqlite',
-      });
-
-      await db.execute(
-        'CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, name TEXT)',
-      );
-      await db.execute("INSERT INTO test (name) VALUES ('test')");
-      const res = await db.execute('SELECT * FROM test');
-      console.log(res);
-
-      await db.close();
-      await Share.open({
-        url: 'file://' + db.getDbPath(),
-        failOnCancel: false,
-        type: 'application/x-sqlite3',
-      });
-    } catch (e) {
-      console.log(e);
-    }
+    // try {
+    //   const db = open({
+    //     name: 'shareableDb.sqlite',
+    //   });
+    //   await db.execute(
+    //     'CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, name TEXT)',
+    //   );
+    //   await db.execute("INSERT INTO test (name) VALUES ('test')");
+    //   const res = await db.execute('SELECT * FROM test');
+    //   console.log(res);
+    //   await db.close();
+    //   await Share.open({
+    //     url: 'file://' + db.getDbPath(),
+    //     failOnCancel: false,
+    //     type: 'application/x-sqlite3',
+    //   });
+    // } catch (e) {
+    //   console.log(e);
+    // }
   };
 
   const createLargeDb = async () => {

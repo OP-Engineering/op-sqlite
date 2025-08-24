@@ -120,8 +120,6 @@ elseif (USE_LIBSQL)
     )
   endif()
 else ()
-  # if (REACTNATIVE_MERGED_SO)
-  if (ReactAndroid_VERSION_MINOR GREATER_EQUAL 76)
     target_link_libraries(
       ${PACKAGE_NAME}
       ${LOG_LIB}
@@ -129,15 +127,4 @@ else ()
       ReactAndroid::jsi
       fbjni::fbjni
     )
-  else()
-    target_link_libraries(
-      ${PACKAGE_NAME}
-      ${LOG_LIB}
-      fbjni::fbjni
-      ReactAndroid::jsi
-      ReactAndroid::turbomodulejsijni
-      ReactAndroid::react_nativemodule_core
-      android
-    )
-  endif()
 endif()

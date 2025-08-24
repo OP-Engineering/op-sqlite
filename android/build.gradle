@@ -2,29 +2,30 @@ import java.nio.file.Paths
 import groovy.json.JsonSlurper
 
 buildscript {
+  ext.getExtOrDefault = {name ->
+    return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties['Dupli_' + name]
+  }
+
   repositories {
     google()
-    gradlePluginPortal()
+    mavenCentral()
   }
 
-  def kotlin_version = rootProject.ext.has("kotlinVersion") ? rootProject.ext.get("kotlinVersion") : project.properties["OPSQLite_kotlinVersion"]
 
   dependencies {
-    classpath("com.android.tools.build:gradle:7.3.1")
+    classpath("com.android.tools.build:gradle:8.7.2")
     // noinspection DifferentKotlinGradleVersion
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${getExtOrDefault('kotlinVersion')}"
   }
 }
 
-def resolveBuildType() {
-    Gradle gradle = getGradle()
-    String tskReqStr = gradle.getStartParameter().getTaskRequests()['args'].toString()
+apply plugin: "com.android.library"
+apply plugin: "kotlin-android"
 
-    return tskReqStr.contains('Release') ? 'release' : 'debug'
-}
+apply plugin: "com.facebook.react"
 
-def isNewArchitectureEnabled() {
-  return project.hasProperty("newArchEnabled") && project.newArchEnabled == "true"
+def getExtOrIntegerDefault(name) {
+  return rootProject.ext.has(name) ? rootProject.ext.get(name) : (project.properties["Dupli_" + name]).toInteger()
 }
 
 def useSQLCipher = false
@@ -112,9 +113,7 @@ if (!tokenizers.isEmpty()) {
   println "[OP-SQLITE] Tokenizers enabled! 🧾 Tokenizers: " + tokenizers
 }
 
-if (isNewArchitectureEnabled()) {
-    apply plugin: "com.facebook.react"
-}
+apply plugin: "com.facebook.react"
 
 apply plugin: 'com.android.library'
 apply plugin: "kotlin-android"
@@ -127,40 +126,13 @@ def getExtOrDefault(name) {
   return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties["OPSQLite" + name]
 }
 
-def reactNativeArchitectures() {
-  def value = project.getProperties().get("reactNativeArchitectures")
-  return value ? value.split(",") : ["armeabi-v7a", "x86", "x86_64", "arm64-v8a"]
-}
-
 android {
-
-  compileSdkVersion safeExtGet("compileSdkVersion", 35)
   namespace "com.op.sqlite"
-  // Used to override the NDK path/version on internal CI or by allowing
-  // users to customize the NDK path/version from their root project (e.g. for M1 support)
-  if (rootProject.hasProperty("ndkPath")) {
-    ndkPath rootProject.ext.ndkPath
-  }
-  if (rootProject.hasProperty("ndkVersion")) {
-    ndkVersion rootProject.ext.ndkVersion
-  }
 
-  buildFeatures {
-    prefab true
-    prefabPublishing true
-  }
-
-  prefab {
-    "op-sqlite" {
-      headers "${project.buildDir}/headers/op-sqlite/"
-    }
-  }
-
+  compileSdkVersion getExtOrIntegerDefault("compileSdkVersion")
   defaultConfig {
-    minSdkVersion safeExtGet("minSdkVersion", 24)
-    targetSdkVersion safeExtGet('targetSdkVersion', 35)
-    versionCode 1
-    versionName "1.0"
+    minSdkVersion getExtOrIntegerDefault("minSdkVersion")
+    targetSdkVersion getExtOrIntegerDefault("targetSdkVersion")
 
     externalNativeBuild {
         cmake {
@@ -207,7 +179,6 @@ android {
             }
 
             cppFlags "-O2 -frtti -fexceptions -Wall -fstack-protector-all"
-            abiFilters(*reactNativeArchitectures())
             arguments "-DANDROID_STL=c++_shared",
               "-DSQLITE_FLAGS='$sqliteFlags'",
               "-DUSE_SQLCIPHER=${useSQLCipher ? 1 : 0}",
@@ -220,8 +191,8 @@ android {
         }
     }
 
+
     packagingOptions {
-      doNotStrip resolveBuildType() == 'debug' ? "**/**/*.so" : ''
       excludes = [
               "META-INF",
               "META-INF/**",
@@ -232,6 +203,17 @@ android {
               "**/libfbjni.so",
               "**/libreactnative.so",
       ]
+    }
+  }
+
+  buildFeatures {
+    prefab true
+    prefabPublishing true
+  }
+
+  prefab {
+    "op-sqlite" {
+      headers "${project.buildDir}/headers/op-sqlite/"
     }
   }
 
@@ -246,21 +228,20 @@ android {
     }
   }
 
-  sourceSets.main {
-    java {
-      // TODO removed the codegen config to allow the package to be built under bridgeless
-      // Once there is a stable API for C++ Turbo Modules, maybe this can be enabled again
-      // if (!isNewArchitectureEnabled()) {
-        srcDirs += 'src/paper/java'
-      // }
-    }
-    jniLibs {
-      srcDirs = []
-      if (useCRSQLite) {
-        srcDirs += 'src/main/libcrsqlite'
-      }
-      if (useSqliteVec) {
-        srcDirs += 'src/main/libsqlitevec'
+  sourceSets {
+    main {
+      java.srcDirs += [
+        "generated/java",
+        "generated/jni"
+      ]
+      jniLibs {
+        srcDirs = []
+        if (useCRSQLite) {
+          srcDirs += 'src/main/libcrsqlite'
+        }
+        if (useSqliteVec) {
+          srcDirs += 'src/main/libsqlitevec'
+        }
       }
     }
   }
@@ -273,7 +254,7 @@ repositories {
 
 def kotlin_version = getExtOrDefault("kotlinVersion")
 dependencies {
-  implementation 'com.facebook.react:react-native'
+  implementation "com.facebook.react:react-android"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
   if (useSQLCipher) {
     implementation('io.github.ronickg:openssl:3.3.2-1')
@@ -288,26 +269,3 @@ tasks.register('prepareHeaders', Copy) {
 }
 
 preBuild.dependsOn(prepareHeaders)
-
-// Resolves "LOCAL_SRC_FILES points to a missing file, Check that libfb.so exists or that its path is correct".
-tasks.configureEach { task ->
-  if (task.name.contains("configureCMakeDebug")) {
-    rootProject.getTasksByName("packageReactNdkDebugLibs", true).forEach {
-      task.dependsOn(it)
-    }
-  }
-  // We want to add a dependency for both configureCMakeRelease and configureCMakeRelWithDebInfo
-  if (task.name.contains("configureCMakeRel")) {
-    rootProject.getTasksByName("packageReactNdkReleaseLibs", true).forEach {
-      task.dependsOn(it)
-    }
-  }
-}
-
-if (isNewArchitectureEnabled()) {
-  react {
-    jsRootDir = file("../src/")
-    libraryName = "opsqlite"
-    codegenJavaPackageName = "com.op.sqlite.example"
-  }
-}
