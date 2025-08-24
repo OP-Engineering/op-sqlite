@@ -10,7 +10,10 @@ const root = path.resolve(__dirname, '..');
  *
  * @type {import('metro-config').MetroConfig}
  */
-module.exports = withMetroConfig(getDefaultConfig(__dirname), {
+const config = getDefaultConfig(__dirname);
+config.resolver.requireCycleIgnorePatterns = [];
+
+module.exports = withMetroConfig(config, {
   root,
   dirname: __dirname,
 });
