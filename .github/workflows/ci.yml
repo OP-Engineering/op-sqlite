@@ -69,11 +69,12 @@ jobs:
             ./scripts/test-android.sh
   test-ios:
     runs-on: macos-latest
-    env:
-      TURBO_CACHE_DIR: .turbo/ios
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Xcode Select
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
 
       - name: Turn off addons
         run: |
@@ -110,11 +111,12 @@ jobs:
 
   test-ios-embedded:
     runs-on: macos-latest
-    env:
-      TURBO_CACHE_DIR: .turbo/ios
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Xcode Select
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
 
       - name: Turn on ios embedded
         run: |
@@ -151,11 +153,12 @@ jobs:
 
   test-ios-sqlcipher:
     runs-on: macos-latest
-    env:
-      TURBO_CACHE_DIR: .turbo/ios
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Xcode Select
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
 
       - name: Turn on SQLCipher
         run: |
@@ -192,11 +195,12 @@ jobs:
 
   test-ios-libsql:
     runs-on: macos-latest
-    env:
-      TURBO_CACHE_DIR: .turbo/ios
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Xcode Select
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
 
       - name: Turn on SQLCipher
         run: |
