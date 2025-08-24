@@ -721,6 +721,23 @@ export function queriesTests() {
       expect(res).to.eql([[id, name, age, networth]]);
     });
 
+    it('Execute raw sync should return just an array of objects', async () => {
+      const id = chance.integer();
+      const name = chance.name();
+      const age = chance.integer();
+      const networth = chance.floating();
+      
+      await db.execute(
+        'INSERT INTO User (id, name, age, networth) VALUES(?, ?, ?, ?)',
+        [id, name, age, networth],
+      );
+
+      const res = db.executeRawSync(
+        'SELECT id, name, age, networth FROM User',
+      );
+      expect(res).to.eql([[id, name, age, networth]]);
+    });
+
     it('Create fts5 virtual table', async () => {
       await db.execute(
         'CREATE VIRTUAL TABLE fts5_table USING fts5(name, content);',
