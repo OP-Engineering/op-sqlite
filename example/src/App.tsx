@@ -10,7 +10,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import RNRestart from 'react-native-restart';
+// import RNRestart from 'react-native-restart';
 import 'reflect-metadata';
 import {createLargeDB, queryLargeDB} from './Database';
 import {
@@ -125,10 +125,10 @@ export default function App() {
   };
 
   const queryAndReload = async () => {
-    queryLargeDB();
-    setTimeout(() => {
-      RNRestart.restart();
-    }, 200);
+    // queryLargeDB();
+    // setTimeout(() => {
+    //   RNRestart.restart();
+    // }, 200);
   };
 
   const loadExtention = async () => {
