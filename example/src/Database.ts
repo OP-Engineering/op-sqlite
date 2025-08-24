@@ -82,24 +82,24 @@ export async function queryLargeDB() {
     // @ts-ignore
     global.gc();
 
-    let start = performance.now();
-    await largeDb.execute('SELECT * FROM Test;');
-    let end = performance.now();
-    times.loadFromDb.push(end - start);
+    // let start = performance.now();
+    // await largeDb.execute('SELECT * FROM Test;');
+    // let end = performance.now();
+    // times.loadFromDb.push(end - start);
 
-    // mmkv.set('largeDB', JSON.stringify(results));
-    // @ts-ignore
-    global.gc();
+    // // mmkv.set('largeDB', JSON.stringify(results));
+    // // @ts-ignore
+    // global.gc();
+
+    // // start = performance.now();
+    // // let rawStr = await mmkv.getString('largeDB');
+    // // JSON.parse(rawStr!);
+    // // end = performance.now();
 
     // start = performance.now();
-    // let rawStr = await mmkv.getString('largeDB');
-    // JSON.parse(rawStr!);
+    // await largeDb.executeRaw('SELECT * FROM Test;');
     // end = performance.now();
-
-    start = performance.now();
-    await largeDb.executeRaw('SELECT * FROM Test;');
-    end = performance.now();
-    times.rawExecution.push(end - start);
+    // times.rawExecution.push(end - start);
 
     // console.log('MMKV time', (end - start).toFixed(2));
 
