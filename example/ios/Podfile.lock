@@ -1284,7 +1284,7 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-  - react-native-http-bridge-refurbished (1.3.2):
+  - react-native-http-bridge-refurbished (1.2.9):
     - GCDWebServer
     - React
   - react-native-restart (0.0.27):
@@ -1638,28 +1638,6 @@ PODS:
     - React-utils (= 0.81.0)
     - ReactNativeDependencies
   - ReactNativeDependencies (0.81.0)
-  - RNShare (12.2.0):
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-Core-prebuilt
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -1733,7 +1711,6 @@ DEPENDENCIES:
   - ReactCodegen (from `build/generated/ios`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - ReactNativeDependencies (from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
-  - RNShare (from `../node_modules/react-native-share`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -1880,8 +1857,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   ReactNativeDependencies:
     :podspec: "../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec"
-  RNShare:
-    :path: "../node_modules/react-native-share"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
@@ -1923,7 +1898,7 @@ SPEC CHECKSUMS:
   React-logger: f044501f6f1e2d803ac5768ca2a9198f5fa55df2
   React-Mapbuffer: 79ba3ee7405add8758e3c6d2df9d8e5deb5546ee
   React-microtasksnativemodule: d7f49e916033c30e1f64bb6b91e5db6c619df220
-  react-native-http-bridge-refurbished: 6ca3d9e2a32f9f9107de554ff0de4e102f3f99de
+  react-native-http-bridge-refurbished: 1bd13b32a8e62abe61bab809c26e2dcf21256ed7
   react-native-restart: 0bc732f4461709022a742bb29bcccf6bbc5b4863
   React-NativeModulesApple: a93cccc5bd37290cf1e2f40cb32718e74df6e8b5
   React-oscompat: eef0d02e3175b37e2c0eb99f69df82ea2f85f943
@@ -1956,9 +1931,8 @@ SPEC CHECKSUMS:
   ReactCodegen: 01b282718505566651f65cbf92b139aca408f4e0
   ReactCommon: 18f3e0fba262b222b8d3247e38f9ec9b36817b9c
   ReactNativeDependencies: 4ddce14a45bb6fc7c36f2b50b65a6da87ec6835c
-  RNShare: 446a4a16e416c9daf64d381ed9196c3d972e71db
   Yoga: 355cfee956cde5ae34c4e0cd752ec7096d665f7b
 
-PODFILE CHECKSUM: 112148d3e8017b4453140f668e6e99073f86b783
+PODFILE CHECKSUM: 6122e992682f69c8f83936c61b0197d2e91e6cee
 
 COCOAPODS: 1.15.2
