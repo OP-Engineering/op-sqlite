@@ -2,30 +2,41 @@
   "name": "@op-engineering/op-sqlite",
   "version": "0.0.0",
   "description": "Next generation SQLite for React Native",
-  "main": "lib/commonjs/index",
-  "module": "lib/module/index",
-  "types": "lib/typescript/src/index.d.ts",
+  "main": "./lib/module/index.js",
+  "types": "./lib/typescript/src/index.d.ts",
   "react-native": "src/index",
-  "source": "src/index",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./lib/typescript/src/index.d.ts",
+      "default": "./lib/module/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
     "src",
     "lib",
     "android",
     "ios",
     "cpp",
-    "op-sqlite.podspec",
-    "generate_tokenizers_header_file.rb",
+    "*.podspec",
+    "*.rb",
+    "react-native.config.js",
     "ios/**.xcframework",
-    "!lib/typescript/example",
-    "!android/build",
-    "!android/.cxx",
     "!ios/build",
+    "!android/build",
+    "!android/gradle",
+    "!android/gradlew",
+    "!android/gradlew.bat",
+    "!android/local.properties",
     "!**/__tests__",
     "!**/__fixtures__",
-    "!**/__mocks__"
+    "!**/__mocks__",
+    "!**/.*"
   ],
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "example": "yarn workspace op_sqlite_example",
+    "typecheck": "tsc",
     "prepare": "bob build",
     "pods": "cd example && yarn pods",
     "clang-format-check": "clang-format -i cpp/*.cpp cpp/*.h"
@@ -33,7 +44,8 @@
   "keywords": [
     "react-native",
     "ios",
-    "android"
+    "android",
+    "sqlite"
   ],
   "repository": "https://github.com/OP-Engineering/op-sqlite",
   "author": "Oscar Franco <ospfranco@protonmail.com> (https://github.com/ospfranco)",
@@ -48,10 +60,10 @@
   "devDependencies": {
     "clang-format": "^1.8.0",
     "lefthook": "^1.5.5",
-    "react": "18.3.1",
-    "react-native": "0.79.2",
-    "react-native-builder-bob": "^0.40.11",
-    "typescript": "5.0.4"
+    "react": "19.1.1",
+    "react-native": "0.81.0",
+    "react-native-builder-bob": "^0.40.13",
+    "typescript": "5.8.3"
   },
   "peerDependencies": {
     "react": "*",
@@ -71,8 +83,12 @@
     "source": "src",
     "output": "lib",
     "targets": [
-      "commonjs",
-      "module",
+      [
+        "module",
+        {
+          "esm": true
+        }
+      ],
       [
         "typescript",
         {
@@ -80,6 +96,19 @@
         }
       ]
     ]
+  },
+  "codegenConfig": {
+    "name": "OPSQLiteSpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "com.op.sqlite"
+    }
+  },
+  "create-react-native-library": {
+    "languages": "kotlin-objc",
+    "type": "turbo-module",
+    "version": "0.52.1"
   },
   "packageManager": "yarn@4.3.1"
 }

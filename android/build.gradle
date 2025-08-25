@@ -2,29 +2,29 @@ import java.nio.file.Paths
 import groovy.json.JsonSlurper
 
 buildscript {
+  ext.getExtOrDefault = {name ->
+    return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties['OPSQLite_' + name]
+  }
+
   repositories {
     google()
-    gradlePluginPortal()
+    mavenCentral()
   }
-
-  def kotlin_version = rootProject.ext.has("kotlinVersion") ? rootProject.ext.get("kotlinVersion") : project.properties["OPSQLite_kotlinVersion"]
 
   dependencies {
-    classpath("com.android.tools.build:gradle:7.3.1")
+    classpath("com.android.tools.build:gradle:8.7.2")
     // noinspection DifferentKotlinGradleVersion
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${getExtOrDefault('kotlinVersion')}"
   }
 }
 
-def resolveBuildType() {
-    Gradle gradle = getGradle()
-    String tskReqStr = gradle.getStartParameter().getTaskRequests()['args'].toString()
+apply plugin: "com.android.library"
+apply plugin: "kotlin-android"
 
-    return tskReqStr.contains('Release') ? 'release' : 'debug'
-}
+apply plugin: "com.facebook.react"
 
-def isNewArchitectureEnabled() {
-  return project.hasProperty("newArchEnabled") && project.newArchEnabled == "true"
+def getExtOrIntegerDefault(name) {
+  return rootProject.ext.has(name) ? rootProject.ext.get(name) : (project.properties["OPSQLite_" + name]).toInteger()
 }
 
 def useSQLCipher = false
@@ -66,8 +66,7 @@ def packageJson = new JsonSlurper().parseText(packageJsonFile.text)
 def opsqliteConfig = packageJson["op-sqlite"]
 
 if(opsqliteConfig) {
-println "[OP-SQLITE] Detected op-sqlite config from package.json at: " + packageJsonFile.absolutePath
-
+  println "[OP-SQLITE] Detected op-sqlite config from package.json at: " + packageJsonFile.absolutePath
   useSQLCipher = opsqliteConfig["sqlcipher"]
   useCRSQLite = opsqliteConfig["crsqlite"]
   useSqliteVec = opsqliteConfig["sqliteVec"]
@@ -80,12 +79,10 @@ println "[OP-SQLITE] Detected op-sqlite config from package.json at: " + package
 }
 
 if(useSQLCipher) {
-  println "[OP-SQLITE] using SQLCipher 🔒"
+  println "[OP-SQLITE] using sqlcipher."
 } else if(useLibsql) {
-  println "[OP-SQLITE] using libsql 📦"
-} else {
-  println "[OP-SQLITE] using Vanilla SQLite"
-}
+  println "[OP-SQLITE] using libsql. Report any issues to Turso"
+} 
 
 if(useCRSQLite) {
   println "[OP-SQLITE] using CR-SQLite 🤖"
@@ -112,42 +109,83 @@ if (!tokenizers.isEmpty()) {
   println "[OP-SQLITE] Tokenizers enabled! 🧾 Tokenizers: " + tokenizers
 }
 
-if (isNewArchitectureEnabled()) {
-    apply plugin: "com.facebook.react"
-}
-
-apply plugin: 'com.android.library'
-apply plugin: "kotlin-android"
-
-def safeExtGet(prop, fallback) {
-  rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
-}
-
-def getExtOrDefault(name) {
-  return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties["OPSQLite" + name]
-}
-
-def reactNativeArchitectures() {
-  def value = project.getProperties().get("reactNativeArchitectures")
-  return value ? value.split(",") : ["armeabi-v7a", "x86", "x86_64", "arm64-v8a"]
-}
-
 android {
-
-  compileSdkVersion safeExtGet("compileSdkVersion", 35)
   namespace "com.op.sqlite"
-  // Used to override the NDK path/version on internal CI or by allowing
-  // users to customize the NDK path/version from their root project (e.g. for M1 support)
-  if (rootProject.hasProperty("ndkPath")) {
-    ndkPath rootProject.ext.ndkPath
-  }
-  if (rootProject.hasProperty("ndkVersion")) {
-    ndkVersion rootProject.ext.ndkVersion
+
+  compileSdkVersion getExtOrIntegerDefault("compileSdkVersion")
+
+  defaultConfig {
+    minSdkVersion getExtOrIntegerDefault("minSdkVersion")
+    targetSdkVersion getExtOrIntegerDefault("targetSdkVersion")
+
+    externalNativeBuild {
+      cmake {
+      if(useSQLCipher) {
+        cFlags += "-DOP_SQLITE_USE_SQLCIPHER=1"
+        cppFlags += "-DOP_SQLITE_USE_SQLCIPHER=1"
+      }
+      if(useLibsql) {
+        cFlags += "-DOP_SQLITE_USE_LIBSQL=1"
+        cppFlags += "-DOP_SQLITE_USE_LIBSQL=1"
+      }
+      if(useCRSQLite) {
+        cFlags += "-DOP_SQLITE_USE_CRSQLITE=1"
+        cppFlags += "-DOP_SQLITE_USE_CRSQLITE=1"
+      }
+      if(performanceMode) {
+        cFlags += ["-DSQLITE_DQS=0", "-DSQLITE_THREADSAFE=1", "-DSQLITE_DEFAULT_MEMSTATUS=0", "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1", "-DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1", "-DSQLITE_MAX_EXPR_DEPTH=0", "-DSQLITE_OMIT_DEPRECATED=1", "-DSQLITE_OMIT_PROGRESS_CALLBACK=1", "-DSQLITE_OMIT_SHARED_CACHE=1", "-DSQLITE_USE_ALLOCA=1"]
+      }
+      if(enableFTS5) {
+        cFlags += ["-DSQLITE_ENABLE_FTS5=1"]
+      }
+      if(enableRtree) {
+        cFlags += ["-DSQLITE_ENABLE_RTREE=1"]
+      }
+      if(useSqliteVec) {
+        cFlags += "-DOP_SQLITE_USE_SQLITE_VEC=1"
+        cppFlags += "-DOP_SQLITE_USE_SQLITE_VEC=1"
+      }
+
+      // This are zeroes because they will be passed as C flags, so they become falsy
+      def sourceFiles = 0
+      // def tokenizerInitStrings = 0
+      def tokenizersHeaderPath = 0
+      if (!tokenizers.isEmpty()) {
+        def sourceDir = isUserApp ? file("$rootDir/../../../c_sources") : file("$rootDir/../c_sources")
+        def destDir = file("$buildscript.sourceFile.parentFile/c_sources")
+        copy {
+          from sourceDir
+          into destDir
+          include "**/*.cpp", "**/*.h"
+        }
+        sourceFiles = fileTree(dir: destDir, include: ["**/*.cpp", "**/*.h"]).files.join(";")
+        tokenizersHeaderPath = "../c_sources/tokenizers.h"
+      }
+
+      cppFlags "-O2 -frtti -fexceptions -Wall -fstack-protector-all"
+      arguments "-DANDROID_STL=c++_shared",
+        "-DSQLITE_FLAGS='$sqliteFlags'",
+        "-DUSE_SQLCIPHER=${useSQLCipher ? 1 : 0}",
+        "-DUSE_CRSQLITE=${useCRSQLite ? 1 : 0}",
+        "-DUSE_LIBSQL=${useLibsql ? 1 : 0}",
+        "-DUSE_SQLITE_VEC=${useSqliteVec ? 1 : 0}",
+        "-DUSER_DEFINED_SOURCE_FILES=${sourceFiles}",
+        "-DUSER_DEFINED_TOKENIZERS_HEADER_PATH='${tokenizersHeaderPath}'",
+        "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+      }
+    }
   }
 
   buildFeatures {
+    buildConfig true
     prefab true
     prefabPublishing true
+  }
+
+  buildTypes {
+    release {
+      minifyEnabled false
+    }
   }
 
   prefab {
@@ -156,88 +194,13 @@ android {
     }
   }
 
-  defaultConfig {
-    minSdkVersion safeExtGet("minSdkVersion", 24)
-    targetSdkVersion safeExtGet('targetSdkVersion', 35)
-    versionCode 1
-    versionName "1.0"
-
-    externalNativeBuild {
-        cmake {
-            if(useSQLCipher) {
-              cFlags += "-DOP_SQLITE_USE_SQLCIPHER=1"
-              cppFlags += "-DOP_SQLITE_USE_SQLCIPHER=1"
-            }
-            if(useLibsql) {
-              cFlags += "-DOP_SQLITE_USE_LIBSQL=1"
-              cppFlags += "-DOP_SQLITE_USE_LIBSQL=1"
-            }
-            if(useCRSQLite) {
-              cFlags += "-DOP_SQLITE_USE_CRSQLITE=1"
-              cppFlags += "-DOP_SQLITE_USE_CRSQLITE=1"
-            }
-            if(performanceMode) {
-              cFlags += ["-DSQLITE_DQS=0", "-DSQLITE_THREADSAFE=1", "-DSQLITE_DEFAULT_MEMSTATUS=0", "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1", "-DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1", "-DSQLITE_MAX_EXPR_DEPTH=0", "-DSQLITE_OMIT_DEPRECATED=1", "-DSQLITE_OMIT_PROGRESS_CALLBACK=1", "-DSQLITE_OMIT_SHARED_CACHE=1", "-DSQLITE_USE_ALLOCA=1"]
-            }
-            if(enableFTS5) {
-              cFlags += ["-DSQLITE_ENABLE_FTS5=1"]
-            }
-            if(enableRtree) {
-              cFlags += ["-DSQLITE_ENABLE_RTREE=1"]
-            }
-            if(useSqliteVec) {
-              cFlags += "-DOP_SQLITE_USE_SQLITE_VEC=1"
-              cppFlags += "-DOP_SQLITE_USE_SQLITE_VEC=1"
-            }
-
-            // This are zeroes because they will be passed as C flags, so they become falsy
-            def sourceFiles = 0
-            // def tokenizerInitStrings = 0
-            def tokenizersHeaderPath = 0
-            if (!tokenizers.isEmpty()) {
-              def sourceDir = isUserApp ? file("$rootDir/../../../c_sources") : file("$rootDir/../c_sources")
-              def destDir = file("$buildscript.sourceFile.parentFile/c_sources")
-              copy {
-                from sourceDir
-                into destDir
-                include "**/*.cpp", "**/*.h"
-              }
-              sourceFiles = fileTree(dir: destDir, include: ["**/*.cpp", "**/*.h"]).files.join(";")
-              tokenizersHeaderPath = "../c_sources/tokenizers.h"
-            }
-
-            cppFlags "-O2 -frtti -fexceptions -Wall -fstack-protector-all"
-            abiFilters(*reactNativeArchitectures())
-            arguments "-DANDROID_STL=c++_shared",
-              "-DSQLITE_FLAGS='$sqliteFlags'",
-              "-DUSE_SQLCIPHER=${useSQLCipher ? 1 : 0}",
-              "-DUSE_CRSQLITE=${useCRSQLite ? 1 : 0}",
-              "-DUSE_LIBSQL=${useLibsql ? 1 : 0}",
-              "-DUSE_SQLITE_VEC=${useSqliteVec ? 1 : 0}",
-              "-DUSER_DEFINED_SOURCE_FILES=${sourceFiles}",
-              "-DUSER_DEFINED_TOKENIZERS_HEADER_PATH='${tokenizersHeaderPath}'",
-              "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
-        }
-    }
-
-    packagingOptions {
-      doNotStrip resolveBuildType() == 'debug' ? "**/**/*.so" : ''
-      excludes = [
-              "META-INF",
-              "META-INF/**",
-              "**/libjsi.so",
-              "**/libreact_nativemodule_core.so",
-              "**/libturbomodulejsijni.so",
-              "**/libc++_shared.so",
-              "**/libfbjni.so",
-              "**/libreactnative.so",
-      ]
-    }
+  lintOptions {
+    disable "GradleCompatible"
   }
 
   compileOptions {
-    sourceCompatibility JavaVersion.VERSION_17
-    targetCompatibility JavaVersion.VERSION_17
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
   }
 
   externalNativeBuild {
@@ -246,21 +209,20 @@ android {
     }
   }
 
-  sourceSets.main {
-    java {
-      // TODO removed the codegen config to allow the package to be built under bridgeless
-      // Once there is a stable API for C++ Turbo Modules, maybe this can be enabled again
-      // if (!isNewArchitectureEnabled()) {
-        srcDirs += 'src/paper/java'
-      // }
-    }
-    jniLibs {
-      srcDirs = []
-      if (useCRSQLite) {
-        srcDirs += 'src/main/libcrsqlite'
-      }
-      if (useSqliteVec) {
-        srcDirs += 'src/main/libsqlitevec'
+  sourceSets {
+    main {
+      java.srcDirs += [
+        "generated/java",
+        "generated/jni"
+      ]
+      jniLibs {
+        srcDirs = []
+        if (useCRSQLite) {
+          srcDirs += 'src/main/libcrsqlite'
+        }
+        if (useSqliteVec) {
+          srcDirs += 'src/main/libsqlitevec'
+        }
       }
     }
   }
@@ -272,8 +234,9 @@ repositories {
 }
 
 def kotlin_version = getExtOrDefault("kotlinVersion")
+
 dependencies {
-  implementation 'com.facebook.react:react-native'
+  implementation "com.facebook.react:react-android"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
   if (useSQLCipher) {
     implementation('io.github.ronickg:openssl:3.3.2-1')
@@ -288,26 +251,3 @@ tasks.register('prepareHeaders', Copy) {
 }
 
 preBuild.dependsOn(prepareHeaders)
-
-// Resolves "LOCAL_SRC_FILES points to a missing file, Check that libfb.so exists or that its path is correct".
-tasks.configureEach { task ->
-  if (task.name.contains("configureCMakeDebug")) {
-    rootProject.getTasksByName("packageReactNdkDebugLibs", true).forEach {
-      task.dependsOn(it)
-    }
-  }
-  // We want to add a dependency for both configureCMakeRelease and configureCMakeRelWithDebInfo
-  if (task.name.contains("configureCMakeRel")) {
-    rootProject.getTasksByName("packageReactNdkReleaseLibs", true).forEach {
-      task.dependsOn(it)
-    }
-  }
-}
-
-if (isNewArchitectureEnabled()) {
-  react {
-    jsRootDir = file("../src/")
-    libraryName = "opsqlite"
-    codegenJavaPackageName = "com.op.sqlite.example"
-  }
-}

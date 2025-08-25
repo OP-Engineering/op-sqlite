@@ -1,5 +1,5 @@
 import {BridgeServer} from 'react-native-http-bridge-refurbished';
-let results: any[] = [];
+let passed: boolean | null = null;
 
 const server = new BridgeServer('http_service', true);
 
@@ -8,7 +8,7 @@ server.get('/ping', async (_req, _res) => {
 });
 
 server.get('/results', async (_req, _res) => {
-  return {results};
+  return {passed};
 });
 
 server.listen(9000);
@@ -21,12 +21,6 @@ export function stopServer() {
   server.stop();
 }
 
-export function setServerResults(r: any[]) {
-  console.log('Setting server results');
-  results = r;
-}
-
-export function setServerError(e: any) {
-  console.error(`Setting server error: ${e}`);
-  results = e;
+export function setServerResults(r: boolean) {
+  passed = r;
 }

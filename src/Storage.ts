@@ -13,7 +13,7 @@ export class Storage {
   private db: DB;
 
   constructor(options: StorageOptions) {
-    this.db = open({ ...options, name: '__opsqlite_storage' });
+    this.db = open({ ...options, name: '__opsqlite_storage.sqlite' });
     this.db.executeSync('PRAGMA mmap_size=268435456');
     this.db.executeSync(
       'CREATE TABLE IF NOT EXISTS storage (key TEXT PRIMARY KEY, value TEXT) WITHOUT ROWID'
@@ -81,5 +81,12 @@ export class Storage {
     return this.db
       .executeSync('SELECT key FROM storage')
       .rows.map((row: any) => row.key);
+  }
+
+  /**
+   * Deletes the underlying database file.
+   */
+  delete() {
+    this.db.delete();
   }
 }

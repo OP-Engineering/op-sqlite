@@ -7,9 +7,6 @@ end
 
 is_user_app = __dir__.include?("node_modules")
 package = JSON.parse(File.read(File.join(__dir__, "package.json")))
-folly_compiler_flags = '-DFOLLY_NO_CONFIG -DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1 -Wno-comma -Wno-shorten-64-to-32'
-fabric_enabled = ENV['RCT_NEW_ARCH_ENABLED'] == '1'
-
 parent_folder_name = File.basename(__dir__)
 app_package = nil
 package_json_path = nil
@@ -95,6 +92,8 @@ Pod::Spec.new do |s|
 
   s.platforms    = { :ios => "13.0", :tvos => "13.0", :osx => "10.15", :visionos => "1.0" }
   s.source       = { :git => "https://github.com/op-engineering/op-sqlite.git", :tag => "#{s.version}" }
+
+  install_modules_dependencies(s)
   
   # Base source files
   source_files = Dir.glob("ios/**/*.{h,m,mm}") + Dir.glob("cpp/**/*.{h,cpp,c}")
@@ -139,14 +138,6 @@ Pod::Spec.new do |s|
     exclude_files += ["cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h"]
   end
   
-  s.dependency "React-callinvoker"
-  s.dependency "React"
-  if fabric_enabled then
-    install_modules_dependencies(s)
-  else
-    s.dependency "React-Core"
-  end
-
   other_cflags = '-DSQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION=1'
   optimizedCflags = '$(inherited) -DSQLITE_DQS=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1 -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DEPRECATED=1 -DSQLITE_OMIT_PROGRESS_CALLBACK=1 -DSQLITE_OMIT_SHARED_CACHE=1 -DSQLITE_USE_ALLOCA=1 -DSQLITE_THREADSAFE=1'
   frameworks = []
