@@ -1,4 +1,9 @@
-export {runTests} from './MochaSetup';
-export {queriesTests} from './queries.spec';
-export {dbSetupTests} from './dbsetup.spec';
-export {blobTests} from './blob.spec';
+import './blob.spec';
+import './constants.spec';
+import './dbsetup.spec';
+import './hooks.spec';
+import './preparedStatements.spec';
+import './queries.spec';
+import './reactive.spec';
+import './storage.spec';
+import './tokenizer.spec';
