@@ -134,6 +134,7 @@ type InternalDB = {
   prepareStatement: (query: string) => PreparedStatement;
   loadExtension: (path: string, entryPoint?: string) => void;
   executeRaw: (query: string, params?: Scalar[]) => Promise<any[]>;
+  executeRawSync: (query: string, params?: Scalar[]) => any[];
   getDbPath: (location?: string) => string;
   reactiveExecute: (params: {
     query: string;
@@ -262,6 +263,11 @@ export type DB = {
    * It will be faster since a lot of repeated work is skipped and only the values you care about are returned
    */
   executeRaw: (query: string, params?: Scalar[]) => Promise<any[]>;
+  /**
+   * Same as `executeRaw` but it will block the JS thread and therefore your UI and should be used with caution
+   * It will return an array of arrays with just the values and not the keys
+   */
+  executeRawSync: (query: string, params?: Scalar[]) => any[];
   /**
    * Get's the absolute path to the db file. Useful for debugging on local builds and for attaching the DB from users devices
    */
@@ -477,6 +483,10 @@ function enhanceDB(db: InternalDB, options: DBParams): DB {
       const sanitizedParams = sanitizeArrayBuffersInArray(params);
 
       return db.executeRaw(query, sanitizedParams as Scalar[]);
+    },
+    executeRawSync: (query: string, params?: Scalar[]) => {
+      const sanitizedParams = sanitizeArrayBuffersInArray(params);
+      return db.executeRawSync(query, sanitizedParams as Scalar[]);
     },
     executeSync: (query: string, params?: Scalar[]): QueryResult => {
       const sanitizedParams = sanitizeArrayBuffersInArray(params);
