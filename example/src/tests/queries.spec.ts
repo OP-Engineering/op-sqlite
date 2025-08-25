@@ -514,6 +514,21 @@ describe('Queries tests', () => {
     });
   });
 
+  it('Execute raw sync should return just an array of objects', async () => {
+    const id = chance.integer();
+    const name = chance.name();
+    const age = chance.integer();
+    const networth = chance.floating();
+
+    await db.execute(
+      'INSERT INTO User (id, name, age, networth) VALUES(?, ?, ?, ?)',
+      [id, name, age, networth],
+    );
+
+    const res = db.executeRawSync('SELECT id, name, age, networth FROM User');
+    expect(res).toDeepEqual([[id, name, age, networth]]);
+  });
+
   it('Transaction, rejects on callback error', async () => {
     const promised = db.transaction(() => {
       throw new Error('Error from callback');
