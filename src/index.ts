@@ -317,33 +317,6 @@ export type OPSQLiteProxy = {
   isIOSEmbedded: () => boolean;
 };
 
-declare global {
-  var __OPSQLiteProxy: object | undefined;
-}
-
-if (global.__OPSQLiteProxy == null) {
-  if (NativeModules.OPSQLite == null) {
-    throw new Error(
-      'Base module not found. Did you do a pod install/clear the gradle cache?'
-    );
-  }
-
-  // Call the synchronous blocking install() function
-  const installed = NativeModules.OPSQLite.install();
-  if (!installed) {
-    throw new Error(
-      `Failed to install op-sqlite: The native OPSQLite Module could not be installed! Looks like something went wrong when installing JSI bindings, check the native logs for more info`
-    );
-  }
-
-  // Check again if the constructor now exists. If not, throw an error.
-  if (global.__OPSQLiteProxy == null) {
-    throw new Error(
-      'OPSqlite native object is not available. Something is wrong. Check the native logs for more information.'
-    );
-  }
-}
-
 export const {
   IOS_DOCUMENT_PATH,
   IOS_LIBRARY_PATH,

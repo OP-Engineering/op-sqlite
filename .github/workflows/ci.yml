@@ -65,6 +65,7 @@ jobs:
           emulator-options: -no-window -no-boot-anim -no-audio -no-snapshot-load
           script: |
             ./scripts/test-android.sh
+
   test-ios:
     runs-on: macos-latest
     steps:

@@ -1,6 +1,7 @@
 #!/bin/bash
 
-yarn run run:ios
+cd example || exit
+yarn run run:ios:release
 
 echo "Polling in-app server..."
 
