@@ -12,27 +12,13 @@ async function pollInAppServer() {
       if (response !== null) {
         let parsedResponse = JSON.parse(response);
 
-        // Wait until some results are returned
-        if (parsedResponse.results.length === 0) {
-          continue;
-        }
-
-        const allTestsPassed = parsedResponse.results.reduce((acc, r) => {
-          console.log(`- ${r.description} : ${r.type}`);
-          return acc && r.type !== 'incorrect';
-        }, true);
-
-        if (allTestsPassed) {
+        if (response.passed === true) {
           console.log(
             `🟢🟢🟢🟢🟢 ${parsedResponse.results.length} tests passed!`
           );
           process.exit(0);
-        } else {
-          parsedResponse.results.forEach((r) => {
-            if (r.type === 'incorrect') {
-              console.log(`🟥Failed: ${JSON.stringify(r, null, 2)}`);
-            }
-          });
+        }
+        if (response.passed === false) {
           console.log('🟥🟥🟥🟥🟥 Some tests failed');
           process.exit(1);
         }
