@@ -3262,13 +3262,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@op-engineering/op-test@npm:^0.1.0":
-  version: 0.1.0
-  resolution: "@op-engineering/op-test@npm:0.1.0"
+"@op-engineering/op-test@npm:^0.2.2":
+  version: 0.2.2
+  resolution: "@op-engineering/op-test@npm:0.2.2"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10c0/99b24c462b3057aa2b73aba83e483ddc684df498e7390dad7b43ec6111b642d7680c16c544d841866e2a0c17473059e097bee8bcd623e5e572bc824e265d63a5
+  checksum: 10c0/66bb7ada2fa9e822bda1f0f95f518cbe7058257be2ede1663776c2861d61b3dd7b343992bd5cef649f7c8938349aa1a46db8f8e9d6442c71ccf0def740531b7b
   languageName: node
   linkType: hard
 
@@ -3748,6 +3748,13 @@ __metadata:
   dependencies:
     "@babel/types": "npm:^7.20.7"
   checksum: 10c0/033abcb2f4c084ad33e30c3efaad82161240f351e3c71b6154ed289946b33b363696c0fbd42502b68e4582a87413c418321f40eb1ea863e34fe525641345e05b
+  languageName: node
+  linkType: hard
+
+"@types/chance@npm:^1.1.7":
+  version: 1.1.7
+  resolution: "@types/chance@npm:1.1.7"
+  checksum: 10c0/896288f0a0f87a738c873dfd8cb0893154225bfda11b1fac36842f4722bc4d73c3933bb986217a59873ad5bc97861ca8939dad370a09ecc32723a928534938bd
   languageName: node
   linkType: hard
 
@@ -6597,7 +6604,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"loose-envify@npm:^1.0.0":
+"loose-envify@npm:^1.0.0, loose-envify@npm:^1.1.0":
   version: 1.4.0
   resolution: "loose-envify@npm:1.4.0"
   dependencies:
@@ -7356,13 +7363,14 @@ __metadata:
     "@babel/core": "npm:^7.25.2"
     "@babel/preset-env": "npm:^7.25.3"
     "@babel/runtime": "npm:^7.25.0"
-    "@op-engineering/op-test": "npm:^0.1.0"
+    "@op-engineering/op-test": "npm:^0.2.2"
     "@react-native-community/cli": "npm:^18.0.0"
     "@react-native-community/cli-platform-android": "npm:18.0.0"
     "@react-native-community/cli-platform-ios": "npm:18.0.0"
     "@react-native/babel-preset": "npm:0.81.0"
     "@react-native/metro-config": "npm:0.81.0"
     "@react-native/typescript-config": "npm:0.81.0"
+    "@types/chance": "npm:^1.1.7"
     "@types/react": "npm:^19.0.0"
     chance: "npm:^1.1.9"
     clsx: "npm:^2.0.0"
@@ -7371,7 +7379,9 @@ __metadata:
     react: "npm:19.1.1"
     react-native: "npm:0.81.0"
     react-native-builder-bob: "npm:^0.40.13"
+    react-native-http-bridge-refurbished: "npm:1.2.9"
     react-native-monorepo-config: "npm:^0.1.9"
+    react-native-restart: "npm:^0.0.27"
     tailwindcss: "npm:3.3.2"
   languageName: unknown
   linkType: soft
@@ -7886,6 +7896,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-http-bridge-refurbished@npm:1.2.9":
+  version: 1.2.9
+  resolution: "react-native-http-bridge-refurbished@npm:1.2.9"
+  dependencies:
+    react: "npm:18.2.0"
+  peerDependencies:
+    react-native: ">=0.72"
+  checksum: 10c0/50d77f2991a2ff7d38a17b59f1f9943f9637be9abd68ba34cc4fe744bcaa7a69e00e728b74bd5905b84fdc870b701388c85c7f27a9aaff17606521df362c8dbf
+  languageName: node
+  linkType: hard
+
 "react-native-monorepo-config@npm:^0.1.8, react-native-monorepo-config@npm:^0.1.9":
   version: 0.1.9
   resolution: "react-native-monorepo-config@npm:0.1.9"
@@ -7893,6 +7914,16 @@ __metadata:
     escape-string-regexp: "npm:^5.0.0"
     fast-glob: "npm:^3.3.3"
   checksum: 10c0/7bff1eca0184008d145c7faa2b0556cca786d0afaf46b8ecd1d828aa5ceec3fb940223ee3db5147c16cc607c9785940fe3b4a52ac0d855f2e1d4c97d096a5635
+  languageName: node
+  linkType: hard
+
+"react-native-restart@npm:^0.0.27":
+  version: 0.0.27
+  resolution: "react-native-restart@npm:0.0.27"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/13ef35f98d12658e29a2c84aa68946cec6e0add946eb3a5d4ffae1fdce050bb563e269e55d9c037e47072a78bcea98f010536d9d7dd9c26eec9e7c9795bf713f
   languageName: node
   linkType: hard
 
@@ -7950,6 +7981,15 @@ __metadata:
   version: 0.14.0
   resolution: "react-refresh@npm:0.14.0"
   checksum: 10c0/b8ae07ad153357d77830928a7f1fc2df837aabefee907fa273ba04c7643f3b860e986f1d4b7ada9b721c8d79b8c24b5b911a314a1a2398b105f1b13d19ea2b8d
+  languageName: node
+  linkType: hard
+
+"react@npm:18.2.0":
+  version: 18.2.0
+  resolution: "react@npm:18.2.0"
+  dependencies:
+    loose-envify: "npm:^1.1.0"
+  checksum: 10c0/b562d9b569b0cb315e44b48099f7712283d93df36b19a39a67c254c6686479d3980b7f013dc931f4a5a3ae7645eae6386b4aa5eea933baa54ecd0f9acb0902b8
   languageName: node
   linkType: hard
 

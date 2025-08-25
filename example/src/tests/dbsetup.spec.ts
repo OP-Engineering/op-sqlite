@@ -8,11 +8,8 @@ import {
   moveAssetsDatabase,
   open,
 } from '@op-engineering/op-sqlite';
-import chai from 'chai';
-import {describe, it} from '@op-engineering/op-test';
+import {describe, it, expect} from '@op-engineering/op-test';
 import {Platform} from 'react-native';
-
-let expect = chai.expect;
 
 const expectedVersion = isLibsql()
   ? '3.45.1'
@@ -50,7 +47,7 @@ export function dbSetupTests() {
 
         const res = await db.execute('select sqlite_version();');
 
-        expect(res.rows[0]!['sqlite_version()']).to.equal(expectedVersion);
+        expect(res.rows[0]!['sqlite_version()']).toBe(expectedVersion);
         db.close();
       });
     }
@@ -113,7 +110,7 @@ export function dbSetupTests() {
         db.loadExtension('path');
       } catch (e) {
         // TODO load a sample extension
-        expect(e).to.exist;
+        expect(!!e).toEqual(true);
       } finally {
         db.delete();
       }
@@ -137,7 +134,7 @@ export function dbSetupTests() {
         location,
       });
 
-      expect(db.getDbPath()).to.contain(location);
+      expect(db.getDbPath().includes(location)).toEqual(true);
 
       db.delete();
     });
@@ -150,7 +147,7 @@ export function dbSetupTests() {
       });
 
       let path = db.getDbPath();
-      expect(path).to.contain('myFolder');
+      expect(path.includes('myFolder')).toEqual(true);
       db.delete();
     });
 
@@ -162,14 +159,14 @@ export function dbSetupTests() {
       });
 
       let path = db.getDbPath();
-      expect(path).to.contain('myFolder/nested');
+      expect(path.includes('myFolder/nested')).toEqual(true);
       db.delete();
     });
 
     it('Moves assets database simple', async () => {
       const copied = await moveAssetsDatabase({filename: 'sample.sqlite'});
 
-      expect(copied).to.equal(true);
+      expect(copied).toEqual(true);
     });
 
     it('Moves assets database with path', async () => {
@@ -178,7 +175,7 @@ export function dbSetupTests() {
         path: 'sqlite',
       });
 
-      expect(copied).to.equal(true);
+      expect(copied).toEqual(true);
     });
 
     it('Moves assets database with path and overwrite', async () => {
@@ -188,7 +185,7 @@ export function dbSetupTests() {
         overwrite: true,
       });
 
-      expect(copied).to.equal(true);
+      expect(copied).toEqual(true);
 
       let db = open({
         name: 'sample2.sqlite',
@@ -197,7 +194,7 @@ export function dbSetupTests() {
       });
 
       let path = db.getDbPath();
-      expect(path).to.contain('sqlite/sample2.sqlite');
+      expect(path.includes('sqlite/sample2.sqlite')).toEqual(true);
       db.delete();
     });
 
@@ -219,12 +216,12 @@ export function dbSetupTests() {
         let db1 = open({
           name: 'closeTest.sqlite',
         });
-        expect(db1).to.exist;
+        expect(!!db1).toBe(true);
         open({
           name: 'closeTest.sqlite',
         });
       } catch (e) {
-        expect(e).to.exist;
+        expect(!!e).toBe(true);
       }
     });
   });
@@ -250,7 +247,7 @@ export function dbSetupTests() {
       'CREATE TABLE IF NOT EXISTS attach2.test (id INTEGER PRIMARY KEY);',
     );
     let res = db.executeSync('INSERT INTO attach2.test (id) VALUES (1);');
-    expect(res).to.exist;
+    expect(!!res).toBe(true);
 
     db.detach('attach2');
 
@@ -270,7 +267,7 @@ export function dbSetupTests() {
     });
 
     let path = db.getDbPath();
-    expect(path).to.exist;
+    expect(!!path).toBe(true);
     db.close();
   });
 

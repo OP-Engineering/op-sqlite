@@ -79,12 +79,10 @@ if(opsqliteConfig) {
 }
 
 if(useSQLCipher) {
-  println "[OP-SQLITE] using SQLCipher 🔒"
+  println "[OP-SQLITE] using sqlcipher."
 } else if(useLibsql) {
-  println "[OP-SQLITE] using libsql 📦"
-} else {
-  println "[OP-SQLITE] using Vanilla SQLite"
-}
+  println "[OP-SQLITE] using libsql. Report any issues to Turso"
+} 
 
 if(useCRSQLite) {
   println "[OP-SQLITE] using CR-SQLite 🤖"

@@ -1,30 +1,30 @@
-// import {BridgeServer} from 'react-native-http-bridge-refurbished';
-// let results: any[] = [];
+import {BridgeServer} from 'react-native-http-bridge-refurbished';
+let results: any[] = [];
 
-// const server = new BridgeServer('http_service', true);
+const server = new BridgeServer('http_service', true);
 
-// server.get('/ping', async (_req, _res) => {
-//   return {message: 'pong'};
-// });
+server.get('/ping', async (_req, _res) => {
+  return {message: 'pong'};
+});
 
-// server.get('/results', async (_req, _res) => {
-//   return {results};
-// });
+server.get('/results', async (_req, _res) => {
+  return {results};
+});
 
-// server.listen(9000);
+server.listen(9000);
 
-// export function startServer() {
-//   return server;
-// }
+export function startServer() {
+  return server;
+}
 
-// export function stopServer() {
-//   server.stop();
-// }
+export function stopServer() {
+  server.stop();
+}
 
-// export function setServerResults(r: any[]) {
-//   results = r;
-// }
+export function setServerResults(r: any[]) {
+  results = r;
+}
 
-// export function setServerError(e: any) {
-//   results = e;
-// }
+export function setServerError(e: any) {
+  results = e;
+}
