@@ -5,23 +5,18 @@ import {
   ANDROID_DATABASE_PATH,
   ANDROID_FILES_PATH,
 } from '@op-engineering/op-sqlite';
-import chai from 'chai';
-import {describe, it} from '@op-engineering/op-test';
+import {describe, it, expect} from '@op-engineering/op-test';
 import {Platform} from 'react-native';
 
-let expect = chai.expect;
-
-export function constantsTests() {
-  describe('Constants tests', () => {
-    it('Constants are there', async () => {
-      if (Platform.OS === 'ios') {
-        expect(IOS_DOCUMENT_PATH).to.exist;
-        expect(IOS_LIBRARY_PATH).to.exist;
-      } else {
-        expect(ANDROID_EXTERNAL_FILES_PATH).to.exist;
-        expect(ANDROID_DATABASE_PATH).to.exist;
-        expect(ANDROID_FILES_PATH).to.exist;
-      }
-    });
+describe('Constants tests', () => {
+  it('Constants are there', async () => {
+    if (Platform.OS === 'ios') {
+      expect(!!IOS_DOCUMENT_PATH).toBeTruthy();
+      expect(!!IOS_LIBRARY_PATH).toBeTruthy();
+    } else {
+      expect(!!ANDROID_EXTERNAL_FILES_PATH).toBeTruthy();
+      expect(!!ANDROID_DATABASE_PATH).toBeTruthy();
+      expect(!!ANDROID_FILES_PATH).toBeTruthy();
+    }
   });
-}
+});

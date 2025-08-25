@@ -97,6 +97,14 @@
       ]
     ]
   },
+  "codegenConfig": {
+    "name": "OPSQLiteSpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "com.op.sqlite"
+    }
+  },
   "create-react-native-library": {
     "languages": "kotlin-objc",
     "type": "turbo-module",

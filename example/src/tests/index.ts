@@ -1,0 +1,9 @@
+import './blob.spec';
+import './constants.spec';
+import './dbsetup.spec';
+import './hooks.spec';
+import './preparedStatements.spec';
+import './queries.spec';
+import './reactive.spec';
+import './storage.spec';
+import './tokenizer.spec';
