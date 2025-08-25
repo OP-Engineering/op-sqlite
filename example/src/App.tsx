@@ -1,11 +1,15 @@
 import {useEffect, useState} from 'react';
 import {
-  setServerError,
+  // setServerError,
   setServerResults,
   startServer,
   stopServer,
 } from './server';
-import {displayResults, runTests} from '@op-engineering/op-test';
+import {
+  displayResults,
+  runTests,
+  allTestsPassed,
+} from '@op-engineering/op-test';
 import './tests'; // import all tests to register them
 
 export default function App() {
@@ -13,12 +17,11 @@ export default function App() {
   useEffect(() => {
     runTests()
       .then(newResults => {
-        console.log(newResults);
-        setServerResults(newResults as any);
+        setServerResults(allTestsPassed(newResults as any));
         setResults(newResults);
       })
-      .catch(e => {
-        setServerError(e);
+      .catch(_ => {
+        setServerResults(false);
       });
 
     startServer();
