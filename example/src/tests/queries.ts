@@ -273,7 +273,7 @@ describe('Queries tests', () => {
     }
     await db.execute(
       `CREATE TABLE T1 ( id INT PRIMARY KEY) STRICT;
-        CREATE TABLE T2 ( id INT PRIMARY KEY) STRICT;`,
+          CREATE TABLE T2 ( id INT PRIMARY KEY) STRICT;`,
     );
 
     let t1name = await db.execute(
@@ -388,14 +388,14 @@ describe('Queries tests', () => {
         // ACT: Upsert statement to create record / increment the value
         await tx.execute(
           `
-              INSERT OR REPLACE INTO [User] ([id], [name], [age], [networth])
-              SELECT ?, ?, ?,
-                IFNULL((
-                  SELECT [networth] + 1000
-                  FROM [User]
-                  WHERE [id] = ?
-                ), 0)
-          `,
+                INSERT OR REPLACE INTO [User] ([id], [name], [age], [networth])
+                SELECT ?, ?, ?,
+                  IFNULL((
+                    SELECT [networth] + 1000
+                    FROM [User]
+                    WHERE [id] = ?
+                  ), 0)
+            `,
           [id, name, age, id],
         );
 

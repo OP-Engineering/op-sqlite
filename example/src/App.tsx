@@ -14,6 +14,7 @@ import './tests'; // import all tests to register them
 export default function App() {
   const [results, setResults] = useState<any>(null);
   useEffect(() => {
+    // registerTests();
     runTests()
       .then(newResults => {
         setServerResults(allTestsPassed(newResults));
