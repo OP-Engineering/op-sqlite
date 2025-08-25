@@ -64,8 +64,6 @@ jobs:
           api-level: 29
           emulator-options: -no-window -no-boot-anim -no-audio -no-snapshot-load
           script: |
-            adb wait-for-device
-            adb shell input keyevent 82
             ./scripts/test-android.sh
   test-ios:
     runs-on: macos-latest

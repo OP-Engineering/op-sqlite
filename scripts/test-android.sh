@@ -1,5 +1,12 @@
-cd example
-JAVA_OPTS=-XX:MaxHeapSize=6g yarn run:android:release 
+#!/bin/bash
+set -ex
+
+cd example || exit
+
+adb wait-for-device
+adb shell input keyevent 82
 adb forward tcp:9000 tcp:9000
-echo "Polling in-app server..."
+
+JAVA_OPTS=-XX:MaxHeapSize=6g yarn run:android:release 
+
 node ../scripts/poll-in-app-server.js
