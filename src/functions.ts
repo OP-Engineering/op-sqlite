@@ -9,8 +9,12 @@ import {
   type Scalar,
   type QueryResult,
   type Transaction,
-  OPSQLite,
+  type OPSQLiteProxy,
 } from './index';
+
+const proxy = global.__OPSQLiteProxy;
+export const OPSQLite = proxy as OPSQLiteProxy;
+
 function enhanceDB(db: _InternalDB, options: DBParams): DB {
   const lock = {
     queue: [] as _PendingTransaction[],
