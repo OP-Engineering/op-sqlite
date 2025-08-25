@@ -1,9 +1,13 @@
-import './blob.spec';
-import './constants.spec';
-import './dbsetup.spec';
-import './hooks.spec';
-import './preparedStatements.spec';
-import './queries.spec';
-import './reactive.spec';
-import './storage.spec';
-import './tokenizer.spec';
+import './blob';
+import './constants';
+import './dbsetup';
+import './hooks';
+import './preparedStatements';
+import './queries';
+import './reactive';
+import './storage';
+import './tokenizer';
+
+// export function registerTests() {
+//   queries();
+// }

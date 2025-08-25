@@ -7384,6 +7384,7 @@ __metadata:
     react-native-http-bridge-refurbished: "npm:1.2.9"
     react-native-monorepo-config: "npm:^0.1.9"
     react-native-restart: "npm:^0.0.27"
+    react-native-safe-area-context: "npm:^5.6.1"
     tailwindcss: "npm:3.3.2"
   languageName: unknown
   linkType: soft
