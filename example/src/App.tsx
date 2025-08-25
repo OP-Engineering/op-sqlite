@@ -2,7 +2,6 @@ import {useEffect, useState} from 'react';
 import {
   // setServerError,
   setServerResults,
-  startServer,
   stopServer,
 } from './server';
 import {
@@ -17,14 +16,12 @@ export default function App() {
   useEffect(() => {
     runTests()
       .then(newResults => {
-        setServerResults(allTestsPassed(newResults as any));
+        setServerResults(allTestsPassed(newResults));
         setResults(newResults);
       })
       .catch(_ => {
         setServerResults(false);
       });
-
-    startServer();
 
     return () => {
       stopServer();
