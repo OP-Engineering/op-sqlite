@@ -8,17 +8,22 @@ SQLite being a C library and React Native being a JS framework with native parts
 
 ## JavaScript and Numbers
 
-JavaScript represents every number internally as a `double`. This means you can only have integers represented up to 2^53 bits(`Number.MAX_SAFE_INTEGER`). Although sqlite supports long long (2^64 bits) the numbers will be truncated when you query a value bigger than what a JS number can represent. If you need to store larger numbers you should use a `bigint`, however, such a type is not natively supported by sqlite, so you will have to serialize and deserialize from/to bigint when you do your queries:
+JavaScript represents every number internally as a `double`. This means you can only have integers represented up to 2^53 bits(`Number.MAX_SAFE_INTEGER`). Although sqlite supports long long (2^64 bits) the numbers will be truncated when you query a value bigger than what a JS number can represent. If you need to store larger numbers you should use a `BigInt` object, however, such a type is not natively supported by sqlite, so you will have to serialize and deserialize from/to strings when you do your queries:
 
-```tsx
+```ts
+// Create your table with the correct types AND USE STRICT TYPING
+db.executeSync(
+  'CREATE TABLE IF NOT EXISTS NumbersTable (myBigInt TEXT NOT NULL) STRICT'
+);
+
 // When inserting, convert bigint into a string
-await db.execute('INSERT INTO NumbersTable VALUES (?)', [
+db.executeSync('INSERT INTO NumbersTable VALUES (?)', [
   bigint('123').toString(),
 ]);
 
 // When retrieving, convert string into bigint
-let res = await db.execute('SELECT * FROM NumbersTable');
-let myBigint = BigInt(res.rows[0].number);
+let res = db.executeSync('SELECT * FROM NumbersTable');
+let myBigint = BigInt(res.rows[0].myBigInt);
 ```
 
 ## SQLite Gotchas
