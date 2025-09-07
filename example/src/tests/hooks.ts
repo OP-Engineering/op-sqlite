@@ -75,6 +75,41 @@ describe('Hooks', () => {
     db.updateHook(null);
   });
 
+  it('Execute batch should trigger update hook', async () => {
+    const id = chance.integer();
+    const name = chance.name();
+    const age = chance.integer();
+    const networth = chance.floating();
+
+    db.executeSync(
+      'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+      [id, name, age, networth],
+    );
+
+    let promiseResolve: any;
+    let promise = new Promise<{
+      rowId: number;
+      row?: any;
+      operation: string;
+      table: string;
+    }>(resolve => {
+      promiseResolve = resolve;
+    });
+
+    db.updateHook(data => {
+      promiseResolve(data);
+    });
+
+    await db.executeBatch([
+      ['UPDATE "User" SET name = ? WHERE id = ?', ['foo', id]],
+    ]);
+
+    const data = await promise;
+
+    expect(data.operation).toEqual('UPDATE');
+    expect(data.rowId).toEqual(1);
+  });
+
   it('remove update hook', async () => {
     const hookRes: string[] = [];
 

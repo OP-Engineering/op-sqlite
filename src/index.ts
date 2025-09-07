@@ -57,7 +57,8 @@ export type ColumnMetadata = {
  */
 export type SQLBatchTuple =
   | [string]
-  | [string, Array<Scalar> | Array<Array<Scalar>>];
+  | [string, Scalar[]]
+  | [string, Scalar[][]];
 
 export type UpdateHookOperation = 'INSERT' | 'DELETE' | 'UPDATE';
 

@@ -361,7 +361,7 @@ void DBHostObject::create_jsi_functions() {
 
         return create_js_rows(rt, status);
     });
-    
+
     function_map["executeRawSync"] = HOSTFN("executeRawSync") {
         const std::string query = args[0].asString(rt).utf8(rt);
         std::vector<JSVariant> params = count == 2 && args[1].isObject()

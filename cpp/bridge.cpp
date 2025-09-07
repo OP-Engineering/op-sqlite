@@ -855,15 +855,12 @@ opsqlite_execute_batch(sqlite3 *db,
         const auto &command = commands->at(i);
         // We do not provide a datastructure to receive query data because we
         // don't need/want to handle this results in a batch execution
-        try {
-            auto result = opsqlite_execute(db, command.sql, &command.params);
-            affectedRows += result.affectedRows;
-        } catch (std::exception &exc) {
-            opsqlite_execute(db, "ROLLBACK", nullptr);
-            throw exc;
-        }
+        // There is also no need to commit/catch this transaction, this is done
+        // in the JS code
+        auto result = opsqlite_execute(db, command.sql, &command.params);
+        affectedRows += result.affectedRows;
     }
-    // opsqlite_execute(db, "COMMIT", nullptr);
+
     return BatchResult{
         .affectedRows = affectedRows,
         .commands = static_cast<int>(commandCount),
