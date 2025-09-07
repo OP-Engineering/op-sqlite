@@ -579,7 +579,7 @@ describe('Queries tests', () => {
     expect(ranCallback).toEqual(true);
   });
 
-  it('Batch execute', async () => {
+  it('executeBatch', async () => {
     const id1 = chance.integer();
     const name1 = chance.name();
     const age1 = chance.integer();
