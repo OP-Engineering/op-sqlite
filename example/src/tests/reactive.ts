@@ -202,6 +202,77 @@ describe('Reactive queries', () => {
     unsubscribe3();
   });
 
+  it('Row reactive query with executeBatch', async () => {
+    let firstReactiveRan = false;
+    let secondReactiveRan = false;
+    let emittedUser = null;
+
+    const unsubscribe = db.reactiveExecute({
+      query: 'SELECT * FROM User;',
+      arguments: [],
+      fireOn: [
+        {
+          table: 'User',
+          ids: [2],
+        },
+      ],
+      callback: () => {
+        firstReactiveRan = true;
+      },
+    });
+
+    const unsubscribe2 = db.reactiveExecute({
+      query: 'SELECT * FROM User;',
+      arguments: [],
+      fireOn: [
+        {
+          table: 'Foo',
+        },
+      ],
+      callback: () => {
+        secondReactiveRan = true;
+      },
+    });
+
+    const unsubscribe3 = db.reactiveExecute({
+      query: 'SELECT name FROM User;',
+      arguments: [],
+      fireOn: [
+        {
+          table: 'User',
+          ids: [1],
+        },
+      ],
+      callback: data => {
+        emittedUser = data.rows[0];
+      },
+    });
+
+    await db.executeBatch([
+      [
+        'INSERT INTO User (id, name, age, networth, nickname) VALUES (?, ?, ?, ?, ?);',
+        [1, 'John', 30, 1000, 'Johnny'],
+      ],
+    ]);
+
+    await sleep(0);
+
+    await db.transaction(async tx => {
+      await tx.execute('UPDATE User SET name = ? WHERE id = ?;', ['Foo', 1]);
+    });
+
+    await sleep(0);
+
+    expect(!!firstReactiveRan).toBe(false);
+    expect(!!secondReactiveRan).toBe(false);
+    expect(emittedUser).toDeepEqual({
+      name: 'Foo',
+    });
+    unsubscribe();
+    unsubscribe2();
+    unsubscribe3();
+  });
+
   it('Update hook and reactive queries work at the same time', async () => {
     let promiseResolve: any;
     let promise = new Promise(resolve => {
