@@ -97,21 +97,23 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
     executeBatch: async (
       commands: SQLBatchTuple[]
     ): Promise<BatchQueryResult> => {
-      const sanitizedCommands = commands.map(([query, params]) => {
-        if (params) {
-          return [query, sanitizeArrayBuffersInArray(params)];
+      // Do normal for loop and replace in place for performance
+      for (let i = 0; i < commands.length; i++) {
+        // [1] is the params arg
+        if (commands[i]![1]) {
+          commands[i]![1] = sanitizeArrayBuffersInArray(commands[i]![1]) as any;
         }
-
-        return [query];
-      });
+      }
 
       async function run() {
         try {
           enhancedDb.executeSync('BEGIN TRANSACTION;');
 
-          let res = await db.executeBatch(sanitizedCommands as any[]);
+          let res = await db.executeBatch(commands as any[]);
 
           enhancedDb.executeSync('COMMIT;');
+
+          await db.flushPendingReactiveQueries();
 
           return res;
         } catch (executionError) {

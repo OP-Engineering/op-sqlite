@@ -3262,15 +3262,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@op-engineering/op-test@npm:^0.2.3":
-  version: 0.2.3
-  resolution: "@op-engineering/op-test@npm:0.2.3"
+"@op-engineering/op-test@npm:^0.2.4":
+  version: 0.2.4
+  resolution: "@op-engineering/op-test@npm:0.2.4"
   dependencies:
     react-native-safe-area-context: "npm:^5.6.1"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10c0/a256568acef2d72b739cbb33ac4e7d7541b028ad49ad5512a6e806eec3dc3bff485b9251a22f6148a0fa46f7a2d2e25c981b476bc65b5b48a21a7fb1aea14136
+  checksum: 10c0/6dacc5124b0d2e23e9c95a33d120bc5edde4fd2f6bb05e3e2b77487549856b2577a5285320472982df7b1907e9e1b43e5062484914c1f37b34b1795d8439e0c2
   languageName: node
   linkType: hard
 
@@ -7365,7 +7365,7 @@ __metadata:
     "@babel/core": "npm:^7.25.2"
     "@babel/preset-env": "npm:^7.25.3"
     "@babel/runtime": "npm:^7.25.0"
-    "@op-engineering/op-test": "npm:^0.2.3"
+    "@op-engineering/op-test": "npm:^0.2.4"
     "@react-native-community/cli": "npm:^18.0.0"
     "@react-native-community/cli-platform-android": "npm:18.0.0"
     "@react-native-community/cli-platform-ios": "npm:18.0.0"
