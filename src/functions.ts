@@ -1,16 +1,16 @@
 import { NativeModules, Platform } from 'react-native';
 import {
   type _InternalDB,
-  type DBParams,
-  type DB,
   type _PendingTransaction,
-  type SQLBatchTuple,
   type BatchQueryResult,
-  type Scalar,
-  type QueryResult,
-  type Transaction,
+  type DB,
+  type DBParams,
   type OPSQLiteProxy,
-} from './index';
+  type QueryResult,
+  type Scalar,
+  type SQLBatchTuple,
+  type Transaction,
+} from './types';
 
 declare global {
   var __OPSQLiteProxy: object | undefined;

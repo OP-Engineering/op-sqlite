@@ -1,5 +1,5 @@
-import { type DB } from './index';
 import { open } from './functions';
+import { type DB } from './types';
 
 type StorageOptions = {
   location?: string;
