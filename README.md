@@ -4,6 +4,8 @@ Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider sponso
 
 OP-SQLite has grown large to cover a lot of plugins, sqlite versions and APIs. Please read the full documentation before opening an issue.
 
+**Now with Windows support!** - Use op-sqlite in your React Native Windows desktop applications.
+
 [Open the docs](https://op-engineering.github.io/op-sqlite/)
 
 Join the Discord:

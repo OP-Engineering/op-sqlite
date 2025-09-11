@@ -1,0 +1,3 @@
+EXPORTS
+DllCanUnloadNow PRIVATE
+MakeReactPackageProvider = ?MakeReactPackageProvider@@YA?AV?$com_ptr@UIReactPackageProvider@ReactNative@Microsoft@@@winrt@Microsoft@ReactNative@@XZ
