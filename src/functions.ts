@@ -449,10 +449,16 @@ export const isLibsql = (): boolean => {
   return OPSQLite.isLibsql();
 };
 
-export const isIOSEmbeeded = (): boolean => {
+// Correctly spelled primary export
+export const isIOSEmbedded = (): boolean => {
   if (Platform.OS !== 'ios') {
     return false;
   }
 
   return OPSQLite.isIOSEmbedded();
 };
+
+/**
+ * @deprecated Use `isIOSEmbedded` instead. This alias will be removed in a future release.
+ */
+export const isIOSEmbeeded = isIOSEmbedded;
