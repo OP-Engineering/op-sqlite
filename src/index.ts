@@ -1,6 +1,17 @@
 import { NativeModules } from 'react-native';
 
-export * from './functions';
+export {
+  OPSQLite,
+  open,
+  openRemote,
+  openSync,
+  moveAssetsDatabase,
+  getDylibPath,
+  isSQLCipher,
+  isLibsql,
+  isIOSEmbedded,
+  isIOSEmbeeded,
+} from './functions';
 export { Storage } from './Storage';
 export * from './types';
 
