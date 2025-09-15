@@ -1,8 +1,34 @@
 import { NativeModules } from 'react-native';
 
-export * from './functions';
+export {
+  OPSQLite,
+  open,
+  openRemote,
+  openSync,
+  moveAssetsDatabase,
+  getDylibPath,
+  isSQLCipher,
+  isLibsql,
+  isIOSEmbedded,
+  isIOSEmbeeded,
+} from './functions';
 export { Storage } from './Storage';
-export * from './types';
+export type {
+  Scalar,
+  QueryResult,
+  ColumnMetadata,
+  SQLBatchTuple,
+  UpdateHookOperation,
+  BatchQueryResult,
+  FileLoadResult,
+  Transaction,
+  _PendingTransaction,
+  PreparedStatement,
+  _InternalDB,
+  DB,
+  DBParams,
+  OPSQLiteProxy,
+} from './types';
 
 export const {
   IOS_DOCUMENT_PATH,
