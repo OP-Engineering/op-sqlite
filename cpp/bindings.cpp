@@ -152,7 +152,7 @@ void install(jsi::Runtime &rt,
 
         std::string remote_encryption_key;
         if (options.hasProperty(rt, "remoteEncryptionKey")) {
-            encryption_key =
+            remote_encryption_key =
                 options.getProperty(rt, "remoteEncryptionKey").asString(rt).utf8(rt);
         }
 
