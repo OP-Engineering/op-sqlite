@@ -1,6 +1,7 @@
 #include "bridge.h"
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
+#include "libsql.h"
 #include "logs.h"
 #include "utils.h"
 #include <filesystem>
@@ -49,15 +50,20 @@ DB opsqlite_libsql_open_sync(std::string const &name,
     libsql_connection_t c;
     const char *err = nullptr;
 
-    libsql_config config = {.db_path = path.c_str(),
-                            .primary_url = url.c_str(),
-                            .auth_token = auth_token.c_str(),
-                            .read_your_writes = '1',
-                            .encryption_key = encryption_key.c_str(),
-                            .remote_encryption_key = remote_encryption_key.c_str(),
-                            .sync_interval = sync_interval,
-                            .with_webpki = '1',
-                            .offline = offline};
+    libsql_config config = {
+        .db_path = path.c_str(),
+        .primary_url = url.c_str(),
+        .auth_token = auth_token.c_str(),
+        .read_your_writes = '1',
+        .encryption_key =
+            encryption_key.empty() ? nullptr : encryption_key.c_str(),
+        .remote_encryption_key = remote_encryption_key.empty()
+                                     ? nullptr
+                                     : remote_encryption_key.c_str(),
+        .sync_interval = sync_interval,
+        .with_webpki = '1',
+        .offline = offline,
+    };
 
     status = libsql_open_sync_with_config(config, &db, &err);
     if (status != 0) {
