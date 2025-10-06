@@ -165,6 +165,29 @@ void opsqlite_libsql_detach(DB const &db, std::string const &alias) {
     opsqlite_libsql_execute(db, statement, nullptr);
 }
 
+int32_t opsqlite_libsql_get_reserved_bytes(DB const &db) {
+    const char *err = nullptr;
+    int32_t reserved_bytes = 0;
+
+    int status = libsql_get_reserved_bytes(db.c, &reserved_bytes, &err);
+
+    if (status != 0) {
+        throw std::runtime_error(err);
+    }
+
+    return reserved_bytes;
+}
+
+void opsqlite_libsql_set_reserved_bytes(DB const &db, int32_t reserved_bytes) {
+    const char *err = nullptr;
+
+    int status = libsql_set_reserved_bytes(db.c, reserved_bytes, &err);
+
+    if (status != 0) {
+        throw std::runtime_error(err);
+    }
+}
+
 void opsqlite_libsql_sync(DB const &db) {
     const char *err = nullptr;
 

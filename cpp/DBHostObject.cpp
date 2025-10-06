@@ -595,6 +595,16 @@ void DBHostObject::create_jsi_functions() {
         opsqlite_libsql_sync(db);
         return {};
     });
+
+    function_map["setReservedBytes"] = HOSTFN("setReservedBytes") {
+        int32_t reserved_bytes = static_cast<int32_t>(args[0].asNumber());
+        opsqlite_libsql_set_reserved_bytes(db, reserved_bytes);
+        return {};
+    });
+
+    function_map["getReservedBytes"] = HOSTFN("getReservedBytes") {
+        return jsi::Value(opsqlite_libsql_get_reserved_bytes(db));
+    });
 #else
     function_map["loadFile"] = HOSTFN("loadFile") {
         if (count < 1) {
