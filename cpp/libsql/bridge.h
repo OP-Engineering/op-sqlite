@@ -55,6 +55,10 @@ void opsqlite_libsql_attach(DB const &db, std::string const &docPath,
 
 void opsqlite_libsql_detach(DB const &db, std::string const &alias);
 
+int32_t opsqlite_libsql_get_reserved_bytes(DB const &db);
+
+void opsqlite_libsql_set_reserved_bytes(DB const &db, int32_t reserved_bytes);
+
 void opsqlite_libsql_sync(DB const &db);
 
 BridgeResult opsqlite_libsql_execute(DB const &db, std::string const &query,

@@ -149,6 +149,8 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
     getDbPath: db.getDbPath,
     reactiveExecute: db.reactiveExecute,
     sync: db.sync,
+    setReservedBytes: db.setReservedBytes,
+    getReservedBytes: db.getReservedBytes,
     close: db.close,
     executeWithHostObjects: async (
       query: string,

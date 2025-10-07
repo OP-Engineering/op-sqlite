@@ -144,6 +144,8 @@ export type _InternalDB = {
     callback: (response: any) => void;
   }) => () => void;
   sync: () => void;
+  setReservedBytes: (reservedBytes: number) => void;
+  getReservedBytes: () => number;
   flushPendingReactiveQueries: () => Promise<void>;
 };
 
@@ -290,6 +292,8 @@ export type DB = {
    * The database is hosted in turso
    **/
   sync: () => void;
+  setReservedBytes: (reservedBytes: number) => void;
+  getReservedBytes: () => number;
 };
 
 export type DBParams = {
