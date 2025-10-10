@@ -83,6 +83,14 @@ void DBHostObject::on_update(const std::string &table,
 
     for (const auto &query_ptr : reactive_queries) {
         auto query = query_ptr.get();
+
+        // The JS environment might have cleared the query while the update was queued
+        // For now this seems to prevent a EXC_BAD_ACCESS
+        if (query == nullptr) {
+            continue;
+        }
+
+        
         if (query->discriminators.empty()) {
             continue;
         }
