@@ -4,21 +4,20 @@ sidebar_position: 1
 
 # Installation
 
-Installing is easy
+Just install and run. In the latest RN versions, pod installation should be automatic but if not run `pod install` manually.
 
 ```bash
 npm i -s @op-engineering/op-sqlite
-npx pod-install@latest
 ```
 
-If you are using Expo, you cannot add this library on a expo-go app, you need to pre-build your app. There are no needed plugins, as long as pod install runs it's all you need:
+You cannot use this library on a expo-go app, you need to pre-build your app. No expo plugin is needed, just make sure the pods are properly setup.
 
 ```bash
 npx expo install @op-engineering/op-sqlite
-npx expo prebuild
+npx expo prebuild --clean
 ```
 
-This package only runs on `iOS`, `Android` and `macOS`, same as `expo-sqlite`, this is a technical limitation as sqlite does not run on the browser.
+This package only runs on `iOS`, `Android` and `macOS`.
 
 # Configuration
 
