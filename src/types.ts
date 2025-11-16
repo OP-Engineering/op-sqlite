@@ -310,6 +310,10 @@ export type OPSQLiteProxy = {
     location?: string;
     encryptionKey?: string;
   }) => _InternalDB;
+  openV2: (options: {
+    path: string;
+    encryptionKey?: string
+  }) => _InternalDB,
   openRemote: (options: { url: string; authToken: string }) => _InternalDB;
   openSync: (options: DBParams) => _InternalDB;
   isSQLCipher: () => boolean;

@@ -15,14 +15,15 @@
     "build:ios": "cd ios && xcodebuild -workspace OPSQLiteExample.xcworkspace -scheme debug -configuration Debug -sdk iphonesimulator CC=clang CPLUSPLUS=clang++ LD=clang LDPLUSPLUS=clang++ GCC_OPTIMIZATION_LEVEL=0 GCC_PRECOMPILE_PREFIX_HEADER=YES ASSETCATALOG_COMPILER_OPTIMIZATION=time DEBUG_INFORMATION_FORMAT=dwarf COMPILER_INDEX_STORE_ENABLE=NO"
   },
   "dependencies": {
+    "@op-engineering/op-server": "^0.1.0",
     "@op-engineering/op-test": "^0.2.4",
     "chance": "^1.1.9",
     "clsx": "^2.0.0",
     "events": "^3.3.0",
     "nativewind": "^2.0.11",
     "react": "19.1.1",
-    "react-native": "0.81.0",
-    "react-native-safe-area-context": "^5.6.1"
+    "react-native": "0.82.1",
+    "react-native-safe-area-context": "^5.6.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
@@ -31,13 +32,12 @@
     "@react-native-community/cli": "^18.0.0",
     "@react-native-community/cli-platform-android": "18.0.0",
     "@react-native-community/cli-platform-ios": "18.0.0",
-    "@react-native/babel-preset": "0.81.0",
-    "@react-native/metro-config": "0.81.0",
-    "@react-native/typescript-config": "0.81.0",
+    "@react-native/babel-preset": "0.82.1",
+    "@react-native/metro-config": "0.82.1",
+    "@react-native/typescript-config": "0.82.1",
     "@types/chance": "^1.1.7",
-    "@types/react": "^19.0.0",
+    "@types/react": "^19.1.1",
     "react-native-builder-bob": "^0.40.13",
-    "react-native-http-bridge-refurbished": "1.2.9",
     "react-native-monorepo-config": "^0.1.9",
     "react-native-restart": "^0.0.27",
     "tailwindcss": "3.3.2"

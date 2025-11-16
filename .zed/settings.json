@@ -1,0 +1,10 @@
+{
+  "format_on_save": "on",
+  "lsp": {
+    "clangd": {
+      "initialization_options": {
+        "fallbackFlags": ["-std=c++20"]
+      }
+    }
+  }
+}

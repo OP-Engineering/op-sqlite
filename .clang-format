@@ -1,2 +1,5 @@
 BasedOnStyle: LLVM
-IndentWidth: 4
+# IndentWidth: 4
+# AlignEscapedNewlines: Left
+# IndentPPDirectives: BeforeHash
+# IndentPPDirectives: AfterHash

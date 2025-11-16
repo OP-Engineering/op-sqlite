@@ -2,8 +2,8 @@
 
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
-#include "types.h"
-#include "utils.h"
+#include "types.hpp"
+#include "utils.hpp"
 #ifdef __ANDROID__
 #include "sqlite3.h"
 #else
@@ -35,6 +35,8 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
                        [[maybe_unused]] std::string const &crsqlite_path,
                        std::string const &sqlite_vec_path);
 #endif
+
+sqlite3 *opsqlite_open_v2(std::string const &path);
 
 void opsqlite_close(sqlite3 *db);
 
