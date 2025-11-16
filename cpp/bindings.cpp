@@ -14,6 +14,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "DB.hpp"
 
 namespace opsqlite {
 
@@ -43,6 +44,13 @@ void install(jsi::Runtime &rt,
     _base_path = std::string(base_path);
     _crsqlite_path = std::string(crsqlite_path);
     _sqlite_vec_path = std::string(sqlite_vec_path);
+  
+  auto open_v2 = HFN {
+    jsi::Object params = args[0].asObject(rt);
+    std::string path = params.getProperty(rt, "path").asString(rt).utf8(rt);
+    auto db = create_db(rt, path);
+    return db;
+  });
 
     auto open = HOST_STATIC_FN("open") {
         jsi::Object options = args[0].asObject(rt);
@@ -179,6 +187,7 @@ void install(jsi::Runtime &rt,
 
     jsi::Object module = jsi::Object(rt);
     module.setProperty(rt, "open", std::move(open));
+  module.setProperty(rt, "openV2", std::move(open_v2));
     module.setProperty(rt, "isSQLCipher", std::move(is_sqlcipher));
     module.setProperty(rt, "isLibsql", std::move(is_libsql));
     module.setProperty(rt, "isIOSEmbedded", std::move(is_ios_embedded));

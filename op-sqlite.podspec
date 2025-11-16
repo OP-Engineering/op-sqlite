@@ -96,7 +96,7 @@ Pod::Spec.new do |s|
   install_modules_dependencies(s)
   
   # Base source files
-  source_files = Dir.glob("ios/**/*.{h,m,mm}") + Dir.glob("cpp/**/*.{h,cpp,c}")
+  source_files = Dir.glob("ios/**/*.{h,hpp,m,mm}") + Dir.glob("cpp/**/*.{hpp,h,cpp,c}")
 
   # Set the path to the `c_sources` directory based on environment
   if is_user_app

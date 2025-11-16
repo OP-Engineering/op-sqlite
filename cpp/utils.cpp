@@ -324,4 +324,8 @@ void log_to_console(jsi::Runtime &runtime, const std::string &message) {
     log.call(runtime, jsi::String::createFromUtf8(runtime, message));
 }
 
+jsi::Function host_fn(jsi::Runtime &rt, jsi::HostFunctionType lambda) {
+  return jsi::Function::createFromHostFunction(rt, jsi::PropNameID::forAscii(rt, ""), 0, lambda);
+};
+
 } // namespace opsqlite

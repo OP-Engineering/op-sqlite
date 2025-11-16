@@ -36,6 +36,8 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
                        std::string const &sqlite_vec_path);
 #endif
 
+sqlite3 *opsqlite_open_v2(std::string const &path);
+
 void opsqlite_close(sqlite3 *db);
 
 void opsqlite_remove(sqlite3 *db, std::string const &name,
