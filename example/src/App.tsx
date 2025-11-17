@@ -99,19 +99,19 @@ export default function App() {
       const oldDbInsertTime = end - start;
 
       // Do a simple async execute query
-      try {
-        // await newDb.execute(
-        //   'INSERT INTO performance_test (name, value, timestamp) VALUES (?, ?, ?)',
-        //   [`Test -1`, 10, Date.now()],
-        // );
-        let res = await newDb.execute(
-          "SELECT * FROM performance_test LIMIT 10"
-        )
-        console.log(res)
+      // try {
+      //   // await newDb.execute(
+      //   //   'INSERT INTO performance_test (name, value, timestamp) VALUES (?, ?, ?)',
+      //   //   [`Test -1`, 10, Date.now()],
+      //   // );
+      //   let res = await newDb.execute(
+      //     "SELECT * FROM performance_test LIMIT 10"
+      //   )
+      //   console.log(res)
 
-      } catch (e) {
-        console.error(e)
-      }
+      // } catch (e) {
+      //   console.error(e)
+      // }
 
       setPerfMetrics({
         openV2Time,

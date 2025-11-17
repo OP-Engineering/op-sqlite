@@ -54,52 +54,25 @@ jsi::Object create_db(jsi::Runtime &rt,
                                         : std::vector<JSVariant>();
     auto native = thiz.asObject(rt).getNativeState<NativeDB>(rt);
 
-    return promisify(rt, [&rt, native, query,
-                          params](std::shared_ptr<jsi::Value> resolve,
-                                  std::shared_ptr<jsi::Value> reject) {
-      try {
+    return promisify(
+        rt, native->invoker,
+        [&rt, native, query, params](std::shared_ptr<jsi::Value> resolve) {
 #ifdef OP_SQLITE_USE_LIBSQL
-        auto status = opsqlite_libsql_execute(db, query, &params);
+          auto status = opsqlite_libsql_execute(db, query, &params);
 #else
-        auto status = opsqlite_execute(native->db, query, &params);
+          auto status = opsqlite_execute(native->db, query, &params);
 #endif
 
-        //        if (invalidated) {
-        //          return;
-        //        }
+          //        if (invalidated) {
+          //          return;
+          //        }
 
-        native->invoker->invokeAsync([&rt, status = std::move(status), resolve,
-                                      reject] {
-          auto jsiResult = create_js_rows(rt, status);
-          resolve->asObject(rt).asFunction(rt).call(rt, std::move(jsiResult));
-          //          resolve->call(rt, std::move(jsiResult));
+          native->invoker->invokeAsync([&rt, status = std::move(status),
+                                        resolve] {
+            auto jsiResult = create_js_rows(rt, status);
+            resolve->asObject(rt).asFunction(rt).call(rt, std::move(jsiResult));
+          });
         });
-        // On Android RN is broken and does not correctly match
-        // runtime_error to the generic exception We have to
-        // explicitly catch it
-        // https://github.com/facebook/react-native/issues/48027
-      } catch (std::runtime_error &e) {
-        //        auto what = e.what();
-        //        invoker->invokeAsync([&rt, what = std::string(what), reject] {
-        //          auto errorCtr = rt.global().getPropertyAsFunction(rt,
-        //          "Error"); auto error = errorCtr.callAsConstructor(
-        //                                                  rt,
-        //                                                  jsi::String::createFromAscii(rt,
-        //                                                  what));
-        //          reject->asObject(rt).asFunction(rt).call(rt, error);
-        //        });
-      } catch (std::exception &exc) {
-        //        auto what = exc.what();
-        //        invoker->invokeAsync([&rt, what = std::string(what), reject] {
-        //          auto errorCtr = rt.global().getPropertyAsFunction(rt,
-        //          "Error"); auto error = errorCtr.callAsConstructor(
-        //                                                  rt,
-        //                                                  jsi::String::createFromAscii(rt,
-        //                                                  what));
-        //          reject->asObject(rt).asFunction(rt).call(rt, error);
-        //        });
-      }
-    });
   });
   res.setProperty(rt, "execute", execute);
 

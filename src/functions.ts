@@ -422,8 +422,9 @@ export function openV2(params: {
 }) {
 
   const db = OPSQLite.openV2(params);
+  const enhancedDb = enhanceDB(db, params as any)
 
-  return db;
+  return enhancedDb;
 }
 
 /**

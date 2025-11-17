@@ -9,12 +9,14 @@
 #else
 #include <sqlite3.h>
 #endif
+#include <ReactCommon/CallInvoker.h>
 #include <string>
 #include <vector>
 
 namespace opsqlite {
 
 namespace jsi = facebook::jsi;
+namespace react = facebook::react;
 
 jsi::Value to_jsi(jsi::Runtime &rt, const JSVariant &value);
 
@@ -50,6 +52,8 @@ void log_to_console(jsi::Runtime &rt, const std::string &message);
 
 jsi::Function host_fn(jsi::Runtime &rt, jsi::HostFunctionType lambda);
 jsi::Value promisify(jsi::Runtime &rt,
-                     std::function<void(std::shared_ptr<jsi::Value> resolve, std::shared_ptr<jsi::Value> reject)> lambda);
+                     std::shared_ptr<react::CallInvoker> invoker,
+                     std::function<void(std::shared_ptr<jsi::Value> resolve)>
+                         lambda);
 
 } // namespace opsqlite

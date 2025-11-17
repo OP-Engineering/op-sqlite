@@ -1,4 +1,4 @@
-#include "utils.h"
+#include "utils.hpp"
 #include "SmartHostObject.h"
 #ifndef OP_SQLITE_USE_LIBSQL
 #include "bridge.h"
@@ -10,6 +10,7 @@
 namespace opsqlite {
 
 namespace jsi = facebook::jsi;
+namespace react = facebook::react;
 
 auto __thread_pool = std::make_shared<ThreadPool>();
 
@@ -331,23 +332,47 @@ jsi::Function host_fn(jsi::Runtime &rt, jsi::HostFunctionType lambda) {
       rt, jsi::PropNameID::forAscii(rt, ""), 0, lambda);
 };
 
-jsi::Value promisify(jsi::Runtime &rt,
-                     std::function<void(std::shared_ptr<jsi::Value> resolve,
-                                        std::shared_ptr<jsi::Value> reject)>
-                         lambda) {
+jsi::Value
+promisify(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
+          std::function<void(std::shared_ptr<jsi::Value> resolve)> lambda) {
   auto promise_constructor = rt.global().getPropertyAsFunction(rt, "Promise");
 
-  auto executor = host_fn(rt, [lambda](jsi::Runtime &rt, const jsi::Value &thiz,
-                                       const jsi::Value *args, size_t count) {
-    auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
-    auto reject = std::make_shared<jsi::Value>(rt, args[1]);
+  auto executor =
+      host_fn(rt, [lambda, invoker](jsi::Runtime &rt, const jsi::Value &thiz,
+                                    const jsi::Value *args, size_t count) {
+        auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
+        auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-    auto task = [lambda, resolve, reject]() { lambda(resolve, reject); };
+        auto task = [&rt, lambda, invoker, resolve, reject]() {
+          try {
+            lambda(resolve);
+          } catch (std::runtime_error &e) {
+            // On Android RN is broken and does not correctly match
+            // runtime_error to the generic exception We have to
+            // explicitly catch it
+            // https://github.com/facebook/react-native/issues/48027
+            auto what = e.what();
+            invoker->invokeAsync([&rt, what = std::string(what), reject] {
+              auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+              auto error = errorCtr.callAsConstructor(
+                  rt, jsi::String::createFromAscii(rt, what));
+              reject->asObject(rt).asFunction(rt).call(rt, error);
+            });
+          } catch (std::exception &exc) {
+            auto what = exc.what();
+            invoker->invokeAsync([&rt, what = std::string(what), reject] {
+              auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+              auto error = errorCtr.callAsConstructor(
+                  rt, jsi::String::createFromAscii(rt, what));
+              reject->asObject(rt).asFunction(rt).call(rt, error);
+            });
+          }
+        };
 
-    __thread_pool->queueWork(task);
+        __thread_pool->queueWork(task);
 
-    return jsi::Value(nullptr);
-  });
+        return jsi::Value(nullptr);
+      });
 
   auto promise = promise_constructor.callAsConstructor(rt, executor);
   return promise;
