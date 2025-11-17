@@ -1,86 +1,27 @@
 import {
   IOS_DOCUMENT_PATH,
-  getDylibPath,
-  isLibsql,
   open,
   openV2,
 } from '@op-engineering/op-sqlite';
-import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 import {
-  Button,
-  Clipboard,
-  Platform,
   SafeAreaView,
   ScrollView,
   Text,
   View,
 } from 'react-native';
-import RNRestart from 'react-native-restart';
-import Share from 'react-native-share';
-import 'reflect-metadata';
-import { createLargeDB, queryLargeDB } from './Database';
-import {
-  setServerError,
-  setServerResults,
-  startServer,
-  stopServer,
-} from './server';
-import { constantsTests } from './tests/constants.spec';
-import { registerHooksTests } from './tests/hooks.spec';
-import { blobTests, dbSetupTests, queriesTests, runTests } from './tests/index';
-import { preparedStatementsTests } from './tests/preparedStatements.spec';
-import { reactiveTests } from './tests/reactive.spec';
-import { tokenizerTests } from './tests/tokenizer.spec';
-import { storageTests } from './tests/storage.spec';
-import performance from 'react-native-performance';
-
 const ROWS = 100_000;
 
 export default function App() {
-  const [times, setTimes] = useState<number[]>([]);
-  const [accessingTimes, setAccessingTimes] = useState<number[]>([]);
-  const [prepareTimes, setPrepareTimes] = useState<number[]>([]);
-  const [prepareExecutionTimes, setPrepareExecutionTimes] = useState<number[]>(
-    [],
-  );
-  const [rawExecutionTimes, setRawExecutionTimes] = useState<number[]>([]);
-  const [results, setResults] = useState<any>([]);
   const [perfMetrics, setPerfMetrics] = useState<{
     openV2Time: number;
     openTime: number;
     newDbInsertTime: number;
     oldDbInsertTime: number;
   } | null>(null);
-  // useEffect(() => {
-  //   runTests(
-  //     queriesTests,
-  //     dbSetupTests,
-  //     blobTests,
-  //     registerHooksTests,
-  //     preparedStatementsTests,
-  //     constantsTests,
-  //     reactiveTests,
-  //     tokenizerTests,
-  //     storageTests,
-  //   )
-  //     .then(results => {
-  //       setServerResults(results as any);
-  //       setResults(results);
-  //     })
-  //     .catch(e => {
-  //       setServerError(e);
-  //     });
-
-  //   startServer();
-
-  //   return () => {
-  //     stopServer();
-  //   };
-  // }, []);
 
   useEffect(() => {
-    setTimeout(() => {
+    setTimeout(async () => {
       // Warm-up phase: Initialize the native SQLite module to avoid cold-start skew
       // This ensures both `open` and `openV2` measurements start from a "warm" state
       const warmupDb = open({ name: 'warmup.sqlite' });
@@ -157,22 +98,28 @@ export default function App() {
       end = performance.now();
       const oldDbInsertTime = end - start;
 
-      // Verify data was inserted
-      const resultOld = oldDb.executeSync(
-        'SELECT COUNT(*) as count FROM performance_test',
-      );
-      // console.log(
-      //   `[Performance] Total rows inserted (oldDb): ${resultOld.rows?._array[0]?.count}`,
-      // );
+      // Do a simple async execute query
+      try {
+        // await newDb.execute(
+        //   'INSERT INTO performance_test (name, value, timestamp) VALUES (?, ?, ?)',
+        //   [`Test -1`, 10, Date.now()],
+        // );
+        let res = await newDb.execute(
+          "SELECT * FROM performance_test LIMIT 10"
+        )
+        console.log(res)
 
-      // Set performance metrics for UI display
+      } catch (e) {
+        console.error(e)
+      }
+
       setPerfMetrics({
         openV2Time,
         openTime,
         newDbInsertTime,
         oldDbInsertTime,
       });
-    }, 3000);
+    }, 1000);
   }, []);
 
   // let passingTests = 0;

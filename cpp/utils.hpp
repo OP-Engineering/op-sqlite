@@ -49,5 +49,7 @@ bool file_exists(const std::string &path);
 void log_to_console(jsi::Runtime &rt, const std::string &message);
 
 jsi::Function host_fn(jsi::Runtime &rt, jsi::HostFunctionType lambda);
+jsi::Value promisify(jsi::Runtime &rt,
+                     std::function<void(std::shared_ptr<jsi::Value> resolve, std::shared_ptr<jsi::Value> reject)> lambda);
 
 } // namespace opsqlite
