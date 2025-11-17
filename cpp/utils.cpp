@@ -3,12 +3,15 @@
 #ifndef OP_SQLITE_USE_LIBSQL
 #include "bridge.h"
 #endif
+#include "OPThreadPool.h"
 #include <fstream>
 #include <sys/stat.h>
 
 namespace opsqlite {
 
 namespace jsi = facebook::jsi;
+
+auto __thread_pool = std::make_shared<ThreadPool>();
 
 using HostPromiseFunctionType = std::function<jsi::Value(
     jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
@@ -329,17 +332,23 @@ jsi::Function host_fn(jsi::Runtime &rt, jsi::HostFunctionType lambda) {
 };
 
 jsi::Value promisify(jsi::Runtime &rt,
-                     std::function<void(std::shared_ptr<jsi::Value> resolve, std::shared_ptr<jsi::Value> reject)> lambda) {
+                     std::function<void(std::shared_ptr<jsi::Value> resolve,
+                                        std::shared_ptr<jsi::Value> reject)>
+                         lambda) {
   auto promise_constructor = rt.global().getPropertyAsFunction(rt, "Promise");
-  
-  auto executor = host_fn(rt, [lambda](jsi::Runtime &rt, const jsi::Value &thiz,
-                             const jsi::Value *args, size_t count) {
 
-    lambda(std::make_shared<jsi::Value>(rt, args[0]), std::make_shared<jsi::Value>(rt, args[1]));
-    
+  auto executor = host_fn(rt, [lambda](jsi::Runtime &rt, const jsi::Value &thiz,
+                                       const jsi::Value *args, size_t count) {
+    auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
+    auto reject = std::make_shared<jsi::Value>(rt, args[1]);
+
+    auto task = [lambda, resolve, reject]() { lambda(resolve, reject); };
+
+    __thread_pool->queueWork(task);
+
     return jsi::Value(nullptr);
   });
-  
+
   auto promise = promise_constructor.callAsConstructor(rt, executor);
   return promise;
 }
