@@ -3,7 +3,7 @@
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
 #include "types.h"
-#include "utils.h"
+#include "utils.hpp"
 #ifdef __ANDROID__
 #include "sqlite3.h"
 #else

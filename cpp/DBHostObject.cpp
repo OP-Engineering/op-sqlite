@@ -371,90 +371,88 @@ void DBHostObject::create_jsi_functions() {
     return create_raw_result(rt, status, &results);
   });
 
-     function_map["execute"] = HOSTFN("execute") {
-       const std::string query = args[0].asString(rt).utf8(rt);
-       std::vector<JSVariant> params = count == 2 && args[1].isObject()
-                                           ? to_variant_vec(rt, args[1])
-                                           : std::vector<JSVariant>();
+  //   function_map["execute"] = HOSTFN("execute") {
+  //     const std::string query = args[0].asString(rt).utf8(rt);
+  //     std::vector<JSVariant> params = count == 2 && args[1].isObject()
+  //                                         ? to_variant_vec(rt, args[1])
+  //                                         : std::vector<JSVariant>();
 
-       auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
-                    auto promise = promiseCtr.callAsConstructor(rt,
-         HOSTFN("executor") {
-         auto task = [this, &rt, query, params,
-                      resolve = std::make_shared<jsi::Value>(rt, args[0]),
-                      reject = std::make_shared<jsi::Value>(rt, args[1])]() {
-           try {
-   #ifdef OP_SQLITE_USE_LIBSQL
-             auto status = opsqlite_libsql_execute(db, query, &params);
-   #else
-             auto status = opsqlite_execute(db, query, &params);
-   #endif
+  //     auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
+  //                     auto promise = promiseCtr.callAsConstructor(rt,
+  //          HOSTFN("executor") {
+  //       auto task = [this, &rt, query, params,
+  //                    resolve = std::make_shared<jsi::Value>(rt, args[0]),
+  //                    reject = std::make_shared<jsi::Value>(rt, args[1])]() {
+  //         try {
+  // #ifdef OP_SQLITE_USE_LIBSQL
+  //           auto status = opsqlite_libsql_execute(db, query, &params);
+  // #else
+  //           auto status = opsqlite_execute(db, query, &params);
+  // #endif
 
-             if (invalidated) {
-               return;
-             }
+  //           if (invalidated) {
+  //             return;
+  //           }
 
-             invoker->invokeAsync([&rt, status = std::move(status), resolve,
-                                   reject] {
-               auto jsiResult = create_js_rows(rt, status);
-               resolve->asObject(rt).asFunction(rt).call(rt,
-               std::move(jsiResult));
-             });
-             // On Android RN is broken and does not correctly
-             //                         match
-             // runtime_error to the generic exception We have to
-             // explicitly catch it
-             //
-             // https:github.com/facebook/react-native/issues/48027
-           } catch (std::runtime_error &e) {
-             auto what = e.what();
-             invoker->invokeAsync([&rt, what = std::string(what), reject] {
-               auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-               auto error = errorCtr.callAsConstructor(
-                   rt, jsi::String::createFromAscii(rt, what));
-               reject->asObject(rt).asFunction(rt).call(rt, error);
-             });
-           } catch (std::exception &exc) {
-             auto what = exc.what();
-             invoker->invokeAsync([&rt, what = std::string(what), reject] {
-               auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-               auto error = errorCtr.callAsConstructor(
-                   rt, jsi::String::createFromAscii(rt, what));
-               reject->asObject(rt).asFunction(rt).call(rt, error);
-             });
-           }
-         };
+  //           invoker->invokeAsync([&rt, status = std::move(status), resolve,
+  //                                 reject] {
+  //             auto jsiResult = create_js_rows(rt, status);
+  //             resolve->asObject(rt).asFunction(rt).call(rt,
+  //             std::move(jsiResult));
+  //           });
+  //           // On Android RN is broken and does not correctly
+  //           //                         match
+  //           // runtime_error to the generic exception We have to
+  //           // explicitly catch it
+  //           //
+  //           // https:github.com/facebook/react-native/issues/48027
+  //         } catch (std::runtime_error &e) {
+  //           auto what = e.what();
+  //           invoker->invokeAsync([&rt, what = std::string(what), reject] {
+  //             auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+  //             auto error = errorCtr.callAsConstructor(
+  //                 rt, jsi::String::createFromAscii(rt, what));
+  //             reject->asObject(rt).asFunction(rt).call(rt, error);
+  //           });
+  //         } catch (std::exception &exc) {
+  //           auto what = exc.what();
+  //           invoker->invokeAsync([&rt, what = std::string(what), reject] {
+  //             auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+  //             auto error = errorCtr.callAsConstructor(
+  //                 rt, jsi::String::createFromAscii(rt, what));
+  //             reject->asObject(rt).asFunction(rt).call(rt, error);
+  //           });
+  //         }
+  //       };
 
-         _thread_pool->queueWork(task);
+  //       _thread_pool->queueWork(task);
 
-         return {};
-            }));
+  //       return {};
+  //             }));
 
-                    return promise;
-     });
+  //                     return promise;
+  //   });
 
-//  function_map["execute"] =
-//      host_fn(rt, [this](jsi::Runtime &rt, const jsi::Value &thiz,
-//                      const jsi::Value *args, size_t count) {
-//        const std::string query = args[0].asString(rt).utf8(rt);
-//        const std::vector<JSVariant> params = count == 2 && args[1].isObject()
-//                                                  ? to_variant_vec(rt, args[1])
-//                                                  : std::vector<JSVariant>();
-//
-//        return promisify(
-//            rt, invoker,
-//            [this, query = std::move(query), params = std::move(params)]() {
-//#ifdef OP_SQLITE_USE_LIBSQL
-//              return opsqlite_libsql_execute(native->db, query, &params);
-//#else
-//              return opsqlite_execute(db, query, &params);
-//#endif
-//            },
-//            [](jsi::Runtime &rt, std::any results) {
-//              auto status = std::any_cast<BridgeResult>(results);
-//              return create_js_rows(rt, status);
-//            });
-//      });
+  function_map["execute"] = HFN(this) {
+    const std::string query = args[0].asString(rt).utf8(rt);
+    const std::vector<JSVariant> params = count == 2 && args[1].isObject()
+                                              ? to_variant_vec(rt, args[1])
+                                              : std::vector<JSVariant>();
+
+    return promisify(
+        rt, invoker,
+        [this, query = std::move(query), params = std::move(params)]() {
+#ifdef OP_SQLITE_USE_LIBSQL
+          return opsqlite_libsql_execute(native->db, query, &params);
+#else
+          return opsqlite_execute(db, query, &params);
+#endif
+        },
+        [](jsi::Runtime &rt, std::any results) {
+          auto status = std::any_cast<BridgeResult>(results);
+          return create_js_rows(rt, status);
+        });
+  });
 
   function_map["executeWithHostObjects"] = HOSTFN("executeWithHostObjects") {
     const std::string query = args[0].asString(rt).utf8(rt);

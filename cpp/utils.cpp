@@ -5,6 +5,7 @@
 #endif
 #include "OPThreadPool.h"
 #include <fstream>
+#include <utility>
 #include <sys/stat.h>
 
 namespace opsqlite {
@@ -329,7 +330,7 @@ void log_to_console(jsi::Runtime &runtime, const std::string &message) {
 
 inline jsi::Function host_fn(jsi::Runtime &rt, jsi::HostFunctionType lambda) {
   return jsi::Function::createFromHostFunction(
-      rt, jsi::PropNameID::forAscii(rt, ""), 0, lambda);
+      rt, jsi::PropNameID::forAscii(rt, ""), 0, std::move(lambda));
 };
 
 jsi::Value
@@ -347,20 +348,18 @@ promisify(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
     auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
     auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-    auto task = [lambda = std::move(lambda),
-                 resolve_callback = std::move(resolve_callback),
-                 invoker = std::move(invoker), resolve = std::move(resolve),
+    auto task = [lambda = lambda, resolve_callback = resolve_callback,
+                 invoker = invoker, resolve = std::move(resolve),
                  reject = std::move(reject)]() {
       try {
         std::any result = lambda();
 
         invoker->invokeAsync(
-//                             react::SchedulerPriority::UserBlockingPriority,
-            [result = std::move(result), resolve = std::move(resolve),
-             resolve_callback = std::move(resolve_callback)](jsi::Runtime &rt) {
+            react::SchedulerPriority::ImmediatePriority,
+            [result = std::move(result), resolve = resolve,
+             resolve_callback = resolve_callback](jsi::Runtime &rt) {
               auto jsi_result = resolve_callback(rt, result);
-              resolve->asObject(rt).asFunction(rt).call(rt,
-                                                        jsi_result);
+              resolve->asObject(rt).asFunction(rt).call(rt, jsi_result);
             });
       } catch (std::runtime_error &e) {
         // On Android RN is broken and does not correctly match
@@ -369,7 +368,7 @@ promisify(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
         // https://github.com/facebook/react-native/issues/48027
         auto what = e.what();
         invoker->invokeAsync(
-            [what = std::string(what), reject = std::move(reject)](jsi::Runtime &rt) {
+            [what = std::string(what), reject = reject](jsi::Runtime &rt) {
               auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
               auto error = errorCtr.callAsConstructor(
                   rt, jsi::String::createFromAscii(rt, what));
@@ -378,7 +377,7 @@ promisify(jsi::Runtime &rt, std::shared_ptr<react::CallInvoker> invoker,
       } catch (std::exception &exc) {
         auto what = exc.what();
         invoker->invokeAsync(
-            [what = std::string(what), reject = std::move(reject)](jsi::Runtime &rt) {
+            [what = std::string(what), reject = reject](jsi::Runtime &rt) {
               auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
               auto error = errorCtr.callAsConstructor(
                   rt, jsi::String::createFromAscii(rt, what));

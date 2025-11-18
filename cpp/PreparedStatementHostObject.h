@@ -35,7 +35,7 @@ class PreparedStatementHostObject : public jsi::HostObject {
         sqlite3 *db, std::string name, sqlite3_stmt *stmt,
         std::shared_ptr<react::CallInvoker> js_call_invoker,
         std::shared_ptr<ThreadPool> thread_pool)
-        : _db(db), _name(std::move(name)), _stmt(stmt),
+        :  _name(std::move(name)), _db(db), _stmt(stmt),
           _js_call_invoker(std::move(js_call_invoker)),
           _thread_pool(std::move(thread_pool)) {};
 #endif
