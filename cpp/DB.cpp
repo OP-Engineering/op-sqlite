@@ -21,14 +21,9 @@ jsi::Object create_db(jsi::Runtime &rt,
                       std::shared_ptr<react::CallInvoker> invoker,
                       const std::string &path) {
   auto res = jsi::Object(rt);
-  auto db = opsqlite_open_v2(path);
+  auto db = std::shared_ptr<sqlite3>(opsqlite_open_v2(path), opsqlite_close);
 
-  auto native = std::make_shared<NativeDB>(path, db, invoker);
-  res.setNativeState(rt, native);
-
-  auto executeSync = host_fn(rt, [](jsi::Runtime &rt, const jsi::Value &thiz,
-                                    const jsi::Value *args, size_t count) {
-    auto native = thiz.asObject(rt).getNativeState<NativeDB>(rt);
+  auto executeSync = HFN(db) {
     std::string query = args[0].asString(rt).utf8(rt);
     std::vector<JSVariant> params;
 
@@ -39,41 +34,34 @@ jsi::Object create_db(jsi::Runtime &rt,
 #ifdef OP_SQLITE_USE_LIBSQL
     auto status = opsqlite_libsql_execute(db, query, &params);
 #else
-    auto status = opsqlite_execute(native->db, query, &params);
+    auto status = opsqlite_execute(db.get(), query, &params);
 #endif
 
     return create_js_rows(rt, status);
   });
   res.setProperty(rt, "executeSync", executeSync);
 
-  auto execute = host_fn(rt, [](jsi::Runtime &rt, const jsi::Value &thiz,
-                                const jsi::Value *args, size_t count) {
-    const std::string query = args[0].asString(rt).utf8(rt);
-    std::vector<JSVariant> params = count == 2 && args[1].isObject()
-                                        ? to_variant_vec(rt, args[1])
-                                        : std::vector<JSVariant>();
-    auto native = thiz.asObject(rt).getNativeState<NativeDB>(rt);
+  auto execute =
+      HFN2(db, invoker) {
+        const std::string query = args[0].asString(rt).utf8(rt);
+        const std::vector<JSVariant> params = count == 2 && args[1].isObject()
+                                                  ? to_variant_vec(rt, args[1])
+                                                  : std::vector<JSVariant>();
 
-    return promisify(
-        rt, native->invoker,
-        [&rt, native, query, params](std::shared_ptr<jsi::Value> resolve) {
+        return promisify(
+            rt, invoker,
+            [&db, query = std::move(query), params = std::move(params)]() {
 #ifdef OP_SQLITE_USE_LIBSQL
-          auto status = opsqlite_libsql_execute(db, query, &params);
+              return opsqlite_libsql_execute(db.get(), query, &params);
 #else
-          auto status = opsqlite_execute(native->db, query, &params);
+              return opsqlite_execute(db.get(), query, &params);
 #endif
-
-          //        if (invalidated) {
-          //          return;
-          //        }
-
-          native->invoker->invokeAsync([&rt, status = std::move(status),
-                                        resolve] {
-            auto jsiResult = create_js_rows(rt, status);
-            resolve->asObject(rt).asFunction(rt).call(rt, std::move(jsiResult));
-          });
-        });
-  });
+            },
+            [](jsi::Runtime &rt, std::any results) {
+              auto status = std::any_cast<BridgeResult>(results);
+              return create_js_rows(rt, status);
+            });
+      });
   res.setProperty(rt, "execute", execute);
 
   return res;
