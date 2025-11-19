@@ -5,7 +5,7 @@ import {
   openV2,
 } from '@op-engineering/op-sqlite';
 import {useEffect, useState} from 'react';
-import {Platform, ScrollView, Text, View} from 'react-native';
+import {Platform, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 const ROWS = 100_000;
@@ -123,8 +123,8 @@ export default function App() {
   }, []);
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-900">
-      <ScrollView>
+    <SafeAreaView className="h-full bg-neutral-900">
+      <View className="flex-1 bg-neutral-900 mt-32">
         {!perfMetrics && (
           <View className="p-4 mt-4 bg-neutral-800 rounded-lg mx-2">
             <Text className="text-xl text-white font-bold mb-3">
@@ -140,19 +140,19 @@ export default function App() {
 
             <View className="mb-2">
               <Text className="text-blue-400 ">
-                HostObject (async): {perfMetrics.oldDbInsertTime.toFixed(2)}ms
+                Old Async: {perfMetrics.oldDbInsertTime.toFixed(2)}ms
               </Text>
               <Text className="text-blue-300">
-                Sync: {perfMetrics.oldDbInsertTimeSync.toFixed(2)}ms
+                Old Sync: {perfMetrics.oldDbInsertTimeSync.toFixed(2)}ms
               </Text>
             </View>
 
             <View className="mb-2">
               <Text className="text-green-400">
-                NativeState (async): {perfMetrics.newDbInsertTime.toFixed(2)}ms
+                New Async: {perfMetrics.newDbInsertTime.toFixed(2)}ms
               </Text>
               <Text className="text-green-300">
-                Sync: {perfMetrics.newDbInsertTimeSync.toFixed(2)}ms
+                New Sync: {perfMetrics.newDbInsertTimeSync.toFixed(2)}ms
               </Text>
             </View>
 
@@ -175,7 +175,7 @@ export default function App() {
             </View>
           </View>
         )}
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }

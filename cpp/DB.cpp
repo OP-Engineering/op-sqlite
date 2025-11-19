@@ -24,7 +24,7 @@ jsi::Object create_db(jsi::Runtime &rt,
   auto db = std::shared_ptr<sqlite3>(opsqlite_open_v2(path), opsqlite_close);
 
   auto executeSync = HFN(db) {
-    std::string query = args[0].asString(rt).utf8(rt);
+    const std::string query = args[0].asString(rt).utf8(rt);
     const std::vector<JSVariant> params = count == 2 && args[1].isObject()
                                               ? to_variant_vec(rt, args[1])
                                               : std::vector<JSVariant>();
@@ -35,7 +35,7 @@ jsi::Object create_db(jsi::Runtime &rt,
     auto status = opsqlite_execute(db.get(), query, &params);
 #endif
 
-    return create_js_rows(rt, status);
+    return create_js_rows_2(rt, status);
   });
   res.setProperty(rt, "executeSync", executeSync);
 
@@ -56,7 +56,7 @@ jsi::Object create_db(jsi::Runtime &rt,
         },
         [](jsi::Runtime &rt, std::any results) {
           auto status = std::any_cast<BridgeResult>(results);
-          return create_js_rows(rt, status);
+          return create_js_rows_2(rt, status);
         });
   });
   res.setProperty(rt, "execute", execute);

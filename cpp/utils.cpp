@@ -5,8 +5,8 @@
 #endif
 #include "OPThreadPool.h"
 #include <fstream>
-#include <utility>
 #include <sys/stat.h>
+#include <utility>
 
 namespace opsqlite {
 
@@ -146,6 +146,37 @@ std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt, jsi::Value const &xs) {
     jsi::Value value = values.getValueAtIndex(rt, ii);
     res.emplace_back(to_variant(rt, value));
   }
+
+  return res;
+}
+
+jsi::Value create_js_rows_2(jsi::Runtime &rt, const BridgeResult &status) {
+  jsi::Object res = jsi::Object(rt);
+
+  res.setProperty(rt, "rowsAffected", status.affectedRows);
+  if (status.affectedRows > 0 && status.insertId != 0) {
+    res.setProperty(rt, "insertId", jsi::Value(status.insertId));
+  }
+
+  size_t row_count = status.rows.size();
+  size_t column_count = status.column_names.size();
+
+  std::vector<jsi::PropNameID> column_prop_ids;
+  column_prop_ids.reserve(column_count);
+  for (size_t i = 0; i < column_count; i++) {
+    column_prop_ids.emplace_back(
+        jsi::PropNameID::forUtf8(rt, status.column_names[i]));
+  }
+
+  auto rows = jsi::Array(rt, row_count);
+  for (int i = 0; i < row_count; i++) {
+    auto row = jsi::Object(rt);
+    for (int j = 0; j < column_count; j++) {
+      row.setProperty(rt, column_prop_ids[j], to_jsi(rt, status.rows[i][j]));
+    }
+    rows.setValueAtIndex(rt, i, std::move(row));
+  }
+  res.setProperty(rt, "rows", std::move(rows));
 
   return res;
 }
