@@ -147,6 +147,10 @@ If you want to use `expo-updates` and `libsql` at the same time there is one mor
 }
 ```
 
+## [Error: Base module not found. Did you do a pod install/clear the gradle cache?]
+
+If you are running into this issue, you have to clear the gradle cache. It is stored inside of the [gradle user home directory](https://docs.gradle.org/current/userguide/directory_layout.html#dir:gradle_user_home), in the `caches/` directory. Removing the `caches/` directory and rebuilding your app should be enough to fix the error.
+
 # Other
 
 For other conflicts and compilation errors there is no documented solutions. You need to get rid of the double compilation by hand, either by patching the compilation of each package so that it still builds or removing the dependency on the package.
