@@ -25,8 +25,7 @@ jsi::Object create_db(jsi::Runtime &rt,
   auto state = std::make_shared<State>();
   state->db = opsqlite_open_v2(path);
   state->invoker = invoker;
-  // auto db = std::shared_ptr<sqlite3>(opsqlite_open_v2(path), opsqlite_close);
-  auto invalidated = std::make_shared<bool>(false);
+  
 
   auto executeSync = HFN(state) {
     const std::string query = args[0].asString(rt).utf8(rt);
