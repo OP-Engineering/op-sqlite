@@ -29,7 +29,7 @@ export const db = open({
 });
 ```
 
-If you want to read more about securely storing your encryption key, [read this article](https://ospfranco.com/react-native-security-guide/). Again: **DO NOT OPEN MORE THAN ONE CONNECTION PER DATABASE**. Just export one single db connection for your entire application and re-use it everywhere.
+If you want to read more about securely storing your encryption key, [read this article](https://ospfranco.com/react-native-security-guide/). Again: **DO NOT OPEN MORE THAN ONE CONNECTION PER DATABASE**. Just export one single db connection for your entire application and reuse it everywhere.
 
 ## Execute
 
@@ -63,7 +63,7 @@ let res = await db.executeWithHostObjects('select * from USERS');
 
 ## Prepared statements
 
-A lot of the work when executing queries is not iterating through the result set itself but, sometimes, planning the execution. If you have a query which is expensive but you can re-use it (even if you have to change the arguments) you can use a `prepared statement`. Bear in mind most of the benefit of a prepared statement is in the querying, joining and planning on how to retrieve the data, for writes the impact is minimal.
+A lot of the work when executing queries is not iterating through the result set itself but, sometimes, planning the execution. If you have a query which is expensive but you can reuse it (even if you have to change the arguments) you can use a `prepared statement`. Bear in mind most of the benefit of a prepared statement is in the querying, joining and planning on how to retrieve the data, for writes the impact is minimal.
 
 ```tsx
 const statement = db.prepareStatement('SELECT * FROM User WHERE name = ?;');
@@ -113,7 +113,7 @@ let res = db.executeSync('SELECT 1');
 
 Wraps the code inside in a transaction. Any error thrown inside of the transaction body function will ROLLBACK the transaction.
 
-If you want to execute a large set of commands as fast as possible you should use the `executeBatch` method, it wraps all the commands in a transaction for you and has less overhead. Using prepared statements for writes inside a transaction is discouraged, you gain very little performance when writting to the database and they are not part of the internal lock mechanism of op-sqlite.
+If you want to execute a large set of commands as fast as possible you should use the `executeBatch` method, it wraps all the commands in a transaction for you and has less overhead. Using prepared statements for writes inside a transaction is discouraged, you gain very little performance when writing to the database and they are not part of the internal lock mechanism of op-sqlite.
 
 ```tsx
 await db.transaction((tx) => {
@@ -240,7 +240,7 @@ Same goes for commit and rollback hooks
 ```tsx
 // will fire whenever a transaction commits
 db.commitHook(() => {
-  console.log('Transaction commmitted!');
+  console.log('Transaction committed!');
 });
 
 db.rollbackHook(() => {

@@ -38,15 +38,15 @@ Sqlite by default does not strictly check for types. If you want type safety, yo
 await db.execute('CREATE TABLE Test (id INT PRIMARY KEY, name TEXT) STRICT;');
 ```
 
-Otherwise, sqlite does a weak attempt at casting and if it fails it inserts whatever you passed into your table, independetly of the declared type. e.g. If you try to insert a string `"1"` into a `INTEGER` column, it will be casted to an int before insertion and behave as a number (see above) when the table is queried.
+Otherwise, sqlite does a weak attempt at casting and if it fails it inserts whatever you passed into your table, independently of the declared type. e.g. If you try to insert a string `"1"` into a `INTEGER` column, it will be casted to an int before insertion and behave as a number (see above) when the table is queried.
 
 [Read the sqlite docs on data types and their loose typing and how it can be the source of subtle bugs](https://sqlite.org/datatype3.html).
 
 ### Foreign constraints
 
-When sqlite evaluates your query and you have forgein key constraints, it keeps track of the satisfied relations via a simple counter. Once your statement finishes executing and the counter is not 0, it then throws a `foreign key constraint failed` error, with no information whatsoever of which foreign constraint failed. Unfortunately, this simple design means it is impossible to catch which foreign constraint has failed and you will receive a generic error. Nothing op-sqlite can do about it, it's a design flaw in SQLite.
+When sqlite evaluates your query and you have foreign key constraints, it keeps track of the satisfied relations via a simple counter. Once your statement finishes executing and the counter is not 0, it then throws a `foreign key constraint failed` error, with no information whatsoever of which foreign constraint failed. Unfortunately, this simple design means it is impossible to catch which foreign constraint has failed and you will receive a generic error. Nothing op-sqlite can do about it, it's a design flaw in SQLite.
 
-Additionaly, the default behavior is not to enforce foreign key constraints. You need to turn the constraint checking on, after opening your connection:
+Additionally, the default behavior is not to enforce foreign key constraints. You need to turn the constraint checking on, after opening your connection:
 
 ```tsx
 db.executeSync('PRAGMA foreign_keys = true');
