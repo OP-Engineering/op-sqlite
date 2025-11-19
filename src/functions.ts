@@ -420,7 +420,7 @@ export const open = (params: {
  * Moves the database from the assets folder to the default path (check the docs) or to a custom path
  * It DOES NOT OVERWRITE the database if it already exists in the destination path
  * if you want to overwrite the database, you need to pass the overwrite flag as true
- * @param args object with the parameters for the operaiton
+ * @param args object with the parameters for the operation
  * @returns promise, rejects if failed to move the database, resolves if the operation was successful
  */
 export const moveAssetsDatabase = async (args: {

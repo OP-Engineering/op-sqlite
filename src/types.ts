@@ -269,7 +269,7 @@ export type DB = {
    */
   executeRawSync: (query: string, params?: Scalar[]) => any[];
   /**
-   * Get's the absolute path to the db file. Useful for debugging on local builds and for attaching the DB from users devices
+   * Gets the absolute path to the db file. Useful for debugging on local builds and for attaching the DB from users devices
    */
   getDbPath: (location?: string) => string;
   /**

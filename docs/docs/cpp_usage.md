@@ -4,7 +4,7 @@ sidebar_position: 10
 
 # C++ Usage
 
-It's possible to access the native C++ functions in case you want to directly call the underlaying API without React-Native/JavaScript. This is useful in case you have native code and need to access sqlite functionality.
+It's possible to access the native C++ functions in case you want to directly call the underlying API without React-Native/JavaScript. This is useful in case you have native code and need to access sqlite functionality.
 
 ## Android
 
