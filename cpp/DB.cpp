@@ -22,6 +22,7 @@ jsi::Object create_db(jsi::Runtime &rt, const std::string &path) {
   auto res = jsi::Object(rt);
   sqlite3 *db = opsqlite_open_v2(path);
 
+  // EXECUTE SYNC
   auto executeSync = HFN(db) {
     const std::string query = args[0].asString(rt).utf8(rt);
     const std::vector<JSVariant> params = count == 2 && args[1].isObject()
@@ -38,6 +39,7 @@ jsi::Object create_db(jsi::Runtime &rt, const std::string &path) {
   });
   res.setProperty(rt, "executeSync", executeSync);
 
+  // EXECUTE
   auto execute = HFN(db) {
     const std::string query = args[0].asString(rt).utf8(rt);
     const std::vector<JSVariant> params = count == 2 && args[1].isObject()
@@ -48,7 +50,7 @@ jsi::Object create_db(jsi::Runtime &rt, const std::string &path) {
         rt,
         [db, query, params]() {
 #ifdef OP_SQLITE_USE_LIBSQL
-          return opsqlite_libsql_execute(state->db, query, &params);
+          return opsqlite_libsql_execute(db, query, &params);
 #else
           return opsqlite_execute(db, query, &params);
 #endif
@@ -60,6 +62,7 @@ jsi::Object create_db(jsi::Runtime &rt, const std::string &path) {
   });
   res.setProperty(rt, "execute", execute);
 
+  // CLOSE
   auto close = HFN(db) {
 #ifdef OP_SQLITE_USE_LIBSQL
     opsqlite_libsql_close(db);
@@ -69,6 +72,7 @@ jsi::Object create_db(jsi::Runtime &rt, const std::string &path) {
 
     return {};
   });
+  res.setProperty(rt, "close", close);
 
   return res;
 }
