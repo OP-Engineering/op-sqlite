@@ -1,5 +1,5 @@
 #include "DB.hpp"
-// #include "PreparedStatementHostObject.h"
+#include "PreparedStatementHostObject.h"
 // #if OP_SQLITE_USE_LIBSQL
 // #include "libsql/bridge.h"
 // #else
@@ -238,35 +238,16 @@ jsi::Object create_db(jsi::Runtime &rt, const std::string &path) {
   // PREPARE STATEMENT
   auto prepareStatement = HFN(db) {
     auto query = args[0].asString(rt).utf8(rt);
+
+#ifdef OP_SQLITE_USE_LIBSQL
+    libsql_stmt_t statement = opsqlite_libsql_prepare_statement(db, query);
+#else
     sqlite3_stmt *statement = opsqlite_prepare_statement(db, query);
+#endif
+    auto preparedStatementHostObject =
+        std::make_shared<PreparedStatementHostObject>(db, statement);
 
-    // Create a simple object with bind and execute methods
-    auto stmt_obj = jsi::Object(rt);
-
-    // BIND
-    auto bind = HFN2(db, statement) {
-      const std::vector<JSVariant> params = count == 1 && args[0].isObject()
-                                                ? to_variant_vec(rt, args[0])
-                                                : std::vector<JSVariant>();
-      opsqlite_bind_statement(statement, &params);
-      return {};
-    });
-    stmt_obj.setProperty(rt, "bind", bind);
-
-    // EXECUTE
-    auto executeStmt = HFN2(db, statement) {
-      std::vector<DumbHostObject> results;
-      std::shared_ptr<std::vector<SmartHostObject>> metadata =
-          std::make_shared<std::vector<SmartHostObject>>();
-
-      auto status = opsqlite_execute_prepared_statement(db, statement, &results,
-                                                        metadata);
-
-      return create_result(rt, status, &results, metadata);
-    });
-    stmt_obj.setProperty(rt, "execute", executeStmt);
-
-    return stmt_obj;
+    return jsi::Object::createFromHostObject(rt, preparedStatementHostObject);
   });
   res.setProperty(rt, "prepareStatement", prepareStatement);
 

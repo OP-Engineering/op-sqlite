@@ -32,12 +32,8 @@ class PreparedStatementHostObject : public jsi::HostObject {
           _js_call_invoker(js_call_invoker), _thread_pool(thread_pool) {};
 #else
     PreparedStatementHostObject(
-        sqlite3 *db, std::string name, sqlite3_stmt *stmt,
-        std::shared_ptr<react::CallInvoker> js_call_invoker,
-        std::shared_ptr<ThreadPool> thread_pool)
-        :  _name(std::move(name)), _db(db), _stmt(stmt),
-          _js_call_invoker(std::move(js_call_invoker)),
-          _thread_pool(std::move(thread_pool)) {};
+        sqlite3 *db, sqlite3_stmt *stmt)
+        :  _db(db), _stmt(stmt) {};
 #endif
     ~PreparedStatementHostObject() override;
 
@@ -47,7 +43,6 @@ class PreparedStatementHostObject : public jsi::HostObject {
                    const jsi::PropNameID &propNameID) override;
 
   private:
-    std::string _name;
 #ifdef OP_SQLITE_USE_LIBSQL
     DB _db;
     libsql_stmt_t _stmt;
@@ -56,8 +51,7 @@ class PreparedStatementHostObject : public jsi::HostObject {
     // This shouldn't be de-allocated until sqlite3_finalize is called on it
     sqlite3_stmt *_stmt;
 #endif
-    std::shared_ptr<react::CallInvoker> _js_call_invoker;
-    std::shared_ptr<ThreadPool> _thread_pool;
+
 };
 
 } // namespace opsqlite

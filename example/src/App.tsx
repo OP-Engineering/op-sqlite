@@ -53,6 +53,8 @@ export default function App() {
   // };
 
   return (
-    <SafeAreaView className="h-full">{displayResults(results)}</SafeAreaView>
+    <SafeAreaView className="flex-1 bg-neutral-700">
+      {displayResults(results)}
+    </SafeAreaView>
   );
 }
