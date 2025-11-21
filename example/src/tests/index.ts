@@ -7,6 +7,7 @@ import './queries';
 import './reactive';
 import './storage';
 import './tokenizer';
+import './queries_v2';
 
 // export function registerTests() {
 //   queries();

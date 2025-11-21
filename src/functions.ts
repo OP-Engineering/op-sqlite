@@ -218,32 +218,34 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
       query: string,
       params?: Scalar[] | undefined
     ): Promise<QueryResult> => {
-      const sanitizedParams = sanitizeArrayBuffersInArray(params);
+      let res = params
+        ? await db.execute(
+            query,
+            sanitizeArrayBuffersInArray(params) as Scalar[]
+          )
+        : await db.executeSync(query);
 
-      let intermediateResult = await db.execute(
-        query,
-        sanitizedParams as Scalar[]
-      );
+      if (!res.rows) {
+        let rows: Record<string, Scalar>[] = [];
+        for (let i = 0; i < (res.rawRows?.length ?? 0); i++) {
+          let row: Record<string, Scalar> = {};
+          let rawRow = res.rawRows![i]!;
+          for (let j = 0; j < res.columnNames!.length; j++) {
+            let columnName = res.columnNames![j]!;
+            let value = rawRow[j]!;
 
-      let rows: Record<string, Scalar>[] = [];
-      for (let i = 0; i < (intermediateResult.rawRows?.length ?? 0); i++) {
-        let row: Record<string, Scalar> = {};
-        let rawRow = intermediateResult.rawRows![i]!;
-        for (let j = 0; j < intermediateResult.columnNames!.length; j++) {
-          let columnName = intermediateResult.columnNames![j]!;
-          let value = rawRow[j]!;
-
-          row[columnName] = value;
+            row[columnName] = value;
+          }
+          rows.push(row);
         }
-        rows.push(row);
+
+        res = {
+          ...res,
+          rows,
+        };
+
+        delete res.rawRows;
       }
-
-      let res = {
-        ...intermediateResult,
-        rows,
-      };
-
-      delete res.rawRows;
 
       return res;
     },
