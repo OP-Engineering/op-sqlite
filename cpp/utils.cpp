@@ -151,7 +151,7 @@ std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt, jsi::Value const &xs) {
   return res;
 }
 
-jsi::Value create_js_rows_2(jsi::Runtime &rt, const BridgeResult &status) {
+jsi::Value create_js_rows(jsi::Runtime &rt, const BridgeResult &status) {
   jsi::Object res = jsi::Object(rt);
 
   res.setProperty(rt, "rowsAffected", status.affectedRows);
@@ -179,40 +179,6 @@ jsi::Value create_js_rows_2(jsi::Runtime &rt, const BridgeResult &status) {
   }
   res.setProperty(rt, "rows", std::move(rows));
 
-  return res;
-}
-
-jsi::Value create_js_rows(jsi::Runtime &rt, const BridgeResult &status) {
-  jsi::Object res = jsi::Object(rt);
-
-  res.setProperty(rt, "rowsAffected", status.affectedRows);
-  if (status.affectedRows > 0 && status.insertId != 0) {
-    res.setProperty(rt, "insertId", jsi::Value(status.insertId));
-  }
-
-  size_t row_count = status.rows.size();
-  auto rows = jsi::Array(rt, row_count);
-
-  if (row_count > 0) {
-    for (int i = 0; i < row_count; i++) {
-      auto row = jsi::Array(rt, status.column_names.size());
-      std::vector<JSVariant> native_row = status.rows[i];
-      for (int j = 0; j < native_row.size(); j++) {
-        auto value = to_jsi(rt, native_row[j]);
-        row.setValueAtIndex(rt, j, value);
-      }
-      rows.setValueAtIndex(rt, i, row);
-    }
-  }
-  res.setProperty(rt, "rawRows", rows);
-
-  size_t column_count = status.column_names.size();
-  auto column_array = jsi::Array(rt, column_count);
-  for (int i = 0; i < column_count; i++) {
-    auto column = status.column_names.at(i);
-    column_array.setValueAtIndex(rt, i, to_jsi(rt, column));
-  }
-  res.setProperty(rt, "columnNames", std::move(column_array));
   return res;
 }
 

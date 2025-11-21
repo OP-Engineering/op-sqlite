@@ -34,7 +34,6 @@ create_result(jsi::Runtime &rt, const BridgeResult &status,
               std::shared_ptr<std::vector<SmartHostObject>> metadata);
 
 jsi::Value create_js_rows(jsi::Runtime &rt, const BridgeResult &status);
-jsi::Value create_js_rows_2(jsi::Runtime &rt, const BridgeResult &status);
 
 jsi::Value
 create_raw_result(jsi::Runtime &rt, const BridgeResult &status,

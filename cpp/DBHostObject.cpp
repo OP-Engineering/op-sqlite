@@ -194,7 +194,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
 };
 
 void DBHostObject::create_jsi_functions() {
-  function_map["attach"] = HOSTFN("attach") {
+  function_map["attach"] = HFN(this) {
     std::string secondary_db_path = std::string(base_path);
 
     auto obj_params = args[0].asObject(rt);
@@ -219,7 +219,7 @@ void DBHostObject::create_jsi_functions() {
     return {};
   });
 
-  function_map["detach"] = HOSTFN("detach") {
+  function_map["detach"] = HFN(this) {
 
     if (!args[0].isString()) {
       throw std::runtime_error("[op-sqlite] alias must be a strings");
@@ -235,7 +235,7 @@ void DBHostObject::create_jsi_functions() {
     return {};
   });
 
-  function_map["close"] = HOSTFN("close") {
+  function_map["close"] = HFN(this) {
     invalidated = true;
 
 #ifdef OP_SQLITE_USE_LIBSQL
@@ -247,7 +247,7 @@ void DBHostObject::create_jsi_functions() {
     return {};
   });
 
-  function_map["delete"] = HOSTFN("delete") {
+  function_map["delete"] = HFN(this) {
     invalidated = true;
 
     std::string path = std::string(base_path);
@@ -282,60 +282,29 @@ void DBHostObject::create_jsi_functions() {
 
   function_map["executeRaw"] = HFN(this) {
     const std::string query = args[0].asString(rt).utf8(rt);
-    std::vector<JSVariant> params = count == 2 && args[1].isObject()
-                                        ? to_variant_vec(rt, args[1])
-                                        : std::vector<JSVariant>();
+    const std::vector<JSVariant> params = count == 2 && args[1].isObject()
+                                              ? to_variant_vec(rt, args[1])
+                                              : std::vector<JSVariant>();
 
-    auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
-    auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor") {
-      auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
-      auto reject = std::make_shared<jsi::Value>(rt, args[1]);
-
-      auto task = [this, &rt, query, params, resolve, reject]() {
-        try {
+    return promisify(
+        rt,
+        [this, query, params]() {
           std::vector<std::vector<JSVariant>> results;
-
 #ifdef OP_SQLITE_USE_LIBSQL
           auto status =
               opsqlite_libsql_execute_raw(db, query, &params, &results);
 #else
           auto status = opsqlite_execute_raw(db, query, &params, &results);
 #endif
+          return std::make_tuple(status, results);
+        },
+        [](jsi::Runtime &rt, std::any prev) {
+          auto tuple = std::any_cast<
+              std::tuple<BridgeResult, std::vector<std::vector<JSVariant>>>>(
+              prev);
 
-          if (invalidated) {
-            return;
-          }
-
-          invoker->invokeAsync([&rt, results = std::move(results),
-                                status = std::move(status), resolve, reject] {
-            auto jsiResult = create_raw_result(rt, status, &results);
-            resolve->asObject(rt).asFunction(rt).call(rt, std::move(jsiResult));
-          });
-        } catch (std::runtime_error &e) {
-          auto what = e.what();
-          invoker->invokeAsync([&rt, what, reject] {
-            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-            auto error = errorCtr.callAsConstructor(
-                rt, jsi::String::createFromAscii(rt, what));
-            reject->asObject(rt).asFunction(rt).call(rt, error);
-          });
-        } catch (std::exception &exc) {
-          auto what = exc.what();
-          invoker->invokeAsync([&rt, what, reject] {
-            auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-            auto error = errorCtr.callAsConstructor(
-                rt, jsi::String::createFromAscii(rt, what));
-            reject->asObject(rt).asFunction(rt).call(rt, error);
-          });
-        }
-      };
-
-      _thread_pool->queueWork(task);
-
-      return {};
-     }));
-
-    return promise;
+          return create_raw_result(rt, std::get<0>(tuple), &std::get<1>(tuple));
+        });
   });
 
   function_map["executeSync"] = HFN(this) {
@@ -351,7 +320,7 @@ void DBHostObject::create_jsi_functions() {
     auto status = opsqlite_execute(db, query, &params);
 #endif
 
-    return create_js_rows_2(rt, status);
+    return create_js_rows(rt, status);
   });
 
   function_map["executeRawSync"] = HFN(this) {
@@ -396,7 +365,7 @@ void DBHostObject::create_jsi_functions() {
 
           invoker->invokeAsync([&rt, status = std::move(status), resolve,
                                 reject] {
-            auto jsiResult = create_js_rows_2(rt, status);
+            auto jsiResult = create_js_rows(rt, status);
             resolve->asObject(rt).asFunction(rt).call(rt, std::move(jsiResult));
           });
           // On Android RN is broken and does not correctly
