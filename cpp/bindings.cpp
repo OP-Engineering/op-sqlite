@@ -19,15 +19,21 @@
 namespace opsqlite {
 
 namespace jsi = facebook::jsi;
+namespace react = facebook::react;
 
 std::string _base_path;
 std::string _crsqlite_path;
 std::string _sqlite_vec_path;
 std::vector<std::shared_ptr<DBHostObject>> dbs;
+bool invalidated = false;
+std::shared_ptr<react::CallInvoker> invoker;
 
 // React native will try to clean the module on JS context invalidation
 // (CodePush/Hot Reload) The clearState function is called
 void invalidate() {
+  // Global flag used by the threads to stop work
+  invalidated = true;
+
   for (const auto &db : dbs) {
     db->invalidate();
   }
@@ -45,16 +51,15 @@ void install(jsi::Runtime &rt,
   _base_path = std::string(base_path);
   _crsqlite_path = std::string(crsqlite_path);
   _sqlite_vec_path = std::string(sqlite_vec_path);
+  opsqlite::invoker = invoker;
 
-  auto open_v2 = host_fn(rt, 
-      [invoker](jsi::Runtime &rt, const jsi::Value &thiz, const jsi::Value *args, size_t count) {
-        jsi::Object params = args[0].asObject(rt);
-        std::string path = params.getProperty(rt, "path").asString(rt).utf8(rt);
-        auto db = create_db(rt, invoker, path);
-        return db;
-      });
+  auto open_v2 = HFN0 {
+    jsi::Object params = args[0].asObject(rt);
+    std::string path = params.getProperty(rt, "path").asString(rt).utf8(rt);
+    return create_db(rt, path);
+  });
 
-  auto open = HOST_STATIC_FN("open") {
+  auto open = HFN0 {
     jsi::Object options = args[0].asObject(rt);
     std::string name = options.getProperty(rt, "name").asString(rt).utf8(rt);
     std::string path = std::string(_base_path);
@@ -87,8 +92,8 @@ void install(jsi::Runtime &rt,
     }
 
     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-        rt, path, invoker, name, path, _crsqlite_path, _sqlite_vec_path,
-        encryption_key);
+        rt, path, opsqlite::invoker, name, path, _crsqlite_path,
+        _sqlite_vec_path, encryption_key);
     dbs.emplace_back(db);
     return jsi::Object::createFromHostObject(rt, db);
   });

@@ -1,5 +1,6 @@
 #include "utils.hpp"
 #include "SmartHostObject.h"
+#include "types.hpp"
 #ifndef OP_SQLITE_USE_LIBSQL
 #include "bridge.h"
 #endif
@@ -365,65 +366,62 @@ inline jsi::Function host_fn(jsi::Runtime &rt, jsi::HostFunctionType lambda) {
 };
 
 jsi::Value
-promisify(jsi::Runtime &rt, std::shared_ptr<State> state,
-          std::function<std::any()> lambda,
+promisify(jsi::Runtime &rt, std::function<std::any()> lambda,
           std::function<jsi::Value(jsi::Runtime &rt, std::any result)>
               resolve_callback) {
   auto promise_constructor = rt.global().getPropertyAsFunction(rt, "Promise");
 
-  auto executor = host_fn(
-      rt, [lambda = std::move(lambda),
-           resolve_callback = std::move(resolve_callback),
-           state = std::move(state)](jsi::Runtime &rt, const jsi::Value &thiz,
-                                     const jsi::Value *args, size_t count) {
-        auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
-        auto reject = std::make_shared<jsi::Value>(rt, args[1]);
+  auto executor = host_fn(rt, [lambda = std::move(lambda),
+                               resolve_callback = std::move(resolve_callback)](
+                                  jsi::Runtime &rt, const jsi::Value &thiz,
+                                  const jsi::Value *args, size_t count) {
+    auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
+    auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-        auto task = [lambda = lambda, resolve_callback = resolve_callback,
-                     state = state, resolve = std::move(resolve),
-                     reject = std::move(reject)]() {
-          try {
-            std::any result = lambda();
+    auto task = [lambda = lambda, resolve_callback = resolve_callback,
+                 resolve = std::move(resolve), reject = std::move(reject)]() {
+      try {
+        std::any result = lambda();
 
-            if (state->invalidated) {
-              return;
-            }
+        if (opsqlite::invalidated) {
+          return;
+        }
 
-            state->invoker->invokeAsync(
-                [result = std::move(result), resolve = resolve,
-                 resolve_callback = resolve_callback](jsi::Runtime &rt) {
-                  auto jsi_result = resolve_callback(rt, result);
-                  resolve->asObject(rt).asFunction(rt).call(rt, jsi_result);
-                });
-          } catch (std::runtime_error &e) {
-            // On Android RN is broken and does not correctly match
-            // runtime_error to the generic exception We have to
-            // explicitly catch it
-            // https://github.com/facebook/react-native/issues/48027
-            auto what = e.what();
-            state->invoker->invokeAsync([what = std::string(what),
-                                        reject = reject](jsi::Runtime &rt) {
+        opsqlite::invoker->invokeAsync(
+            [result = std::move(result), resolve = resolve,
+             resolve_callback = resolve_callback](jsi::Runtime &rt) {
+              auto jsi_result = resolve_callback(rt, result);
+              resolve->asObject(rt).asFunction(rt).call(rt, jsi_result);
+            });
+      } catch (std::runtime_error &e) {
+        // On Android RN is broken and does not correctly match
+        // runtime_error to the generic exception We have to
+        // explicitly catch it
+        // https://github.com/facebook/react-native/issues/48027
+        auto what = e.what();
+        opsqlite::invoker->invokeAsync(
+            [what = std::string(what), reject = reject](jsi::Runtime &rt) {
               auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
               auto error = errorCtr.callAsConstructor(
                   rt, jsi::String::createFromAscii(rt, what));
               reject->asObject(rt).asFunction(rt).call(rt, error);
             });
-          } catch (std::exception &exc) {
-            auto what = exc.what();
-            state->invoker->invokeAsync([what = std::string(what),
-                                        reject = reject](jsi::Runtime &rt) {
+      } catch (std::exception &exc) {
+        auto what = exc.what();
+        opsqlite::invoker->invokeAsync(
+            [what = std::string(what), reject = reject](jsi::Runtime &rt) {
               auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
               auto error = errorCtr.callAsConstructor(
                   rt, jsi::String::createFromAscii(rt, what));
               reject->asObject(rt).asFunction(rt).call(rt, error);
             });
-          }
-        };
+      }
+    };
 
-        __thread_pool->queueWork(task);
+    __thread_pool->queueWork(task);
 
-        return jsi::Value(nullptr);
-      });
+    return jsi::Value(nullptr);
+  });
 
   auto promise = promise_constructor.callAsConstructor(rt, executor);
   return promise;

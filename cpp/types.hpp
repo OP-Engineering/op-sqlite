@@ -1,17 +1,16 @@
 #pragma once
 
+#include <ReactCommon/CallInvoker.h>
 #include <memory>
 #include <sqlite3.h>
 #include <string>
 #include <variant>
 #include <vector>
-#include <ReactCommon/CallInvoker.h>
 
-struct State {
-  sqlite3 *db;
-  bool invalidated = false;
-  std::shared_ptr<facebook::react::CallInvoker> invoker;
-};
+namespace opsqlite {
+
+extern std::shared_ptr<facebook::react::CallInvoker> invoker;
+extern bool invalidated;
 
 struct ArrayBuffer {
   std::shared_ptr<uint8_t> data;
@@ -39,3 +38,5 @@ struct BatchArguments {
   std::string sql;
   std::vector<JSVariant> params;
 };
+
+} // namespace opsqlite

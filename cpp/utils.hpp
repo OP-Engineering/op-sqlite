@@ -2,7 +2,7 @@
 
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
-#include "types.h"
+#include "types.hpp"
 #include <jsi/jsi.h>
 #ifdef __ANDROID__
 #include "sqlite3.h"
@@ -53,8 +53,7 @@ void log_to_console(jsi::Runtime &rt, const std::string &message);
 
 jsi::Function host_fn(jsi::Runtime &rt, jsi::HostFunctionType lambda);
 jsi::Value
-promisify(jsi::Runtime &rt, std::shared_ptr<State> state,
-          std::function<std::any()> lambda,
+promisify(jsi::Runtime &rt, std::function<std::any()> lambda,
           std::function<jsi::Value(jsi::Runtime &rt, std::any result)>
               resolve_callback);
 

@@ -18,6 +18,5 @@ public:
   std::shared_ptr<react::CallInvoker> invoker;
 };
 
-jsi::Object create_db(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker>& invoker,
-                 const std::string &path);
+jsi::Object create_db(jsi::Runtime &rt, const std::string &path);
 } // namespace opsqlite

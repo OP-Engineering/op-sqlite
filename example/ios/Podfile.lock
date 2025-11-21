@@ -1,12 +1,31 @@
 PODS:
   - FBLazyVector (0.82.1)
-  - GCDWebServer (3.5.4):
-    - GCDWebServer/Core (= 3.5.4)
-  - GCDWebServer/Core (3.5.4)
   - hermes-engine (0.82.1):
     - hermes-engine/Pre-built (= 0.82.1)
   - hermes-engine/Pre-built (0.82.1)
   - op-sqlite (0.0.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
+  - OpServer (0.1.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1335,9 +1354,6 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-  - react-native-http-bridge-refurbished (1.2.9):
-    - GCDWebServer
-    - React
   - react-native-restart (0.0.27):
     - React-Core
   - react-native-safe-area-context (5.6.2):
@@ -1787,6 +1803,7 @@ DEPENDENCIES:
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - op-sqlite (from `../..`)
+  - "OpServer (from `../node_modules/@op-engineering/op-server`)"
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
   - RCTRequired (from `../node_modules/react-native/Libraries/Required`)
   - RCTTypeSafety (from `../node_modules/react-native/Libraries/TypeSafety`)
@@ -1821,7 +1838,6 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
-  - react-native-http-bridge-refurbished (from `../node_modules/react-native-http-bridge-refurbished`)
   - react-native-restart (from `../node_modules/react-native-restart`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -1859,10 +1875,6 @@ DEPENDENCIES:
   - ReactNativeDependencies (from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
-SPEC REPOS:
-  trunk:
-    - GCDWebServer
-
 EXTERNAL SOURCES:
   FBLazyVector:
     :path: "../node_modules/react-native/Libraries/FBLazyVector"
@@ -1871,6 +1883,8 @@ EXTERNAL SOURCES:
     :tag: hermes-2025-09-01-RNv0.82.0-265ef62ff3eb7289d17e366664ac0da82303e101
   op-sqlite:
     :path: "../.."
+  OpServer:
+    :path: "../node_modules/@op-engineering/op-server"
   RCTDeprecation:
     :path: "../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation"
   RCTRequired:
@@ -1937,8 +1951,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   React-microtasksnativemodule:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
-  react-native-http-bridge-refurbished:
-    :path: "../node_modules/react-native-http-bridge-refurbished"
   react-native-restart:
     :path: "../node_modules/react-native-restart"
   react-native-safe-area-context:
@@ -2014,9 +2026,9 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   FBLazyVector: 2e5b5553df729e080483373db6f045201ff4e6db
-  GCDWebServer: 2c156a56c8226e2d5c0c3f208a3621ccffbe3ce4
   hermes-engine: 273e30e7fb618279934b0b95ffab60ecedb7acf5
-  op-sqlite: eb439e849525b9b0e55ae28b0e4ecdb9784e9203
+  op-sqlite: 31c4784c1e005544d60a45cc12418effec8d1667
+  OpServer: df489af86274d23917fe3f1fcd1649b6afdf74e3
   RCTDeprecation: c6b36da89aa26090c8684d29c2868dcca2cd4554
   RCTRequired: 1413a0844770d00fa1f1bb2da4680adfa8698065
   RCTTypeSafety: 354b4bb344998550c45d054ef66913837948f958
@@ -2050,7 +2062,6 @@ SPEC CHECKSUMS:
   React-logger: 0645991bbb7690e7b251c77d4f3636f061522cf6
   React-Mapbuffer: b825b19234eb571a071e595c123909f0c15ab8f5
   React-microtasksnativemodule: acf58b8dd297cd84ccff01eeac094c405adcea00
-  react-native-http-bridge-refurbished: 1bd13b32a8e62abe61bab809c26e2dcf21256ed7
   react-native-restart: 0bc732f4461709022a742bb29bcccf6bbc5b4863
   react-native-safe-area-context: 37e680fc4cace3c0030ee46e8987d24f5d3bdab2
   React-NativeModulesApple: b50b7150a4f573d8466c43d8af38d2610fe17d92

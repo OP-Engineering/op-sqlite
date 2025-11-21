@@ -3321,6 +3321,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@op-engineering/op-server@npm:^0.1.0":
+  version: 0.1.0
+  resolution: "@op-engineering/op-server@npm:0.1.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/09f71b4e78b94ddcf63df18af88fc00f0a7f5ddf56c062ea80fb6ee553b1faf8ec206d8e5f327fd5994f1341057702d3892f59bdfc89a51ba080d8d876917e4c
+  languageName: node
+  linkType: hard
+
 "@op-engineering/op-sqlite@workspace:.":
   version: 0.0.0-use.local
   resolution: "@op-engineering/op-sqlite@workspace:."
@@ -6753,7 +6763,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"loose-envify@npm:^1.0.0, loose-envify@npm:^1.1.0":
+"loose-envify@npm:^1.0.0":
   version: 1.4.0
   resolution: "loose-envify@npm:1.4.0"
   dependencies:
@@ -7521,6 +7531,7 @@ __metadata:
     "@babel/core": "npm:^7.25.2"
     "@babel/preset-env": "npm:^7.25.3"
     "@babel/runtime": "npm:^7.25.0"
+    "@op-engineering/op-server": "npm:^0.1.0"
     "@op-engineering/op-test": "npm:^0.2.4"
     "@react-native-community/cli": "npm:^18.0.0"
     "@react-native-community/cli-platform-android": "npm:18.0.0"
@@ -7537,7 +7548,6 @@ __metadata:
     react: "npm:19.1.1"
     react-native: "npm:0.82.1"
     react-native-builder-bob: "npm:^0.40.13"
-    react-native-http-bridge-refurbished: "npm:1.2.9"
     react-native-monorepo-config: "npm:^0.1.9"
     react-native-restart: "npm:^0.0.27"
     react-native-safe-area-context: "npm:^5.6.2"
@@ -8073,17 +8083,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-http-bridge-refurbished@npm:1.2.9":
-  version: 1.2.9
-  resolution: "react-native-http-bridge-refurbished@npm:1.2.9"
-  dependencies:
-    react: "npm:18.2.0"
-  peerDependencies:
-    react-native: ">=0.72"
-  checksum: 10c0/50d77f2991a2ff7d38a17b59f1f9943f9637be9abd68ba34cc4fe744bcaa7a69e00e728b74bd5905b84fdc870b701388c85c7f27a9aaff17606521df362c8dbf
-  languageName: node
-  linkType: hard
-
 "react-native-monorepo-config@npm:^0.1.8":
   version: 0.1.9
   resolution: "react-native-monorepo-config@npm:0.1.9"
@@ -8179,15 +8178,6 @@ __metadata:
   version: 0.14.0
   resolution: "react-refresh@npm:0.14.0"
   checksum: 10c0/b8ae07ad153357d77830928a7f1fc2df837aabefee907fa273ba04c7643f3b860e986f1d4b7ada9b721c8d79b8c24b5b911a314a1a2398b105f1b13d19ea2b8d
-  languageName: node
-  linkType: hard
-
-"react@npm:18.2.0":
-  version: 18.2.0
-  resolution: "react@npm:18.2.0"
-  dependencies:
-    loose-envify: "npm:^1.1.0"
-  checksum: 10c0/b562d9b569b0cb315e44b48099f7712283d93df36b19a39a67c254c6686479d3980b7f013dc931f4a5a3ae7645eae6386b4aa5eea933baa54ecd0f9acb0902b8
   languageName: node
   linkType: hard
 
