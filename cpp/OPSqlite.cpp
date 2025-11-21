@@ -1,4 +1,4 @@
-#include "bindings.h"
+#include "OPSqlite.hpp"
 #include "DBHostObject.h"
 #include "DumbHostObject.h"
 #include "OPThreadPool.h"

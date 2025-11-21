@@ -70,6 +70,8 @@ void opsqlite_deregister_update_hook(sqlite3 *db);
 void opsqlite_register_commit_hook(sqlite3 *db, void *db_host_object_ptr);
 void opsqlite_deregister_commit_hook(sqlite3 *db);
 void opsqlite_register_rollback_hook(sqlite3 *db, void *db_host_object_ptr);
+
+void opsqlite_register_rollback(sqlite3 *db, void *cb);
 void opsqlite_deregister_rollback_hook(sqlite3 *db);
 
 sqlite3_stmt *opsqlite_prepare_statement(sqlite3 *db, std::string const &query);

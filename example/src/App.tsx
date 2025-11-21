@@ -11,6 +11,7 @@ import {
 } from '@op-engineering/op-test';
 import './tests'; // import all tests to register them
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {StyleSheet} from 'react-native';
 
 export default function App() {
   const [results, setResults] = useState<any>(null);
@@ -53,8 +54,15 @@ export default function App() {
   // };
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-700">
+    <SafeAreaView style={STYLES.container}>
       {displayResults(results)}
     </SafeAreaView>
   );
 }
+
+const STYLES = StyleSheet.create({
+  container: {
+    height: '100%',
+    backgroundColor: '#333',
+  },
+});

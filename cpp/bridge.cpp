@@ -3,6 +3,7 @@
 // so that threading operations are safe and contained within DBHostObject
 
 #include "bridge.h"
+#include "DB.hpp"
 #include "DBHostObject.h"
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
@@ -839,6 +840,12 @@ void opsqlite_deregister_commit_hook(sqlite3 *db) {
 void rollback_callback(void *db_host_object_ptr) {
   auto db_host_object = reinterpret_cast<DBHostObject *>(db_host_object_ptr);
   db_host_object->on_rollback();
+}
+
+void rollback_callback2(void *cb) { opsqlite::invoke_generic_callback(cb); }
+
+void opsqlite_register_rollback(sqlite3 *db, void *cb) {
+  sqlite3_rollback_hook(db, &rollback_callback2, cb);
 }
 
 void opsqlite_register_rollback_hook(sqlite3 *db, void *db_host_object_ptr) {

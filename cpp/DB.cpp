@@ -18,9 +18,19 @@ namespace opsqlite {
 namespace jsi = facebook::jsi;
 namespace react = facebook::react;
 
+void invoke_generic_callback(void *cb) {
+  auto callback = reinterpret_cast<jsi::Value *>(cb);
+  if (callback != nullptr) {
+    opsqlite::invoker->invokeAsync([callback](jsi::Runtime &rt) {
+      callback->asObject(rt).asFunction(rt).call(rt);
+    });
+  }
+}
+
 jsi::Object create_db(jsi::Runtime &rt, const std::string &path) {
   auto res = jsi::Object(rt);
   sqlite3 *db = opsqlite_open_v2(path);
+//  auto rollback_hook = std::make_shared<jsi::Value>(rt, nullptr);
 
   // EXECUTE SYNC
   auto executeSync = HFN(db) {
@@ -266,6 +276,29 @@ jsi::Object create_db(jsi::Runtime &rt, const std::string &path) {
   auto flush_pending_reactive_queries = HFN(db) { return {}; });
   res.setProperty(rt, "flushPendingReactiveQueries",
                   flush_pending_reactive_queries);
+
+  // ROLLBACK HOOK
+  auto rollbackHook = HFN(db) {
+    //     if (count < 1) {
+    //       throw std::runtime_error("[op-sqlite][rollbackHook] callback
+    //       needed");
+    //     }
+
+    //     if (args[0].isUndefined() || args[0].isNull()) {
+    // //      if (rollback_hook) {
+    // //        rollback_hook.reset();
+    // //      }
+    // //      rollback_hook = std::make_shared<jsi::Value>(rt, nullptr);
+    //       opsqlite_register_rollback(db, nullptr);
+    //     } else {
+    //       rollback_hook = std::make_shared<jsi::Value>(rt, args[0]);
+    //       opsqlite_register_rollback(db, reinterpret_cast<void
+    //       *>(rollback_hook.get()));
+    //     }
+
+    return {};
+  });
+  res.setProperty(rt, "rollbackHook", rollbackHook);
 
   return res;
 }
