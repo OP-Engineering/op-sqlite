@@ -16,10 +16,6 @@ namespace react = facebook::react;
 
 auto __thread_pool = std::make_shared<ThreadPool>();
 
-using HostPromiseFunctionType = std::function<jsi::Value(
-    jsi::Runtime &rt, const jsi::Value &thisVal, const jsi::Value *args,
-    size_t count, jsi::Function resolve, jsi::Function reject)>;
-
 inline jsi::Value to_jsi(jsi::Runtime &rt, const JSVariant &value) {
   if (std::holds_alternative<bool>(value)) {
     return std::get<bool>(value);

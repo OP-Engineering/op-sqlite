@@ -23,7 +23,6 @@ add_library(
   ../cpp/PreparedStatementHostObject.cpp
   ../cpp/DumbHostObject.cpp
   ../cpp/DBHostObject.cpp
-  ../cpp/DB.cpp
   cpp-adapter.cpp
 )
 

@@ -150,36 +150,6 @@ void create_dirs_if_needed(const std::string &path) {
   }
 }
 
-sqlite3 *opsqlite_open_v2(const std::string &path) {
-  create_dirs_if_needed(path);
-
-  char *errMsg;
-  sqlite3 *db;
-
-  int flags =
-      SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
-
-  int status = sqlite3_open_v2(path.c_str(), &db, flags, nullptr);
-
-  if (status != SQLITE_OK) {
-    throw std::runtime_error(sqlite3_errmsg(db));
-  }
-
-#ifdef OP_SQLITE_USE_SQLCIPHER
-  if (!encryption_key.empty()) {
-    opsqlite_execute(db, "PRAGMA key = '" + encryption_key + "'", nullptr);
-  }
-#endif
-
-#ifndef OP_SQLITE_USE_PHONE_VERSION
-  sqlite3_enable_load_extension(db, 1);
-#endif
-
-  TOKENIZER_LIST
-
-  return db;
-}
-
 void opsqlite_close(sqlite3 *db) {
 #ifdef OP_SQLITE_USE_CRSQLITE
   opsqlite_execute(db, "select crsql_finalize();", nullptr);
