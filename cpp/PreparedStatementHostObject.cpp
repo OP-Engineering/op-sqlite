@@ -4,7 +4,7 @@
 #else
 #include "bridge.h"
 #endif
-#include "macros.h"
+#include "macros.hpp"
 #include "utils.hpp"
 
 namespace opsqlite {

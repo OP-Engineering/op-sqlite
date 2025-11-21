@@ -9,7 +9,7 @@
 #endif
 #include "DB.hpp"
 #include "logs.h"
-#include "macros.h"
+#include "macros.hpp"
 #include "utils.hpp"
 #include <iostream>
 #include <string>
