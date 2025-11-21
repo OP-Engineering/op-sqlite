@@ -16,7 +16,7 @@ add_definitions(
 add_library(
   ${PACKAGE_NAME}
   SHARED
-  ../cpp/bindings.cpp
+  ../cpp/OPSqlite.cpp
   ../cpp/utils.cpp
   ../cpp/OPThreadPool.cpp
   ../cpp/SmartHostObject.cpp

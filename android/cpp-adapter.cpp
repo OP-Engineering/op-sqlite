@@ -1,4 +1,4 @@
-#include "bindings.h"
+#include "OPSqlite.hpp"
 #include "logs.h"
 #include <ReactCommon/CallInvokerHolder.h>
 #include <fbjni/fbjni.h>
