@@ -3321,13 +3321,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@op-engineering/op-server@npm:^0.1.2":
-  version: 0.1.2
-  resolution: "@op-engineering/op-server@npm:0.1.2"
+"@op-engineering/op-server@npm:^0.1.3":
+  version: 0.1.3
+  resolution: "@op-engineering/op-server@npm:0.1.3"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10c0/86f5c3ef6de294f1a5a412d0400efef1ba21a998a1bb9355023307e58448d7d7264a5f66c1e6f7245bd6497f45093464198a88a2da634594cbbf18f299e978ac
+  checksum: 10c0/9c76d770bec5c049ca1d6cf41512316c087eb2980cf97450ab0775bf022767b2a43f02372bd00cf89861584bf5a843e521f6fab21bde4af4583a290c75f5843e
   languageName: node
   linkType: hard
 
@@ -7532,7 +7532,7 @@ __metadata:
     "@babel/core": "npm:^7.25.2"
     "@babel/preset-env": "npm:^7.25.3"
     "@babel/runtime": "npm:^7.25.0"
-    "@op-engineering/op-server": "npm:^0.1.2"
+    "@op-engineering/op-server": "npm:^0.1.3"
     "@op-engineering/op-test": "npm:^0.2.4"
     "@react-native-community/cli": "npm:^18.0.0"
     "@react-native-community/cli-platform-android": "npm:18.0.0"
