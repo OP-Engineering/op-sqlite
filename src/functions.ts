@@ -198,12 +198,12 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
           rows.push(row);
         }
 
+        delete res.rawRows;
+
         res = {
           ...res,
           rows,
         };
-
-        delete res.rawRows;
       }
 
       return res;
@@ -223,7 +223,7 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
             query,
             sanitizeArrayBuffersInArray(params) as Scalar[]
           )
-        : await db.executeSync(query);
+        : await db.execute(query);
 
       if (!res.rows) {
         let rows: Record<string, Scalar>[] = [];
@@ -239,12 +239,12 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
           rows.push(row);
         }
 
+        delete res.rawRows;
+
         res = {
           ...res,
           rows,
         };
-
-        delete res.rawRows;
       }
 
       return res;

@@ -15,7 +15,6 @@ import {
   beforeEach,
   describe,
   it,
-  itOnly,
 } from '@op-engineering/op-test';
 import {Platform} from 'react-native';
 
@@ -74,7 +73,7 @@ describe('Queries v2', () => {
     // });
   }
 
-  itOnly('multiple connections to same db', async () => {
+  it('multiple connections to same db', async () => {
     const db2 = openV2({
       path:
         Platform.OS === 'ios'
@@ -97,13 +96,9 @@ describe('Queries v2', () => {
       db3.execute('SELECT 1'),
     ];
 
-    console.log('mk0');
     let res = await Promise.all(promises);
-    console.log('mk1');
-    console.log(res);
     res.forEach(r => {
       expect(r.rowsAffected).toEqual(0);
-      console.log(r.rows);
       expect(r.rows[0]!['1']).toEqual(1);
     });
   });
@@ -637,8 +632,11 @@ describe('Queries v2', () => {
   });
 
   it('Batch execute with BLOB', async () => {
-    let db = open({
-      name: 'queries.sqlite',
+    let db = openV2({
+      path:
+        Platform.OS === 'ios'
+          ? `${IOS_DOCUMENT_PATH}/queries2.sqlite`
+          : `${ANDROID_DATABASE_PATH}/queries2.sqlite`,
       encryptionKey: 'test',
     });
 
@@ -742,16 +740,18 @@ describe('Queries v2', () => {
     expect(res).toDeepEqual([[id, name, age, networth]]);
   });
 
-  it('Create fts5 virtual table', async () => {
-    await db.execute(
+  it('Create fts5 virtual table', () => {
+    db.executeSync('DROP TABLE IF EXISTS fts5_table;');
+    db.executeSync(
       'CREATE VIRTUAL TABLE fts5_table USING fts5(name, content);',
     );
-    await db.execute('INSERT INTO fts5_table (name, content) VALUES(?, ?)', [
+
+    db.executeSync('INSERT INTO fts5_table (name, content) VALUES(?, ?)', [
       'test',
       'test content',
     ]);
 
-    const res = await db.execute('SELECT * FROM fts5_table');
+    const res = db.executeSync('SELECT * FROM fts5_table');
     expect(res.rows).toDeepEqual([{name: 'test', content: 'test content'}]);
   });
 

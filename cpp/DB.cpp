@@ -225,38 +225,15 @@ jsi::Object create_db(jsi::Runtime &rt, const std::string &path) {
   res.setProperty(rt, "detach", detach);
 
   // DELETE
-  // auto deleteDb = HFN(db) {
-  //   std::string db_path = path;
+  auto deleteDb = HFN2(db, path) {
 
-  //   if (count == 1 && args[0].isString()) {
-  //     std::string location = args[0].asString(rt).utf8(rt);
+    if (path != ":memory:") {
+      opsqlite_remove_v2(db, path);
+    }
 
-  //     if (!location.empty()) {
-  //       if (location == ":memory:") {
-  //         db_path = ":memory:";
-  //       } else if (location.rfind('/', 0) == 0) {
-  //         db_path = location;
-  //       } else {
-  //         // Extract base path from full path
-  //         size_t last_slash = path.rfind('/');
-  //         std::string base = (last_slash != std::string::npos)
-  //                                ? path.substr(0, last_slash + 1)
-  //                                : "";
-  //         db_path = base + location;
-  //       }
-  //     }
-  //   }
-
-  //   // Extract db name from path
-  //   size_t last_slash = db_path.rfind('/');
-  //   std::string db_name = (last_slash != std::string::npos)
-  //                             ? db_path.substr(last_slash + 1)
-  //                             : db_path;
-
-  //   opsqlite_remove(db, db_name, db_path);
-  //   return {};
-  // });
-  // res.setProperty(rt, "delete", deleteDb);
+    return {};
+  });
+  res.setProperty(rt, "delete", deleteDb);
 
   // PREPARE STATEMENT
   auto prepareStatement = HFN(db) {
@@ -303,6 +280,11 @@ jsi::Object create_db(jsi::Runtime &rt, const std::string &path) {
     return {};
   });
   res.setProperty(rt, "close", close);
+
+  // FLUSH PENDING REACTIVE QUERIES
+  auto flush_pending_reactive_queries = HFN(db) { return {}; });
+  res.setProperty(rt, "flushPendingReactiveQueries",
+                  flush_pending_reactive_queries);
 
   return res;
 }

@@ -42,6 +42,7 @@ void opsqlite_close(sqlite3 *db);
 
 void opsqlite_remove(sqlite3 *db, std::string const &name,
                      std::string const &doc_path);
+void opsqlite_remove_v2(sqlite3 *db, std::string const &path);
 
 void opsqlite_attach(sqlite3 *db, std::string const &doc_path,
                      std::string const &secondary_db_name,
