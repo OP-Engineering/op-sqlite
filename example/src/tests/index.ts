@@ -7,6 +7,3 @@ import './queries';
 import './reactive';
 import './storage';
 import './tokenizer';
-import './queries_v2';
-import './blob_v2';
-import './preparedStatements_v2';

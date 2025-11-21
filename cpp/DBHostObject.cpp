@@ -280,7 +280,7 @@ void DBHostObject::create_jsi_functions() {
     return {};
   });
 
-  function_map["executeRaw"] = HOSTFN("executeRaw") {
+  function_map["executeRaw"] = HFN(this) {
     const std::string query = args[0].asString(rt).utf8(rt);
     std::vector<JSVariant> params = count == 2 && args[1].isObject()
                                         ? to_variant_vec(rt, args[1])
@@ -338,7 +338,7 @@ void DBHostObject::create_jsi_functions() {
     return promise;
   });
 
-  function_map["executeSync"] = HOSTFN("executeSync") {
+  function_map["executeSync"] = HFN(this) {
     std::string query = args[0].asString(rt).utf8(rt);
     std::vector<JSVariant> params;
 
@@ -351,10 +351,10 @@ void DBHostObject::create_jsi_functions() {
     auto status = opsqlite_execute(db, query, &params);
 #endif
 
-    return create_js_rows(rt, status);
+    return create_js_rows_2(rt, status);
   });
 
-  function_map["executeRawSync"] = HOSTFN("executeRawSync") {
+  function_map["executeRawSync"] = HFN(this) {
     const std::string query = args[0].asString(rt).utf8(rt);
     std::vector<JSVariant> params = count == 2 && args[1].isObject()
                                         ? to_variant_vec(rt, args[1])
@@ -396,7 +396,7 @@ void DBHostObject::create_jsi_functions() {
 
           invoker->invokeAsync([&rt, status = std::move(status), resolve,
                                 reject] {
-            auto jsiResult = create_js_rows(rt, status);
+            auto jsiResult = create_js_rows_2(rt, status);
             resolve->asObject(rt).asFunction(rt).call(rt, std::move(jsiResult));
           });
           // On Android RN is broken and does not correctly
