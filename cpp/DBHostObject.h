@@ -6,7 +6,7 @@
 #include <jsi/jsi.h>
 #include <set>
 #ifdef OP_SQLITE_USE_LIBSQL
-#include "libsql/bridge.h"
+#include "libsql/bridge.hpp"
 #else
 #ifdef __ANDROID__
 #include "sqlite3.h"

@@ -4,7 +4,7 @@
 #include "SmartHostObject.h"
 #include "libsql.h"
 #include "types.hpp"
-#include "utils.h"
+#include "utils.hpp"
 #include <vector>
 
 #define LIBSQL_INT 1

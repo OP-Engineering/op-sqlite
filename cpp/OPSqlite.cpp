@@ -3,7 +3,7 @@
 #include "DumbHostObject.h"
 #include "OPThreadPool.h"
 #ifdef OP_SQLITE_USE_LIBSQL
-#include "libsql/bridge.h"
+#include "libsql/bridge.hpp"
 #else
 #include "bridge.h"
 #endif
