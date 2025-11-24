@@ -245,7 +245,7 @@ dependencies {
 
 tasks.register('prepareHeaders', Copy) {
   from('../cpp')
-  include "**/*.h"
+  include "**/*.h", "**/*.hpp"
   into "${project.buildDir}/headers/op-sqlite/op-engineering_op-sqlite/"
   includeEmptyDirs = false
 }

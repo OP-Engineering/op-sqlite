@@ -1,7 +1,7 @@
 #pragma once
 
 #include "SmartHostObject.h"
-#include "types.h"
+#include "types.hpp"
 #include <any>
 #include <jsi/jsi.h>
 #include <stdio.h>
@@ -12,25 +12,24 @@ namespace opsqlite {
 namespace jsi = facebook::jsi;
 
 class JSI_EXPORT DumbHostObject : public jsi::HostObject {
-  public:
-    DumbHostObject() = default;
+public:
+  DumbHostObject() = default;
 
-    explicit DumbHostObject(
-        std::shared_ptr<std::vector<SmartHostObject>> metadata);
+  explicit DumbHostObject(
+      std::shared_ptr<std::vector<SmartHostObject>> metadata);
 
-    std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt) override;
+  std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt) override;
 
-    jsi::Value get(jsi::Runtime &rt,
-                   const jsi::PropNameID &propNameID) override;
+  jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID) override;
 
-    void set(jsi::Runtime &rt, const jsi::PropNameID &name,
-             const jsi::Value &value) override;
+  void set(jsi::Runtime &rt, const jsi::PropNameID &name,
+           const jsi::Value &value) override;
 
-    std::vector<JSVariant> values;
+  std::vector<JSVariant> values;
 
-    std::shared_ptr<std::vector<SmartHostObject>> metadata;
+  std::shared_ptr<std::vector<SmartHostObject>> metadata;
 
-    std::vector<std::pair<std::string, JSVariant>> ownValues;
+  std::vector<std::pair<std::string, JSVariant>> ownValues;
 };
 
 } // namespace opsqlite

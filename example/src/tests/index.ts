@@ -7,7 +7,3 @@ import './queries';
 import './reactive';
 import './storage';
 import './tokenizer';
-
-// export function registerTests() {
-//   queries();
-// }

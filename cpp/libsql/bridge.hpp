@@ -3,8 +3,8 @@
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
 #include "libsql.h"
-#include "types.h"
-#include "utils.h"
+#include "types.hpp"
+#include "utils.hpp"
 #include <vector>
 
 #define LIBSQL_INT 1
@@ -25,8 +25,8 @@ typedef std::function<void(std::string dbName)> CommitCallback;
 typedef std::function<void(std::string dbName)> RollbackCallback;
 
 struct DB {
-    libsql_database_t db;
-    libsql_connection_t c;
+  libsql_database_t db;
+  libsql_connection_t c;
 };
 
 std::string opsqlite_get_db_path(std::string const &name,

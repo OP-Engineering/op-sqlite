@@ -180,31 +180,31 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
       return db.executeRaw(query, sanitizedParams as Scalar[]);
     },
     executeSync: (query: string, params?: Scalar[]): QueryResult => {
-      const sanitizedParams = sanitizeArrayBuffersInArray(params);
-
-      let intermediateResult = sanitizedParams
-        ? db.executeSync(query, sanitizedParams as Scalar[])
+      let res = params
+        ? db.executeSync(query, sanitizeArrayBuffersInArray(params) as Scalar[])
         : db.executeSync(query);
 
-      let rows: Record<string, Scalar>[] = [];
-      for (let i = 0; i < (intermediateResult.rawRows?.length ?? 0); i++) {
-        let row: Record<string, Scalar> = {};
-        let rawRow = intermediateResult.rawRows![i]!;
-        for (let j = 0; j < intermediateResult.columnNames!.length; j++) {
-          let columnName = intermediateResult.columnNames![j]!;
-          let value = rawRow[j]!;
+      if (!res.rows) {
+        let rows: Record<string, Scalar>[] = [];
+        for (let i = 0; i < (res.rawRows?.length ?? 0); i++) {
+          let row: Record<string, Scalar> = {};
+          let rawRow = res.rawRows![i]!;
+          for (let j = 0; j < res.columnNames!.length; j++) {
+            let columnName = res.columnNames![j]!;
+            let value = rawRow[j]!;
 
-          row[columnName] = value;
+            row[columnName] = value;
+          }
+          rows.push(row);
         }
-        rows.push(row);
+
+        delete res.rawRows;
+
+        res = {
+          ...res,
+          rows,
+        };
       }
-
-      let res = {
-        ...intermediateResult,
-        rows,
-      };
-
-      delete res.rawRows;
 
       return res;
     },
@@ -218,32 +218,34 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
       query: string,
       params?: Scalar[] | undefined
     ): Promise<QueryResult> => {
-      const sanitizedParams = sanitizeArrayBuffersInArray(params);
+      let res = params
+        ? await db.execute(
+            query,
+            sanitizeArrayBuffersInArray(params) as Scalar[]
+          )
+        : await db.execute(query);
 
-      let intermediateResult = await db.execute(
-        query,
-        sanitizedParams as Scalar[]
-      );
+      if (!res.rows) {
+        let rows: Record<string, Scalar>[] = [];
+        for (let i = 0; i < (res.rawRows?.length ?? 0); i++) {
+          let row: Record<string, Scalar> = {};
+          let rawRow = res.rawRows![i]!;
+          for (let j = 0; j < res.columnNames!.length; j++) {
+            let columnName = res.columnNames![j]!;
+            let value = rawRow[j]!;
 
-      let rows: Record<string, Scalar>[] = [];
-      for (let i = 0; i < (intermediateResult.rawRows?.length ?? 0); i++) {
-        let row: Record<string, Scalar> = {};
-        let rawRow = intermediateResult.rawRows![i]!;
-        for (let j = 0; j < intermediateResult.columnNames!.length; j++) {
-          let columnName = intermediateResult.columnNames![j]!;
-          let value = rawRow[j]!;
-
-          row[columnName] = value;
+            row[columnName] = value;
+          }
+          rows.push(row);
         }
-        rows.push(row);
+
+        delete res.rawRows;
+
+        res = {
+          ...res,
+          rows,
+        };
       }
-
-      let res = {
-        ...intermediateResult,
-        rows,
-      };
-
-      delete res.rawRows;
 
       return res;
     },
@@ -415,6 +417,13 @@ export const open = (params: {
 
   return enhancedDb;
 };
+
+export function openV2(params: { path: string; encryptionKey?: string }) {
+  const db = OPSQLite.openV2(params);
+  const enhancedDb = enhanceDB(db, params as any);
+
+  return enhancedDb;
+}
 
 /**
  * Moves the database from the assets folder to the default path (check the docs) or to a custom path

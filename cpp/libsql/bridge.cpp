@@ -1,9 +1,9 @@
-#include "bridge.h"
+#include "bridge.hpp"
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
 #include "libsql.h"
 #include "logs.h"
-#include "utils.h"
+#include "utils.hpp"
 #include <filesystem>
 #include <iostream>
 #include <unordered_map>

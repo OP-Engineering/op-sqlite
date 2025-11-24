@@ -1,7 +1,7 @@
 {
   "name": "@op-engineering/op-sqlite",
   "version": "0.0.0",
-  "description": "Next generation SQLite for React Native",
+  "description": "Fastest SQLite for React Native",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
   "react-native": "src/index",
@@ -48,7 +48,7 @@
     "sqlite"
   ],
   "repository": "https://github.com/OP-Engineering/op-sqlite",
-  "author": "Oscar Franco <ospfranco@protonmail.com> (https://github.com/ospfranco)",
+  "author": "Oscar Franco <ospfranco@gmail.com> (https://github.com/ospfranco)",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/OP-Engineering/op-sqlite/issues"
@@ -59,11 +59,10 @@
   },
   "devDependencies": {
     "clang-format": "^1.8.0",
-    "lefthook": "^1.5.5",
     "react": "19.1.1",
-    "react-native": "0.81.0",
-    "react-native-builder-bob": "^0.40.13",
-    "typescript": "5.8.3"
+    "react-native": "0.82.1",
+    "react-native-builder-bob": "^0.40.15",
+    "typescript": "5.0.4"
   },
   "peerDependencies": {
     "react": "*",
@@ -110,5 +109,8 @@
     "type": "turbo-module",
     "version": "0.52.1"
   },
-  "packageManager": "yarn@4.3.1"
+  "packageManager": "yarn@4.11.0",
+  "dependencies": {
+    "react-native-safe-area-context": "^5.6.2"
+  }
 }

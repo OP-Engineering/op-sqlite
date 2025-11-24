@@ -5,7 +5,7 @@
 #include <memory>
 #ifdef OP_SQLITE_USE_LIBSQL
 #include "libsql.h"
-#include "libsql/bridge.h"
+#include "libsql/bridge.hpp"
 #else
 #ifdef __ANDROID__
 #include "sqlite3.h"
@@ -22,42 +22,30 @@ namespace jsi = facebook::jsi;
 namespace react = facebook::react;
 
 class PreparedStatementHostObject : public jsi::HostObject {
-  public:
+public:
 #ifdef OP_SQLITE_USE_LIBSQL
-    PreparedStatementHostObject(
-        DB const &db, std::string name, libsql_stmt_t stmt,
-        std::shared_ptr<react::CallInvoker> js_call_invoker,
-        std::shared_ptr<ThreadPool> thread_pool)
-        : _db(db), _name(std::move(name)), _stmt(stmt),
-          _js_call_invoker(js_call_invoker), _thread_pool(thread_pool) {};
+  PreparedStatementHostObject(
+      DB const &db, libsql_stmt_t stmt)
+      : _db(db), _stmt(stmt) {};
 #else
-    PreparedStatementHostObject(
-        sqlite3 *db, std::string name, sqlite3_stmt *stmt,
-        std::shared_ptr<react::CallInvoker> js_call_invoker,
-        std::shared_ptr<ThreadPool> thread_pool)
-        : _db(db), _name(std::move(name)), _stmt(stmt),
-          _js_call_invoker(std::move(js_call_invoker)),
-          _thread_pool(std::move(thread_pool)) {};
+  PreparedStatementHostObject(sqlite3 *db, sqlite3_stmt *stmt)
+      : _db(db), _stmt(stmt) {};
 #endif
-    ~PreparedStatementHostObject() override;
+  ~PreparedStatementHostObject() override;
 
-    std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt) override;
+  std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt) override;
 
-    jsi::Value get(jsi::Runtime &rt,
-                   const jsi::PropNameID &propNameID) override;
+  jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID) override;
 
-  private:
-    std::string _name;
+private:
 #ifdef OP_SQLITE_USE_LIBSQL
-    DB _db;
-    libsql_stmt_t _stmt;
+  DB _db;
+  libsql_stmt_t _stmt;
 #else
-    sqlite3 *_db;
-    // This shouldn't be de-allocated until sqlite3_finalize is called on it
-    sqlite3_stmt *_stmt;
+  sqlite3 *_db;
+  // This shouldn't be de-allocated until sqlite3_finalize is called on it
+  sqlite3_stmt *_stmt;
 #endif
-    std::shared_ptr<react::CallInvoker> _js_call_invoker;
-    std::shared_ptr<ThreadPool> _thread_pool;
 };
 
 } // namespace opsqlite
