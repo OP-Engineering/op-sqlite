@@ -94,6 +94,18 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
     delete: db.delete,
     attach: db.attach,
     detach: db.detach,
+    loadFile: db.loadFile,
+    updateHook: db.updateHook,
+    commitHook: db.commitHook,
+    rollbackHook: db.rollbackHook,
+    loadExtension: db.loadExtension,
+    getDbPath: db.getDbPath,
+    reactiveExecute: db.reactiveExecute,
+    sync: db.sync,
+    setReservedBytes: db.setReservedBytes,
+    getReservedBytes: db.getReservedBytes,
+    close: db.close,
+    flushPendingReactiveQueries: db.flushPendingReactiveQueries,
     executeBatch: async (
       commands: SQLBatchTuple[]
     ): Promise<BatchQueryResult> => {
@@ -141,17 +153,6 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
         startNextTransaction();
       });
     },
-    loadFile: db.loadFile,
-    updateHook: db.updateHook,
-    commitHook: db.commitHook,
-    rollbackHook: db.rollbackHook,
-    loadExtension: db.loadExtension,
-    getDbPath: db.getDbPath,
-    reactiveExecute: db.reactiveExecute,
-    sync: db.sync,
-    setReservedBytes: db.setReservedBytes,
-    getReservedBytes: db.getReservedBytes,
-    close: db.close,
     executeWithHostObjects: async (
       query: string,
       params?: Scalar[]

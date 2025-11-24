@@ -294,6 +294,13 @@ export type DB = {
   sync: () => void;
   setReservedBytes: (reservedBytes: number) => void;
   getReservedBytes: () => number;
+  /**
+   * If you have changed any of the tables outside of a transaction then the reactive queries will not fire on their own
+   * This method allows to flush the pending queue of changes. Useful when using Drizzle or other ORM that do not
+   * use the db.transaction method internally
+   * @returns void
+   */
+  flushPendingReactiveQueries: () => Promise<void>;
 };
 
 export type DBParams = {
@@ -310,10 +317,7 @@ export type OPSQLiteProxy = {
     location?: string;
     encryptionKey?: string;
   }) => _InternalDB;
-  openV2: (options: {
-    path: string;
-    encryptionKey?: string
-  }) => _InternalDB,
+  openV2: (options: { path: string; encryptionKey?: string }) => _InternalDB;
   openRemote: (options: { url: string; authToken: string }) => _InternalDB;
   openSync: (options: DBParams) => _InternalDB;
   isSQLCipher: () => boolean;
