@@ -45,13 +45,15 @@ const db = open({
 });
 ```
 
-If you want to access the SD card app's directory:
+If you want to access the SD card app's directory. However, `ANDROID_EXTERNAL_FILES_PATH` **can be null**, sometimes there are OS/Device level errors on which the OS does not detect the directory correctly. You should always have a fallback.
 
 ```tsx
 const db = open({
   name: 'myDB',
   location:
-    Platform.OS === 'ios' ? IOS_LIBRARY_PATH : ANDROID_EXTERNAL_FILES_PATH,
+    Platform.OS === 'ios'
+      ? IOS_LIBRARY_PATH
+      : ANDROID_EXTERNAL_FILES_PATH ?? ANDROID_DATABASE_PATH,
 });
 ```
 
@@ -63,7 +65,7 @@ const db = open({
   location:
     Platform.OS === 'ios'
       ? IOS_LIBRARY_PATH
-      : `${ANDROID_EXTERNAL_FILES_PATH}/dbs/`,
+      : `${ANDROID_EXTERNAL_FILES_PATH}/databases/`,
 });
 ```
 

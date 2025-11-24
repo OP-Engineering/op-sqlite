@@ -12,14 +12,13 @@ import java.io.InputStream
 import java.io.OutputStream
 import com.facebook.react.util.RNLog;
 
-//@ReactModule(name = OPSQLiteModule.NAME)
 internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextBaseJavaModule(context) {
     override fun getName(): String {
         return NAME
     }
 
-    fun getTypedExportedConstants(): MutableMap<String, Any> {
-        val constants: MutableMap<String, Any> = HashMap()
+    fun getTypedExportedConstants(): MutableMap<String, Any?> {
+        val constants: MutableMap<String, Any?> = HashMap()
         val context = reactApplicationContext
         val dbPath =
                 context.getDatabasePath("defaultDatabase")
@@ -28,14 +27,14 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextB
         constants["ANDROID_DATABASE_PATH"] = dbPath
         val filesPath = context.filesDir.absolutePath
         constants["ANDROID_FILES_PATH"] = filesPath
-        val externalFilesDir = context.getExternalFilesDir(null)!!.absolutePath
-        constants["ANDROID_EXTERNAL_FILES_PATH"] = externalFilesDir
-        constants["IOS_DOCUMENT_PATH"] = ""
-        constants["IOS_LIBRARY_PATH"] = ""
+        val externalFilesDir = context.getExternalFilesDir(null)
+        constants["ANDROID_EXTERNAL_FILES_PATH"] = externalFilesDir?.absolutePath
+        constants["IOS_DOCUMENT_PATH"] = null
+        constants["IOS_LIBRARY_PATH"] = null
         return constants
     }
 
-    override fun getConstants(): MutableMap<String, Any>? {
+    override fun getConstants(): MutableMap<String, Any?> {
         return getTypedExportedConstants()
     }
 
@@ -53,7 +52,6 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextB
     @ReactMethod(isBlockingSynchronousMethod = true)
     fun getDylibPath(bundleId: String, name: String): Boolean {
         throw Exception("Do not call getDylibPath on Android")
-        return true
     }
 
     @ReactMethod
