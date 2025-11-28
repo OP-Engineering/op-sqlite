@@ -51,6 +51,7 @@ void install(jsi::Runtime &rt,
   _crsqlite_path = std::string(crsqlite_path);
   _sqlite_vec_path = std::string(sqlite_vec_path);
   opsqlite::invoker = invoker;
+  opsqlite::invalidated = false;
 
   auto open = HFN0 {
     jsi::Object options = args[0].asObject(rt);
