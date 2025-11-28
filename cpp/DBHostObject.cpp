@@ -142,7 +142,7 @@ void DBHostObject::auto_register_update_hook() {
 #ifdef OP_SQLITE_USE_LIBSQL
 // Remote connection constructor
 DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &url,
-                           std::string &auth_token, )
+                           std::string &auth_token)
     : db_name(url), rt(rt) {
   _thread_pool = std::make_shared<ThreadPool>();
   db = opsqlite_libsql_open_remote(url, auth_token);
@@ -612,13 +612,12 @@ void DBHostObject::create_jsi_functions() {
     return jsi::String::createFromUtf8(rt, result);
   });
 
-  function_map["flushPendingReactiveQueries"] =
-      HOSTFN("flushPendingReactiveQueries") {
+  function_map["flushPendingReactiveQueries"] = HFN(this) {
     auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
-    auto promise = promiseCtr.callAsConstructor(rt, HOSTFN("executor") {
+    auto promise = promiseCtr.callAsConstructor(rt, HFN(this) {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
 
-      auto task = [&rt, this, resolve]() {
+      auto task = [this, resolve]() {
         flush_pending_reactive_queries(resolve);
       };
 
