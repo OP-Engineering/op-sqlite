@@ -69,12 +69,6 @@ void install(jsi::Runtime &rt,
           options.getProperty(rt, "encryptionKey").asString(rt).utf8(rt);
     }
 
-#ifdef OP_SQLITE_USE_SQLCIPHER
-    if (encryption_key.empty()) {
-      log_to_console(rt, "Encryption key is missing for SQLCipher");
-    }
-#endif
-
     if (!location.empty()) {
       if (location == ":memory:") {
         path = ":memory:";
@@ -86,8 +80,7 @@ void install(jsi::Runtime &rt,
     }
 
     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-        rt, path, opsqlite::invoker, name, path, _crsqlite_path,
-        _sqlite_vec_path, encryption_key);
+        rt, path, name, path, _crsqlite_path, _sqlite_vec_path, encryption_key);
     dbs.emplace_back(db);
     return jsi::Object::createFromHostObject(rt, db);
   });
@@ -126,7 +119,7 @@ void install(jsi::Runtime &rt,
         options.getProperty(rt, "authToken").asString(rt).utf8(rt);
 
     std::shared_ptr<DBHostObject> db =
-        std::make_shared<DBHostObject>(rt, url, auth_token, invoker);
+        std::make_shared<DBHostObject>(rt, url, auth_token);
 
     return jsi::Object::createFromHostObject(rt, db);
   });
@@ -177,8 +170,8 @@ void install(jsi::Runtime &rt,
     }
 
     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-        rt, invoker, name, path, url, auth_token, sync_interval, offline,
-        encryption_key, remote_encryption_key);
+        rt, name, path, url, auth_token, sync_interval, offline, encryption_key,
+        remote_encryption_key);
     return jsi::Object::createFromHostObject(rt, db);
   });
 #endif

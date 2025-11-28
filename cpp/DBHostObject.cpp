@@ -142,9 +142,8 @@ void DBHostObject::auto_register_update_hook() {
 #ifdef OP_SQLITE_USE_LIBSQL
 // Remote connection constructor
 DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &url,
-                           std::string &auth_token,
-                           std::shared_ptr<react::CallInvoker> invoker)
-    : db_name(url), invoker(std::move(invoker)), rt(rt) {
+                           std::string &auth_token, )
+    : db_name(url), rt(rt) {
   _thread_pool = std::make_shared<ThreadPool>();
   db = opsqlite_libsql_open_remote(url, auth_token);
 
@@ -152,14 +151,12 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &url,
 }
 
 // Sync connection constructor
-DBHostObject::DBHostObject(jsi::Runtime &rt,
-                           std::shared_ptr<react::CallInvoker> invoker,
-                           std::string &db_name, std::string &path,
-                           std::string &url, std::string &auth_token,
-                           int sync_interval, bool offline,
-                           std::string &encryption_key,
+DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &db_name,
+                           std::string &path, std::string &url,
+                           std::string &auth_token, int sync_interval,
+                           bool offline, std::string &encryption_key,
                            std::string &remote_encryption_key)
-    : db_name(db_name), invoker(std::move(invoker)), rt(rt) {
+    : db_name(db_name), rt(rt) {
 
   _thread_pool = std::make_shared<ThreadPool>();
 
@@ -173,13 +170,11 @@ DBHostObject::DBHostObject(jsi::Runtime &rt,
 #endif
 
 DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
-                           std::shared_ptr<react::CallInvoker> invoker,
                            std::string &db_name, std::string &path,
                            std::string &crsqlite_path,
                            std::string &sqlite_vec_path,
                            std::string &encryption_key)
-    : base_path(base_path), invoker(std::move(invoker)), db_name(db_name),
-      rt(rt) {
+    : base_path(base_path), db_name(db_name), rt(rt) {
   _thread_pool = std::make_shared<ThreadPool>();
 
 #ifdef OP_SQLITE_USE_SQLCIPHER

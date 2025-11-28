@@ -102,7 +102,7 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
   }
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
-  if (!encryption_key.empty()) {
+  if (encryption_key != nullptr && !encryption_key.empty()) {
     opsqlite_execute(db, "PRAGMA key = '" + encryption_key + "'", nullptr);
   }
 #endif
