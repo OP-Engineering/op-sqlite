@@ -20,7 +20,7 @@ namespace react = facebook::react;
 void DBHostObject::flush_pending_reactive_queries(
     const std::shared_ptr<jsi::Value> &resolve) {
   invoker->invokeAsync(
-      [this, resolve](jsi::Runtime &rt) { resolve->asObject(rt).asFunction(rt).call(rt, {}); });
+      [resolve](jsi::Runtime &rt) { resolve->asObject(rt).asFunction(rt).call(rt, {}); });
 }
 #else
 void DBHostObject::flush_pending_reactive_queries(
@@ -143,11 +143,11 @@ void DBHostObject::auto_register_update_hook() {
 // Remote connection constructor
 DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &url,
                            std::string &auth_token)
-    : db_name(url), rt(rt) {
+    : db_name(url) {
   _thread_pool = std::make_shared<ThreadPool>();
   db = opsqlite_libsql_open_remote(url, auth_token);
 
-  create_jsi_functions();
+  create_jsi_functions(rt);
 }
 
 // Sync connection constructor
@@ -156,7 +156,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &db_name,
                            std::string &auth_token, int sync_interval,
                            bool offline, std::string &encryption_key,
                            std::string &remote_encryption_key)
-    : db_name(db_name), rt(rt) {
+    : db_name(db_name) {
 
   _thread_pool = std::make_shared<ThreadPool>();
 
@@ -164,7 +164,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &db_name,
       opsqlite_libsql_open_sync(db_name, path, url, auth_token, sync_interval,
                                 offline, encryption_key, remote_encryption_key);
 
-  create_jsi_functions();
+  create_jsi_functions(rt);
 }
 
 #endif
@@ -427,19 +427,19 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
   });
 
 #ifdef OP_SQLITE_USE_LIBSQL
-  function_map["sync"] = HOSTFN("sync") {
+  function_map["sync"] = HFN(this) {
     opsqlite_libsql_sync(db);
     return {};
   });
 
-  function_map["setReservedBytes"] = HOSTFN("setReservedBytes") {
-    int32_t reserved_bytes = static_cast<int32_t>(args[0].asNumber());
+  function_map["setReservedBytes"] =HFN(this) {
+    auto reserved_bytes = static_cast<int32_t>(args[0].asNumber());
     opsqlite_libsql_set_reserved_bytes(db, reserved_bytes);
     return {};
   });
 
-  function_map["getReservedBytes"] = HOSTFN("getReservedBytes") {
-    return jsi::Value(opsqlite_libsql_get_reserved_bytes(db));
+  function_map["getReservedBytes"] = HFN(this) {
+    return {opsqlite_libsql_get_reserved_bytes(db)};
   });
 #else
   function_map["loadFile"] = HFN(this) {

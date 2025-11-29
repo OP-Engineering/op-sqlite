@@ -45,9 +45,9 @@
     "node": ">=18"
   },
   "op-sqlite": {
-    "libsql": false,
+    "libsql": true,
     "sqlcipher": false,
-    "iosSqlite": true,
+    "iosSqlite": false,
     "fts5": true,
     "rtree": true,
     "crsqlite": false,
