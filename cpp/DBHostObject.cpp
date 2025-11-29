@@ -20,7 +20,7 @@ namespace react = facebook::react;
 void DBHostObject::flush_pending_reactive_queries(
     const std::shared_ptr<jsi::Value> &resolve) {
   invoker->invokeAsync(
-      [this, resolve]() { resolve->asObject(rt).asFunction(rt).call(rt, {}); });
+      [resolve](jsi::Runtime &rt) { resolve->asObject(rt).asFunction(rt).call(rt, {}); });
 }
 #else
 void DBHostObject::flush_pending_reactive_queries(
@@ -36,8 +36,8 @@ void DBHostObject::flush_pending_reactive_queries(
                                                       metadata);
 
     invoker->invokeAsync(
-        [this, results = std::make_shared<std::vector<DumbHostObject>>(results),
-         callback = query->callback, metadata, status = std::move(status)] {
+        [results = std::make_shared<std::vector<DumbHostObject>>(results),
+         callback = query->callback, metadata, status = std::move(status)](jsi::Runtime &rt) {
           auto jsiResult = create_result(rt, status, results.get(), metadata);
           callback->asObject(rt).asFunction(rt).call(rt, jsiResult);
         });
@@ -46,24 +46,24 @@ void DBHostObject::flush_pending_reactive_queries(
   pending_reactive_queries.clear();
 
   invoker->invokeAsync(
-      [this, resolve]() { resolve->asObject(rt).asFunction(rt).call(rt, {}); });
+      [resolve](jsi::Runtime &rt) { resolve->asObject(rt).asFunction(rt).call(rt, {}); });
 }
 
 void DBHostObject::on_commit() {
   invoker->invokeAsync(
-      [this] { commit_hook_callback->asObject(rt).asFunction(rt).call(rt); });
+      [this](jsi::Runtime &rt) { commit_hook_callback->asObject(rt).asFunction(rt).call(rt); });
 }
 
 void DBHostObject::on_rollback() {
   invoker->invokeAsync(
-      [this] { rollback_hook_callback->asObject(rt).asFunction(rt).call(rt); });
+      [this](jsi::Runtime &rt) { rollback_hook_callback->asObject(rt).asFunction(rt).call(rt); });
 }
 
 void DBHostObject::on_update(const std::string &table,
                              const std::string &operation, long long row_id) {
   if (update_hook_callback != nullptr) {
     invoker->invokeAsync(
-        [this, callback = update_hook_callback, table, operation, row_id] {
+        [callback = update_hook_callback, table, operation, row_id](jsi::Runtime &rt) {
           auto res = jsi::Object(rt);
           res.setProperty(rt, "table", jsi::String::createFromUtf8(rt, table));
           res.setProperty(rt, "operation",
@@ -143,11 +143,11 @@ void DBHostObject::auto_register_update_hook() {
 // Remote connection constructor
 DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &url,
                            std::string &auth_token)
-    : db_name(url), rt(rt) {
+    : db_name(url) {
   _thread_pool = std::make_shared<ThreadPool>();
   db = opsqlite_libsql_open_remote(url, auth_token);
 
-  create_jsi_functions();
+  create_jsi_functions(rt);
 }
 
 // Sync connection constructor
@@ -156,7 +156,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &db_name,
                            std::string &auth_token, int sync_interval,
                            bool offline, std::string &encryption_key,
                            std::string &remote_encryption_key)
-    : db_name(db_name), rt(rt) {
+    : db_name(db_name) {
 
   _thread_pool = std::make_shared<ThreadPool>();
 
@@ -164,7 +164,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &db_name,
       opsqlite_libsql_open_sync(db_name, path, url, auth_token, sync_interval,
                                 offline, encryption_key, remote_encryption_key);
 
-  create_jsi_functions();
+  create_jsi_functions(rt);
 }
 
 #endif
@@ -174,7 +174,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
                            std::string &crsqlite_path,
                            std::string &sqlite_vec_path,
                            std::string &encryption_key)
-    : base_path(base_path), db_name(db_name), rt(rt) {
+    : base_path(base_path), db_name(db_name) {
   _thread_pool = std::make_shared<ThreadPool>();
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
@@ -185,10 +185,10 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
 #else
   db = opsqlite_open(db_name, path, crsqlite_path, sqlite_vec_path);
 #endif
-  create_jsi_functions();
+  create_jsi_functions(rt);
 };
 
-void DBHostObject::create_jsi_functions() {
+void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
   function_map["attach"] = HFN(this) {
     std::string secondary_db_path = std::string(base_path);
 
@@ -427,19 +427,19 @@ void DBHostObject::create_jsi_functions() {
   });
 
 #ifdef OP_SQLITE_USE_LIBSQL
-  function_map["sync"] = HOSTFN("sync") {
+  function_map["sync"] = HFN(this) {
     opsqlite_libsql_sync(db);
     return {};
   });
 
-  function_map["setReservedBytes"] = HOSTFN("setReservedBytes") {
-    int32_t reserved_bytes = static_cast<int32_t>(args[0].asNumber());
+  function_map["setReservedBytes"] =HFN(this) {
+    auto reserved_bytes = static_cast<int32_t>(args[0].asNumber());
     opsqlite_libsql_set_reserved_bytes(db, reserved_bytes);
     return {};
   });
 
-  function_map["getReservedBytes"] = HOSTFN("getReservedBytes") {
-    return jsi::Value(opsqlite_libsql_get_reserved_bytes(db));
+  function_map["getReservedBytes"] = HFN(this) {
+    return {opsqlite_libsql_get_reserved_bytes(db)};
   });
 #else
   function_map["loadFile"] = HFN(this) {
@@ -461,7 +461,7 @@ void DBHostObject::create_jsi_functions() {
         });
   });
 
-  function_map["updateHook"] = HOSTFN("updateHook") {
+  function_map["updateHook"] = HFN(this) {
     auto callback = std::make_shared<jsi::Value>(rt, args[0]);
 
     if (callback->isUndefined() || callback->isNull()) {
@@ -474,7 +474,7 @@ void DBHostObject::create_jsi_functions() {
     return {};
   });
 
-  function_map["commitHook"] = HOSTFN("commitHook") {
+  function_map["commitHook"] = HFN(this) {
     if (count < 1) {
       throw std::runtime_error("[op-sqlite][commitHook] callback needed");
     }
@@ -490,7 +490,7 @@ void DBHostObject::create_jsi_functions() {
     return {};
   });
 
-  function_map["rollbackHook"] = HOSTFN("rollbackHook") {
+  function_map["rollbackHook"] = HFN(this) {
     if (count < 1) {
       throw std::runtime_error("[op-sqlite][rollbackHook] callback needed");
     }
@@ -507,7 +507,7 @@ void DBHostObject::create_jsi_functions() {
     return {};
   });
 
-  function_map["loadExtension"] = HOSTFN("loadExtension") {
+  function_map["loadExtension"] = HFN(this) {
     auto path = args[0].asString(rt).utf8(rt);
     std::string entry_point;
     if (count > 1 && args[1].isString()) {
@@ -518,7 +518,7 @@ void DBHostObject::create_jsi_functions() {
     return {};
   });
 
-  function_map["reactiveExecute"] = HOSTFN("reactiveExecute") {
+  function_map["reactiveExecute"] = HFN(this) {
     auto query = args[0].asObject(rt);
 
     const std::string query_str =
@@ -561,7 +561,7 @@ void DBHostObject::create_jsi_functions() {
 
     auto_register_update_hook();
 
-    auto unsubscribe = HOSTFN("unsubscribe") {
+    auto unsubscribe = HFN2(this, reactiveQuery) {
       auto it = std::find(reactive_queries.begin(), reactive_queries.end(),
                           reactiveQuery);
       if (it != reactive_queries.end()) {
@@ -575,7 +575,7 @@ void DBHostObject::create_jsi_functions() {
   });
 #endif
 
-  function_map["prepareStatement"] = HOSTFN("prepareStatement") {
+  function_map["prepareStatement"] = HFN(this) {
     auto query = args[0].asString(rt).utf8(rt);
 #ifdef OP_SQLITE_USE_LIBSQL
     libsql_stmt_t statement = opsqlite_libsql_prepare_statement(db, query);
@@ -588,7 +588,7 @@ void DBHostObject::create_jsi_functions() {
     return jsi::Object::createFromHostObject(rt, preparedStatementHostObject);
   });
 
-  function_map["getDbPath"] = HOSTFN("getDbPath") {
+  function_map["getDbPath"] = HFN(this) {
     std::string path = std::string(base_path);
 
     if (count == 1) {
@@ -639,11 +639,11 @@ std::vector<jsi::PropNameID> DBHostObject::getPropertyNames(jsi::Runtime &_rt) {
   return keys;
 }
 
-jsi::Value DBHostObject::get(jsi::Runtime &_rt,
+jsi::Value DBHostObject::get(jsi::Runtime &rt,
                              const jsi::PropNameID &propNameID) {
   auto name = propNameID.utf8(rt);
   if (function_map.count(name) != 1) {
-    return HOST_STATIC_FN(name.c_str()) {
+    return HFN(name) {
       throw std::runtime_error(
           "[op-sqlite] Function " + name +
           " not implemented for current backend (libsql or sqlcipher)");
