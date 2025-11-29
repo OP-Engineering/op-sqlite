@@ -43,14 +43,14 @@ void invalidate() {
 }
 
 void install(jsi::Runtime &rt,
-             const std::shared_ptr<react::CallInvoker> &invoker,
+             const std::shared_ptr<react::CallInvoker> &_invoker,
              const char *base_path, const char *crsqlite_path,
              const char *sqlite_vec_path) {
 
   _base_path = std::string(base_path);
   _crsqlite_path = std::string(crsqlite_path);
   _sqlite_vec_path = std::string(sqlite_vec_path);
-  opsqlite::invoker = invoker;
+  opsqlite::invoker = _invoker;
   opsqlite::invalidated = false;
 
   auto open = HFN0 {
@@ -85,7 +85,7 @@ void install(jsi::Runtime &rt,
     return jsi::Object::createFromHostObject(rt, db);
   });
 
-  auto is_sqlcipher = HOST_STATIC_FN("isSQLCipher") {
+  auto is_sqlcipher = HFN(=) {
 #ifdef OP_SQLITE_USE_SQLCIPHER
     return true;
 #else
@@ -93,7 +93,7 @@ void install(jsi::Runtime &rt,
 #endif
   });
 
-  auto is_ios_embedded = HOST_STATIC_FN("isIOSEmbedded") {
+  auto is_ios_embedded = HFN(=) {
 #ifdef OP_SQLITE_USE_PHONE_VERSION
     return true;
 #else
@@ -101,7 +101,7 @@ void install(jsi::Runtime &rt,
 #endif
   });
 
-  auto is_libsql = HOST_STATIC_FN("isLibsql") {
+  auto is_libsql = HFN(=) {
 #ifdef OP_SQLITE_USE_LIBSQL
     return true;
 #else
@@ -110,7 +110,7 @@ void install(jsi::Runtime &rt,
   });
 
 #ifdef OP_SQLITE_USE_LIBSQL
-  auto open_remote = HOST_STATIC_FN("openRemote") {
+  auto open_remote = HFN(=) {
     jsi::Object options = args[0].asObject(rt);
 
     std::string url = options.getProperty(rt, "url").asString(rt).utf8(rt);
@@ -124,7 +124,7 @@ void install(jsi::Runtime &rt,
     return jsi::Object::createFromHostObject(rt, db);
   });
 
-  auto open_sync = HOST_STATIC_FN("openSync") {
+  auto open_sync = HFN(=) {
     jsi::Object options = args[0].asObject(rt);
     std::string name = options.getProperty(rt, "name").asString(rt).utf8(rt);
     std::string path = std::string(_base_path);
@@ -162,7 +162,7 @@ void install(jsi::Runtime &rt,
     if (!location.empty()) {
       if (location == ":memory:") {
         path = ":memory:";
-      } else if (location.rfind("/", 0) == 0) {
+      } else if (location.rfind('/', 0) == 0) {
         path = location;
       } else {
         path = path + "/" + location;

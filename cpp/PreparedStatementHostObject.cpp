@@ -48,7 +48,7 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
   }
 
   if (name == "bindSync") {
-    return HOSTFN("bindSync") {
+    return HFN(this) {
       if (_stmt == nullptr) {
         throw std::runtime_error("statement has been freed");
       }
@@ -71,7 +71,7 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
   }
 
   if (name == "execute") {
-    return HOSTFN("execute") {
+    return HFN(this) {
       if (_stmt == nullptr) {
         throw std::runtime_error("statement has been freed");
       }
