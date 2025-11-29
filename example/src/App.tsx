@@ -10,8 +10,7 @@ import {
   allTestsPassed,
 } from '@op-engineering/op-test';
 import './tests'; // import all tests to register them
-import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
-import {StyleSheet} from 'react-native';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 export default function App() {
   const [results, setResults] = useState<any>(null);
@@ -53,18 +52,5 @@ export default function App() {
   // }
   // };
 
-  return (
-    <SafeAreaProvider>
-      <SafeAreaView style={STYLES.container}>
-        {displayResults(results)}
-      </SafeAreaView>
-    </SafeAreaProvider>
-  );
+  return <SafeAreaProvider>{displayResults(results)}</SafeAreaProvider>;
 }
-
-const STYLES = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#333',
-  },
-});
