@@ -6,8 +6,8 @@ xcrun simctl boot "$(xcrun simctl list devices available | grep -m1 'Booted' || 
 
 yarn run:ios:release
 
-cd ..
+sleep 5
 
-sleep(5)
+cd ..
 
 node ./scripts/poll-in-app-server.js
