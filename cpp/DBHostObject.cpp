@@ -20,7 +20,7 @@ namespace react = facebook::react;
 void DBHostObject::flush_pending_reactive_queries(
     const std::shared_ptr<jsi::Value> &resolve) {
   invoker->invokeAsync(
-      [this, resolve]() { resolve->asObject(rt).asFunction(rt).call(rt, {}); });
+      [this, resolve](jsi::Runtime &rt) { resolve->asObject(rt).asFunction(rt).call(rt, {}); });
 }
 #else
 void DBHostObject::flush_pending_reactive_queries(

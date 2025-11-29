@@ -46,8 +46,8 @@
   },
   "op-sqlite": {
     "libsql": false,
-    "sqlcipher": true,
-    "iosSqlite": false,
+    "sqlcipher": false,
+    "iosSqlite": true,
     "fts5": true,
     "rtree": true,
     "crsqlite": false,

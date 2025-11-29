@@ -110,7 +110,7 @@ void install(jsi::Runtime &rt,
   });
 
 #ifdef OP_SQLITE_USE_LIBSQL
-  auto open_remote = HOST_STATIC_FN("openRemote") {
+  auto open_remote = HFN(=) {
     jsi::Object options = args[0].asObject(rt);
 
     std::string url = options.getProperty(rt, "url").asString(rt).utf8(rt);
@@ -124,7 +124,7 @@ void install(jsi::Runtime &rt,
     return jsi::Object::createFromHostObject(rt, db);
   });
 
-  auto open_sync = HOST_STATIC_FN("openSync") {
+  auto open_sync = HFN(=) {
     jsi::Object options = args[0].asObject(rt);
     std::string name = options.getProperty(rt, "name").asString(rt).utf8(rt);
     std::string path = std::string(_base_path);
@@ -162,7 +162,7 @@ void install(jsi::Runtime &rt,
     if (!location.empty()) {
       if (location == ":memory:") {
         path = ":memory:";
-      } else if (location.rfind("/", 0) == 0) {
+      } else if (location.rfind('/', 0) == 0) {
         path = location;
       } else {
         path = path + "/" + location;
