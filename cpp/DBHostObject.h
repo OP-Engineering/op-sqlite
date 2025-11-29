@@ -73,7 +73,7 @@ public:
 private:
   std::set<std::shared_ptr<ReactiveQuery>> pending_reactive_queries;
   void auto_register_update_hook();
-  void create_jsi_functions();
+  void create_jsi_functions(jsi::Runtime &rt);
   void
   flush_pending_reactive_queries(const std::shared_ptr<jsi::Value> &resolve);
 
@@ -84,7 +84,6 @@ private:
   std::shared_ptr<jsi::Value> update_hook_callback;
   std::shared_ptr<jsi::Value> commit_hook_callback;
   std::shared_ptr<jsi::Value> rollback_hook_callback;
-  jsi::Runtime &rt;
   std::vector<std::shared_ptr<ReactiveQuery>> reactive_queries;
   std::vector<PendingReactiveInvocation> pending_reactive_invocations;
   bool is_update_hook_registered = false;
