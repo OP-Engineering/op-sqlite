@@ -23,7 +23,7 @@ async function pollInAppServer() {
         }
       }
     } catch (error) {
-      console.error('Error occurred during polling:', error);
+      console.error('🟥', error);
     }
 
     await new Promise((resolve) => setTimeout(resolve, pollInterval));

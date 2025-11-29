@@ -33,8 +33,8 @@ if is_user_app
   raise "package.json not found" if package_json_path.nil?
   
   app_package = JSON.parse(File.read(package_json_path))
-# When running on the example app
 else
+  # When running on the example app
   package_json_path = File.join(__dir__, "example", "package.json")
   app_package = JSON.parse(File.read(File.join(__dir__, "example", "package.json")))
 end
@@ -90,7 +90,7 @@ Pod::Spec.new do |s|
   s.license      = package["license"]
   s.authors      = package["author"]
 
-  s.platforms    = { :ios => "13.0", :tvos => "13.0", :osx => "10.15", :visionos => "1.0" }
+  s.platforms    = { :ios => min_ios_version_supported, :tvos => "13.0", :osx => "10.15", :visionos => "1.0" }
   s.source       = { :git => "https://github.com/op-engineering/op-sqlite.git", :tag => "#{s.version}" }
 
   install_modules_dependencies(s)
