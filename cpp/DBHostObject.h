@@ -74,8 +74,7 @@ private:
   std::set<std::shared_ptr<ReactiveQuery>> pending_reactive_queries;
   void auto_register_update_hook();
   void create_jsi_functions(jsi::Runtime &rt);
-  void
-  flush_pending_reactive_queries(const std::shared_ptr<jsi::Value> &resolve);
+  void flush_pending_reactive_queries(const std::shared_ptr<jsi::Value> &resolve);
 
   std::unordered_map<std::string, jsi::Value> function_map;
   std::string base_path;
