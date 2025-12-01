@@ -72,22 +72,24 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
     documentPath = [paths objectAtIndex:0];
   }
 
+#ifdef OP_SQLITE_USE_CRSQLITE
   NSBundle *crsqlite_bundle =
       [NSBundle bundleWithIdentifier:@"io.vlcn.crsqlite"];
   NSString *crsqlite_path = [crsqlite_bundle pathForResource:@"crsqlite"
                                                       ofType:@""];
+#else
+  NSString *crsqlite_path = @"";
+#endif
+  
+
+#ifdef OP_SQLITE_USE_SQLITE_VEC
   NSBundle *libsqlitevec_bundle =
       [NSBundle bundleWithIdentifier:@"com.ospfranco.sqlitevec"];
   NSString *sqlite_vec_path = [libsqlitevec_bundle pathForResource:@"sqlitevec"
                                                             ofType:@""];
-
-  if (crsqlite_path == nil) {
-    crsqlite_path = @"";
-  }
-
-  if (sqlite_vec_path == nil) {
-    sqlite_vec_path = @"";
-  }
+#else
+  NSString *sqlite_vec_path = @"";
+#endif
 
   opsqlite::install(runtime, callInvoker, [documentPath UTF8String],
                     [crsqlite_path UTF8String], [sqlite_vec_path UTF8String]);

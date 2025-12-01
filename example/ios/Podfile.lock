@@ -25,7 +25,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - OpServer (0.1.4):
+  - OpServer (0.1.5):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2027,8 +2027,8 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   FBLazyVector: 2e5b5553df729e080483373db6f045201ff4e6db
   hermes-engine: 273e30e7fb618279934b0b95ffab60ecedb7acf5
-  op-sqlite: 7e1d781318b8f936bd7afe0773cf0d2e0b81780b
-  OpServer: 63fc523290a5c7c6f98dc7ba5e76cc720d798259
+  op-sqlite: d3b8002e984138ab1d6d88728adb0570db539901
+  OpServer: 9b3ebdeeb095950e760e3c39853cd06849421b35
   RCTDeprecation: c6b36da89aa26090c8684d29c2868dcca2cd4554
   RCTRequired: 1413a0844770d00fa1f1bb2da4680adfa8698065
   RCTTypeSafety: 354b4bb344998550c45d054ef66913837948f958

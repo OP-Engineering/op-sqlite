@@ -210,13 +210,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-OPSQLiteExample/Pods-OPSQLiteExample-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-OPSQLiteExample/Pods-OPSQLiteExample-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -253,13 +249,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-OPSQLiteExample/Pods-OPSQLiteExample-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-OPSQLiteExample/Pods-OPSQLiteExample-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -315,6 +307,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LLVM_LTO = NO;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -342,6 +335,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 24CMR7378R;
+				GCC_OPTIMIZATION_LEVEL = s;
 				INFOPLIST_FILE = OPSQLiteExample/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "OP SQLite";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
@@ -349,6 +343,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LLVM_LTO = NO;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -444,7 +439,10 @@
 				);
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = "$(inherited)  ";
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(OTHER_CFLAGS)",
 					"-DFOLLY_NO_CONFIG",
@@ -532,7 +530,10 @@
 					"\"$(inherited)\"",
 				);
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_CFLAGS = "$(inherited)  ";
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(OTHER_CFLAGS)",
 					"-DFOLLY_NO_CONFIG",
