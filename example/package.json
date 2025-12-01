@@ -20,9 +20,8 @@
     "chance": "^1.1.9",
     "clsx": "^2.0.0",
     "events": "^3.3.0",
-    "react": "19.1.0",
-    "react-native": "0.81.5",
-    "react-native-performance": "^6.0.0",
+    "react": "19.1.1",
+    "react-native": "0.82.1",
     "react-native-safe-area-context": "^5.6.2"
   },
   "devDependencies": {
@@ -32,8 +31,8 @@
     "@react-native-community/cli": "^18.0.0",
     "@react-native-community/cli-platform-android": "18.0.0",
     "@react-native-community/cli-platform-ios": "18.0.0",
-    "@react-native/babel-preset": "0.81.5",
-    "@react-native/metro-config": "0.81.5",
+    "@react-native/babel-preset": "0.82.1",
+    "@react-native/metro-config": "0.82.1",
     "@react-native/typescript-config": "0.81.5",
     "@types/chance": "^1.1.7",
     "@types/react": "^19.1.1",
