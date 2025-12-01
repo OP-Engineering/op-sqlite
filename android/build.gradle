@@ -85,28 +85,27 @@ if(useSQLCipher) {
 } 
 
 if(useCRSQLite) {
-  println "[OP-SQLITE] using CR-SQLite 🤖"
+  println "[OP-SQLITE] using CR-SQLite"
 }
 
 if(performanceMode) {
-  println "[OP-SQLITE] Performance mode enabled! 🚀"
+  println "[OP-SQLITE] Performance mode enabled"
 }
 
 if(enableFTS5) {
-  println "[OP-SQLITE] FTS5 enabled! 🔎"
+  println "[OP-SQLITE] FTS5 enabled"
 }
 
 if(enableRtree) {
-  println "[OP-SQLITE] RTree enabled! 🌲"
+  println "[OP-SQLITE] RTree enabled"
 }
 
 if(useSqliteVec) {
-    println "[OP-SQLITE] Sqlite Vec enabled! ↗️"
+  println "[OP-SQLITE] Sqlite-vec enabled"
 }
 
-
 if (!tokenizers.isEmpty()) {
-  println "[OP-SQLITE] Tokenizers enabled! 🧾 Tokenizers: " + tokenizers
+  println "[OP-SQLITE] Tokenizers enabled. Detected tokenizers: " + tokenizers
 }
 
 android {
@@ -120,58 +119,67 @@ android {
 
     externalNativeBuild {
       cmake {
-      if(useSQLCipher) {
-        cFlags += "-DOP_SQLITE_USE_SQLCIPHER=1"
-        cppFlags += "-DOP_SQLITE_USE_SQLCIPHER=1"
-      }
-      if(useLibsql) {
-        cFlags += "-DOP_SQLITE_USE_LIBSQL=1"
-        cppFlags += "-DOP_SQLITE_USE_LIBSQL=1"
-      }
-      if(useCRSQLite) {
-        cFlags += "-DOP_SQLITE_USE_CRSQLITE=1"
-        cppFlags += "-DOP_SQLITE_USE_CRSQLITE=1"
-      }
-      if(performanceMode) {
-        cFlags += ["-DSQLITE_DQS=0", "-DSQLITE_THREADSAFE=1", "-DSQLITE_DEFAULT_MEMSTATUS=0", "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1", "-DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1", "-DSQLITE_MAX_EXPR_DEPTH=0", "-DSQLITE_OMIT_DEPRECATED=1", "-DSQLITE_OMIT_PROGRESS_CALLBACK=1", "-DSQLITE_OMIT_SHARED_CACHE=1", "-DSQLITE_USE_ALLOCA=1"]
-      }
-      if(enableFTS5) {
-        cFlags += ["-DSQLITE_ENABLE_FTS5=1"]
-      }
-      if(enableRtree) {
-        cFlags += ["-DSQLITE_ENABLE_RTREE=1"]
-      }
-      if(useSqliteVec) {
-        cFlags += "-DOP_SQLITE_USE_SQLITE_VEC=1"
-        cppFlags += "-DOP_SQLITE_USE_SQLITE_VEC=1"
-      }
-
-      // This are zeroes because they will be passed as C flags, so they become falsy
-      def sourceFiles = 0
-      // def tokenizerInitStrings = 0
-      def tokenizersHeaderPath = 0
-      if (!tokenizers.isEmpty()) {
-        def sourceDir = isUserApp ? file("$rootDir/../../../c_sources") : file("$rootDir/../c_sources")
-        def destDir = file("$buildscript.sourceFile.parentFile/c_sources")
-        copy {
-          from sourceDir
-          into destDir
-          include "**/*.cpp", "**/*.h"
+        if(useSQLCipher) {
+          cFlags += "-DOP_SQLITE_USE_SQLCIPHER=1"
+          cppFlags += "-DOP_SQLITE_USE_SQLCIPHER=1"
         }
-        sourceFiles = fileTree(dir: destDir, include: ["**/*.cpp", "**/*.h"]).files.join(";")
-        tokenizersHeaderPath = "../c_sources/tokenizers.h"
-      }
+        if(useLibsql) {
+          cFlags += "-DOP_SQLITE_USE_LIBSQL=1"
+          cppFlags += "-DOP_SQLITE_USE_LIBSQL=1"
+        }
+        if(useCRSQLite) {
+          cFlags += "-DOP_SQLITE_USE_CRSQLITE=1"
+          cppFlags += "-DOP_SQLITE_USE_CRSQLITE=1"
+        }
+        if(performanceMode) {
+          cFlags += ["-DSQLITE_DQS=0", "-DSQLITE_THREADSAFE=1", "-DSQLITE_DEFAULT_MEMSTATUS=0", "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1", "-DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1", "-DSQLITE_MAX_EXPR_DEPTH=0", "-DSQLITE_OMIT_DEPRECATED=1", "-DSQLITE_OMIT_PROGRESS_CALLBACK=1", "-DSQLITE_OMIT_SHARED_CACHE=1", "-DSQLITE_USE_ALLOCA=1"]
+        }
+        if(enableFTS5) {
+          cFlags += ["-DSQLITE_ENABLE_FTS5=1"]
+        }
+        if(enableRtree) {
+          cFlags += ["-DSQLITE_ENABLE_RTREE=1"]
+        }
+        if(useSqliteVec) {
+          cFlags += "-DOP_SQLITE_USE_SQLITE_VEC=1"
+          cppFlags += "-DOP_SQLITE_USE_SQLITE_VEC=1"
+        }
 
-      cppFlags "-O2 -frtti -fexceptions -Wall -fstack-protector-all"
-      arguments "-DANDROID_STL=c++_shared",
-        "-DSQLITE_FLAGS='$sqliteFlags'",
-        "-DUSE_SQLCIPHER=${useSQLCipher ? 1 : 0}",
-        "-DUSE_CRSQLITE=${useCRSQLite ? 1 : 0}",
-        "-DUSE_LIBSQL=${useLibsql ? 1 : 0}",
-        "-DUSE_SQLITE_VEC=${useSqliteVec ? 1 : 0}",
-        "-DUSER_DEFINED_SOURCE_FILES=${sourceFiles}",
-        "-DUSER_DEFINED_TOKENIZERS_HEADER_PATH='${tokenizersHeaderPath}'",
-        "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+        // This are zeroes because they will be passed as C flags, so they become falsy
+        def sourceFiles = 0
+        // def tokenizerInitStrings = 0
+        def tokenizersHeaderPath = 0
+        if (!tokenizers.isEmpty()) {
+          def sourceDir = isUserApp ? file("$rootDir/../../../c_sources") : file("$rootDir/../c_sources")
+          def destDir = file("$buildscript.sourceFile.parentFile/c_sources")
+          copy {
+            from sourceDir
+            into destDir
+            include "**/*.cpp", "**/*.h"
+          }
+          sourceFiles = fileTree(dir: destDir, include: ["**/*.cpp", "**/*.h"]).files.join(";")
+          tokenizersHeaderPath = "../c_sources/tokenizers.h"
+        }
+
+        cppFlags "-O2 -frtti -fexceptions -Wall -fstack-protector-all"
+        arguments "-DANDROID_STL=c++_shared",
+          "-DSQLITE_FLAGS='$sqliteFlags'",
+          "-DUSE_SQLCIPHER=${useSQLCipher ? 1 : 0}",
+          "-DUSE_CRSQLITE=${useCRSQLite ? 1 : 0}",
+          "-DUSE_LIBSQL=${useLibsql ? 1 : 0}",
+          "-DUSE_SQLITE_VEC=${useSqliteVec ? 1 : 0}",
+          "-DUSER_DEFINED_SOURCE_FILES=${sourceFiles}",
+          "-DUSER_DEFINED_TOKENIZERS_HEADER_PATH='${tokenizersHeaderPath}'",
+          "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+
+        buildTypes {
+          debug {
+            cppFlags "-O1 -g"
+          }
+          release {
+            cppFlags "-O2"
+          }
+        }
       }
     }
   }
