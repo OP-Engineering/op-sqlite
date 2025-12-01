@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@op-engineering/op-server": "^0.1.4",
-    "@op-engineering/op-test": "^0.2.4",
+    "@op-engineering/op-test": "^0.2.5",
     "chance": "^1.1.9",
     "clsx": "^2.0.0",
     "events": "^3.3.0",
@@ -45,7 +45,7 @@
     "node": ">=18"
   },
   "op-sqlite": {
-    "libsql": true,
+    "libsql": false,
     "sqlcipher": false,
     "iosSqlite": false,
     "fts5": true,

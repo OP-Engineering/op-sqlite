@@ -1,29 +1,40 @@
 import {useEffect, useState} from 'react';
-import {
-  // setServerError,
-  setServerResults,
-  stopServer,
-} from './server';
+import {setServerResults, stopServer} from './server';
 import {
   displayResults,
   runTests,
   allTestsPassed,
 } from '@op-engineering/op-test';
 import './tests'; // import all tests to register them
-import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
+import {performanceTest} from './performance_test';
+import {StyleSheet, Text, View} from 'react-native';
 
 export default function App() {
   const [results, setResults] = useState<any>(null);
+  const [perfResult, setPerfResult] = useState<number>(0);
   useEffect(() => {
-    // registerTests();
-    runTests()
-      .then(newResults => {
-        setServerResults(allTestsPassed(newResults));
-        setResults(newResults);
-      })
-      .catch(_ => {
+    const work = async () => {
+      try {
+        const results = await runTests();
+        setServerResults(allTestsPassed(results));
+        setResults(results);
+      } catch (e) {
         setServerResults(false);
-      });
+      }
+
+      setTimeout(() => {
+        try {
+          global?.gc?.();
+          let perfRes = performanceTest();
+          setPerfResult(perfRes);
+        } catch (e) {
+          // intentionally left blank
+        }
+      }, 1000);
+    };
+
+    work();
 
     return () => {
       stopServer();
@@ -52,5 +63,29 @@ export default function App() {
   // }
   // };
 
-  return <SafeAreaProvider>{displayResults(results)}</SafeAreaProvider>;
+  return (
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.container}>
+        <View>
+          <Text style={styles.text}>Performance Result: {perfResult}</Text>
+        </View>
+        <View style={styles.results}>{displayResults(results)}</View>
+      </SafeAreaView>
+    </SafeAreaProvider>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#222',
+    gap: 4,
+    padding: 10,
+  },
+  results: {
+    flex: 1,
+  },
+  text: {
+    color: 'white',
+  },
+});
