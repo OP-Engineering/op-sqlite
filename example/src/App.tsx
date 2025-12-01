@@ -67,7 +67,9 @@ export default function App() {
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
         <View>
-          <Text style={styles.text}>Performance Result: {perfResult}</Text>
+          <Text style={styles.performanceText}>
+            100_000 query time: {perfResult.toFixed(0)} ms
+          </Text>
         </View>
         <View style={styles.results}>{displayResults(results)}</View>
       </SafeAreaView>
@@ -85,7 +87,8 @@ const styles = StyleSheet.create({
   results: {
     flex: 1,
   },
-  text: {
+  performanceText: {
     color: 'white',
+    fontSize: 16,
   },
 });
