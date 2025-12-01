@@ -66,19 +66,19 @@ end
 
 if phone_version then
   if use_sqlcipher then
-    raise "SQLCipher is not supported with phone version"
+    raise "SQLCipher is not supported with phone version. It cannot load extensions."
   end
 
   if use_crsqlite then
-    raise "CRSQLite is not supported with phone version"
+    raise "CRSQLite is not supported with phone version. It cannot load extensions."
   end
 
   if rtree then
-    raise "RTree is not supported with phone version"
+    raise "RTree is not supported with phone version. It cannot load extensions."
   end
 
   if use_sqlite_vec then
-    raise "SQLite Vec is not supported with phone version"
+    raise "SQLite Vec is not supported with phone version. It cannot load extensions."
   end
 end
 
