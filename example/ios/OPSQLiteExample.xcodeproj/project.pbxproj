@@ -307,6 +307,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LLVM_LTO = NO;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -334,6 +335,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 24CMR7378R;
+				GCC_OPTIMIZATION_LEVEL = s;
 				INFOPLIST_FILE = OPSQLiteExample/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "OP SQLite";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
@@ -341,6 +343,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LLVM_LTO = NO;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

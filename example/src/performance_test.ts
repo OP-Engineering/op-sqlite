@@ -1,6 +1,5 @@
 import {open} from '@op-engineering/op-sqlite';
-
-// Adjust the import above if your API is different
+import performance from 'react-native-performance';
 
 export function performanceTest() {
   const db = open({

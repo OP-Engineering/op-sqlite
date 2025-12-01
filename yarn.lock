@@ -1774,13 +1774,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@op-engineering/op-server@npm:^0.1.4":
-  version: 0.1.4
-  resolution: "@op-engineering/op-server@npm:0.1.4"
+"@op-engineering/op-server@npm:^0.1.5":
+  version: 0.1.5
+  resolution: "@op-engineering/op-server@npm:0.1.5"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10c0/bee41839969e50357d99ba14fd66c23c562a524c40d9ac009a633831494c24267ddd4bdb236b6435aa64f84f9e59c2ce3d0290082e1b30ad74678431bbce38ee
+  checksum: 10c0/8414554750cf665f92faf7ed08a47ccb024f3e0a61070c2efeaed589a25f1cfa8bef99db842a8f3fe8d4ed2fd4dbde252717d9990f3db48d6c6baf119b1e028e
   languageName: node
   linkType: hard
 
@@ -5587,7 +5587,7 @@ __metadata:
     "@babel/core": "npm:^7.25.2"
     "@babel/preset-env": "npm:^7.25.3"
     "@babel/runtime": "npm:^7.25.0"
-    "@op-engineering/op-server": "npm:^0.1.4"
+    "@op-engineering/op-server": "npm:^0.1.5"
     "@op-engineering/op-test": "npm:^0.2.5"
     "@react-native-community/cli": "npm:^18.0.0"
     "@react-native-community/cli-platform-android": "npm:18.0.0"
@@ -5604,6 +5604,7 @@ __metadata:
     react-native: "npm:0.82.1"
     react-native-builder-bob: "npm:^0.40.13"
     react-native-monorepo-config: "npm:^0.1.9"
+    react-native-performance: "npm:^6.0.0"
     react-native-restart: "npm:^0.0.27"
     react-native-safe-area-context: "npm:^5.6.2"
     tailwindcss: "npm:3.3.2"
@@ -6070,6 +6071,15 @@ __metadata:
     escape-string-regexp: "npm:^5.0.0"
     fast-glob: "npm:^3.3.3"
   checksum: 10c0/fa88a725b4fe65443291fba746cccf2a3732defe6c8e1f7aab532b8345feac2b34af7fe17a28a96d30c7b9520f0f99e42962069ef8eb31acc4d33e7aa3b68a83
+  languageName: node
+  linkType: hard
+
+"react-native-performance@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "react-native-performance@npm:6.0.0"
+  peerDependencies:
+    react-native: "*"
+  checksum: 10c0/09ed75d79eada16e0fbd7a64fa463d4692b208b5e5f728c71d6b831a16797070784c83b4e4cd27e0e8a4a4ba05fee58e5fc62cf3f209986285a8f06c98a2d62a
   languageName: node
   linkType: hard
 

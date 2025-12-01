@@ -93,6 +93,8 @@ Pod::Spec.new do |s|
   s.platforms    = { :ios => min_ios_version_supported, :tvos => "13.0", :osx => "10.15", :visionos => "1.0" }
   s.source       = { :git => "https://github.com/op-engineering/op-sqlite.git", :tag => "#{s.version}" }
 
+  log_message.call("[OP-SQLITE] Configuration found at #{package_json_path}")
+
   install_modules_dependencies(s)
   
   # Base source files
@@ -114,42 +116,37 @@ Pod::Spec.new do |s|
 
   # Assign the collected source files to `s.source_files`
   s.source_files = source_files
-
+  
   xcconfig = {
-    :GCC_PREPROCESSOR_DEFINITIONS => "HAVE_FULLFSYNC=1",
-    :WARNING_CFLAGS => "-Wno-shorten-64-to-32 -Wno-comma -Wno-unreachable-code -Wno-conditional-uninitialized -Wno-deprecated-declarations",
+    :GCC_PREPROCESSOR_DEFINITIONS => "",
     :CLANG_CXX_LANGUAGE_STANDARD => "c++20",
     :GCC_OPTIMIZATION_LEVEL => "2",
   }
-
-  log_message.call("[OP-SQLITE] Configuration found at #{package_json_path}")
   
   exclude_files = []
   
   if use_sqlcipher then
-    log_message.call("[OP-SQLITE] using SQLCipher 🔒")
+    log_message.call("[OP-SQLITE] using SQLCipher")
     exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h"]
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_SQLCIPHER=1 HAVE_FULLFSYNC=1 SQLITE_HAS_CODEC SQLITE_TEMP_STORE=3 SQLITE_EXTRA_INIT=sqlcipher_extra_init SQLITE_EXTRA_SHUTDOWN=sqlcipher_extra_shutdown"
     s.dependency "OpenSSL-Universal"    
   elsif use_libsql then
-    log_message.call("[OP-SQLITE] using libsql 📘")
+    log_message.call("[OP-SQLITE] using libsql. Please contact turso (via Discord) for libsql issues")
     exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/bridge.h", "cpp/bridge.cpp"]
   else
-    log_message.call("[OP-SQLITE] using vanilla SQLite 📦")
+    log_message.call("[OP-SQLITE] using pure SQLite from CocoaPods with performance optimizations")
     exclude_files += ["cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h"]
   end
   
-  other_cflags = '-DSQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION=1'
-  optimizedCflags = '$(inherited) -DSQLITE_DQS=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1 -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DEPRECATED=1 -DSQLITE_OMIT_PROGRESS_CALLBACK=1 -DSQLITE_OMIT_SHARED_CACHE=1 -DSQLITE_USE_ALLOCA=1 -DSQLITE_THREADSAFE=1'
+  other_cflags = '$(inherited) -DSQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION=1 -DHAVE_USLEEP=1 -DSQLITE_ENABLE_LOCKING_STYLE=0'
+  optimizedCflags = ' -DSQLITE_DQS=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1 -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DEPRECATED=1 -DSQLITE_OMIT_PROGRESS_CALLBACK=1 -DSQLITE_OMIT_SHARED_CACHE=1 -DSQLITE_USE_ALLOCA=1 -DSQLITE_STRICT_SUBTYPE=1'
   frameworks = []
 
   if fts5 then
-    log_message.call("[OP-SQLITE] FTS5 enabled 🔎")
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " SQLITE_ENABLE_FTS5=1"
   end
 
   if rtree then
-    log_message.call("[OP-SQLITE] RTree enabled 🌲")
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " SQLITE_ENABLE_RTREE=1"
   end
  
@@ -161,7 +158,7 @@ Pod::Spec.new do |s|
   end
 
   if performance_mode then
-    log_message.call("[OP-SQLITE] Performance mode enabled, some features might be disabled 🚀")
+    log_message.call("[OP-SQLITE] Performance mode enabled")
     other_cflags += optimizedCflags
   end
 
@@ -187,7 +184,7 @@ Pod::Spec.new do |s|
   end
 
   if sqlite_flags != "" then
-    log_message.call("[OP-SQLITE] Custom SQLite flags: #{sqlite_flags}")
+    log_message.call("[OP-SQLITE] Detected custom SQLite flags: #{sqlite_flags}")
     other_cflags += " #{sqlite_flags}"
   end
 
