@@ -14,8 +14,11 @@ package_json_path = nil
 # When installed on user node_modules lives inside node_modules/@op-engineering/op-sqlite
 # Find the users package.json by searching up through parent directories
 if is_user_app
-  current_dir = File.dirname(File.expand_path(__dir__))
+  current_dir = File.expand_path(__dir__)
+  # Move one level up to the parent directory
+  current_dir = File.dirname(current_dir)
   
+  # Find the package.json by searching up through parent directories
   loop do
     package_path = File.join(current_dir, "package.json")
     if File.exist?(package_path)
@@ -23,11 +26,12 @@ if is_user_app
       break
     end
 
-    break if File.dirname(current_dir) == current_dir  # reached filesystem root
+    parent_dir = File.dirname(current_dir)
+    break if parent_dir == current_dir  # reached filesystem root
     current_dir = parent_dir
   end
   
-  raise "package.json not found? It's needed to read any op-sqlite config (if available)" if package_json_path.nil?
+  raise "package.json not found" if package_json_path.nil?
 else
   package_json_path = File.join(__dir__, "example", "package.json")
 end
