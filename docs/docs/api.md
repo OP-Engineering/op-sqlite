@@ -33,7 +33,7 @@ If you want to read more about securely storing your encryption key, [read this 
 
 ## Execute
 
-Base query operation. In runs in a separate so be careful with race conditions. Execution runs on native C++ threads always, so the JS/UI is not blocked, therefore, it’s recommended to ALWAYS use transactions.
+Base async query operation. All execute calls run on a (**single**) separate and dedicated thread, so the JS thread is not blocked. It’s recommended to ALWAYS use transactions since even read calls can corrupt a sqlite database.
 
 ```tsx
 import { open } from '@op-engineering/op-sqlite';
@@ -53,7 +53,7 @@ try {
 
 ### Execute with Host Objects
 
-It’s possible to return HostObjects when using a query. The benefit is that HostObjects are only created in C++ and only when you try to access a value inside of them a C++ scalar → JS scalar conversion happens. This means creation is fast, property access is slow. The use case is clear if you are returning **massive** amount of objects but only displaying/accessing a few of them at the time.
+It’s possible to return HostObjects when using a query. The benefit is that HostObjects are only created in C++ and only when you try to access a value inside of them a C++ value → JS value conversion happens. This means creation is fast, property access is slow. The use case is clear if you are returning **massive** amount of objects but only displaying/accessing a few of them at the time.
 
 The example of querying 300k objects from a database uses this api. Just be careful with all the gotchas of HostObjects (no spread, no logging, etc.)
 
