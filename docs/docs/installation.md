@@ -38,7 +38,7 @@ SQLite is very customizable on compilation level. op-sqlite also allows you add 
     // "crsqlite": false,
     // "performanceMode": true,
     // "iosSqlite": false,
-    // "sqliteFlags": "-DSQLITE_DQS=0",
+    // "sqliteFlags": "-DSQLITE_DQS=0 -DSQLITE_MY_FLAG=1",
     // "fts5": true,
     // "rtree": true,
     // "libsql": true,
