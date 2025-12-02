@@ -5,19 +5,17 @@ log_message = lambda do |message|
   puts "\e[34m#{message}\e[0m"
 end
 
+# In the sample app the dir is not inside of node_modules
 is_user_app = __dir__.include?("node_modules")
 package = JSON.parse(File.read(File.join(__dir__, "package.json")))
-parent_folder_name = File.basename(__dir__)
 app_package = nil
 package_json_path = nil
 
 # When installed on user node_modules lives inside node_modules/@op-engineering/op-sqlite
+# Find the users package.json by searching up through parent directories
 if is_user_app
-  current_dir = File.expand_path(__dir__)
-  # Move one level up to the parent directory
-  current_dir = File.dirname(current_dir)
+  current_dir = File.dirname(File.expand_path(__dir__))
   
-  # Find the package.json by searching up through parent directories
   loop do
     package_path = File.join(current_dir, "package.json")
     if File.exist?(package_path)
@@ -25,19 +23,16 @@ if is_user_app
       break
     end
 
-    parent_dir = File.dirname(current_dir)
-    break if parent_dir == current_dir  # reached filesystem root
+    break if File.dirname(current_dir) == current_dir  # reached filesystem root
     current_dir = parent_dir
   end
   
-  raise "package.json not found" if package_json_path.nil?
-  
-  app_package = JSON.parse(File.read(package_json_path))
+  raise "package.json not found? It's needed to read any op-sqlite config (if available)" if package_json_path.nil?
 else
-  # When running on the example app
   package_json_path = File.join(__dir__, "example", "package.json")
-  app_package = JSON.parse(File.read(File.join(__dir__, "example", "package.json")))
 end
+
+app_package = JSON.parse(File.read(package_json_path))
 
 op_sqlite_config = app_package["op-sqlite"]
 use_sqlcipher = false
@@ -127,15 +122,24 @@ Pod::Spec.new do |s|
   
   if use_sqlcipher then
     log_message.call("[OP-SQLITE] using SQLCipher")
-    exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h"]
+    exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h", "ios/libsql.xcframework/**/*"]
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_SQLCIPHER=1 HAVE_FULLFSYNC=1 SQLITE_HAS_CODEC SQLITE_TEMP_STORE=3 SQLITE_EXTRA_INIT=sqlcipher_extra_init SQLITE_EXTRA_SHUTDOWN=sqlcipher_extra_shutdown"
     s.dependency "OpenSSL-Universal"    
   elsif use_libsql then
     log_message.call("[OP-SQLITE] using libsql. Please contact turso (via Discord) for libsql issues")
     exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/bridge.h", "cpp/bridge.cpp"]
   else
-    log_message.call("[OP-SQLITE] using pure SQLite from CocoaPods with performance optimizations")
-    exclude_files += ["cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h"]
+    log_message.call("[OP-SQLITE] using pure SQLite")
+    exclude_files += ["cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h", "ios/libsql.xcframework/**/*"]
+  end
+
+   # Exclude xcframeworks that aren't being used
+  if !use_crsqlite then
+    exclude_files += ["ios/crsqlite.xcframework/**/*"]
+  end
+
+  if !use_sqlite_vec then
+    exclude_files += ["ios/sqlitevec.xcframework/**/*"]
   end
   
   other_cflags = '$(inherited) -DSQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION=1 -DHAVE_USLEEP=1 -DSQLITE_ENABLE_LOCKING_STYLE=0'
