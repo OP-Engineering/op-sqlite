@@ -9,12 +9,21 @@ import './tests'; // import all tests to register them
 import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import {performanceTest} from './performance_test';
 import {StyleSheet, Text, View} from 'react-native';
+import {open} from '@op-engineering/op-sqlite';
 
 export default function App() {
   const [results, setResults] = useState<any>(null);
   const [perfResult, setPerfResult] = useState<number>(0);
+  const [openTime, setOpenTime] = useState(0);
+
   useEffect(() => {
     const work = async () => {
+      let start = performance.now();
+      let dummyDB = open({
+        name: 'dummyDb.sqlite',
+      });
+      setOpenTime(performance.now() - start);
+
       try {
         const results = await runTests();
         setServerResults(allTestsPassed(results));
@@ -67,6 +76,9 @@ export default function App() {
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
         <View>
+          <Text style={styles.performanceText}>
+            Open DB time: {openTime.toFixed(0)} ms
+          </Text>
           <Text style={styles.performanceText}>
             100_000 query time: {perfResult.toFixed(0)} ms
           </Text>
