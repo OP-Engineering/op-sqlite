@@ -19,6 +19,8 @@ jobs:
         with:
           node-version: "22"
           registry-url: https://registry.npmjs.org
+          scope: "@op-engineering"
+          always-auth: true
       - name: enable corepack
         run: corepack enable
         shell: bash
