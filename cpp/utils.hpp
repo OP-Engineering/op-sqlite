@@ -50,7 +50,6 @@ bool file_exists(const std::string &path);
 
 void log_to_console(jsi::Runtime &rt, const std::string &message);
 
-jsi::Function host_fn(jsi::Runtime &rt, jsi::HostFunctionType lambda);
 jsi::Value
 promisify(jsi::Runtime &rt, std::function<std::any()> lambda,
           std::function<jsi::Value(jsi::Runtime &rt, std::any result)>

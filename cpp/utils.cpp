@@ -8,6 +8,7 @@
 #include <fstream>
 #include <sys/stat.h>
 #include <utility>
+#include "macros.hpp"
 
 namespace opsqlite {
 
@@ -322,21 +323,14 @@ void log_to_console(jsi::Runtime &runtime, const std::string &message) {
   log.call(runtime, jsi::String::createFromUtf8(runtime, message));
 }
 
-inline jsi::Function host_fn(jsi::Runtime &rt, jsi::HostFunctionType lambda) {
-  return jsi::Function::createFromHostFunction(
-      rt, jsi::PropNameID::forAscii(rt, ""), 0, std::move(lambda));
-};
-
 jsi::Value
 promisify(jsi::Runtime &rt, std::function<std::any()> lambda,
           std::function<jsi::Value(jsi::Runtime &rt, std::any result)>
               resolve_callback) {
   auto promise_constructor = rt.global().getPropertyAsFunction(rt, "Promise");
 
-  auto executor = host_fn(rt, [lambda = std::move(lambda),
-                               resolve_callback = std::move(resolve_callback)](
-                                  jsi::Runtime &rt, const jsi::Value &thiz,
-                                  const jsi::Value *args, size_t count) {
+  auto executor = HFN2(lambda = std::move(lambda),
+                       resolve_callback = std::move(resolve_callback)) {
     auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
     auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 

@@ -73,18 +73,22 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
   }
 
 #ifdef OP_SQLITE_USE_CRSQLITE
-  NSBundle *crsqlite_bundle =
-      [NSBundle bundleWithIdentifier:@"io.vlcn.crsqlite"];
+  NSString *crsqlite_bundle_path =
+      [[[NSBundle mainBundle] privateFrameworksPath]
+          stringByAppendingPathComponent:@"crsqlite.framework"];
+  NSBundle *crsqlite_bundle = [NSBundle bundleWithPath:crsqlite_bundle_path];
   NSString *crsqlite_path = [crsqlite_bundle pathForResource:@"crsqlite"
                                                       ofType:@""];
 #else
   NSString *crsqlite_path = @"";
 #endif
-  
 
 #ifdef OP_SQLITE_USE_SQLITE_VEC
+  NSString *sqlitevec_bundle_path =
+      [[[NSBundle mainBundle] privateFrameworksPath]
+          stringByAppendingPathComponent:@"sqlitevec.framework"];
   NSBundle *libsqlitevec_bundle =
-      [NSBundle bundleWithIdentifier:@"com.ospfranco.sqlitevec"];
+      [NSBundle bundleWithPath:sqlitevec_bundle_path];
   NSString *sqlite_vec_path = [libsqlitevec_bundle pathForResource:@"sqlitevec"
                                                             ofType:@""];
 #else
@@ -98,7 +102,10 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 
 RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(getDylibPath : (
     NSString *)bundleId andResource : (NSString *)resourceName) {
-  NSBundle *bundle = [NSBundle bundleWithIdentifier:bundleId];
+  NSString *bundle_path = [[[NSBundle mainBundle] privateFrameworksPath]
+      stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.framework",
+                                                                resourceName]];
+  NSBundle *bundle = [NSBundle bundleWithPath:bundle_path];
   NSString *path = [bundle pathForResource:resourceName ofType:@""];
   return path;
 }

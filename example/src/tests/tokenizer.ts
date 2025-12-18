@@ -16,6 +16,7 @@ describe('Tokenizer tests', () => {
     });
 
     if (!isLibsql()) {
+      await db.execute('DROP TABLE IF EXISTS tokenizer_table;');
       await db.execute(
         `CREATE VIRTUAL TABLE tokenizer_table USING fts5(content, tokenize = 'wordtokenizer');`,
       );
