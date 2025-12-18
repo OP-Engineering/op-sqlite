@@ -19,7 +19,7 @@ export default function App() {
   useEffect(() => {
     const work = async () => {
       let start = performance.now();
-      let dummyDB = open({
+      open({
         name: 'dummyDb.sqlite',
       });
       setOpenTime(performance.now() - start);
