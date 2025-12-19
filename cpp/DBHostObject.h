@@ -78,7 +78,7 @@ private:
 
   std::unordered_map<std::string, jsi::Value> function_map;
   std::string base_path;
-  std::shared_ptr<ThreadPool> _thread_pool;
+  std::shared_ptr<ThreadPool> thread_pool;
   std::string db_name;
   std::shared_ptr<jsi::Value> update_hook_callback;
   std::shared_ptr<jsi::Value> commit_hook_callback;

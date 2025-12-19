@@ -32,7 +32,7 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
       std::vector<JSVariant> params = to_variant_vec(rt, js_params);
 
       return promisify(
-          rt,
+          rt, _thread_pool,
           [this, params]() {
 #ifdef OP_SQLITE_USE_LIBSQL
             opsqlite_libsql_bind_statement(_stmt, &params);
@@ -77,7 +77,7 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
       }
 
       return promisify(
-          rt,
+          rt, _thread_pool,
           [this]() {
             std::vector<DumbHostObject> results;
             auto metadata = std::make_shared<std::vector<SmartHostObject>>();

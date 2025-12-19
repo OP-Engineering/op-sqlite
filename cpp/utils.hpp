@@ -12,6 +12,7 @@
 #include <ReactCommon/CallInvoker.h>
 #include <string>
 #include <vector>
+#include "OPThreadPool.h"
 
 namespace opsqlite {
 
@@ -51,7 +52,7 @@ bool file_exists(const std::string &path);
 void log_to_console(jsi::Runtime &rt, const std::string &message);
 
 jsi::Value
-promisify(jsi::Runtime &rt, std::function<std::any()> lambda,
+promisify(jsi::Runtime &rt, std::shared_ptr<ThreadPool> thread_pool, std::function<std::any()> lambda,
           std::function<jsi::Value(jsi::Runtime &rt, std::any result)>
               resolve_callback);
 

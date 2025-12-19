@@ -5,17 +5,15 @@
 #include "bridge.h"
 #endif
 #include "OPThreadPool.h"
+#include "macros.hpp"
 #include <fstream>
 #include <sys/stat.h>
 #include <utility>
-#include "macros.hpp"
 
 namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 namespace react = facebook::react;
-
-auto __thread_pool = std::make_shared<ThreadPool>();
 
 inline jsi::Value to_jsi(jsi::Runtime &rt, const JSVariant &value) {
   if (std::holds_alternative<bool>(value)) {
@@ -324,17 +322,20 @@ void log_to_console(jsi::Runtime &runtime, const std::string &message) {
 }
 
 jsi::Value
-promisify(jsi::Runtime &rt, std::function<std::any()> lambda,
+promisify(jsi::Runtime &rt, std::shared_ptr<ThreadPool> thread_pool,
+          std::function<std::any()> lambda,
           std::function<jsi::Value(jsi::Runtime &rt, std::any result)>
               resolve_callback) {
   auto promise_constructor = rt.global().getPropertyAsFunction(rt, "Promise");
 
-  auto executor = HFN2(lambda = std::move(lambda),
-                       resolve_callback = std::move(resolve_callback)) {
+  auto executor =
+      HFN3(lambda = std::move(lambda),
+           resolve_callback = std::move(resolve_callback), thread_pool) {
     auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
     auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-    auto task = [lambda = lambda, resolve_callback = resolve_callback,
+    auto task = [lambda = lambda, thread_pool,
+                 resolve_callback = resolve_callback,
                  resolve = std::move(resolve), reject = std::move(reject)]() {
       try {
         std::any result = lambda();
@@ -374,7 +375,7 @@ promisify(jsi::Runtime &rt, std::function<std::any()> lambda,
       }
     };
 
-    __thread_pool->queueWork(task);
+    thread_pool->queueWork(task);
 
     return jsi::Value(nullptr);
   });
