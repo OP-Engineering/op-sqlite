@@ -24,13 +24,15 @@ namespace react = facebook::react;
 class PreparedStatementHostObject : public jsi::HostObject {
 public:
 #ifdef OP_SQLITE_USE_LIBSQL
-  PreparedStatementHostObject(
-      DB const &db, libsql_stmt_t stmt)
-      : _db(db), _stmt(stmt) {};
+  PreparedStatementHostObject(DB const &db, libsql_stmt_t stmt,
+                              std::shared_ptr<ThreadPool> thread_pool)
+      : _db(db), _stmt(stmt), _thread_pool(thread_pool) {};
 #else
-  PreparedStatementHostObject(sqlite3 *db, sqlite3_stmt *stmt)
-      : _db(db), _stmt(stmt) {};
+  PreparedStatementHostObject(sqlite3 *db, sqlite3_stmt *stmt,
+                              std::shared_ptr<ThreadPool> thread_pool)
+      : _db(db), _stmt(stmt), _thread_pool(thread_pool) {};
 #endif
+
   ~PreparedStatementHostObject() override;
 
   std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt) override;
@@ -38,6 +40,7 @@ public:
   jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID) override;
 
 private:
+  std::shared_ptr<ThreadPool> _thread_pool;
 #ifdef OP_SQLITE_USE_LIBSQL
   DB _db;
   libsql_stmt_t _stmt;

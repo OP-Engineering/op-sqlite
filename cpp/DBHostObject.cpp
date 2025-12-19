@@ -19,8 +19,9 @@ namespace react = facebook::react;
 #ifdef OP_SQLITE_USE_LIBSQL
 void DBHostObject::flush_pending_reactive_queries(
     const std::shared_ptr<jsi::Value> &resolve) {
-  invoker->invokeAsync(
-      [resolve](jsi::Runtime &rt) { resolve->asObject(rt).asFunction(rt).call(rt, {}); });
+  invoker->invokeAsync([resolve](jsi::Runtime &rt) {
+    resolve->asObject(rt).asFunction(rt).call(rt, {});
+  });
 }
 #else
 void DBHostObject::flush_pending_reactive_queries(
@@ -37,7 +38,8 @@ void DBHostObject::flush_pending_reactive_queries(
 
     invoker->invokeAsync(
         [results = std::make_shared<std::vector<DumbHostObject>>(results),
-         callback = query->callback, metadata, status = std::move(status)](jsi::Runtime &rt) {
+         callback = query->callback, metadata,
+         status = std::move(status)](jsi::Runtime &rt) {
           auto jsiResult = create_result(rt, status, results.get(), metadata);
           callback->asObject(rt).asFunction(rt).call(rt, jsiResult);
         });
@@ -45,33 +47,36 @@ void DBHostObject::flush_pending_reactive_queries(
 
   pending_reactive_queries.clear();
 
-  invoker->invokeAsync(
-      [resolve](jsi::Runtime &rt) { resolve->asObject(rt).asFunction(rt).call(rt, {}); });
+  invoker->invokeAsync([resolve](jsi::Runtime &rt) {
+    resolve->asObject(rt).asFunction(rt).call(rt, {});
+  });
 }
 
 void DBHostObject::on_commit() {
-  invoker->invokeAsync(
-      [this](jsi::Runtime &rt) { commit_hook_callback->asObject(rt).asFunction(rt).call(rt); });
+  invoker->invokeAsync([this](jsi::Runtime &rt) {
+    commit_hook_callback->asObject(rt).asFunction(rt).call(rt);
+  });
 }
 
 void DBHostObject::on_rollback() {
-  invoker->invokeAsync(
-      [this](jsi::Runtime &rt) { rollback_hook_callback->asObject(rt).asFunction(rt).call(rt); });
+  invoker->invokeAsync([this](jsi::Runtime &rt) {
+    rollback_hook_callback->asObject(rt).asFunction(rt).call(rt);
+  });
 }
 
 void DBHostObject::on_update(const std::string &table,
                              const std::string &operation, long long row_id) {
   if (update_hook_callback != nullptr) {
-    invoker->invokeAsync(
-        [callback = update_hook_callback, table, operation, row_id](jsi::Runtime &rt) {
-          auto res = jsi::Object(rt);
-          res.setProperty(rt, "table", jsi::String::createFromUtf8(rt, table));
-          res.setProperty(rt, "operation",
-                          jsi::String::createFromUtf8(rt, operation));
-          res.setProperty(rt, "rowId", jsi::Value(static_cast<double>(row_id)));
+    invoker->invokeAsync([callback = update_hook_callback, table, operation,
+                          row_id](jsi::Runtime &rt) {
+      auto res = jsi::Object(rt);
+      res.setProperty(rt, "table", jsi::String::createFromUtf8(rt, table));
+      res.setProperty(rt, "operation",
+                      jsi::String::createFromUtf8(rt, operation));
+      res.setProperty(rt, "rowId", jsi::Value(static_cast<double>(row_id)));
 
-          callback->asObject(rt).asFunction(rt).call(rt, res);
-        });
+      callback->asObject(rt).asFunction(rt).call(rt, res);
+    });
   }
 
   for (const auto &query_ptr : reactive_queries) {
@@ -144,7 +149,7 @@ void DBHostObject::auto_register_update_hook() {
 DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &url,
                            std::string &auth_token)
     : db_name(url) {
-  _thread_pool = std::make_shared<ThreadPool>();
+  thread_pool = std::make_shared<ThreadPool>();
   db = opsqlite_libsql_open_remote(url, auth_token);
 
   create_jsi_functions(rt);
@@ -158,7 +163,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &db_name,
                            std::string &remote_encryption_key)
     : db_name(db_name) {
 
-  _thread_pool = std::make_shared<ThreadPool>();
+  thread_pool = std::make_shared<ThreadPool>();
 
   db =
       opsqlite_libsql_open_sync(db_name, path, url, auth_token, sync_interval,
@@ -175,7 +180,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
                            std::string &sqlite_vec_path,
                            std::string &encryption_key)
     : base_path(base_path), db_name(db_name) {
-  _thread_pool = std::make_shared<ThreadPool>();
+  thread_pool = std::make_shared<ThreadPool>();
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
   db = opsqlite_open(db_name, path, crsqlite_path, sqlite_vec_path,
@@ -281,7 +286,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
                                               : std::vector<JSVariant>();
 
     return promisify(
-        rt,
+        rt, thread_pool,
         [this, query, params]() {
           std::vector<std::vector<JSVariant>> results;
 #ifdef OP_SQLITE_USE_LIBSQL
@@ -341,7 +346,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
                                         : std::vector<JSVariant>();
 
     return promisify(
-        rt,
+        rt, thread_pool,
         [this, query, params]() {
 #ifdef OP_SQLITE_USE_LIBSQL
           auto status = opsqlite_libsql_execute(db, query, &params);
@@ -363,7 +368,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
                                         : std::vector<JSVariant>();
 
     return promisify(
-        rt,
+        rt, thread_pool,
         [this, query, params]() {
           std::vector<DumbHostObject> results;
           std::shared_ptr<std::vector<SmartHostObject>> metadata =
@@ -408,7 +413,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
     to_batch_arguments(rt, batchParams, &commands);
 
     return promisify(
-        rt,
+        rt, thread_pool,
         [this, commands]() {
 #ifdef OP_SQLITE_USE_LIBSQL
           auto batchResult = opsqlite_libsql_execute_batch(db, &commands);
@@ -432,7 +437,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
     return {};
   });
 
-  function_map["setReservedBytes"] =HFN(this) {
+  function_map["setReservedBytes"] = HFN(this) {
     auto reserved_bytes = static_cast<int32_t>(args[0].asNumber());
     opsqlite_libsql_set_reserved_bytes(db, reserved_bytes);
     return {};
@@ -451,7 +456,8 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
     const std::string sqlFileName = args[0].asString(rt).utf8(rt);
 
     return promisify(
-        rt, [this, sqlFileName]() { return import_sql_file(db, sqlFileName); },
+        rt, thread_pool,
+        [this, sqlFileName]() { return import_sql_file(db, sqlFileName); },
         [](jsi::Runtime &rt, std::any prev) {
           auto result = std::any_cast<BatchResult>(prev);
           auto res = jsi::Object(rt);
@@ -583,7 +589,8 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
     sqlite3_stmt *statement = opsqlite_prepare_statement(db, query);
 #endif
     auto preparedStatementHostObject =
-        std::make_shared<PreparedStatementHostObject>(db, statement);
+        std::make_shared<PreparedStatementHostObject>(db, statement,
+                                                      thread_pool);
 
     return jsi::Object::createFromHostObject(rt, preparedStatementHostObject);
   });
@@ -621,7 +628,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
         flush_pending_reactive_queries(resolve);
       };
 
-      _thread_pool->queueWork(task);
+      thread_pool->queueWork(task);
 
       return {};
     }));
@@ -664,7 +671,7 @@ void DBHostObject::invalidate() {
   }
 
   invalidated = true;
-  _thread_pool->restartPool();
+  thread_pool->restartPool();
 #ifdef OP_SQLITE_USE_LIBSQL
   opsqlite_libsql_close(db);
 #else
