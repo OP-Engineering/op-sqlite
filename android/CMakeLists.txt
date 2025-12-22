@@ -5,9 +5,15 @@ set (PACKAGE_NAME "op-sqlite")
 
 include_directories(
   ../cpp
-  ../cpp/sqlcipher
-  ../cpp/libsql
 )
+
+if (USE_SQLCIPHER)
+  include_directories(../cpp/sqlcipher)
+endif()
+
+if (USE_LIBSQL) 
+  include_directories(src/main/jniLibs/include)
+endif()
 
 add_definitions(
   ${SQLITE_FLAGS}
@@ -45,7 +51,7 @@ elseif (USE_LIBSQL)
     -DOP_SQLITE_USE_LIBSQL=1
   )
 else()
- target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlite3.h ../cpp/sqlite3.c ../cpp/bridge.cpp ../cpp/bridge.h)
+ target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlite3.c ../cpp/bridge.cpp)
 endif()
 
 if (USE_CRSQLITE)
@@ -64,7 +70,7 @@ find_package(ReactAndroid REQUIRED CONFIG)
 find_package(fbjni REQUIRED CONFIG)
 find_library(LOG_LIB log)
 
-# Add user defined files
+# Add user defined files (the generated tokenizers)
 if (USER_DEFINED_SOURCE_FILES)
   target_sources(${PACKAGE_NAME} PRIVATE ${USER_DEFINED_SOURCE_FILES})
 
@@ -81,17 +87,20 @@ if (USE_SQLCIPHER)
     openssl::crypto
   )
 elseif (USE_LIBSQL)
-  cmake_path(SET LIBSQL ${CMAKE_CURRENT_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libsql_experimental.a NORMALIZE)
-  add_library(libsql STATIC IMPORTED)
-  set_target_properties(libsql PROPERTIES IMPORTED_LOCATION ${LIBSQL})
+  cmake_path(SET LIBSQL_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/main/jniLibs/${ANDROID_ABI}/libsql_experimental.so NORMALIZE)
+  add_library(libsql_experimental SHARED IMPORTED)
+  set_target_properties(libsql_experimental PROPERTIES 
+    IMPORTED_LOCATION ${LIBSQL_PATH}
+    IMPORTED_NO_SONAME TRUE
+  )
 
   target_link_libraries(
     ${PACKAGE_NAME}
+    libsql_experimental
     ${LOG_LIB}
     ReactAndroid::reactnative
     ReactAndroid::jsi
     fbjni::fbjni
-    libsql
   )
 else ()
   target_link_libraries(

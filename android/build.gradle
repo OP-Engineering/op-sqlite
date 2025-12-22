@@ -117,6 +117,8 @@ android {
     minSdkVersion getExtOrIntegerDefault("minSdkVersion")
     targetSdkVersion getExtOrIntegerDefault("targetSdkVersion")
 
+    buildConfigField "boolean", "USE_LIBSQL", "${useLibsql}"
+
     externalNativeBuild {
       cmake {
         if(useSQLCipher) {
@@ -216,6 +218,9 @@ android {
       ]
       jniLibs {
         srcDirs = []
+        if (useLibsql) {
+          srcDirs += 'src/main/jniLibs'
+        }
         if (useCRSQLite) {
           srcDirs += 'src/main/libcrsqlite'
         }

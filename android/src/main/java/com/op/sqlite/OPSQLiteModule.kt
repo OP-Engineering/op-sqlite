@@ -110,6 +110,9 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextB
 
     companion object {
         init {
+            if (BuildConfig.USE_LIBSQL) {
+                System.loadLibrary("sql_experimental")
+            }
             System.loadLibrary("op-sqlite")
         }
 
