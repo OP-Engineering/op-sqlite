@@ -46,7 +46,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/core@npm:^7.11.6, @babel/core@npm:^7.12.3, @babel/core@npm:^7.25.2":
+"@babel/core@npm:^7.0.0, @babel/core@npm:^7.11.6, @babel/core@npm:^7.12.3, @babel/core@npm:^7.25.2":
   version: 7.28.5
   resolution: "@babel/core@npm:7.28.5"
   dependencies:
@@ -1342,7 +1342,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/preset-env@npm:^7.25.2, @babel/preset-env@npm:^7.25.3":
+"@babel/preset-env@npm:^7.0.0, @babel/preset-env@npm:^7.25.2, @babel/preset-env@npm:^7.25.3":
   version: 7.28.5
   resolution: "@babel/preset-env@npm:7.28.5"
   dependencies:
@@ -1451,7 +1451,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/preset-typescript@npm:^7.24.7":
+"@babel/preset-typescript@npm:^7.0.0, @babel/preset-typescript@npm:^7.24.7":
   version: 7.28.5
   resolution: "@babel/preset-typescript@npm:7.28.5"
   dependencies:
@@ -2781,6 +2781,23 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 10c0/89f454ad43ef4d6ccd94828923dbc28a3ca847e70754d7bf9ea64daea3d6eff53bb87a0a5aa79637e7a26cc293f38c3636f76b8a2a4fabc2ad20727564148b51
+  languageName: node
+  linkType: hard
+
+"@rnx-kit/jest-preset@npm:^0.1.17":
+  version: 0.1.18
+  resolution: "@rnx-kit/jest-preset@npm:0.1.18"
+  dependencies:
+    "@babel/core": "npm:^7.0.0"
+    "@babel/preset-env": "npm:^7.0.0"
+    "@babel/preset-typescript": "npm:^7.0.0"
+    find-up: "npm:^5.0.0"
+  peerDependencies:
+    react-native: ^0.0.0-0 || >=0.63
+  peerDependenciesMeta:
+    react-native:
+      optional: true
+  checksum: 10c0/4469382e777a747b6f0e3270f79e42d318d5e71041779898ad92a857c432154f172d91c6fe9d690399ebd2fb9c9a3b32bda2a3613e8290876e6f692caf2e5f39
   languageName: node
   linkType: hard
 
@@ -6773,6 +6790,7 @@ __metadata:
     "@react-native/babel-preset": "npm:0.82.1"
     "@react-native/metro-config": "npm:0.82.1"
     "@react-native/typescript-config": "npm:0.81.5"
+    "@rnx-kit/jest-preset": "npm:^0.1.17"
     "@types/chance": "npm:^1.1.7"
     "@types/react": "npm:^19.1.1"
     chance: "npm:^1.1.9"
@@ -6784,6 +6802,7 @@ __metadata:
     react-native-monorepo-config: "npm:^0.1.9"
     react-native-restart: "npm:^0.0.27"
     react-native-safe-area-context: "npm:^5.6.2"
+    react-native-windows: "npm:0.80.6"
     tailwindcss: "npm:3.3.2"
   languageName: unknown
   linkType: soft
@@ -7367,7 +7386,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-windows@npm:^0.80.0":
+"react-native-windows@npm:0.80.6, react-native-windows@npm:^0.80.0":
   version: 0.80.6
   resolution: "react-native-windows@npm:0.80.6"
   dependencies:

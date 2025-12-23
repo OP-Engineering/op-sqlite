@@ -32,7 +32,8 @@
     "!**/__tests__",
     "!**/__fixtures__",
     "!**/__mocks__",
-    "!**/.*"
+    "!**/.*",
+    "windows"
   ],
   "scripts": {
     "example": "yarn workspace op_sqlite_example",
@@ -104,6 +105,11 @@
     "jsSrcsDir": "src",
     "android": {
       "javaPackageName": "com.op.sqlite"
+    },
+    "windows": {
+      "namespace": "OpSqliteCodegen",
+      "outputDirectory": "windows/OpSqlite/codegen",
+      "separateDataTypes": true
     }
   },
   "create-react-native-library": {
@@ -111,5 +117,12 @@
     "type": "turbo-module",
     "version": "0.52.1"
   },
-  "packageManager": "yarn@4.11.0"
+  "packageManager": "yarn@4.11.0",
+  "react-native-windows": {
+    "init-windows": {
+      "name": "OpSqlite",
+      "namespace": "OpSqlite",
+      "template": "cpp-lib"
+    }
+  }
 }
