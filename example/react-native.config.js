@@ -19,5 +19,10 @@ module.exports = {
         windows: {},
       },
     },
+    'react-native-restart': {
+      platforms: {
+        windows: null, // Exclude from Windows builds
+      },
+    },
   },
 };

@@ -6908,6 +6908,7 @@ __metadata:
     react-native: "npm:^0.80.0"
     react-native-builder-bob: "npm:^0.40.13"
     react-native-monorepo-config: "npm:^0.1.9"
+    react-native-restart: "npm:^0.0.27"
     react-native-safe-area-context: "npm:^5.6.2"
     react-native-windows: "npm:^0.80.0"
     tailwindcss: "npm:3.3.2"
@@ -7470,6 +7471,16 @@ __metadata:
     escape-string-regexp: "npm:^5.0.0"
     fast-glob: "npm:^3.3.3"
   checksum: 10c0/fa88a725b4fe65443291fba746cccf2a3732defe6c8e1f7aab532b8345feac2b34af7fe17a28a96d30c7b9520f0f99e42962069ef8eb31acc4d33e7aa3b68a83
+  languageName: node
+  linkType: hard
+
+"react-native-restart@npm:^0.0.27":
+  version: 0.0.27
+  resolution: "react-native-restart@npm:0.0.27"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/13ef35f98d12658e29a2c84aa68946cec6e0add946eb3a5d4ffae1fdce050bb563e269e55d9c037e47072a78bcea98f010536d9d7dd9c26eec9e7c9795bf713f
   languageName: node
   linkType: hard
 
