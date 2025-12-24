@@ -73,15 +73,17 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
-      <WarningLevel>Level4</WarningLevel>
-      <SDLCheck>true</SDLCheck>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>false</SDLCheck>
       <AdditionalOptions>%(AdditionalOptions) /bigobj</AdditionalOptions>
-      <DisableSpecificWarnings>4453;28204</DisableSpecificWarnings>
-      <PreprocessorDefinitions>_WINRT_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings>4453;28204;4244;4267;4996;4100;4456</DisableSpecificWarnings>
+      <PreprocessorDefinitions>_WINRT_DLL;OP_SQLITE_WINDOWS;SQLITE_ENABLE_FTS5;SQLITE_ENABLE_JSON1;SQLITE_ENABLE_RTREE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>
         $(MSBuildThisFileDirectory);
+        $(MSBuildThisFileDirectory)..\..\cpp;
+        $(ReactNativeWindowsDir)Microsoft.ReactNative.Cxx;
         %(AdditionalIncludeDirectories)
       </AdditionalIncludeDirectories>
     </ClCompile>
@@ -111,9 +113,22 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="targetver.h" />
+    <!-- OP-SQLite core headers -->
+    <ClInclude Include="..\..\cpp\bridge.h" />
+    <ClInclude Include="..\..\cpp\DBHostObject.h" />
+    <ClInclude Include="..\..\cpp\DumbHostObject.h" />
+    <ClInclude Include="..\..\cpp\logs.h" />
+    <ClInclude Include="..\..\cpp\macros.hpp" />
+    <ClInclude Include="..\..\cpp\OPSqlite.hpp" />
+    <ClInclude Include="..\..\cpp\OPThreadPool.h" />
+    <ClInclude Include="..\..\cpp\PreparedStatementHostObject.h" />
+    <ClInclude Include="..\..\cpp\SmartHostObject.h" />
+    <ClInclude Include="..\..\cpp\sqlite3.h" />
+    <ClInclude Include="..\..\cpp\types.hpp" />
+    <ClInclude Include="..\..\cpp\utils.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="OpSqlite.cpp" />
+    <ClCompile Include="OpSqliteWin.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -121,6 +136,35 @@
       <DependentUpon>ReactPackageProvider.idl</DependentUpon>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <!-- OP-SQLite core sources (without precompiled headers) -->
+    <ClCompile Include="..\..\cpp\bridge.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\cpp\DBHostObject.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\cpp\DumbHostObject.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\cpp\OPSqlite.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\cpp\OPThreadPool.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\cpp\PreparedStatementHostObject.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\cpp\SmartHostObject.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\cpp\sqlite3.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <ClCompile Include="..\..\cpp\utils.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="ReactPackageProvider.idl" />

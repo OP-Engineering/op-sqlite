@@ -20,11 +20,20 @@
 #include <winrt/base.h>
 #include <CppWinRTIncludes.h>
 #include <winrt/Microsoft.ReactNative.h>
+#include <winrt/Windows.Storage.h>
+#include <winrt/Windows.Foundation.h>
+#include <winrt/Windows.ApplicationModel.h>
+
+// JSI Headers for React Native Windows
+#include <JSI/JsiApiContext.h>
+#include <ReactContext.h>
 
 // C RunTime Header Files
 #include <malloc.h>
 #include <memory.h>
 #include <stdlib.h>
 #include <tchar.h>
+#include <string>
+#include <filesystem>
 
 // Reference additional headers your project requires here

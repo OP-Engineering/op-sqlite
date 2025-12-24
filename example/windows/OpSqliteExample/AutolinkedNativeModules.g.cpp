@@ -6,9 +6,6 @@
 // Includes from @op-engineering/op-sqlite
 #include <winrt/OpSqlite.h>
 
-// Includes from react-native-restart
-#include <winrt/ReactNativeRestart.h>
-
 namespace winrt::Microsoft::ReactNative
 {
 
@@ -16,8 +13,6 @@ void RegisterAutolinkedNativeModulePackages(winrt::Windows::Foundation::Collecti
 { 
     // IReactPackageProviders from @op-engineering/op-sqlite
     packageProviders.Append(winrt::OpSqlite::ReactPackageProvider());
-    // IReactPackageProviders from react-native-restart
-    packageProviders.Append(winrt::ReactNativeRestart::ReactPackageProvider());
 }
 
 }

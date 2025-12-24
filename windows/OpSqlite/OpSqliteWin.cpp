@@ -37,23 +37,26 @@ OpSqliteCodegen::OPSQLiteSpec_Constants OpSqlite::GetConstants() noexcept {
 
 bool OpSqlite::install() noexcept {
   try {
-    // Get the JSI runtime from React Native Windows context
+    // Get the JSI runtime synchronously
+    // TryGetOrCreateContextRuntime returns a pointer to the JSI runtime
+    facebook::jsi::Runtime* runtime = winrt::Microsoft::ReactNative::TryGetOrCreateContextRuntime(m_context);
+    if (!runtime) {
+      return false;
+    }
+    
     auto callInvoker = m_context.CallInvoker();
     if (!callInvoker) {
       return false;
     }
     
-    // Use ExecuteJsi to run code on the JS thread with access to the JSI runtime
-    winrt::Microsoft::ReactNative::ExecuteJsi(m_context, [this, callInvoker](facebook::jsi::Runtime& runtime) {
-      // Call the core opsqlite install function
-      opsqlite::install(
-        runtime,
-        callInvoker,
-        m_basePath.c_str(),
-        "",  // crsqlite_path - not supported on Windows yet
-        ""   // sqlite_vec_path - not supported on Windows yet
-      );
-    });
+    // Call the core opsqlite install function synchronously
+    opsqlite::install(
+      *runtime,
+      callInvoker,
+      m_basePath.c_str(),
+      "",  // crsqlite_path - not supported on Windows yet
+      ""   // sqlite_vec_path - not supported on Windows yet
+    );
     
     return true;
   } catch (const std::exception& e) {

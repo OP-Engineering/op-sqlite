@@ -2,7 +2,9 @@
 
 #include <ReactCommon/CallInvoker.h>
 #include <jsi/jsi.h>
+#ifndef OP_SQLITE_WINDOWS
 #include <jsi/jsilib.h>
+#endif
 
 namespace opsqlite {
 

@@ -9,8 +9,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpSqliteExample", "OpSqlite
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpSqlite", "..\..\windows\OpSqlite\OpSqlite.vcxproj", "{C3ED4E71-BC2A-4144-A871-A9E261ACBDB5}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ReactNativeRestart", "..\node_modules\react-native-restart\windows\ReactNativeRestart\ReactNativeRestart.vcxproj", "{D1C46E7E-5F31-46E9-A162-E2E5A8F67E4F}"
-EndProject
+
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -69,18 +68,7 @@ Global
 		{C3ED4E71-BC2A-4144-A871-A9E261ACBDB5}.Release|x86.Build.0 = Release|Win32
 		{C3ED4E71-BC2A-4144-A871-A9E261ACBDB5}.Release|ARM64.ActiveCfg = Release|ARM64
 		{C3ED4E71-BC2A-4144-A871-A9E261ACBDB5}.Release|ARM64.Build.0 = Release|ARM64
-		{D1C46E7E-5F31-46E9-A162-E2E5A8F67E4F}.Debug|x64.ActiveCfg = Debug|x64
-		{D1C46E7E-5F31-46E9-A162-E2E5A8F67E4F}.Debug|x64.Build.0 = Debug|x64
-		{D1C46E7E-5F31-46E9-A162-E2E5A8F67E4F}.Debug|x86.ActiveCfg = Debug|Win32
-		{D1C46E7E-5F31-46E9-A162-E2E5A8F67E4F}.Debug|x86.Build.0 = Debug|Win32
-		{D1C46E7E-5F31-46E9-A162-E2E5A8F67E4F}.Debug|ARM64.ActiveCfg = Debug|ARM64
-		{D1C46E7E-5F31-46E9-A162-E2E5A8F67E4F}.Debug|ARM64.Build.0 = Debug|ARM64
-		{D1C46E7E-5F31-46E9-A162-E2E5A8F67E4F}.Release|x64.ActiveCfg = Release|x64
-		{D1C46E7E-5F31-46E9-A162-E2E5A8F67E4F}.Release|x64.Build.0 = Release|x64
-		{D1C46E7E-5F31-46E9-A162-E2E5A8F67E4F}.Release|x86.ActiveCfg = Release|Win32
-		{D1C46E7E-5F31-46E9-A162-E2E5A8F67E4F}.Release|x86.Build.0 = Release|Win32
-		{D1C46E7E-5F31-46E9-A162-E2E5A8F67E4F}.Release|ARM64.ActiveCfg = Release|ARM64
-		{D1C46E7E-5F31-46E9-A162-E2E5A8F67E4F}.Release|ARM64.Build.0 = Release|ARM64
+
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

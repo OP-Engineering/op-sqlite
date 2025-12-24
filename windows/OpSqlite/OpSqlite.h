@@ -15,19 +15,26 @@ namespace winrt::OpSqlite
 
 // See https://microsoft.github.io/react-native-windows/docs/native-platform for help writing native modules
 
-REACT_MODULE(OpSqlite)
+REACT_MODULE(OpSqlite, L"OPSQLite")
 struct OpSqlite
 {
-  using ModuleSpec = OpSqliteCodegen::OpSqliteSpec;
+  using ModuleSpec = OpSqliteCodegen::OPSQLiteSpec;
 
   REACT_INIT(Initialize)
   void Initialize(React::ReactContext const &reactContext) noexcept;
 
-  REACT_SYNC_METHOD(multiply)
-  double multiply(double a, double b) noexcept;
+  REACT_GET_CONSTANTS(GetConstants)
+  OpSqliteCodegen::OPSQLiteSpec_Constants GetConstants() noexcept;
+
+  REACT_SYNC_METHOD(install)
+  bool install() noexcept;
+
+  REACT_SYNC_METHOD(moveAssetsDatabase)
+  bool moveAssetsDatabase(std::string name, std::string extension) noexcept;
 
 private:
   React::ReactContext m_context;
+  std::string m_basePath;
 };
 
 } // namespace winrt::OpSqlite

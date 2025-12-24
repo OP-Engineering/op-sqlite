@@ -18,14 +18,15 @@
   },
   "dependencies": {
     "@op-engineering/op-server": "^0.1.5",
+    "@op-engineering/op-sqlite": "*",
     "@op-engineering/op-test": "^0.2.5",
     "chance": "^1.1.9",
     "clsx": "^2.0.0",
     "events": "^3.3.0",
     "react": "19.1.1",
-    "react-native": "0.82.1",
+    "react-native": "^0.80.0",
     "react-native-safe-area-context": "^5.6.2",
-    "react-native-windows": "0.80.6"
+    "react-native-windows": "^0.80.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
