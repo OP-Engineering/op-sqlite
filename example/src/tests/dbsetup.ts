@@ -288,15 +288,3 @@ if (isSQLCipher()) {
     db.close();
   });
 }
-
-// This test wasn't really failing, but the module was not being properly
-// invalidated/re-created on a hot reload
-// Check opsqlite::invalidated
-// itOnly('Can execute async pragma', async () => {
-//   const db = open({
-//     name: 'pragma.sqlite',
-//   });
-
-//   const result = await db.execute('select sqlite_version() as version');
-//   expect(result).toBe('1.52');
-// });
