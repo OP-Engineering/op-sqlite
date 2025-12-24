@@ -130,7 +130,7 @@ Pod::Spec.new do |s|
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_SQLCIPHER=1 HAVE_FULLFSYNC=1 SQLITE_HAS_CODEC SQLITE_TEMP_STORE=3 SQLITE_EXTRA_INIT=sqlcipher_extra_init SQLITE_EXTRA_SHUTDOWN=sqlcipher_extra_shutdown"
     s.dependency "OpenSSL-Universal"    
   elsif use_libsql then
-    log_message.call("[OP-SQLITE] using libsql. Please contact turso (via Discord) for libsql issues")
+    log_message.call("[OP-SQLITE] ⚠️ Using libsql. If you have libsql questions please ask in the Turso Discord server.")
     exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/bridge.h", "cpp/bridge.cpp"]
   else
     log_message.call("[OP-SQLITE] using pure SQLite")
@@ -185,9 +185,9 @@ Pod::Spec.new do |s|
   if use_libsql then
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_LIBSQL=1"
     if use_crsqlite then
-      frameworks = ["ios/libsql.xcframework", "ios/crsqlite.xcframework"]
+      frameworks = ["ios/libsql_experimental.xcframework", "ios/crsqlite.xcframework"]
     else
-      frameworks = ["ios/libsql.xcframework"]
+      frameworks = ["ios/libsql_experimental.xcframework"]
     end
   end
 
