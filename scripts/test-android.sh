@@ -15,7 +15,7 @@ adb forward tcp:9000 tcp:9000
 yarn run:android:release
 
 echo "Waiting 20 seconds for app to fully initialize and tests to start..."
-sleep 40
+sleep 60
 
 echo "Checking if app is running..."
 adb shell "ps | grep com.op.sqlite.example" || {
