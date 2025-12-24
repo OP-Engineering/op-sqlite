@@ -32,7 +32,7 @@ jobs:
       - name: Install JDK
         uses: actions/setup-java@v3
         with:
-          distribution: "openjdk"
+          distribution: "temurin"
           java-version: "17"
 
       - name: Enable KVM
@@ -262,7 +262,7 @@ jobs:
       - name: Install JDK
         uses: actions/setup-java@v3
         with:
-          distribution: "openjdk"
+          distribution: "temurin"
           java-version: "17"
 
       - name: Enable KVM
