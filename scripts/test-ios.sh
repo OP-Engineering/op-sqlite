@@ -21,6 +21,5 @@ if [ $? -ne 0 ]; then
     echo "No booted simulator device found."
   fi
 fi
-```
 
 
