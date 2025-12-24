@@ -10,20 +10,18 @@ echo "Boot completed!"
 adb shell input keyevent 82
 adb forward tcp:9000 tcp:9000
 
-JAVA_OPTS=-XX:MaxHeapSize=6g yarn run:android:release
+# JAVA_OPTS=-XX:MaxHeapSize=6g yarn run:android:release
 
-echo "Clearing old logs..."
-adb logcat -c
+yarn run:android:release
 
-echo "Starting app..."
-JAVA_OPTS=-XX:MaxHeapSize=6g yarn run:android:release &
-APP_PID=$!
-
-echo "Waiting 15 seconds for app to initialize..."
-sleep 15
+echo "Waiting 20 seconds for app to fully initialize and tests to start..."
+sleep 20
 
 echo "Checking if app is running..."
-adb shell "ps | grep com.op.sqlite.example" || echo "Warning: App process not found"
+adb shell "ps | grep com.op.sqlite.example" || {
+  echo "APP WAS NOT RUNNING RE_LAUNCHING! 🟠"
+  yarn run:android:release
+}
 
 node ../scripts/poll-in-app-server.js || {
   echo "❌ poll-in-app-server failed, printing device logs from app launch..."

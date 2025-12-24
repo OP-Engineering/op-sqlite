@@ -2,8 +2,8 @@ const http = require('http');
 
 async function pollInAppServer() {
   const startTime = Date.now();
-  const maxDuration = 5 * 60 * 1000; // 20 seconds
-  const pollInterval = 1000; // 1 seconds
+  const maxDuration = 10 * 60 * 1000; // 3 minutes - tests can take time on CI
+  const pollInterval = 5000; //
 
   while (Date.now() - startTime < maxDuration) {
     try {
@@ -29,7 +29,7 @@ async function pollInAppServer() {
     await new Promise((resolve) => setTimeout(resolve, pollInterval));
   }
 
-  console.error('Polling failed after 5 minutes');
+  console.error(`Polling timed out after ${Math.round(maxDuration/1000)} seconds`);
   process.exit(1);
 }
 

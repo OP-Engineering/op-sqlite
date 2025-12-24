@@ -17,6 +17,7 @@ export default function App() {
   const [openTime, setOpenTime] = useState(0);
 
   useEffect(() => {
+    console.log("App has started 🟢")
     const work = async () => {
       let start = performance.now();
       open({
