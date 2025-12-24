@@ -2,7 +2,7 @@ const http = require('http');
 
 async function pollInAppServer() {
   const startTime = Date.now();
-  const maxDuration = 20 * 1000; // 20 seconds
+  const maxDuration = 5 * 60 * 1000; // 20 seconds
   const pollInterval = 1000; // 1 seconds
 
   while (Date.now() - startTime < maxDuration) {
