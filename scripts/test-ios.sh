@@ -16,7 +16,7 @@ if [ $? -ne 0 ]; then
   echo "poll-in-app-server failed, printing device logs..."
   DEVICE_ID=$(xcrun simctl list devices booted | grep -m1 Booted | awk -F '[()]' '{print $2}')
   if [ -n "$DEVICE_ID" ]; then
-    xcrun simctl spawn "$DEVICE_ID" log stream --style syslog --predicate 'eventType = logEvent' --last 1h
+    xcrun simctl spawn "$DEVICE_ID" log show --style syslog --predicate 'process == "OPSQLiteExample"' --info --debug --last 10m
   else
     echo "No booted simulator device found."
   fi
