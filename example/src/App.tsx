@@ -27,9 +27,11 @@ export default function App() {
 
       try {
         const results = await runTests();
+        console.log("TESTS FINISHED 🟢")
         setServerResults(allTestsPassed(results));
         setResults(results);
       } catch (e) {
+        console.log(`TEST FAILED 🟥 ${e}`)
         setServerResults(false);
       }
 

@@ -2,12 +2,20 @@ const http = require('http');
 
 async function pollInAppServer() {
   const startTime = Date.now();
-  const maxDuration = 10 * 60 * 1000; // 3 minutes - tests can take time on CI
+  const maxDuration = 2 * 60 * 1000; // 3 minutes - tests can take time on CI
   const pollInterval = 5000; //
+
+  // Do an initial ping into the server
+
+  try {
+    await makeHttpRequest('http://127.0.0.1:9000/ping')
+    console.log("🟢 Ping success")
+  } catch(e) {
+    console.error("Ping failed!")
+  }
 
   while (Date.now() - startTime < maxDuration) {
     try {
-      console.log('Polling in-app server for results...');
       const response = await makeHttpRequest('http://127.0.0.1:9000/results');
 
       if (response !== null) {
