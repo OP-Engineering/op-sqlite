@@ -12,7 +12,7 @@ packageJson['op-sqlite']['iosSqlite'] = false;
 packageJson['op-sqlite']['fts5'] = true;
 packageJson['op-sqlite']['rtree'] = true;
 packageJson['op-sqlite']['crsqlite'] = false;
-packageJson['op-sqlite']['sqliteVec'] = true;
+packageJson['op-sqlite']['sqliteVec'] = false;
 
 // Save the updated package.json file
 fs.writeFileSync(
