@@ -14,14 +14,8 @@ adb forward tcp:9000 tcp:9000
 
 yarn run:android:release
 
-echo "Waiting 20 seconds for app to fully initialize and tests to start..."
-sleep 80
-
-echo "Checking if app is running..."
-adb shell "ps | grep com.op.sqlite.example" || {
-  echo "APP WAS NOT RUNNING RE_LAUNCHING! 🟠"
-  yarn run:android:release
-}
+# echo "Waiting 20 seconds for app to fully initialize and tests to start..."
+# sleep 80
 
 node ../scripts/poll-in-app-server.js || {
   echo "❌ poll-in-app-server failed, printing device logs from app launch..."
