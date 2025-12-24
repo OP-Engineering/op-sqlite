@@ -104,7 +104,11 @@ if(useSqliteVec) {
   println "[OP-SQLITE] Sqlite-vec enabled"
 }
 
-if (!tokenizers.isEmpty()) {
+if(!tokenizers.isEmpty()) {
+  if(useLibsql) {
+    throw new GradleException("[OP-SQLITE] Error: libsql does not support tokenizers. Please disable tokenizers or do not enable libsql.")
+  }
+  
   println "[OP-SQLITE] Tokenizers enabled. Detected tokenizers: " + tokenizers
 }
 
@@ -116,6 +120,8 @@ android {
   defaultConfig {
     minSdkVersion getExtOrIntegerDefault("minSdkVersion")
     targetSdkVersion getExtOrIntegerDefault("targetSdkVersion")
+
+    buildConfigField "boolean", "USE_LIBSQL", "${useLibsql}"
 
     externalNativeBuild {
       cmake {
@@ -216,6 +222,9 @@ android {
       ]
       jniLibs {
         srcDirs = []
+        if (useLibsql) {
+          srcDirs += 'src/main/jniLibs'
+        }
         if (useCRSQLite) {
           srcDirs += 'src/main/libcrsqlite'
         }
