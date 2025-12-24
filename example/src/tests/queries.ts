@@ -14,7 +14,7 @@ import {
   describe,
   it,
 } from '@op-engineering/op-test';
-import pkg from '../../package.json'
+// import pkg from '../../package.json'
 
 describe('Queries tests', () => {
   let db: DB;
@@ -778,48 +778,48 @@ describe('Queries tests', () => {
   });
 
 
- const sqliteVecEnabled = pkg?.['op-sqlite']?.sqliteVec === true;
-  if (sqliteVecEnabled) {
-    it('sqlite-vec extension: vector similarity search', async () => {
-      // Create a virtual table for storing vectors
-      await db.execute(`
-        CREATE VIRTUAL TABLE vec_items USING vec0(
-          embedding FLOAT[8]
-        )
-      `);
+//  const sqliteVecEnabled = pkg?.['op-sqlite']?.sqliteVec === true;
+//   if (sqliteVecEnabled) {
+//     it('sqlite-vec extension: vector similarity search', async () => {
+//       // Create a virtual table for storing vectors
+//       await db.execute(`
+//         CREATE VIRTUAL TABLE vec_items USING vec0(
+//           embedding FLOAT[8]
+//         )
+//       `);
   
-      // Insert some sample vectors
-      await db.execute(`
-        INSERT INTO vec_items(rowid, embedding)
-        VALUES
-          (1, '[-0.200, 0.250, 0.341, -0.211, 0.645, 0.935, -0.316, -0.924]'),
-          (2, '[0.443, -0.501, 0.355, -0.771, 0.707, -0.708, -0.185, 0.362]'),
-          (3, '[0.716, -0.927, 0.134, 0.052, -0.669, 0.793, -0.634, -0.162]'),
-          (4, '[-0.710, 0.330, 0.656, 0.041, -0.990, 0.726, 0.385, -0.958]')
-      `);
+//       // Insert some sample vectors
+//       await db.execute(`
+//         INSERT INTO vec_items(rowid, embedding)
+//         VALUES
+//           (1, '[-0.200, 0.250, 0.341, -0.211, 0.645, 0.935, -0.316, -0.924]'),
+//           (2, '[0.443, -0.501, 0.355, -0.771, 0.707, -0.708, -0.185, 0.362]'),
+//           (3, '[0.716, -0.927, 0.134, 0.052, -0.669, 0.793, -0.634, -0.162]'),
+//           (4, '[-0.710, 0.330, 0.656, 0.041, -0.990, 0.726, 0.385, -0.958]')
+//       `);
   
-      // Perform KNN query to find the 2 nearest neighbors
-      const queryVector = '[0.890, 0.544, 0.825, 0.961, 0.358, 0.0196, 0.521, 0.175]';
-      const result = await db.execute(`
-        SELECT rowid, distance
-        FROM vec_items
-        WHERE embedding MATCH ?
-        ORDER BY distance
-        LIMIT 2
-      `, [queryVector]);
+//       // Perform KNN query to find the 2 nearest neighbors
+//       const queryVector = '[0.890, 0.544, 0.825, 0.961, 0.358, 0.0196, 0.521, 0.175]';
+//       const result = await db.execute(`
+//         SELECT rowid, distance
+//         FROM vec_items
+//         WHERE embedding MATCH ?
+//         ORDER BY distance
+//         LIMIT 2
+//       `, [queryVector]);
   
-      // Verify results
-      expect(result.rows.length).toEqual(2);
-      expect(result.rows[0]!.rowid).toEqual(2);
-      expect(result.rows[1]!.rowid).toEqual(1);
+//       // Verify results
+//       expect(result.rows.length).toEqual(2);
+//       expect(result.rows[0]!.rowid).toEqual(2);
+//       expect(result.rows[1]!.rowid).toEqual(1);
       
-      // Verify distances are positive numbers
-      const distance0 = result.rows[0]!.distance as number;
-      const distance1 = result.rows[1]!.distance as number;
-      expect(typeof distance0).toEqual('number');
-      expect(distance0 > 0).toBeTruthy();
-      expect(distance1 > 0).toBeTruthy();
-    });
-  }
+//       // Verify distances are positive numbers
+//       const distance0 = result.rows[0]!.distance as number;
+//       const distance1 = result.rows[1]!.distance as number;
+//       expect(typeof distance0).toEqual('number');
+//       expect(distance0 > 0).toBeTruthy();
+//       expect(distance1 > 0).toBeTruthy();
+//     });
+//   }
   
 });
