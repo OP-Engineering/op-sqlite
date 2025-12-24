@@ -8,6 +8,7 @@ packageJson['op-sqlite']['libsql'] = true;
 packageJson['op-sqlite']['sqlcipher'] = false;
 packageJson['op-sqlite']['ioSqlite'] = false;
 delete packageJson['op-sqlite']['tokenizers'];
+packageJson['op-sqlite']['sqliteVec'] = false;
 
 // Save the updated package.json file
 fs.writeFileSync(

@@ -51,7 +51,7 @@
     "fts5": true,
     "rtree": true,
     "crsqlite": false,
-    "sqliteVec": false,
+    "sqliteVec": true,
     "performanceMode": true,
     "tokenizers": [
       "wordtokenizer",
