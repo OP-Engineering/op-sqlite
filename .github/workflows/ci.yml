@@ -184,8 +184,7 @@ jobs:
 
   test-android:
     runs-on: ubuntu-latest
-    # env:
-    #   ANDROID_EMULATOR_WAIT_TIME_BEFORE_KILL: 0
+    timeout-minutes: 20
     steps:
       - name: Free Disk Space (Ubuntu)
         uses: insightsengineering/disk-space-reclaimer@v1
@@ -228,17 +227,17 @@ jobs:
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@v3
 
-      - name: AVD cache
-        uses: actions/cache@v4
-        id: avd-cache
-        with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: avd-29
+      # - name: AVD cache
+      #   uses: actions/cache@v4
+      #   id: avd-cache
+      #   with:
+      #     path: |
+      #       ~/.android/avd/*
+      #       ~/.android/adb*
+      #     key: avd-29
 
       - name: create AVD and generate snapshot for caching
-        if: steps.avd-cache.outputs.cache-hit != 'true'
+        # if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
@@ -262,8 +261,7 @@ jobs:
 
   test-android-sqlcipher:
     runs-on: ubuntu-latest
-    # env:
-    #   ANDROID_EMULATOR_WAIT_TIME_BEFORE_KILL: 0
+    timeout-minutes: 20
     steps:
       - name: Free Disk Space (Ubuntu)
         uses: insightsengineering/disk-space-reclaimer@v1
@@ -305,17 +303,17 @@ jobs:
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@v3
 
-      - name: AVD cache
-        uses: actions/cache@v4
-        id: avd-cache
-        with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: avd-29
+      # - name: AVD cache
+      #   uses: actions/cache@v4
+      #   id: avd-cache
+      #   with:
+      #     path: |
+      #       ~/.android/avd/*
+      #       ~/.android/adb*
+      #     key: avd-29
 
       - name: create AVD and generate snapshot for caching
-        if: steps.avd-cache.outputs.cache-hit != 'true'
+        # if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
