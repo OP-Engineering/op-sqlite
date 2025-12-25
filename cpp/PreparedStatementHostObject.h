@@ -40,7 +40,6 @@ public:
   jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID) override;
 
 private:
-  std::shared_ptr<ThreadPool> _thread_pool;
 #ifdef OP_SQLITE_USE_LIBSQL
   DB _db;
   libsql_stmt_t _stmt;
@@ -49,6 +48,7 @@ private:
   // This shouldn't be de-allocated until sqlite3_finalize is called on it
   sqlite3_stmt *_stmt;
 #endif
+  std::shared_ptr<ThreadPool> _thread_pool;
 };
 
 } // namespace opsqlite

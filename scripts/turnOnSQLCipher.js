@@ -7,6 +7,7 @@ const packageJson = JSON.parse(fs.readFileSync('./example/package.json'));
 packageJson['op-sqlite']['sqlcipher'] = true;
 packageJson['op-sqlite']['libsql'] = false;
 packageJson['op-sqlite']['iosSqlite'] = false;
+packageJson['op-sqlite']['sqliteVec'] = false;
 
 // Save the updated package.json file
 fs.writeFileSync(

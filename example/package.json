@@ -45,13 +45,13 @@
     "node": ">=18"
   },
   "op-sqlite": {
-    "libsql": true,
+    "libsql": false,
     "sqlcipher": false,
     "iosSqlite": false,
     "fts5": true,
     "rtree": true,
     "crsqlite": false,
-    "sqliteVec": false,
+    "sqliteVec": true,
     "performanceMode": true,
     "tokenizers": [
       "wordtokenizer",
