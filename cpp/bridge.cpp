@@ -15,31 +15,6 @@
 #include <unordered_map>
 #include <variant>
 
-// Compile-time verification of SQLite flags
-#ifdef SQLITE_SOMETHING
-#warning "SQLITE_SOMETHING is defined"
-#else
-#warning "SQLITE_SOMETHING is NOT defined"
-#endif
-
-#ifdef SQLITE_FOO
-#warning "SQLITE_FOO is defined"
-#else
-#warning "SQLITE_FOO is NOT defined"
-#endif
-
-#ifdef SQLITE_ENABLE_FTS5
-#warning "SQLITE_ENABLE_FTS5 is defined"
-#endif
-
-#ifdef SQLITE_ENABLE_RTREE
-#warning "SQLITE_ENABLE_RTREE is defined"
-#endif
-
-#ifdef OP_SQLITE_USE_SQLITE_VEC
-#warning "OP_SQLITE_USE_SQLITE_VEC is defined"
-#endif
-
 #ifdef TOKENIZERS_HEADER_PATH
 #include TOKENIZERS_HEADER_PATH
 #else
