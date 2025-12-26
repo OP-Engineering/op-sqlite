@@ -46,7 +46,7 @@ if (isUserApp) {
   // Start from the root + 1 level up (to avoid detecting the op-sqlite/package.json) and traverse upwards to find the first package.json
   File currentDir = new File("$rootDir/../")
   packageJsonFile = null
-  
+
   // Try to find package.json by traversing upwards
   while (currentDir != null) {
     File potential = new File(currentDir, "package.json")
@@ -70,6 +70,7 @@ if(opsqliteConfig) {
   useSQLCipher = opsqliteConfig["sqlcipher"]
   useCRSQLite = opsqliteConfig["crsqlite"]
   useSqliteVec = opsqliteConfig["sqliteVec"]
+
   performanceMode = opsqliteConfig["performanceMode"]
   sqliteFlags = opsqliteConfig["sqliteFlags"] ? opsqliteConfig["sqliteFlags"] : ""
   enableFTS5 = opsqliteConfig["fts5"]
@@ -82,7 +83,7 @@ if(useSQLCipher) {
   println "[OP-SQLITE] using sqlcipher."
 } else if(useLibsql) {
   println "[OP-SQLITE] using libsql. Report any issues to Turso"
-} 
+}
 
 if(useCRSQLite) {
   println "[OP-SQLITE] using CR-SQLite"
@@ -108,7 +109,7 @@ if(!tokenizers.isEmpty()) {
   if(useLibsql) {
     throw new GradleException("[OP-SQLITE] Error: libsql does not support tokenizers. Please disable tokenizers or do not enable libsql.")
   }
-  
+
   println "[OP-SQLITE] Tokenizers enabled. Detected tokenizers: " + tokenizers
 }
 
@@ -168,6 +169,7 @@ android {
         }
 
         cppFlags "-O3 -frtti -fexceptions -Wall -fstack-protector-all"
+
         arguments "-DANDROID_STL=c++_shared",
           "-DSQLITE_FLAGS='$sqliteFlags'",
           "-DUSE_SQLCIPHER=${useSQLCipher ? 1 : 0}",
