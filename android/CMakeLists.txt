@@ -11,12 +11,14 @@ if (USE_SQLCIPHER)
   include_directories(../cpp/sqlcipher)
 endif()
 
-if (USE_LIBSQL) 
+if (USE_LIBSQL)
   include_directories(src/main/jniLibs/include)
 endif()
 
+separate_arguments(SQLITE_FLAGS_LIST UNIX_COMMAND "${SQLITE_FLAGS}")
+
 add_definitions(
-  ${SQLITE_FLAGS}
+    ${SQLITE_FLAGS_LIST}
 )
 
 add_library(
@@ -42,11 +44,11 @@ if (USE_SQLCIPHER)
     -DSQLITE_EXTRA_INIT=sqlcipher_extra_init
     -DSQLITE_EXTRA_SHUTDOWN=sqlcipher_extra_shutdown
   )
-  
+
   find_package(openssl REQUIRED CONFIG)
 elseif (USE_LIBSQL)
   target_sources(${PACKAGE_NAME} PRIVATE ../cpp/libsql/bridge.cpp)
-  
+
   add_definitions(
     -DOP_SQLITE_USE_LIBSQL=1
   )
@@ -89,7 +91,7 @@ if (USE_SQLCIPHER)
 elseif (USE_LIBSQL)
   cmake_path(SET LIBSQL_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/main/jniLibs/${ANDROID_ABI}/libsql_experimental.so NORMALIZE)
   add_library(libsql_experimental SHARED IMPORTED)
-  set_target_properties(libsql_experimental PROPERTIES 
+  set_target_properties(libsql_experimental PROPERTIES
     IMPORTED_LOCATION ${LIBSQL_PATH}
     IMPORTED_NO_SONAME TRUE
   )
