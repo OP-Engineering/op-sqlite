@@ -67,15 +67,14 @@ def opsqliteConfig = packageJson["op-sqlite"]
 
 if(opsqliteConfig) {
   println "[OP-SQLITE] Detected op-sqlite config from package.json at: " + packageJsonFile.absolutePath
-  useSQLCipher = opsqliteConfig["sqlcipher"]
-  useCRSQLite = opsqliteConfig["crsqlite"]
-  useSqliteVec = opsqliteConfig["sqliteVec"]
-
+  useSQLCipher = !!opsqliteConfig["sqlcipher"]
+  useCRSQLite = !!opsqliteConfig["crsqlite"]
+  useSqliteVec = !!opsqliteConfig["sqliteVec"]
   performanceMode = opsqliteConfig["performanceMode"]
   sqliteFlags = opsqliteConfig["sqliteFlags"] ? opsqliteConfig["sqliteFlags"] : ""
-  enableFTS5 = opsqliteConfig["fts5"]
-  useLibsql = opsqliteConfig["libsql"]
-  enableRtree = opsqliteConfig["rtree"]
+  enableFTS5 = !!opsqliteConfig["fts5"]
+  useLibsql = !!opsqliteConfig["libsql"]
+  enableRtree = !!opsqliteConfig["rtree"]
   tokenizers = opsqliteConfig["tokenizers"] ? opsqliteConfig["tokenizers"] : []
 }
 
