@@ -201,21 +201,26 @@ export class NodeDatabase implements DB {
       },
     };
 
-    const wrappedFn = this.db.transaction(async () => {
-      try {
-        await fn(transaction);
-        if (this.commitHookCallback) {
-          this.commitHookCallback();
-        }
-      } catch (error: any) {
-        if (this.rollbackHookCallback) {
-          this.rollbackHookCallback();
-        }
-        throw error;
-      }
-    });
+    // Manually control transaction with BEGIN/COMMIT/ROLLBACK to support async operations
+    this.executeSync('BEGIN TRANSACTION');
 
-    wrappedFn();
+    try {
+      await fn(transaction);
+
+      this.executeSync('COMMIT');
+
+      if (this.commitHookCallback) {
+        this.commitHookCallback();
+      }
+    } catch (error: any) {
+      this.executeSync('ROLLBACK');
+
+      if (this.rollbackHookCallback) {
+        this.rollbackHookCallback();
+      }
+
+      throw error;
+    }
   }
 
   prepareStatement(query: string): PreparedStatement {

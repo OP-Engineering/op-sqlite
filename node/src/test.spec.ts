@@ -86,7 +86,7 @@ describe('op-sqlite Node.js tests', () => {
     expect(result.rowsAffected ?? 0).toBeGreaterThanOrEqual(2);
   });
 
-  test.skip('Transaction commit', async () => {
+  test('Transaction commit', async () => {
     // Skipped: better-sqlite3's transaction function doesn't support async/await
     await db.transaction(async (tx) => {
       await tx.execute('INSERT INTO test_users (name, age) VALUES (?, ?)', [
@@ -100,7 +100,7 @@ describe('op-sqlite Node.js tests', () => {
     });
 
     const result = db.executeSync('SELECT COUNT(*) as count FROM test_users');
-    expect(result.rows.length).toBeGreaterThanOrEqual(5);
+    expect(result.rows[0].count).toBeGreaterThanOrEqual(5);
   });
 
   test.skip('Transaction rollback', async () => {
