@@ -419,13 +419,6 @@ export const open = (params: {
   return enhancedDb;
 };
 
-export function openV2(params: { path: string; encryptionKey?: string }) {
-  const db = OPSQLite.openV2(params);
-  const enhancedDb = enhanceDB(db, params as any);
-
-  return enhancedDb;
-}
-
 /**
  * Moves the database from the assets folder to the default path (check the docs) or to a custom path
  * It DOES NOT OVERWRITE the database if it already exists in the destination path

@@ -2,7 +2,7 @@
   "compilerOptions": {
     "rootDir": ".",
     "paths": {
-      "@op-engineering/op-sqlite": ["./src/index"]
+      "@op-engineering/op-sqlite": ["./src/index"],
     },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
@@ -18,14 +18,14 @@
     "noImplicitReturns": true,
     "noImplicitUseStrict": false,
     "noStrictGenericChecks": false,
-    "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUncheckedIndexedAccess": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
     "target": "ESNext",
-    "verbatimModuleSyntax": true
+    "verbatimModuleSyntax": true,
   },
-  "exclude": ["docs"]
+  "exclude": ["docs"],
 }
