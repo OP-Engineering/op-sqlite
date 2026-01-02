@@ -1,15 +1,15 @@
 import { NativeModules, Platform } from 'react-native';
-import {
-  type _InternalDB,
-  type _PendingTransaction,
-  type BatchQueryResult,
-  type DB,
-  type DBParams,
-  type OPSQLiteProxy,
-  type QueryResult,
-  type Scalar,
-  type SQLBatchTuple,
-  type Transaction,
+import type {
+  _InternalDB,
+  _PendingTransaction,
+  BatchQueryResult,
+  DB,
+  DBParams,
+  OPSQLiteProxy,
+  QueryResult,
+  Scalar,
+  SQLBatchTuple,
+  Transaction,
 } from './types';
 
 declare global {
@@ -418,13 +418,6 @@ export const open = (params: {
 
   return enhancedDb;
 };
-
-export function openV2(params: { path: string; encryptionKey?: string }) {
-  const db = OPSQLite.openV2(params);
-  const enhancedDb = enhanceDB(db, params as any);
-
-  return enhancedDb;
-}
 
 /**
  * Moves the database from the assets folder to the default path (check the docs) or to a custom path
