@@ -1,6 +1,6 @@
 {
   "name": "@op-engineering/op-sqlite",
-  "version": "0.0.0",
+  "version": "15.2.0-beta.0",
   "description": "Fastest SQLite for React Native (with node.js support)",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
