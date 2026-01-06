@@ -166,3 +166,7 @@ pre_install do |installer|
 	end
 end
 ```
+
+## NodeJS support
+
+It's impossible to run a React Native JSI module in Node. However, the library does provide a NodeJS compatible façade with the same API as the RN version. The idea is to enable you to write simple Jest tests that test your queries, NOT to prove the correctness of the library. The NodeJS façade is a convenience and it's not meant for production usage. If you find any issues please report them with a reproducible example.module. 
