@@ -27,13 +27,16 @@ export class NodeDatabase implements DB {
   private rollbackHookCallback?: (() => void) | null;
 
   constructor(name: string, location?: string) {
-    const dbLocation = location || './';
-    this.dbPath = path.join(dbLocation, name);
-
-    // Ensure directory exists
-    const dir = path.dirname(this.dbPath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    this.dbPath = ':memory:'
+    if(location !== ":memory:") {
+      const dbLocation = location || './';
+      this.dbPath = path.join(dbLocation, name);
+  
+      // Ensure directory exists
+      const dir = path.dirname(this.dbPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
     }
 
     this.db = new Database(this.dbPath);
