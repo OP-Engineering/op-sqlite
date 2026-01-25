@@ -41,7 +41,7 @@
     "test:node": "yarn workspace node test",
     "example": "yarn workspace op_sqlite_example",
     "typecheck": "tsc",
-    "prepare": "bob build",
+    "prepare": "bob build && build:node",
     "build:node": "yarn workspace node build",
     "pods": "cd example && yarn pods",
     "clang-format-check": "clang-format -i cpp/*.cpp cpp/*.h"
