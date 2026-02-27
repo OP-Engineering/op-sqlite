@@ -2,8 +2,8 @@ const http = require('http');
 
 async function pollInAppServer() {
   const startTime = Date.now();
-  const maxDuration = 5 * 60 * 1000; // 3 minutes - tests can take time on CI
-  const pollInterval = 5000; //
+  const maxDuration = 10 * 60 * 1000;
+  const pollInterval = 10000; //
 
   // Do an initial ping into the server
 

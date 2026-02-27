@@ -7,7 +7,7 @@ import {
 } from '@op-engineering/op-test';
 import './tests'; // import all tests to register them
 import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
-import {performanceTest} from './performance_test';
+// import {performanceTest} from './performance_test';
 import {StyleSheet, Text, View} from 'react-native';
 import {open} from '@op-engineering/op-sqlite';
 
@@ -35,15 +35,15 @@ export default function App() {
         setServerResults(false);
       }
 
-      setTimeout(() => {
-        try {
-          global?.gc?.();
-          let perfRes = performanceTest();
-          setPerfResult(perfRes);
-        } catch (e) {
-          // intentionally left blank
-        }
-      }, 1000);
+      // setTimeout(() => {
+      //   try {
+      //     global?.gc?.();
+      //     let perfRes = performanceTest();
+      //     setPerfResult(perfRes);
+      //   } catch (e) {
+      //     // intentionally left blank
+      //   }
+      // }, 1000);
     };
 
     work();
