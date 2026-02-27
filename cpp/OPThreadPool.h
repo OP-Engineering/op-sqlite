@@ -17,6 +17,7 @@ public:
   void queueWork(const std::function<void(void)> &task);
   void waitFinished();
   void restartPool();
+  void shutdown();
 
 private:
   unsigned int busy{};

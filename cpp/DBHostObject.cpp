@@ -671,7 +671,7 @@ void DBHostObject::invalidate() {
   }
 
   invalidated = true;
-  thread_pool->restartPool();
+  thread_pool->shutdown();
 #ifdef OP_SQLITE_USE_LIBSQL
   opsqlite_libsql_close(db);
 #else

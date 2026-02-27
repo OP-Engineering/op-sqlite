@@ -117,4 +117,22 @@ void ThreadPool::restartPool() {
 
   done = false;
 }
+void ThreadPool::shutdown() {
+  if (done) {
+    return;
+  }
+
+  done = true;
+
+  workQueueConditionVariable.notify_all();
+
+  for (auto &thread : threads) {
+    if (thread.joinable()) {
+      thread.join();
+    }
+  }
+
+  threads.clear();
+}
+
 } // namespace opsqlite
