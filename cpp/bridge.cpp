@@ -89,7 +89,9 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
                        [[maybe_unused]] std::string const &sqlite_vec_path) {
 #endif
   std::string final_path = opsqlite_get_db_path(name, path);
+#if defined(OP_SQLITE_USE_CRSQLITE) || defined(OP_SQLITE_USE_SQLITE_VEC)
   char *errMsg;
+#endif
   sqlite3 *db;
 
   int flags =
