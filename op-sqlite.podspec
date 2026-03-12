@@ -77,8 +77,12 @@ if phone_version then
   end
 
   if use_sqlite_vec then
-    raise "SQLite Vec is not supported with phone version. It cannot load extensions."
+    raise "sqlite-vec is not supported with phone version. It cannot load extensions."
   end
+end
+
+if use_libsql and use_sqlite_vec then
+    raise "You cannot use sqlite-vec with libsql. libsql already has vector search included."
 end
 
 Pod::Spec.new do |s|
