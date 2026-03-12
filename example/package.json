@@ -7,6 +7,7 @@
     "ios": "react-native run-ios --scheme='debug' --simulator='iPhone 16 Pro'",
     "run:ios:unused": "xcodebuild -workspace ios/OPSQLiteExample.xcworkspace -scheme release -configuration Release -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' clean build",
     "run:ios:release": "react-native run-ios --scheme='release' --no-packager",
+    "postinstall": "patch-package",
     "start": "react-native start",
     "pods": "cd ios && bundle exec pod install && rm -f .xcode.env.local",
     "pods:nuke": "cd ios && rm -rf Pods && rm -rf Podfile.lock && bundle exec pod install",
@@ -15,7 +16,6 @@
     "build:ios": "cd ios && xcodebuild -workspace OPSQLiteExample.xcworkspace -scheme debug -configuration Debug -sdk iphonesimulator CC=clang CPLUSPLUS=clang++ LD=clang LDPLUSPLUS=clang++ GCC_OPTIMIZATION_LEVEL=0 GCC_PRECOMPILE_PREFIX_HEADER=YES ASSETCATALOG_COMPILER_OPTIMIZATION=time DEBUG_INFORMATION_FORMAT=dwarf COMPILER_INDEX_STORE_ENABLE=NO"
   },
   "dependencies": {
-    "@op-engineering/op-server": "^0.1.5",
     "@op-engineering/op-test": "^0.2.5",
     "chance": "^1.1.9",
     "clsx": "^2.0.0",
@@ -36,6 +36,7 @@
     "@react-native/typescript-config": "0.81.5",
     "@types/chance": "^1.1.7",
     "@types/react": "^19.1.1",
+    "patch-package": "^8.0.1",
     "react-native-builder-bob": "^0.40.13",
     "react-native-monorepo-config": "^0.1.9",
     "react-native-restart": "^0.0.27",

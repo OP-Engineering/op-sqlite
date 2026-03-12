@@ -74,10 +74,14 @@ void ThreadPool::doWork() {
 
       task = workQueue.front();
       workQueue.pop();
+      ++busy;
     }
-    ++busy;
     task();
-    --busy;
+    {
+      std::lock_guard<std::mutex> g(workQueueMutex);
+      --busy;
+    }
+    workQueueConditionVariable.notify_one();
   }
 }
 

@@ -242,10 +242,11 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
     thread_pool->waitFinished();
 #ifdef OP_SQLITE_USE_LIBSQL
     opsqlite_libsql_close(db);
+    db = {};
 #else
     opsqlite_close(db);
-#endif
     db = nullptr;
+#endif
 
     return {};
   });
