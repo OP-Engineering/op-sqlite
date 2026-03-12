@@ -188,9 +188,6 @@ Pod::Spec.new do |s|
 
   if use_libsql then
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_LIBSQL=1"
-    if use_sqlite_vec then
-      
-    end
     if use_crsqlite then
       frameworks = ["ios/libsql_experimental.xcframework", "ios/crsqlite.xcframework"]
     else
