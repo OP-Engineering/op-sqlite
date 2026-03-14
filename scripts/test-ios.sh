@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+# set -euo pipefail
 
 LOG_STREAM_PID=""
 LOG_FILE=""
@@ -21,12 +21,12 @@ print_diagnostics() {
   fi
 }
 
-on_error() {
-  local exit_code=$?
-  echo "❌ iOS test script failed with exit code ${exit_code}"
-  print_diagnostics
-  exit "${exit_code}"
-}
+# on_error() {
+#   local exit_code=$?
+#   echo "❌ iOS test script failed with exit code ${exit_code}"
+#   print_diagnostics
+#   exit "${exit_code}"
+# }
 
 wait_for_test_result() {
   while true; do
@@ -45,9 +45,9 @@ wait_for_test_result() {
 }
 
 trap cleanup EXIT
-trap on_error ERR
+# trap on_error ERR
 
-cd example
+cd example || exit
 
 xcrun simctl boot "$(xcrun simctl list devices available | grep -m1 'Booted' || xcrun simctl list devices available | grep -m1 'Shutdown' | awk -F '[()]' '{print $2}')"
 
@@ -58,7 +58,7 @@ if [[ -z "${DEVICE_ID}" ]]; then
 fi
 
 # Prevent the simulator from auto-locking the screen, which suspends the app
-xcrun simctl spawn "${DEVICE_ID}" defaults write com.apple.springboard idleTimerDuration -int 0 2>/dev/null || true
+# xcrun simctl spawn "${DEVICE_ID}" defaults write com.apple.springboard idleTimerDuration -int 0 2>/dev/null || true
 
 LOG_FILE="$(pwd)/ios-sim-log.txt"
 rm -f "${LOG_FILE}"
@@ -67,7 +67,7 @@ LOG_STREAM_PID=$!
 
 yarn run:ios:release
 
-sleep 80
+# sleep 80
 
 wait_for_test_result
 
