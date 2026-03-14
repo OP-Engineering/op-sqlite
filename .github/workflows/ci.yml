@@ -14,7 +14,7 @@ jobs:
       - name: Typecheck files
         run: yarn typecheck
 
-  test-ios:
+  ios:
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -56,7 +56,7 @@ jobs:
         run: |
           ./scripts/test-ios.sh
 
-  test-ios-embedded:
+  ios-embedded:
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -98,7 +98,7 @@ jobs:
         run: |
           ./scripts/test-ios.sh
 
-  test-ios-sqlcipher:
+  ios-sqlcipher:
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -140,7 +140,7 @@ jobs:
         run: |
           ./scripts/test-ios.sh
 
-  test-ios-libsql:
+  ios-libsql:
     runs-on: macos-latest
     steps:
       - name: Checkout
@@ -149,7 +149,7 @@ jobs:
       - name: Xcode Select
         run: sudo xcode-select -s /Applications/Xcode_16.4.app
 
-      - name: Turn on SQLCipher
+      - name: Turn on libsql
         run: |
           node ./scripts/turnOnLibsql.js
 
@@ -182,25 +182,25 @@ jobs:
         run: |
           ./scripts/test-ios.sh
 
-  test-android:
+  android:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
-      - name: Free Disk Space (Ubuntu)
-        uses: insightsengineering/disk-space-reclaimer@v1
-        with:
-          # this might remove tools that are actually needed,
-          # if set to "true" but frees about 6 GB
-          tools-cache: false
+      # - name: Free Disk Space (Ubuntu)
+      #   uses: insightsengineering/disk-space-reclaimer@v1
+      #   with:
+      #     # this might remove tools that are actually needed,
+      #     # if set to "true" but frees about 6 GB
+      #     tools-cache: false
 
-          # all of these default to true, but feel free to set to
-          # "false" if necessary for your workflow
-          android: false
-          dotnet: true
-          haskell: true
-          large-packages: true
-          swap-storage: true
-          docker-images: true
+      #     # all of these default to true, but feel free to set to
+      #     # "false" if necessary for your workflow
+      #     android: false
+      #     dotnet: true
+      #     haskell: true
+      #     large-packages: true
+      #     swap-storage: true
+      #     docker-images: true
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -236,15 +236,15 @@ jobs:
       #       ~/.android/adb*
       #     key: avd-29
 
-      - name: create AVD and generate snapshot for caching
-        # if: steps.avd-cache.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 29
-          force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          disable-animations: false
-          script: echo "Generated AVD snapshot for caching."
+      # - name: create AVD and generate snapshot for caching
+      #   # if: steps.avd-cache.outputs.cache-hit != 'true'
+      #   uses: reactivecircus/android-emulator-runner@v2
+      #   with:
+      #     api-level: 29
+      #     force-avd-creation: false
+      #     emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+      #     disable-animations: false
+      #     script: echo "Generated AVD snapshot for caching."
 
       - name: Give execute permissions to script
         run: chmod +x ./scripts/test-android.sh
@@ -259,25 +259,33 @@ jobs:
           script: |
             ./scripts/test-android.sh
 
-  test-android-sqlcipher:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - name: Free Disk Space (Ubuntu)
-        uses: insightsengineering/disk-space-reclaimer@v1
+      - name: Upload Android diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
         with:
-          # this might remove tools that are actually needed,
-          # if set to "true" but frees about 6 GB
-          tools-cache: false
+          name: android-logcat-${{ github.job }}
+          path: example/android-logcat.txt
+          if-no-files-found: ignore
 
-          # all of these default to true, but feel free to set to
-          # "false" if necessary for your workflow
-          android: false
-          dotnet: true
-          haskell: true
-          large-packages: true
-          swap-storage: true
-          docker-images: true
+  android-sqlcipher:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      # - name: Free Disk Space (Ubuntu)
+      #   uses: insightsengineering/disk-space-reclaimer@v1
+      #   with:
+      #     # this might remove tools that are actually needed,
+      #     # if set to "true" but frees about 6 GB
+      #     tools-cache: false
+
+      #     # all of these default to true, but feel free to set to
+      #     # "false" if necessary for your workflow
+      #     android: false
+      #     dotnet: true
+      #     haskell: true
+      #     large-packages: true
+      #     swap-storage: true
+      #     docker-images: true
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -337,8 +345,17 @@ jobs:
             adb shell input keyevent 82
             ./scripts/test-android.sh
 
-  test-android-libsql:
+      - name: Upload Android diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-logcat-${{ github.job }}
+          path: example/android-logcat.txt
+          if-no-files-found: ignore
+
+  android-libsql:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     env:
       TURBO_CACHE_DIR: .turbo/android
     steps:
@@ -387,3 +404,11 @@ jobs:
             adb wait-for-device
             adb shell input keyevent 82
             ./scripts/test-android.sh
+
+      - name: Upload Android diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-logcat-${{ github.job }}
+          path: example/android-logcat.txt
+          if-no-files-found: ignore

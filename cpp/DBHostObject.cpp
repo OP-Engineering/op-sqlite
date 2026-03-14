@@ -236,11 +236,16 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
 
   function_map["close"] = HFN(this) {
     invalidated = true;
-
+    // Drain any in-flight async queries before closing the db handle.
+    // Without this, a queued/running execute() on the thread pool may
+    // dereference the freed sqlite3* pointer → heap corruption / SIGABRT.
+    thread_pool->waitFinished();
 #ifdef OP_SQLITE_USE_LIBSQL
     opsqlite_libsql_close(db);
+    db = {};
 #else
     opsqlite_close(db);
+    db = nullptr;
 #endif
 
     return {};
@@ -671,7 +676,13 @@ void DBHostObject::invalidate() {
   }
 
   invalidated = true;
-  thread_pool->restartPool();
+  // Drain in-flight thread pool work before closing the db handle.
+  // restartPool() joins threads (waiting for the current task) but then
+  // needlessly re-creates the pool. waitFinished() is sufficient: it
+  // blocks until the queue is empty and no worker is busy, then the
+  // ThreadPool destructor (via shared_ptr release) joins the threads.
+  thread_pool->waitFinished();
+
 #ifdef OP_SQLITE_USE_LIBSQL
   opsqlite_libsql_close(db);
 #else

@@ -1,5 +1,4 @@
 import {useEffect, useState} from 'react';
-import {setServerResults, stopServer} from './server';
 import {
   displayResults,
   runTests,
@@ -7,9 +6,9 @@ import {
 } from '@op-engineering/op-test';
 import './tests'; // import all tests to register them
 import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
-import {performanceTest} from './performance_test';
+// import {performanceTest} from './performance_test';
 import {StyleSheet, Text, View} from 'react-native';
-import {open} from '@op-engineering/op-sqlite';
+// import {open} from '@op-engineering/op-sqlite';
 
 export default function App() {
   const [results, setResults] = useState<any>(null);
@@ -19,38 +18,38 @@ export default function App() {
   useEffect(() => {
     console.log("App has started 🟢")
     const work = async () => {
-      let start = performance.now();
-      open({
-        name: 'dummyDb.sqlite',
-      });
-      setOpenTime(performance.now() - start);
+      // let start = performance.now();
+      // open({
+      //   name: 'dummyDb.sqlite',
+      // });
+      // setOpenTime(performance.now() - start);
 
       try {
+        console.log("TESTS STARTED 🟠");
         const results = await runTests();
+        const passed = allTestsPassed(results);
         console.log("TESTS FINISHED 🟢")
-        setServerResults(allTestsPassed(results));
+        console.log(`OPSQLITE_TEST_RESULT:${passed ? 'PASS' : 'FAIL'}`);
         setResults(results);
       } catch (e) {
         console.log(`TEST FAILED 🟥 ${e}`)
-        setServerResults(false);
+        console.log('OPSQLITE_TEST_RESULT:FAIL');
       }
 
-      setTimeout(() => {
-        try {
-          global?.gc?.();
-          let perfRes = performanceTest();
-          setPerfResult(perfRes);
-        } catch (e) {
-          // intentionally left blank
-        }
-      }, 1000);
+      // setTimeout(() => {
+      //   try {
+      //     global?.gc?.();
+      //     let perfRes = performanceTest();
+      //     setPerfResult(perfRes);
+      //   } catch (e) {
+      //     // intentionally left blank
+      //   }
+      // }, 1000);
     };
 
     work();
 
-    return () => {
-      stopServer();
-    };
+    return () => {};
   }, []);
 
   // const shareDb = async () => {
