@@ -27,6 +27,11 @@ def getExtOrIntegerDefault(name) {
   return rootProject.ext.has(name) ? rootProject.ext.get(name) : (project.properties["OPSQLite_" + name]).toInteger()
 }
 
+def reactNativeArchitectures() {
+  def value = project.getProperties().get("reactNativeArchitectures")
+  return value ? value.split(",") : ["armeabi-v7a", "x86", "x86_64", "arm64-v8a"]
+}
+
 def useSQLCipher = false
 def useLibsql = false
 def useCRSQLite = false
@@ -168,7 +173,7 @@ android {
         }
 
         cppFlags "-O3 -frtti -fexceptions -Wall -fstack-protector-all"
-
+        abiFilters(*reactNativeArchitectures())
         arguments "-DANDROID_STL=c++_shared",
           "-DSQLITE_FLAGS='$sqliteFlags'",
           "-DUSE_SQLCIPHER=${useSQLCipher ? 1 : 0}",
