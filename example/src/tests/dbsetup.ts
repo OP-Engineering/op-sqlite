@@ -15,7 +15,7 @@ const expectedVersion = isLibsql()
   ? '3.45.1'
   : isSQLCipher()
   ? '3.50.4'
-  : '3.50.4';
+  : '3.51.3';
 const flavor = isLibsql() ? 'libsql' : isSQLCipher() ? 'sqlcipher' : 'sqlite';
 
 // const expectedSqliteVecVersion = 'v0.1.2-alpha.7';
