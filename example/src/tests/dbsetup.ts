@@ -14,7 +14,7 @@ import {Platform} from 'react-native';
 const expectedVersion = isLibsql()
   ? '3.45.1'
   : isSQLCipher()
-  ? '3.50.4'
+  ? '3.51.3'
   : '3.51.3';
 const flavor = isLibsql() ? 'libsql' : isSQLCipher() ? 'sqlcipher' : 'sqlite';
 
