@@ -12,6 +12,7 @@ https://discord.gg/W9XmqCQCKP
 
 Some of the big supported features:
 
+- iOS, Android, macOS and web support
 - Vanilla sqlite
 - Libsql is supported as a compilation target
 - SQLCipher is supported as a compilation target

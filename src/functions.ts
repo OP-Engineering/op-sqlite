@@ -105,6 +105,9 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
     setReservedBytes: db.setReservedBytes,
     getReservedBytes: db.getReservedBytes,
     close: db.close,
+    closeAsync: async () => {
+      db.close();
+    },
     flushPendingReactiveQueries: db.flushPendingReactiveQueries,
     executeBatch: async (
       commands: SQLBatchTuple[]
@@ -417,6 +420,18 @@ export const open = (params: {
   const enhancedDb = enhanceDB(db, params);
 
   return enhancedDb;
+};
+
+/**
+ * Async wrapper around open().
+ * Useful for cross-platform code that also targets web where openAsync() is required.
+ */
+export const openAsync = async (params: {
+  name: string;
+  location?: string;
+  encryptionKey?: string;
+}): Promise<DB> => {
+  return open(params);
 };
 
 /**
