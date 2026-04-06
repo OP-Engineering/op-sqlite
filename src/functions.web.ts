@@ -57,24 +57,16 @@ let promiserPromise: Promise<WorkerPromiser> | null = null;
 async function getPromiser(): Promise<WorkerPromiser> {
   if (!promiserPromise) {
     promiserPromise = (async () => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore TS declaration is provided via src/web/sqlite-wasm.d.ts
-      const mod = await import('./web/sqlite-wasm/index.mjs');
-      const makePromiser = mod.sqlite3Worker1Promiser as (
-        config?: unknown
-      ) => Promise<WorkerPromiser>;
+      const mod = await import('@sqlite.org/sqlite-wasm');
+      const makePromiser = mod.sqlite3Worker1Promiser as any;
 
-      const WebWorker = (globalThis as any).Worker;
-      if (!WebWorker) {
-        throw new Error('[op-sqlite] Web Worker API is not available in this environment.');
+      const maybePromiser = makePromiser();
+
+      if (typeof maybePromiser === 'function') {
+        return maybePromiser as WorkerPromiser;
       }
 
-      return makePromiser({
-        worker: () =>
-          new WebWorker(new URL('./web/sqlite-wasm/sqlite3-worker1.mjs', import.meta.url), {
-            type: 'module',
-          }),
-      });
+      return (await maybePromiser) as WorkerPromiser;
     })();
   }
 

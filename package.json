@@ -121,5 +121,8 @@
     "type": "turbo-module",
     "version": "0.52.1"
   },
-  "packageManager": "yarn@4.11.0"
+  "packageManager": "yarn@4.11.0",
+  "dependencies": {
+    "@sqlite.org/sqlite-wasm": "^3.51.2-build8"
+  }
 }

@@ -2196,6 +2196,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@op-engineering/op-sqlite@workspace:."
   dependencies:
+    "@sqlite.org/sqlite-wasm": "npm:^3.51.2-build8"
     "@types/better-sqlite3": "npm:^7.6.13"
     "@types/jest": "npm:^30.0.0"
     better-sqlite3: "npm:^12.5.0"
@@ -2944,6 +2945,13 @@ __metadata:
   dependencies:
     "@sinonjs/commons": "npm:^3.0.0"
   checksum: 10c0/2e2fb6cc57f227912814085b7b01fede050cd4746ea8d49a1e44d5a0e56a804663b0340ae2f11af7559ea9bf4d087a11f2f646197a660ea3cb04e19efc04aa63
+  languageName: node
+  linkType: hard
+
+"@sqlite.org/sqlite-wasm@npm:^3.51.2-build8":
+  version: 3.51.2-build8
+  resolution: "@sqlite.org/sqlite-wasm@npm:3.51.2-build8"
+  checksum: 10c0/f193298c13a2e156897ca4dcae524f4c84c6004b7175baefc36dacec35b1ab3f7868f69d0ce975adfe64cb20c2cd15efba6285d3a48439ae4b556eb7f923e749
   languageName: node
   linkType: hard
 

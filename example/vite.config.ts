@@ -25,7 +25,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: ['@op-engineering/op-sqlite'],
+    exclude: ['@op-engineering/op-sqlite', '@sqlite.org/sqlite-wasm'],
   },
   build: {
     outDir: path.resolve(rootDir, 'web-build'),
