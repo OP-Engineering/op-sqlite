@@ -17,7 +17,32 @@ npx expo install @op-engineering/op-sqlite
 npx expo prebuild --clean
 ```
 
-This package only runs on `iOS`, `Android` and `macOS`.
+This package runs on `iOS`, `Android`, `macOS` and `web`.
+
+## Web requirements
+
+Web support is async-only and uses the sqlite wasm worker API with OPFS persistence.
+
+`@sqlite.org/sqlite-wasm` is an optional dependency. You only need to install it if you use op-sqlite on web.
+
+```bash
+yarn add @sqlite.org/sqlite-wasm
+```
+
+If your app does not target web, you do not need to install this package.
+
+Required runtime behavior on web:
+
+- Use `openAsync()` to open the database.
+- Use async DB methods such as `execute()` and `closeAsync()`.
+- Synchronous APIs (for example `open()` and `executeSync()`) intentionally throw on web.
+- SQLCipher and libsql are not supported on web. As well as loading extensions.
+- OPFS is required for the web backend. If OPFS is unavailable, `openAsync()` throws.
+
+Required response headers (for worker/OPFS setup):
+
+- `Cross-Origin-Opener-Policy: same-origin`
+- `Cross-Origin-Embedder-Policy: require-corp`
 
 # Configuration
 

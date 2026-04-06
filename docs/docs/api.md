@@ -16,6 +16,20 @@ export const db = open({
 });
 ```
 
+### Open Async (Web)
+
+On web, opening is async-only and requires OPFS.
+
+```tsx
+import { openAsync } from '@op-engineering/op-sqlite';
+
+export const db = await openAsync({
+  name: 'myDb.sqlite',
+});
+```
+
+On web, `open()` intentionally throws. Use `openAsync()`.
+
 ### SQLCipher Open
 
 If you are using SQLCipher all the methods are the same with the exception of the open method which needs an extra `encryptionKey` to encrypt/decrypt the database.
@@ -50,6 +64,12 @@ try {
   console.error('Something went wrong executing SQL commands:', e.message);
 }
 ```
+
+### Web note
+
+On web, `execute()` runs the full SQL string passed to it.
+On native, `execute()` currently runs only the first prepared statement.
+If you need identical behavior across platforms, avoid multi-statement SQL strings.
 
 ### Execute with Host Objects
 
@@ -108,6 +128,8 @@ You can do sync queries via the `executeSync` functions. Not available in transa
 ```jsx
 let res = db.executeSync('SELECT 1');
 ```
+
+On web, sync APIs intentionally throw. Use async methods only.
 
 ## Transactions
 
