@@ -1,22 +1,22 @@
 import {
-  IOS_DOCUMENT_PATH,
-  IOS_LIBRARY_PATH,
-  ANDROID_EXTERNAL_FILES_PATH,
-  ANDROID_DATABASE_PATH,
-  ANDROID_FILES_PATH,
-} from '@op-engineering/op-sqlite';
-import {describe, it, expect} from '@op-engineering/op-test';
-import {Platform} from 'react-native';
+	ANDROID_DATABASE_PATH,
+	ANDROID_EXTERNAL_FILES_PATH,
+	ANDROID_FILES_PATH,
+	IOS_DOCUMENT_PATH,
+	IOS_LIBRARY_PATH,
+} from "@op-engineering/op-sqlite";
+import { describe, expect, it } from "@op-engineering/op-test";
+import { Platform } from "react-native";
 
-describe('Constants tests', () => {
-  it('Constants are there', async () => {
-    if (Platform.OS === 'ios') {
-      expect(!!IOS_DOCUMENT_PATH).toBeTruthy();
-      expect(!!IOS_LIBRARY_PATH).toBeTruthy();
-    } else {
-      expect(!!ANDROID_EXTERNAL_FILES_PATH).toBeTruthy();
-      expect(!!ANDROID_DATABASE_PATH).toBeTruthy();
-      expect(!!ANDROID_FILES_PATH).toBeTruthy();
-    }
-  });
+describe("Constants tests", () => {
+	it("Constants are there", async () => {
+		if (Platform.OS === "ios") {
+			expect(!!IOS_DOCUMENT_PATH).toBeTruthy();
+			expect(!!IOS_LIBRARY_PATH).toBeTruthy();
+		} else {
+			expect(!!ANDROID_EXTERNAL_FILES_PATH).toBeTruthy();
+			expect(!!ANDROID_DATABASE_PATH).toBeTruthy();
+			expect(!!ANDROID_FILES_PATH).toBeTruthy();
+		}
+	});
 });

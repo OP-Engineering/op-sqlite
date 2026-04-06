@@ -23,6 +23,14 @@ This package runs on `iOS`, `Android`, `macOS` and `web`.
 
 Web support is async-only and uses the sqlite wasm worker API with OPFS persistence.
 
+`@sqlite.org/sqlite-wasm` is an optional dependency. You only need to install it if you use op-sqlite on web.
+
+```bash
+yarn add @sqlite.org/sqlite-wasm
+```
+
+If your app does not target web, you do not need to install this package.
+
 Required runtime behavior on web:
 
 - Use `openAsync()` to open the database.

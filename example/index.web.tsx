@@ -1,15 +1,15 @@
-import { AppRegistry } from 'react-native';
-import App from './src/AppWeb';
-import { name as appName } from './app.json';
+import { AppRegistry } from "react-native";
+import { name as appName } from "./app.json";
+import App from "./src/AppWeb";
 
 AppRegistry.registerComponent(appName, () => App);
 
-const rootTag = (globalThis as any).document?.getElementById('root');
+const rootTag = (globalThis as any).document?.getElementById("root");
 if (!rootTag) {
-  throw new Error('Root element not found');
+	throw new Error("Root element not found");
 }
 
 AppRegistry.runApplication(appName, {
-  rootTag,
-  initialProps: {},
+	rootTag,
+	initialProps: {},
 });
