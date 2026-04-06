@@ -15,6 +15,10 @@ if (USE_LIBSQL)
   include_directories(src/main/jniLibs/include)
 endif()
 
+if (USE_TURSO)
+  include_directories(src/main/tursoLibs/include)
+endif()
+
 separate_arguments(SQLITE_FLAGS_LIST UNIX_COMMAND "${SQLITE_FLAGS}")
 
 add_definitions(
@@ -51,6 +55,12 @@ elseif (USE_LIBSQL)
 
   add_definitions(
     -DOP_SQLITE_USE_LIBSQL=1
+  )
+elseif (USE_TURSO)
+  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/turso_bridge.cpp)
+
+  add_definitions(
+    -DOP_SQLITE_USE_TURSO=1
   )
 else()
  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlite3.c ../cpp/bridge.cpp)
@@ -99,6 +109,22 @@ elseif (USE_LIBSQL)
   target_link_libraries(
     ${PACKAGE_NAME}
     libsql_experimental
+    ${LOG_LIB}
+    ReactAndroid::reactnative
+    ReactAndroid::jsi
+    fbjni::fbjni
+  )
+elseif (USE_TURSO)
+  cmake_path(SET TURSO_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/main/tursoLibs/${ANDROID_ABI}/libturso_sdk_kit.so NORMALIZE)
+  add_library(turso_sdk_kit SHARED IMPORTED)
+  set_target_properties(turso_sdk_kit PROPERTIES
+    IMPORTED_LOCATION ${TURSO_PATH}
+    IMPORTED_NO_SONAME TRUE
+  )
+
+  target_link_libraries(
+    ${PACKAGE_NAME}
+    turso_sdk_kit
     ${LOG_LIB}
     ReactAndroid::reactnative
     ReactAndroid::jsi

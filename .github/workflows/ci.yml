@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup
         uses: ./.github/actions/setup
@@ -18,7 +18,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Xcode Select
         run: sudo xcode-select -s /Applications/Xcode_16.4.app
@@ -60,7 +60,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Xcode Select
         run: sudo xcode-select -s /Applications/Xcode_16.4.app
@@ -102,7 +102,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Xcode Select
         run: sudo xcode-select -s /Applications/Xcode_16.4.app
@@ -144,7 +144,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Xcode Select
         run: sudo xcode-select -s /Applications/Xcode_16.4.app
@@ -203,7 +203,7 @@ jobs:
       #     docker-images: true
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Turn off addons
         run: |
@@ -287,7 +287,7 @@ jobs:
       #     swap-storage: true
       #     docker-images: true
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Turn on SQLCipher
         run: |
@@ -359,9 +359,109 @@ jobs:
     env:
       TURBO_CACHE_DIR: .turbo/android
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - run: node ./scripts/turnOnLibsql.js
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Install JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: "zulu"
+          java-version: "17"
+
+      - name: Finalize Android SDK
+        run: |
+          /bin/bash -c "yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null"
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/wrapper
+            ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('example/android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Give execute permissions to script
+        run: chmod +x ./scripts/test-android.sh
+
+      - name: run tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          emulator-options: -no-window -no-boot-anim -no-audio -no-snapshot-load
+          script: |
+            adb wait-for-device
+            adb shell input keyevent 82
+            ./scripts/test-android.sh
+
+      - name: Upload Android diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-logcat-${{ github.job }}
+          path: example/android-logcat.txt
+          if-no-files-found: ignore
+
+  ios-turso:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Xcode Select
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+
+      - name: Turn on Turso
+        run: |
+          node ./scripts/turnOnTurso.js
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: install bundler dependencies
+        run: |
+          cd example
+          bundle install
+
+      - name: Cache cocoapods
+        id: cocoapods-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/ios/Pods
+          key: ${{ runner.os }}-cocoapods-${{ hashFiles('example/ios/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cocoapods-
+
+      - name: Install cocoapods
+        run: |
+          cd example/ios
+          bundle exec pod install
+        env:
+          NO_FLIPPER: 1
+
+      - name: run tests
+        run: |
+          ./scripts/test-ios.sh
+
+  android-turso:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+
+      - run: node ./scripts/turnOnTurso.js
 
       - name: Setup
         uses: ./.github/actions/setup

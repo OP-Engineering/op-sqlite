@@ -89,3 +89,5 @@ android/c_sources
 # c_sources/
 
 scripts/sqlite-vec-*
+turso/
+.tmp/

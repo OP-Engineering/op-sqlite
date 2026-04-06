@@ -38,7 +38,7 @@ describe("PreparedStatements", () => {
 				"Carlos",
 			]);
 		} catch (e) {
-			console.warn("error on before each", e);
+			console.warn("Prepared statements block, error on before each", e);
 		}
 	});
 

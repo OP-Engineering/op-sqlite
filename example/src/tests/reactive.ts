@@ -1,4 +1,4 @@
-import { type DB, isLibsql, open } from "@op-engineering/op-sqlite";
+import { type DB, isLibsql, isTurso, open } from "@op-engineering/op-sqlite";
 import {
 	afterAll,
 	beforeEach,
@@ -39,7 +39,7 @@ describe("Reactive queries", () => {
 		}
 	});
 	// libsql does not support reactive queries
-	if (isLibsql()) {
+	if (isLibsql() || isTurso()) {
 		return;
 	}
 

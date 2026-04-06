@@ -496,6 +496,10 @@ export const isLibsql = (): boolean => {
 	return false;
 };
 
+export const isTurso = (): boolean => {
+	return false;
+};
+
 export const isIOSEmbedded = (): boolean => {
 	return false;
 };

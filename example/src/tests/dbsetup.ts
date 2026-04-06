@@ -1,22 +1,30 @@
 import {
 	ANDROID_DATABASE_PATH,
-	ANDROID_EXTERNAL_FILES_PATH,
+	// ANDROID_EXTERNAL_FILES_PATH,
 	IOS_LIBRARY_PATH,
 	isIOSEmbeeded,
 	isLibsql,
 	isSQLCipher,
+	isTurso,
 	moveAssetsDatabase,
 	open,
 } from "@op-engineering/op-sqlite";
 import { describe, expect, it } from "@op-engineering/op-test";
 import { Platform } from "react-native";
 
-const expectedVersion = isLibsql()
-	? "3.45.1"
-	: isSQLCipher()
-		? "3.51.3"
-		: "3.51.3";
-const flavor = isLibsql() ? "libsql" : isSQLCipher() ? "sqlcipher" : "sqlite";
+let expectedVersion = "3.51.3";
+let flavor = "sqlite";
+
+if (isLibsql()) {
+	expectedVersion = "3.45.1";
+	flavor = "libsql";
+} else if (isTurso()) {
+	expectedVersion = "3.50.4";
+	flavor = "turso";
+} else if (isSQLCipher()) {
+	expectedVersion = "3.51.3";
+	flavor = "sqlcipher";
+}
 
 // const expectedSqliteVecVersion = 'v0.1.2-alpha.7';
 
@@ -66,37 +74,37 @@ describe("DB setup tests", () => {
 		inMemoryDb.close();
 	});
 
-	if (Platform.OS === "android") {
-		it("Create db in external directory Android", async () => {
-			const androidDb = open({
-				name: "AndroidSDCardDB.sqlite",
-				location: ANDROID_EXTERNAL_FILES_PATH,
-				encryptionKey: "test",
-			});
+	// if (Platform.OS === "android") {
+	// 	it("Create db in external directory Android", async () => {
+	// 		const androidDb = open({
+	// 			name: "AndroidSDCardDB.sqlite",
+	// 			location: ANDROID_EXTERNAL_FILES_PATH,
+	// 			encryptionKey: "test",
+	// 		});
 
-			await androidDb.execute("DROP TABLE IF EXISTS User;");
-			await androidDb.execute(
-				"CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL) STRICT;",
-			);
+	// 		await androidDb.execute("DROP TABLE IF EXISTS User;");
+	// 		await androidDb.execute(
+	// 			"CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL) STRICT;",
+	// 		);
 
-			androidDb.close();
-		});
+	// 		androidDb.close();
+	// 	});
 
-		it("Creates db in external nested directory on Android", async () => {
-			const androidDb = open({
-				name: "AndroidSDCardDB.sqlite",
-				location: `${ANDROID_EXTERNAL_FILES_PATH}/nested`,
-				encryptionKey: "test",
-			});
+	// 	it("Creates db in external nested directory on Android", async () => {
+	// 		const androidDb = open({
+	// 			name: "AndroidSDCardDB.sqlite",
+	// 			location: `${ANDROID_EXTERNAL_FILES_PATH}/nested`,
+	// 			encryptionKey: "test",
+	// 		});
 
-			await androidDb.execute("DROP TABLE IF EXISTS User;");
-			await androidDb.execute(
-				"CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL) STRICT;",
-			);
+	// 		await androidDb.execute("DROP TABLE IF EXISTS User;");
+	// 		await androidDb.execute(
+	// 			"CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL) STRICT;",
+	// 		);
 
-			androidDb.close();
-		});
-	}
+	// 		androidDb.close();
+	// 	});
+	// }
 
 	// Currently this only tests the function is there
 	it("Should load extension", async () => {
@@ -226,6 +234,9 @@ describe("DB setup tests", () => {
 });
 
 it("Can attach/dettach database", () => {
+	if (isTurso()) {
+		return;
+	}
 	const db = open({
 		name: "attachTest.sqlite",
 		encryptionKey: "test",

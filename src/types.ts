@@ -323,5 +323,6 @@ export type OPSQLiteProxy = {
 	openSync: (options: DBParams) => _InternalDB;
 	isSQLCipher: () => boolean;
 	isLibsql: () => boolean;
+	isTurso: () => boolean;
 	isIOSEmbedded: () => boolean;
 };

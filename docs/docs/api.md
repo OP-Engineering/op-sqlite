@@ -45,6 +45,28 @@ export const db = open({
 
 If you want to read more about securely storing your encryption key, [read this article](https://ospfranco.com/react-native-security-guide/). Again: **DO NOT OPEN MORE THAN ONE CONNECTION PER DATABASE**. Just export one single db connection for your entire application and reuse it everywhere.
 
+### Remote and Sync Open (Libsql/Turso)
+
+For remote/sync scenarios, enable either the `libsql` or `turso` backend in your package configuration, then use `openRemote` or `openSync`.
+
+```tsx
+import { openRemote, openSync } from '@op-engineering/op-sqlite';
+
+const remoteDb = openRemote({
+  url: 'url',
+  authToken: 'token',
+});
+
+const syncDb = openSync({
+  name: 'myDb.sqlite',
+  url: 'url',
+  authToken: 'token',
+});
+
+// Force a sync round when needed
+syncDb.sync();
+```
+
 ## Execute
 
 Base async query operation. All execute calls run on a (**single**) separate and dedicated thread, so the JS thread is not blocked. It’s recommended to ALWAYS use transactions since even read calls can corrupt a sqlite database.

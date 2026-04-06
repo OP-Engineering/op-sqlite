@@ -1,4 +1,4 @@
-import { type DB, isLibsql, open } from "@op-engineering/op-sqlite";
+import { type DB, isLibsql, isTurso, open } from "@op-engineering/op-sqlite";
 import {
 	afterEach,
 	beforeEach,
@@ -17,7 +17,7 @@ const chance = new Chance();
 
 describe("Hooks", () => {
 	let db: DB;
-	if (isLibsql()) {
+	if (isLibsql() || isTurso()) {
 		return;
 	}
 
@@ -30,7 +30,7 @@ describe("Hooks", () => {
 				"CREATE TABLE User ( id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL) STRICT;",
 			);
 		} catch (e) {
-			console.warn("error on before each", e);
+			console.warn("Hooks Block, error on before each", e);
 		}
 	});
 

@@ -362,8 +362,8 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
 }
 
 /**
- * Open a replicating connection via libsql to a turso db
- * libsql needs to be enabled on your package.json
+ * Open a replicating/sync connection.
+ * Requires libsql or turso backend to be enabled in package.json.
  */
 export const openSync = (params: {
 	url: string;
@@ -375,8 +375,10 @@ export const openSync = (params: {
 	encryptionKey?: string;
 	remoteEncryptionKey?: string;
 }): DB => {
-	if (!isLibsql()) {
-		throw new Error("This function is only available for libsql");
+	if (!isLibsql() && !isTurso()) {
+		throw new Error(
+			"This function is only available for libsql or turso backends",
+		);
 	}
 
 	const db = OPSQLite.openSync(params);
@@ -386,12 +388,14 @@ export const openSync = (params: {
 };
 
 /**
- * Open a remote connection via libsql to a turso db
- * libsql needs to be enabled on your package.json
+ * Open a remote connection.
+ * Requires libsql or turso backend to be enabled in package.json.
  */
 export const openRemote = (params: { url: string; authToken: string }): DB => {
-	if (!isLibsql()) {
-		throw new Error("This function is only available for libsql");
+	if (!isLibsql() && !isTurso()) {
+		throw new Error(
+			"This function is only available for libsql or turso backends",
+		);
 	}
 
 	const db = OPSQLite.openRemote(params);
@@ -467,6 +471,10 @@ export const isSQLCipher = (): boolean => {
 
 export const isLibsql = (): boolean => {
 	return OPSQLite.isLibsql();
+};
+
+export const isTurso = (): boolean => {
+	return OPSQLite.isTurso();
 };
 
 export const isIOSEmbedded = (): boolean => {

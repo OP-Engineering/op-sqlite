@@ -14,6 +14,7 @@ Some of the big supported features:
 
 - iOS, Android, macOS and web support
 - Vanilla sqlite
+- Turso is supported as a compilation target
 - Libsql is supported as a compilation target
 - SQLCipher is supported as a compilation target
 - FTS5 plugin

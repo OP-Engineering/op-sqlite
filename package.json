@@ -43,6 +43,7 @@
 		"typecheck": "tsc",
 		"prepare": "bob build && yarn build:node",
 		"build:node": "yarn workspace node build",
+		"build:turso": "./scripts/build-turso-binaries.sh",
 		"pods": "cd example && yarn pods",
 		"clang-format-check": "clang-format -i cpp/*.cpp cpp/*.h"
 	},

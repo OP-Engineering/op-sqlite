@@ -42,6 +42,7 @@ op_sqlite_config = app_package["op-sqlite"]
 use_sqlcipher = false
 use_crsqlite = false
 use_libsql = false
+use_turso = false
 performance_mode = false
 phone_version = false
 sqlite_flags = ""
@@ -54,6 +55,7 @@ if(op_sqlite_config != nil)
   use_sqlcipher = op_sqlite_config["sqlcipher"] == true
   use_crsqlite = op_sqlite_config["crsqlite"] == true
   use_libsql = op_sqlite_config["libsql"] == true
+  use_turso = op_sqlite_config["turso"] == true
   performance_mode = op_sqlite_config["performanceMode"] || false
   phone_version = op_sqlite_config["iosSqlite"] == true
   sqlite_flags = op_sqlite_config["sqliteFlags"] || ""
@@ -85,6 +87,14 @@ if use_libsql and use_sqlite_vec then
     raise "You cannot use sqlite-vec with libsql. libsql already has vector search included."
 end
 
+if use_turso and use_sqlite_vec then
+  raise "You cannot use sqlite-vec with turso backend."
+end
+
+if use_turso and use_libsql then
+  raise "You cannot enable both libsql and turso backend."
+end
+
 Pod::Spec.new do |s|
   s.name         = "op-sqlite"
   s.version      = package["version"]
@@ -103,6 +113,9 @@ Pod::Spec.new do |s|
   # Base source files
   source_files = Dir.glob("ios/**/*.{h,hpp,m,mm}") + Dir.glob("cpp/**/*.{hpp,h,cpp,c}")
 
+  # Backend bridges are selected explicitly by flags and should not be compiled by default.
+  source_files.reject! { |path| path == "cpp/turso_bridge.cpp" } unless use_turso
+
   # Set the path to the `c_sources` directory based on environment
   if is_user_app
     c_sources_dir = File.join("..", "..", "..", "c_sources")
@@ -111,6 +124,10 @@ Pod::Spec.new do |s|
   end
 
   if tokenizers.any?
+    if use_turso then
+      raise "Tokenizers are not supported with turso backend. Please disable tokenizers or do not enable turso."
+    end
+
     generate_tokenizers_header_file(tokenizers, File.join(c_sources_dir, "tokenizers.h"))
     FileUtils.cp_r(c_sources_dir, __dir__)
     # # Add all .h and .c files from the `c_sources` directory
@@ -133,12 +150,15 @@ Pod::Spec.new do |s|
     exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h", "ios/libsql.xcframework/**/*"]
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_SQLCIPHER=1 HAVE_FULLFSYNC=1 SQLITE_HAS_CODEC SQLITE_TEMP_STORE=3 SQLITE_EXTRA_INIT=sqlcipher_extra_init SQLITE_EXTRA_SHUTDOWN=sqlcipher_extra_shutdown"
     s.dependency "OpenSSL-Universal"    
+  elsif use_turso then
+    log_message.call("[OP-SQLITE] using Turso SDK kit")
+    exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/bridge.h", "cpp/bridge.cpp", "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h", "ios/libsql_experimental.xcframework/**/*"]
   elsif use_libsql then
     log_message.call("[OP-SQLITE] ⚠️ Using libsql. If you have libsql questions please ask in the Turso Discord server.")
-    exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/bridge.h", "cpp/bridge.cpp"]
+    exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/bridge.h", "cpp/bridge.cpp", "ios/turso_sdk_kit.xcframework/**/*"]
   else
     log_message.call("[OP-SQLITE] using pure SQLite")
-    exclude_files += ["cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h", "ios/libsql.xcframework/**/*"]
+    exclude_files += ["cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h", "ios/libsql_experimental.xcframework/**/*", "ios/turso_sdk_kit.xcframework/**/*"]
   end
 
    # Exclude xcframeworks that aren't being used
@@ -193,6 +213,11 @@ Pod::Spec.new do |s|
     else
       frameworks = ["ios/libsql_experimental.xcframework"]
     end
+  end
+
+  if use_turso then
+    xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_TURSO=1"
+    frameworks = ["ios/turso_sdk_kit.xcframework"]
   end
 
   if sqlite_flags != "" then
