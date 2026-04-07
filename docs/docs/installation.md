@@ -36,7 +36,7 @@ Required runtime behavior on web:
 - Use `openAsync()` to open the database.
 - Use async DB methods such as `execute()` and `closeAsync()`.
 - Synchronous APIs (for example `open()` and `executeSync()`) intentionally throw on web.
-- SQLCipher and libsql are not supported on web. As well as loading extensions.
+- SQLCipher, libsql and turso are not supported on web. As well as loading extensions.
 - OPFS is required for the web backend. If OPFS is unavailable, `openAsync()` throws.
 
 Required response headers (for worker/OPFS setup):
@@ -67,6 +67,7 @@ SQLite is very customizable on compilation level. op-sqlite also allows you add 
     // "fts5": true,
     // "rtree": true,
     // "libsql": true,
+    // "turso": true,
     // "sqliteVec": true,
     // "tokenizers": ["simple_tokenizer"]
   }
@@ -84,6 +85,7 @@ All keys are optional, only turn on the features you want:
 - `tokenizers` allows you to write your own C tokenizers. Read more in the corresponding section in this documentation.
 - `rtree` enables the [rtree extension](https://www.sqlite.org/rtree.html)
 - `sqliteVec` enables [sqlite-vec](https://github.com/asg017/sqlite-vec), an extension for RAG embeddings
+- `turso` switches the backend to Turso SDK kit and enables `openRemote`, `openSync` and `sync` APIs for remote/sync workflows.
 
 Some combination of features are not allowed. For example `sqlcipher` and `iosSqlite` since they are fundamentally different sources. In this cases you will get an error while doing a pod install or during the Android build.
 

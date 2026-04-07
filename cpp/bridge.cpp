@@ -338,6 +338,12 @@ sqlite3_stmt *opsqlite_prepare_statement(sqlite3 *db,
   return statement;
 }
 
+void opsqlite_finalize_statement(sqlite3_stmt *statement) {
+  if (statement != nullptr) {
+    sqlite3_finalize(statement);
+  }
+}
+
 BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
                               const std::vector<JSVariant> *params) {
   sqlite3_stmt *statement;

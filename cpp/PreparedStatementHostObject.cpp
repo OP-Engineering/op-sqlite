@@ -116,7 +116,7 @@ PreparedStatementHostObject::~PreparedStatementHostObject() {
   }
 #else
   if (_stmt != nullptr) {
-    //    sqlite3_finalize(_stmt);
+    opsqlite_finalize_statement(_stmt);
     _stmt = nullptr;
   }
 #endif

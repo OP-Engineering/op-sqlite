@@ -57,6 +57,15 @@ public:
                std::string &url, std::string &auth_token, int sync_interval,
                bool offline, std::string &encryption_key,
                std::string &remote_encryption_key);
+#elif defined(OP_SQLITE_USE_TURSO)
+  // Constructor for remoteOpen, purely for remote databases
+  DBHostObject(jsi::Runtime &rt, std::string &url, std::string &auth_token,
+               std::string &base_path);
+
+  // Constructor for a local database with remote sync
+  DBHostObject(jsi::Runtime &rt, std::string &db_name, std::string &path,
+               std::string &url, std::string &auth_token,
+               std::string &remote_encryption_key);
 #endif
 
   std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt) override;

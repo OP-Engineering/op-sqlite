@@ -10,6 +10,7 @@
 #include "logs.h"
 #include "macros.hpp"
 #include "utils.hpp"
+#include <functional>
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -109,7 +110,15 @@ void install(jsi::Runtime &rt,
 #endif
   });
 
-#ifdef OP_SQLITE_USE_LIBSQL
+  auto is_turso = HFN(=) {
+#ifdef OP_SQLITE_USE_TURSO
+    return true;
+#else
+    return false;
+#endif
+  });
+
+#if defined(OP_SQLITE_USE_LIBSQL) || defined(OP_SQLITE_USE_TURSO)
   auto open_remote = HFN(=) {
     jsi::Object options = args[0].asObject(rt);
 
@@ -118,8 +127,16 @@ void install(jsi::Runtime &rt,
     std::string auth_token =
         options.getProperty(rt, "authToken").asString(rt).utf8(rt);
 
+#ifdef OP_SQLITE_USE_LIBSQL
     std::shared_ptr<DBHostObject> db =
         std::make_shared<DBHostObject>(rt, url, auth_token);
+#else
+    std::string path = std::string(_base_path);
+    std::shared_ptr<DBHostObject> db =
+        std::make_shared<DBHostObject>(rt, url, auth_token, path);
+#endif
+
+    dbs.emplace_back(db);
 
     return jsi::Object::createFromHostObject(rt, db);
   });
@@ -169,9 +186,20 @@ void install(jsi::Runtime &rt,
       }
     }
 
+  #ifdef OP_SQLITE_USE_LIBSQL
     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-        rt, name, path, url, auth_token, sync_interval, offline, encryption_key,
-        remote_encryption_key);
+      rt, name, path, url, auth_token, sync_interval, offline, encryption_key,
+      remote_encryption_key);
+  #else
+    (void)sync_interval;
+    (void)offline;
+
+    std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
+      rt, name, path, url, auth_token, remote_encryption_key);
+  #endif
+
+    dbs.emplace_back(db);
+
     return jsi::Object::createFromHostObject(rt, db);
   });
 #endif
@@ -180,8 +208,9 @@ void install(jsi::Runtime &rt,
   module.setProperty(rt, "open", std::move(open));
   module.setProperty(rt, "isSQLCipher", std::move(is_sqlcipher));
   module.setProperty(rt, "isLibsql", std::move(is_libsql));
+  module.setProperty(rt, "isTurso", std::move(is_turso));
   module.setProperty(rt, "isIOSEmbedded", std::move(is_ios_embedded));
-#ifdef OP_SQLITE_USE_LIBSQL
+#if defined(OP_SQLITE_USE_LIBSQL) || defined(OP_SQLITE_USE_TURSO)
   module.setProperty(rt, "openRemote", std::move(open_remote));
   module.setProperty(rt, "openSync", std::move(open_sync));
 #endif

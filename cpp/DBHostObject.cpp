@@ -172,6 +172,32 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &db_name,
   create_jsi_functions(rt);
 }
 
+#elif defined(OP_SQLITE_USE_TURSO)
+// Remote connection constructor
+DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &url,
+                           std::string &auth_token, std::string &base_path)
+    : db_name(url) {
+  thread_pool = std::make_shared<ThreadPool>();
+  db = opsqlite_open_remote(url, auth_token, base_path);
+
+  create_jsi_functions(rt);
+}
+
+// Sync connection constructor
+DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &db_name,
+                           std::string &path, std::string &url,
+                           std::string &auth_token,
+                           std::string &remote_encryption_key)
+    : db_name(db_name) {
+
+  thread_pool = std::make_shared<ThreadPool>();
+
+  db = opsqlite_open_sync(db_name, path, url, auth_token,
+                          remote_encryption_key);
+
+  create_jsi_functions(rt);
+}
+
 #endif
 
 DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
@@ -436,11 +462,17 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
         });
   });
 
-#ifdef OP_SQLITE_USE_LIBSQL
+#if defined(OP_SQLITE_USE_LIBSQL) || defined(OP_SQLITE_USE_TURSO)
   function_map["sync"] = HFN(this) {
+#ifdef OP_SQLITE_USE_LIBSQL
     opsqlite_libsql_sync(db);
+#else
+    opsqlite_sync(db);
+#endif
     return {};
   });
+
+#ifdef OP_SQLITE_USE_LIBSQL
 
   function_map["setReservedBytes"] = HFN(this) {
     auto reserved_bytes = static_cast<int32_t>(args[0].asNumber());
@@ -451,7 +483,11 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
   function_map["getReservedBytes"] = HFN(this) {
     return {opsqlite_libsql_get_reserved_bytes(db)};
   });
-#else
+#endif
+
+#endif
+
+#if !defined(OP_SQLITE_USE_LIBSQL) && !defined(OP_SQLITE_USE_TURSO)
   function_map["loadFile"] = HFN(this) {
     if (count < 1) {
       throw std::runtime_error(

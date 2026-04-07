@@ -1,62 +1,76 @@
-import * as path from 'node:path';
-import { NodeDatabase } from './database';
-import type { DB, DBParams, OPSQLiteProxy } from './types';
+import * as path from "node:path";
+import { NodeDatabase } from "./database";
+import type { DB, DBParams, OPSQLiteProxy } from "./types";
 
-export { NodeDatabase as Database } from './database';
+export { NodeDatabase as Database } from "./database";
 export type {
-    BatchQueryResult, ColumnMetadata, DB,
-    DBParams, FileLoadResult, OPSQLiteProxy, PreparedStatement, QueryResult, Scalar, SQLBatchTuple, Transaction, UpdateHookOperation
-} from './types';
+	BatchQueryResult,
+	ColumnMetadata,
+	DB,
+	DBParams,
+	FileLoadResult,
+	OPSQLiteProxy,
+	PreparedStatement,
+	QueryResult,
+	Scalar,
+	SQLBatchTuple,
+	Transaction,
+	UpdateHookOperation,
+} from "./types";
 
 class OPSQLiteProxyImpl implements OPSQLiteProxy {
-  open(options: {
-    name: string;
-    location?: string;
-    encryptionKey?: string;
-  }): DB {
-    if (options.encryptionKey) {
-      console.warn(
-        'Encryption is not supported in the Node.js implementation. Use @journeyapps/sqlcipher for encryption support.'
-      );
-    }
-    return new NodeDatabase(options.name, options.location);
-  }
+	open(options: {
+		name: string;
+		location?: string;
+		encryptionKey?: string;
+	}): DB {
+		if (options.encryptionKey) {
+			console.warn(
+				"Encryption is not supported in the Node.js implementation. Use @journeyapps/sqlcipher for encryption support.",
+			);
+		}
+		return new NodeDatabase(options.name, options.location);
+	}
 
-  openV2(options: { path: string; encryptionKey?: string }): DB {
-    if (options.encryptionKey) {
-      console.warn(
-        'Encryption is not supported in the Node.js implementation. Use @journeyapps/sqlcipher for encryption support.'
-      );
-    }
+	openV2(options: { path: string; encryptionKey?: string }): DB {
+		if (options.encryptionKey) {
+			console.warn(
+				"Encryption is not supported in the Node.js implementation. Use @journeyapps/sqlcipher for encryption support.",
+			);
+		}
 
-    const dir = path.dirname(options.path);
-    const name = path.basename(options.path);
-    return new NodeDatabase(name, dir);
-  }
+		const dir = path.dirname(options.path);
+		const name = path.basename(options.path);
+		return new NodeDatabase(name, dir);
+	}
 
-  openRemote(options: { url: string; authToken: string }): DB {
-    throw new Error(
-      'openRemote is not supported in the Node.js implementation. Use the libsql client directly for remote connections.'
-    );
-  }
+	openRemote(options: { url: string; authToken: string }): DB {
+		throw new Error(
+			"openRemote is not supported in the Node.js implementation. Use the libsql client directly for remote connections.",
+		);
+	}
 
-  openSync(options: DBParams): DB {
-    throw new Error(
-      'openSync is not supported in the Node.js implementation. Use the libsql client directly for sync functionality.'
-    );
-  }
+	openSync(options: DBParams): DB {
+		throw new Error(
+			"openSync is not supported in the Node.js implementation. Use the libsql client directly for sync functionality.",
+		);
+	}
 
-  isSQLCipher(): boolean {
-    return false;
-  }
+	isSQLCipher(): boolean {
+		return false;
+	}
 
-  isLibsql(): boolean {
-    return false;
-  }
+	isLibsql(): boolean {
+		return false;
+	}
 
-  isIOSEmbedded(): boolean {
-    return false;
-  }
+	isTurso(): boolean {
+		return false;
+	}
+
+	isIOSEmbedded(): boolean {
+		return false;
+	}
 }
 
 // Create singleton instance
@@ -69,6 +83,7 @@ export const openRemote = proxy.openRemote.bind(proxy);
 export const openSync = proxy.openSync.bind(proxy);
 export const isSQLCipher = proxy.isSQLCipher.bind(proxy);
 export const isLibsql = proxy.isLibsql.bind(proxy);
+export const isTurso = proxy.isTurso.bind(proxy);
 export const isIOSEmbedded = proxy.isIOSEmbedded.bind(proxy);
 
 // Default export

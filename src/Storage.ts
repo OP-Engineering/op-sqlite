@@ -1,9 +1,9 @@
-import { open } from './functions';
-import { type DB } from './types';
+import { isTurso, open } from "./functions";
+import type { DB } from "./types";
 
 type StorageOptions = {
-  location?: string;
-  encryptionKey?: string;
+	location?: string;
+	encryptionKey?: string;
 };
 
 /**
@@ -11,83 +11,86 @@ type StorageOptions = {
  * The encryption key is only used when compiled against the SQLCipher version of op-sqlite.
  */
 export class Storage {
-  private db: DB;
+	private db: DB;
 
-  constructor(options: StorageOptions) {
-    this.db = open({ ...options, name: '__opsqlite_storage.sqlite' });
-    this.db.executeSync('PRAGMA mmap_size=268435456');
-    this.db.executeSync(
-      'CREATE TABLE IF NOT EXISTS storage (key TEXT PRIMARY KEY, value TEXT) WITHOUT ROWID'
-    );
-  }
+	constructor(options: StorageOptions) {
+		this.db = open({ ...options, name: "__opsqlite_storage.sqlite" });
+		if (!isTurso()) {
+			this.db.executeSync("PRAGMA mmap_size=268435456");
+		}
+		const createStorageTable = isTurso()
+			? "CREATE TABLE IF NOT EXISTS storage (key TEXT PRIMARY KEY, value TEXT)"
+			: "CREATE TABLE IF NOT EXISTS storage (key TEXT PRIMARY KEY, value TEXT) WITHOUT ROWID";
+		this.db.executeSync(createStorageTable);
+	}
 
-  async getItem(key: string): Promise<string | undefined> {
-    const result = await this.db.execute(
-      'SELECT value FROM storage WHERE key = ?',
-      [key]
-    );
+	async getItem(key: string): Promise<string | undefined> {
+		const result = await this.db.execute(
+			"SELECT value FROM storage WHERE key = ?",
+			[key],
+		);
 
-    let value = result.rows[0]?.value;
-    if (typeof value !== 'undefined' && typeof value !== 'string') {
-      throw new Error('Value must be a string or undefined');
-    }
-    return value;
-  }
+		const value = result.rows[0]?.value;
+		if (typeof value !== "undefined" && typeof value !== "string") {
+			throw new Error("Value must be a string or undefined");
+		}
+		return value;
+	}
 
-  getItemSync(key: string): string | undefined {
-    const result = this.db.executeSync(
-      'SELECT value FROM storage WHERE key = ?',
-      [key]
-    );
+	getItemSync(key: string): string | undefined {
+		const result = this.db.executeSync(
+			"SELECT value FROM storage WHERE key = ?",
+			[key],
+		);
 
-    let value = result.rows[0]?.value;
-    if (typeof value !== 'undefined' && typeof value !== 'string') {
-      throw new Error('Value must be a string or undefined');
-    }
+		const value = result.rows[0]?.value;
+		if (typeof value !== "undefined" && typeof value !== "string") {
+			throw new Error("Value must be a string or undefined");
+		}
 
-    return value;
-  }
+		return value;
+	}
 
-  async setItem(key: string, value: string) {
-    await this.db.execute(
-      'INSERT OR REPLACE INTO storage (key, value) VALUES (?, ?)',
-      [key, value.toString()]
-    );
-  }
+	async setItem(key: string, value: string) {
+		await this.db.execute(
+			"INSERT OR REPLACE INTO storage (key, value) VALUES (?, ?)",
+			[key, value.toString()],
+		);
+	}
 
-  setItemSync(key: string, value: string) {
-    this.db.executeSync(
-      'INSERT OR REPLACE INTO storage (key, value) VALUES (?, ?)',
-      [key, value.toString()]
-    );
-  }
+	setItemSync(key: string, value: string) {
+		this.db.executeSync(
+			"INSERT OR REPLACE INTO storage (key, value) VALUES (?, ?)",
+			[key, value.toString()],
+		);
+	}
 
-  async removeItem(key: string) {
-    await this.db.execute('DELETE FROM storage WHERE key = ?', [key]);
-  }
+	async removeItem(key: string) {
+		await this.db.execute("DELETE FROM storage WHERE key = ?", [key]);
+	}
 
-  removeItemSync(key: string) {
-    this.db.executeSync('DELETE FROM storage WHERE key = ?', [key]);
-  }
+	removeItemSync(key: string) {
+		this.db.executeSync("DELETE FROM storage WHERE key = ?", [key]);
+	}
 
-  async clear() {
-    await this.db.execute('DELETE FROM storage');
-  }
+	async clear() {
+		await this.db.execute("DELETE FROM storage");
+	}
 
-  clearSync() {
-    this.db.executeSync('DELETE FROM storage');
-  }
+	clearSync() {
+		this.db.executeSync("DELETE FROM storage");
+	}
 
-  getAllKeys() {
-    return this.db
-      .executeSync('SELECT key FROM storage')
-      .rows.map((row: any) => row.key);
-  }
+	getAllKeys() {
+		return this.db
+			.executeSync("SELECT key FROM storage")
+			.rows.map((row: any) => row.key);
+	}
 
-  /**
-   * Deletes the underlying database file.
-   */
-  delete() {
-    this.db.delete();
-  }
+	/**
+	 * Deletes the underlying database file.
+	 */
+	delete() {
+		this.db.delete();
+	}
 }

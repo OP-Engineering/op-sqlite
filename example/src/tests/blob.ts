@@ -22,7 +22,7 @@ describe("Blobs", () => {
 				"CREATE TABLE BlobTable ( id INT PRIMARY KEY, content BLOB) STRICT;",
 			);
 		} catch (e) {
-			console.warn("error on before each", e);
+			console.warn("Blobs block, error on before each", e);
 		}
 	});
 

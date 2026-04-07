@@ -36,6 +36,19 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
                        std::string const &sqlite_vec_path);
 #endif
 
+#ifdef OP_SQLITE_USE_TURSO
+sqlite3 *opsqlite_open_sync(std::string const &name, std::string const &path,
+                            std::string const &url,
+                            std::string const &auth_token,
+                            std::string const &remote_encryption_key);
+
+sqlite3 *opsqlite_open_remote(std::string const &url,
+                              std::string const &auth_token,
+                              std::string const &base_path);
+
+void opsqlite_sync(sqlite3 *db);
+#endif
+
 void opsqlite_close(sqlite3 *db);
 
 void opsqlite_remove(sqlite3 *db, std::string const &name,
@@ -70,6 +83,8 @@ void opsqlite_register_rollback_hook(sqlite3 *db, void *db_host_object_ptr);
 void opsqlite_deregister_rollback_hook(sqlite3 *db);
 
 sqlite3_stmt *opsqlite_prepare_statement(sqlite3 *db, std::string const &query);
+
+void opsqlite_finalize_statement(sqlite3_stmt *statement);
 
 void opsqlite_bind_statement(sqlite3_stmt *statement,
                              const std::vector<JSVariant> *params);
