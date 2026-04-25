@@ -60,6 +60,23 @@ describe("Blobs", () => {
 		expect(finalUint8[0]).toBe(42);
 	});
 
+	it("Uint8Array subarray", async () => {
+		const uint8 = new Uint8Array([97, 98, 99, 100]);
+		const subarray = uint8.subarray(1, 3);
+
+		await db.execute(`INSERT OR REPLACE INTO BlobTable VALUES (?, ?);`, [
+			1,
+			subarray,
+		]);
+
+		const result = await db.execute("SELECT content FROM BlobTable");
+		const content = result.rows[0]?.content;
+		expect(content).toBeTruthy();
+
+		const finalUint8 = new Uint8Array(content as ArrayBuffer);
+		expect(Array.from(finalUint8)).toEqual([98, 99]);
+	});
+
 	it("Uint16Array", async () => {
 		const uint8 = new Uint16Array(2);
 		uint8[0] = 42;

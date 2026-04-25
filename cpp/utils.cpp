@@ -97,18 +97,48 @@ inline JSVariant to_variant(jsi::Runtime &rt, const jsi::Value &value) {
     return JSVariant(strVal);
   } else if (value.isObject()) {
     auto obj = value.asObject(rt);
+    size_t byteOffset = 0;
+    size_t byteLength = 0;
+    uint8_t *sourceData = nullptr;
 
-    if (!obj.isArrayBuffer(rt)) {
-      throw std::runtime_error(
-          "Object is not an ArrayBuffer, cannot bind to SQLite");
+    if (obj.isArrayBuffer(rt)) {
+      auto buffer = obj.getArrayBuffer(rt);
+      sourceData = buffer.data(rt);
+      byteLength = buffer.size(rt);
+    } else {
+      jsi::Function arrayBufferCtor =
+          rt.global().getPropertyAsFunction(rt, "ArrayBuffer");
+      jsi::Function isViewFn =
+          arrayBufferCtor.getPropertyAsFunction(rt, "isView");
+      bool isArrayBufferView = isViewFn.call(rt, obj).getBool();
+
+      if (!isArrayBufferView) {
+        throw std::runtime_error(
+            "Object is not an ArrayBuffer or ArrayBuffer view, cannot bind "
+            "to SQLite");
+      }
+
+      jsi::Object bufferObject = obj.getPropertyAsObject(rt, "buffer");
+      auto buffer = bufferObject.getArrayBuffer(rt);
+
+      byteOffset =
+          static_cast<size_t>(obj.getProperty(rt, "byteOffset").asNumber());
+      byteLength =
+          static_cast<size_t>(obj.getProperty(rt, "byteLength").asNumber());
+
+      const size_t bufferSize = buffer.size(rt);
+      if (byteOffset > bufferSize || byteLength > bufferSize - byteOffset) {
+        throw std::runtime_error("Invalid ArrayBuffer view range");
+      }
+
+      sourceData = buffer.data(rt) + byteOffset;
     }
 
-    auto buffer = obj.getArrayBuffer(rt);
-    uint8_t *data = new uint8_t[buffer.size(rt)];
-    memcpy(data, buffer.data(rt), buffer.size(rt));
+    uint8_t *data = new uint8_t[byteLength];
+    memcpy(data, sourceData, byteLength);
 
     return JSVariant(ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
-                                 .size = buffer.size(rt)});
+                                 .size = byteLength});
   }
 
   throw std::runtime_error("Cannot convert JSI value to C++ Variant value");
