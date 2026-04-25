@@ -68,26 +68,6 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
 		}
 	};
 
-	function sanitizeArrayBuffersInArray(
-		params?: any[] | any[][],
-	): any[] | undefined {
-		if (!params) {
-			return params;
-		}
-
-		return params.map((p) => {
-			if (Array.isArray(p)) {
-				return sanitizeArrayBuffersInArray(p);
-			}
-
-			if (ArrayBuffer.isView(p)) {
-				return p.buffer;
-			}
-
-			return p;
-		});
-	}
-
 	// spreading the object does not work with HostObjects (db)
 	// We need to manually assign the fields
 	const enhancedDb = {
@@ -112,14 +92,6 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
 		executeBatch: async (
 			commands: SQLBatchTuple[],
 		): Promise<BatchQueryResult> => {
-			// Do normal for loop and replace in place for performance
-			for (let i = 0; i < commands.length; i++) {
-				// [1] is the params arg
-				if (commands[i]![1]) {
-					commands[i]![1] = sanitizeArrayBuffersInArray(commands[i]![1]) as any;
-				}
-			}
-
 			async function run() {
 				try {
 					enhancedDb.executeSync("BEGIN TRANSACTION;");
@@ -160,33 +132,24 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
 			query: string,
 			params?: Scalar[],
 		): Promise<QueryResult> => {
-			const sanitizedParams = sanitizeArrayBuffersInArray(params);
-
-			return sanitizedParams
-				? await db.executeWithHostObjects(query, sanitizedParams as Scalar[])
+			return params
+				? await db.executeWithHostObjects(query, params)
 				: await db.executeWithHostObjects(query);
 		},
 		executeRaw: async (query: string, params?: Scalar[]) => {
-			const sanitizedParams = sanitizeArrayBuffersInArray(params);
-
-			return db.executeRaw(query, sanitizedParams as Scalar[]);
+			return db.executeRaw(query, params as Scalar[]);
 		},
 		executeRawSync: (query: string, params?: Scalar[]) => {
-			const sanitizedParams = sanitizeArrayBuffersInArray(params);
-			return db.executeRawSync(query, sanitizedParams as Scalar[]);
+			return db.executeRawSync(query, params as Scalar[]);
 		},
 		// Wrapper for executeRaw, drizzleORM uses this function
 		// at some point I changed the API but they did not pin their dependency to a specific version
 		// so re-inserting this so it starts working again
 		executeRawAsync: async (query: string, params?: Scalar[]) => {
-			const sanitizedParams = sanitizeArrayBuffersInArray(params);
-
-			return db.executeRaw(query, sanitizedParams as Scalar[]);
+			return db.executeRaw(query, params as Scalar[]);
 		},
 		executeSync: (query: string, params?: Scalar[]): QueryResult => {
-			let res = params
-				? db.executeSync(query, sanitizeArrayBuffersInArray(params) as Scalar[])
-				: db.executeSync(query);
+			let res = params ? db.executeSync(query, params) : db.executeSync(query);
 
 			if (!res.rows) {
 				const rows: Record<string, Scalar>[] = [];
@@ -222,12 +185,7 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
 			query: string,
 			params?: Scalar[] | undefined,
 		): Promise<QueryResult> => {
-			let res = params
-				? await db.execute(
-						query,
-						sanitizeArrayBuffersInArray(params) as Scalar[],
-					)
-				: await db.execute(query);
+			let res = params ? await db.execute(query, params) : await db.execute(query);
 
 			if (!res.rows) {
 				const rows: Record<string, Scalar>[] = [];
@@ -258,14 +216,10 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
 
 			return {
 				bindSync: (params: Scalar[]) => {
-					const sanitizedParams = sanitizeArrayBuffersInArray(params);
-
-					stmt.bindSync(sanitizedParams!);
+					stmt.bindSync(params);
 				},
 				bind: async (params: Scalar[]) => {
-					const sanitizedParams = sanitizeArrayBuffersInArray(params);
-
-					await stmt.bind(sanitizedParams!);
+					await stmt.bind(params);
 				},
 				execute: stmt.execute,
 			};
