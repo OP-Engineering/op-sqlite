@@ -5,6 +5,7 @@ import {
 	describe,
 	expect,
 	it,
+	itOnly,
 } from "@op-engineering/op-test";
 
 let db: DB;
@@ -56,7 +57,7 @@ describe("Blobs", () => {
 
 		const result = await db.execute("SELECT content FROM BlobTable");
 
-		const finalUint8 = new Uint8Array(result.rows[0]!.content as any);
+		const finalUint8 = new Uint8Array(result.rows[0]?.content as any);
 		expect(finalUint8[0]).toBe(42);
 	});
 
@@ -74,7 +75,9 @@ describe("Blobs", () => {
 		expect(content).toBeTruthy();
 
 		const finalUint8 = new Uint8Array(content as ArrayBuffer);
-		expect(Array.from(finalUint8)).toEqual([98, 99]);
+		const res = Array.from(finalUint8);
+		expect(res[0]).toEqual(98);
+		expect(res[1]).toEqual(99);
 	});
 
 	it("Uint16Array", async () => {

@@ -101,7 +101,7 @@ describe("Queries tests", () => {
 		} catch (e: any) {
 			expect(
 				e.message.includes(
-					"Exception in HostFunction: Object is not an ArrayBuffer, cannot bind to SQLite",
+					"Object is not an ArrayBuffer or ArrayBuffer view",
 				),
 			).toEqual(true);
 		}

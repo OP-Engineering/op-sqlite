@@ -100,24 +100,17 @@ inline JSVariant to_variant(jsi::Runtime &rt, const jsi::Value &value) {
     size_t byteOffset = 0;
     size_t byteLength = 0;
     uint8_t *sourceData = nullptr;
+    jsi::Function arrayBufferCtor =
+      rt.global().getPropertyAsFunction(rt, "ArrayBuffer");
+    jsi::Function isViewFn =
+      arrayBufferCtor.getPropertyAsFunction(rt, "isView");
+    bool isArrayBufferView = isViewFn.call(rt, obj).getBool();
 
     if (obj.isArrayBuffer(rt)) {
       auto buffer = obj.getArrayBuffer(rt);
       sourceData = buffer.data(rt);
       byteLength = buffer.size(rt);
-    } else {
-      jsi::Function arrayBufferCtor =
-          rt.global().getPropertyAsFunction(rt, "ArrayBuffer");
-      jsi::Function isViewFn =
-          arrayBufferCtor.getPropertyAsFunction(rt, "isView");
-      bool isArrayBufferView = isViewFn.call(rt, obj).getBool();
-
-      if (!isArrayBufferView) {
-        throw std::runtime_error(
-            "Object is not an ArrayBuffer or ArrayBuffer view, cannot bind "
-            "to SQLite");
-      }
-
+    } else if (isArrayBufferView) {
       jsi::Object bufferObject = obj.getPropertyAsObject(rt, "buffer");
       auto buffer = bufferObject.getArrayBuffer(rt);
 
@@ -132,6 +125,10 @@ inline JSVariant to_variant(jsi::Runtime &rt, const jsi::Value &value) {
       }
 
       sourceData = buffer.data(rt) + byteOffset;
+    } else {
+      throw std::runtime_error(
+          "Object is not an ArrayBuffer or ArrayBuffer view, cannot bind "
+          "to SQLite");
     }
 
     uint8_t *data = new uint8_t[byteLength];
