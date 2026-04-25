@@ -116,7 +116,7 @@ RCT_EXPORT_METHOD(moveAssetsDatabase : (NSDictionary *)args resolve : (
       NSLibraryDirectory, NSUserDomainMask, true) objectAtIndex:0];
 
   NSString *filename = args[@"filename"];
-  BOOL overwrite = args[@"overwrite"];
+  BOOL overwrite = [args[@"overwrite"] boolValue];
 
   NSString *sourcePath = [[NSBundle mainBundle] pathForResource:filename
                                                          ofType:nil];
