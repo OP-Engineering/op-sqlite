@@ -146,6 +146,38 @@ describe("DB setup tests", () => {
 		db.delete();
 	});
 
+	it("Should delete db when a location argument is passed to delete()", async () => {
+		const db = open({
+			name: "deleteWithLocationArg.sqlite",
+			encryptionKey: "test",
+		});
+
+		// Regression: delete() previously read args[1] when count == 1, which
+		// read past the JSI argument list and could crash native code. An
+		// empty-string location exercises the count == 1 / args[0] path; the
+		// empty-guard in the host function preserves the base path so the file
+		// is still found and removed.
+		db.delete("");
+	});
+
+	it("Should reject a non-string location argument to delete()", async () => {
+		const db = open({
+			name: "deleteBadArg.sqlite",
+			encryptionKey: "test",
+		});
+
+		let threw = false;
+		try {
+			// @ts-expect-error — intentionally passing a non-string to exercise the guard
+			db.delete(123);
+		} catch (e) {
+			threw = true;
+		}
+		expect(threw).toEqual(true);
+
+		db.delete();
+	});
+
 	it("Should create db in custom folder", async () => {
 		const db = open({
 			name: "customFolderTest.sqlite",

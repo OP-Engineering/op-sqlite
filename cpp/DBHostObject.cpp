@@ -283,12 +283,12 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
     std::string path = std::string(base_path);
 
     if (count == 1) {
-      if (!args[1].isString()) {
+      if (!args[0].isString()) {
         throw std::runtime_error(
-            "[op-sqlite][open] database location must be a string");
+            "[op-sqlite][delete] database location must be a string");
       }
 
-      std::string location = args[1].asString(rt).utf8(rt);
+      std::string location = args[0].asString(rt).utf8(rt);
 
       if (!location.empty()) {
         if (location == ":memory:") {
