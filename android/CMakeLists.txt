@@ -19,11 +19,18 @@ if (USE_TURSO)
   include_directories(src/main/tursoLibs/include)
 endif()
 
+# Apply library-default SQLite flags (driven by package.json toggles such as
+# performanceMode, fts5 and rtree) FIRST, then user-supplied sqliteFlags. clang's
+# last-define-wins rule lets the user override any default when both define the
+# same macro. This mirrors iOS, where the podspec appends sqliteFlags after the
+# optimizedCflags. Use add_compile_options (not add_definitions) because CMake
+# sorts COMPILE_DEFINITIONS alphabetically before emitting them, which would
+# break the override ordering for pairs like -DSQLITE_FOO=1 vs -DSQLITE_FOO=0.
+separate_arguments(DEFAULT_SQLITE_FLAGS_LIST UNIX_COMMAND "${DEFAULT_SQLITE_FLAGS}")
 separate_arguments(SQLITE_FLAGS_LIST UNIX_COMMAND "${SQLITE_FLAGS}")
 
-add_definitions(
-    ${SQLITE_FLAGS_LIST}
-)
+add_compile_options(${DEFAULT_SQLITE_FLAGS_LIST})
+add_compile_options(${SQLITE_FLAGS_LIST})
 
 add_library(
   ${PACKAGE_NAME}
