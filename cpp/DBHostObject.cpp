@@ -24,7 +24,7 @@ void DBHostObject::flush_pending_reactive_queries(
     resolve->asObject(rt).asFunction(rt).call(rt, {});
   });
 }
-#elif OP_SQLITE_USE_TURSO
+#elif defined(OP_SQLITE_USE_TURSO)
 
 std::string turso_remote_db_name(const std::string &url) {
   return "turso_remote_" + std::to_string(std::hash<std::string>{}(url)) +
