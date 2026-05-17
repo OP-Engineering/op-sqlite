@@ -280,31 +280,10 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
   function_map["delete"] = HFN(this) {
     invalidated = true;
 
-    std::string path = std::string(base_path);
-
-    if (count == 1) {
-      if (!args[1].isString()) {
-        throw std::runtime_error(
-            "[op-sqlite][open] database location must be a string");
-      }
-
-      std::string location = args[1].asString(rt).utf8(rt);
-
-      if (!location.empty()) {
-        if (location == ":memory:") {
-          path = ":memory:";
-        } else if (location.rfind('/', 0) == 0) {
-          path = location;
-        } else {
-          path = path + "/" + location;
-        }
-      }
-    }
-
 #ifdef OP_SQLITE_USE_LIBSQL
-    opsqlite_libsql_remove(db, db_name, path);
+    opsqlite_libsql_remove(db, db_name, base_path);
 #else
-    opsqlite_remove(db, db_name, path);
+    opsqlite_remove(db, db_name, base_path);
 #endif
 
     return {};

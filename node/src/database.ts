@@ -350,10 +350,9 @@ export class NodeDatabase implements DB {
     }
   }
 
-  delete(location?: string): void {
+  delete(): void {
     this.close();
-    const dbLocation = location || './';
-    const dbPath = path.join(dbLocation, path.basename(this.dbPath));
+    const dbPath = this.dbPath;
 
     if (fs.existsSync(dbPath)) {
       fs.unlinkSync(dbPath);
