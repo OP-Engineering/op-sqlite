@@ -89,6 +89,7 @@ private:
   std::string base_path;
   std::shared_ptr<ThreadPool> thread_pool;
   std::string db_name;
+  std::string delete_db_name;
   std::shared_ptr<jsi::Value> update_hook_callback;
   std::shared_ptr<jsi::Value> commit_hook_callback;
   std::shared_ptr<jsi::Value> rollback_hook_callback;
