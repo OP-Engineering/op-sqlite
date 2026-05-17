@@ -292,6 +292,24 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
     return {};
   });
 
+  function_map["interrupt"] = HFN(this) {
+    if (invalidated) {
+      throw std::runtime_error("[op-sqlite][interrupt] database is closed");
+    }
+
+#ifdef OP_SQLITE_USE_LIBSQL
+    throw std::runtime_error("[op-sqlite][interrupt] sqlite3_interrupt is not "
+                             "supported with libsql");
+#else
+    if (db == nullptr) {
+      throw std::runtime_error("[op-sqlite][interrupt] database is null");
+    }
+
+    sqlite3_interrupt(db);
+    return {};
+#endif
+  });
+
   function_map["delete"] = HFN(this) {
     if (count != 0) {
       throw std::runtime_error("[op-sqlite] Delete no longer takes arguments");

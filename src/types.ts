@@ -102,6 +102,7 @@ export type PreparedStatement = {
 export type _InternalDB = {
 	close: () => void;
 	closeAsync?: () => Promise<void>;
+	interrupt: () => void;
 	delete: () => void;
 	attach: (params: {
 		secondaryDbFileName: string;
@@ -153,6 +154,14 @@ export type _InternalDB = {
 export type DB = {
 	close: () => void;
 	closeAsync: () => Promise<void>;
+	/**
+	 * Aborts any pending database operation on this connection.
+	 *
+	 * Calls SQLite's native sqlite3_interrupt(). Safe to call from a thread
+	 * different from the one running the operation. An interrupted operation
+	 * returns SQLITE_INTERRUPT and any in-flight transaction is rolled back.
+	 */
+	interrupt: () => void;
 	delete: () => void;
 	attach: (params: {
 		secondaryDbFileName: string;

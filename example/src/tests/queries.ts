@@ -107,6 +107,56 @@ describe("Queries tests", () => {
 		}
 	});
 
+	it("interrupt is safe to call with no in-flight query", () => {
+		if (isLibsql() || isTurso()) {
+			return;
+		}
+
+		let threw = false;
+		try {
+			db.interrupt();
+		} catch (_e) {
+			threw = true;
+		}
+
+		expect(threw).toEqual(false);
+	});
+
+	it("interrupt aborts an in-flight query and rolls back the transaction", async () => {
+		if (isLibsql() || isTurso()) {
+			return;
+		}
+
+		await db.execute("DROP TABLE IF EXISTS InterruptTest;");
+		await db.execute("CREATE TABLE InterruptTest (n INTEGER);");
+
+		const longQuery = `
+			WITH RECURSIVE seq(n) AS (
+				SELECT 1 UNION ALL SELECT n + 1 FROM seq WHERE n < 100000000
+			)
+			INSERT INTO InterruptTest SELECT n FROM seq;
+		`;
+
+		const queryPromise = db.execute(longQuery);
+
+		await new Promise((resolve) => setTimeout(resolve, 50));
+		db.interrupt();
+
+		let interrupted = false;
+		try {
+			await queryPromise;
+		} catch (e: any) {
+			interrupted = /interrupt|interrupted|abort|code 9|SQLITE_INTERRUPT/i.test(
+				String(e?.message ?? e),
+			);
+		}
+
+		expect(interrupted).toEqual(true);
+
+		const count = await db.execute("SELECT COUNT(*) AS n FROM InterruptTest;");
+		expect(count.rows[0]!.n).toEqual(0);
+	});
+
 	it("executeSync", () => {
 		const res = db.executeSync("SELECT 1");
 		expect(res.rowsAffected).toEqual(0);
