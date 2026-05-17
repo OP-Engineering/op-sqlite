@@ -85,6 +85,7 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
 		setReservedBytes: db.setReservedBytes,
 		getReservedBytes: db.getReservedBytes,
 		close: db.close,
+		interrupt: db.interrupt,
 		closeAsync: async () => {
 			db.close();
 		},
