@@ -93,6 +93,26 @@ On web, `execute()` runs the full SQL string passed to it.
 On native, `execute()` currently runs only the first prepared statement.
 If you need identical behavior across platforms, avoid multi-statement SQL strings.
 
+## Interrupting a Query
+
+On native, `interrupt()` aborts any pending database operation on this connection. It is safe to call from a thread different from the one running the operation. The interrupted query returns `SQLITE_INTERRUPT`; any in-flight transaction is rolled back. This calls SQLite's native [`sqlite3_interrupt()`](https://sqlite.org/c3ref/interrupt.html).
+
+```tsx
+const query = db.execute(longRunningQuery);
+
+setTimeout(() => {
+  db.interrupt();
+}, 100);
+
+try {
+  await query;
+} catch (error) {
+  // SQLITE_INTERRUPT
+}
+```
+
+On web, `interrupt()` is not supported.
+
 ### Execute with Host Objects
 
 It’s possible to return HostObjects when using a query. The benefit is that HostObjects are only created in C++ and only when you try to access a value inside of them a C++ value → JS value conversion happens. This means creation is fast, property access is slow. The use case is clear if you are returning **massive** amount of objects but only displaying/accessing a few of them at the time.

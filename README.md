@@ -25,6 +25,7 @@ Some of the big supported features:
 - Custom tokenizers
 - Load runtime extensions
 - JSONB support
+- Native query interruption via `db.interrupt()`
 
 It also contains a simple [Key-Value store](https://op-engineering.github.io/op-sqlite/docs/key_value_storage) you can use without adding one more dependency to your app.
 
