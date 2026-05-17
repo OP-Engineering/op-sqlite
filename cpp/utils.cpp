@@ -134,7 +134,7 @@ inline JSVariant to_variant(jsi::Runtime &rt, const jsi::Value &value) {
     uint8_t *data = new uint8_t[byteLength];
     memcpy(data, sourceData, byteLength);
 
-    return JSVariant(ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+    return JSVariant(ArrayBuffer{.data = std::shared_ptr<uint8_t[]>{data},
                                  .size = byteLength});
   }
 
