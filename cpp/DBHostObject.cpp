@@ -6,6 +6,7 @@
 #include "bridge.h"
 #endif
 #include "logs.h"
+#include <functional>
 #include "macros.hpp"
 #include "utils.hpp"
 #include <iostream>
@@ -19,6 +20,19 @@ namespace react = facebook::react;
 #ifdef OP_SQLITE_USE_LIBSQL
 void DBHostObject::flush_pending_reactive_queries(
     const std::shared_ptr<jsi::Value> &resolve) {
+  invoker->invokeAsync([resolve](jsi::Runtime &rt) {
+    resolve->asObject(rt).asFunction(rt).call(rt, {});
+  });
+}
+#elif defined(OP_SQLITE_USE_TURSO)
+
+std::string turso_remote_db_name(const std::string &url) {
+  return "turso_remote_" + std::to_string(std::hash<std::string>{}(url)) +
+         ".sqlite";
+}
+
+void DBHostObject::flush_pending_reactive_queries(
+  const std::shared_ptr<jsi::Value> &resolve) {
   invoker->invokeAsync([resolve](jsi::Runtime &rt) {
     resolve->asObject(rt).asFunction(rt).call(rt, {});
   });
@@ -161,7 +175,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &db_name,
                            std::string &auth_token, int sync_interval,
                            bool offline, std::string &encryption_key,
                            std::string &remote_encryption_key)
-    : db_name(db_name) {
+    : base_path(path), db_name(db_name), delete_db_name(db_name) {
 
   thread_pool = std::make_shared<ThreadPool>();
 
@@ -176,7 +190,8 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &db_name,
 // Remote connection constructor
 DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &url,
                            std::string &auth_token, std::string &base_path)
-    : db_name(url) {
+    : base_path(base_path), db_name(url),
+      delete_db_name(turso_remote_db_name(url)) {
   thread_pool = std::make_shared<ThreadPool>();
   db = opsqlite_open_remote(url, auth_token, base_path);
 
@@ -188,7 +203,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &db_name,
                            std::string &path, std::string &url,
                            std::string &auth_token,
                            std::string &remote_encryption_key)
-    : db_name(db_name) {
+    : base_path(path), db_name(db_name), delete_db_name(db_name) {
 
   thread_pool = std::make_shared<ThreadPool>();
 
@@ -205,7 +220,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
                            std::string &crsqlite_path,
                            std::string &sqlite_vec_path,
                            std::string &encryption_key)
-    : base_path(base_path), db_name(db_name) {
+    : base_path(base_path), db_name(db_name), delete_db_name(db_name) {
   thread_pool = std::make_shared<ThreadPool>();
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
@@ -278,33 +293,24 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
   });
 
   function_map["delete"] = HFN(this) {
+    if (count != 0) {
+      throw std::runtime_error("[op-sqlite] Delete no longer takes arguments");
+    }
+
     invalidated = true;
+    // Drain any in-flight async queries before closing/removing the db handle.
+    // Without this, queued/running work may dereference a freed sqlite handle.
+    thread_pool->waitFinished();
 
-    std::string path = std::string(base_path);
-
-    if (count == 1) {
-      if (!args[1].isString()) {
-        throw std::runtime_error(
-            "[op-sqlite][open] database location must be a string");
-      }
-
-      std::string location = args[1].asString(rt).utf8(rt);
-
-      if (!location.empty()) {
-        if (location == ":memory:") {
-          path = ":memory:";
-        } else if (location.rfind('/', 0) == 0) {
-          path = location;
-        } else {
-          path = path + "/" + location;
-        }
-      }
+    if (delete_db_name.empty()) {
+      throw std::runtime_error(
+        "[op-sqlite][delete] delete() is not supported for remote-only databases");
     }
 
 #ifdef OP_SQLITE_USE_LIBSQL
-    opsqlite_libsql_remove(db, db_name, path);
+    opsqlite_libsql_remove(db, delete_db_name, base_path);
 #else
-    opsqlite_remove(db, db_name, path);
+    opsqlite_remove(db, delete_db_name, base_path);
 #endif
 
     return {};

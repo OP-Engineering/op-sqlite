@@ -67,6 +67,33 @@ const syncDb = openSync({
 syncDb.sync();
 ```
 
+## Close
+
+Closes the current database connection. This is mainly useful before tearing down the runtime, replacing the file on disk, or deleting the database.
+
+```tsx
+const db = open({
+  name: 'myDb.sqlite',
+});
+
+db.close();
+```
+
+On web, use `await db.closeAsync()` instead.
+
+## Delete
+
+Deletes the database file represented by the current connection.
+
+```tsx
+const db = open({
+  name: 'myDb.sqlite',
+});
+
+db.close();
+db.delete();
+```
+
 ## Execute
 
 Base async query operation. All execute calls run on a (**single**) separate and dedicated thread, so the JS thread is not blocked. It’s recommended to ALWAYS use transactions since even read calls can corrupt a sqlite database.

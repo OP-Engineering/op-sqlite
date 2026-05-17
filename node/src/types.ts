@@ -52,7 +52,7 @@ export type PreparedStatement = {
 
 export type DB = {
 	close: () => void;
-	delete: (location?: string) => void;
+	delete: () => void;
 	attach: (params: {
 		secondaryDbFileName: string;
 		alias: string;

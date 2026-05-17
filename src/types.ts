@@ -102,7 +102,7 @@ export type PreparedStatement = {
 export type _InternalDB = {
 	close: () => void;
 	closeAsync?: () => Promise<void>;
-	delete: (location?: string) => void;
+	delete: () => void;
 	attach: (params: {
 		secondaryDbFileName: string;
 		alias: string;
@@ -153,7 +153,7 @@ export type _InternalDB = {
 export type DB = {
 	close: () => void;
 	closeAsync: () => Promise<void>;
-	delete: (location?: string) => void;
+	delete: () => void;
 	attach: (params: {
 		secondaryDbFileName: string;
 		alias: string;
