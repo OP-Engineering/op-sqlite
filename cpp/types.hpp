@@ -13,7 +13,7 @@ extern std::shared_ptr<facebook::react::CallInvoker> invoker;
 extern bool invalidated;
 
 struct ArrayBuffer {
-  std::shared_ptr<uint8_t> data;
+  std::shared_ptr<uint8_t[]> data;
   size_t size;
 };
 
