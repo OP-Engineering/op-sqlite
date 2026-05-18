@@ -206,6 +206,7 @@ describe("Reactive queries", () => {
 		let firstReactiveRan = false;
 		let secondReactiveRan = false;
 		let emittedUser = null;
+		let promiseResolve: ((v: unknown) => void) | null = null;
 
 		const unsubscribe = db.reactiveExecute({
 			query: "SELECT * FROM User;",
@@ -244,9 +245,14 @@ describe("Reactive queries", () => {
 				},
 			],
 			callback: (data) => {
+				promiseResolve?.(null);
 				emittedUser = data.rows[0];
 			},
 		});
+
+		let promise = new Promise(
+			(resolve, _) => (promiseResolve = resolve),
+		);
 
 		await db.executeBatch([
 			[
@@ -255,13 +261,17 @@ describe("Reactive queries", () => {
 			],
 		]);
 
-		await sleep(0);
+		await promise;
+
+		promise = new Promise(
+			(resolve, _) => (promiseResolve = resolve),
+		);
 
 		await db.transaction(async (tx) => {
 			await tx.execute("UPDATE User SET name = ? WHERE id = ?;", ["Foo", 1]);
 		});
 
-		await sleep(0);
+		await promise;
 
 		expect(!!firstReactiveRan).toBe(false);
 		expect(!!secondReactiveRan).toBe(false);
@@ -274,15 +284,19 @@ describe("Reactive queries", () => {
 	});
 
 	it("Update hook and reactive queries work at the same time", async () => {
-		let promiseResolve: any;
-		const promise = new Promise((resolve) => {
-			promiseResolve = resolve;
+		let hookResolve: ((v: unknown) => void) | null = null;
+		let reactiveResolve: ((v: unknown) => void) | null = null;
+		const hookPromise = new Promise((resolve) => {
+			hookResolve = resolve;
 		});
-		db.updateHook(({ operation }) => {
-			promiseResolve?.(operation);
+		const reactivePromise = new Promise((resolve) => {
+			reactiveResolve = resolve;
 		});
 
-		let emittedUser = null;
+		db.updateHook(({ operation }) => {
+			hookResolve?.(operation);
+		});
+
 		const unsubscribe = db.reactiveExecute({
 			query: "SELECT * FROM User;",
 			arguments: [],
@@ -292,7 +306,7 @@ describe("Reactive queries", () => {
 				},
 			],
 			callback: (data) => {
-				emittedUser = data.rows[0];
+				reactiveResolve?.(data.rows[0]);
 			},
 		});
 
@@ -311,9 +325,8 @@ describe("Reactive queries", () => {
 			);
 		});
 
-		const operation = await promise;
-
-		await sleep(0);
+		const operation = await hookPromise;
+		const emittedUser = await reactivePromise;
 
 		expect(operation).toEqual("INSERT");
 		expect(emittedUser).toDeepEqual({
