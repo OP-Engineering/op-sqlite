@@ -284,15 +284,19 @@ describe("Reactive queries", () => {
 	});
 
 	it("Update hook and reactive queries work at the same time", async () => {
-		let promiseResolve: ((v: unknown) => void) | null = null;
-		const promise = new Promise((resolve) => {
-			promiseResolve = resolve;
+		let hookResolve: ((v: unknown) => void) | null = null;
+		let reactiveResolve: ((v: unknown) => void) | null = null;
+		const hookPromise = new Promise((resolve) => {
+			hookResolve = resolve;
 		});
-		db.updateHook(({ operation }) => {
-			promiseResolve?.(operation);
+		const reactivePromise = new Promise((resolve) => {
+			reactiveResolve = resolve;
 		});
 
-		let emittedUser = null;
+		db.updateHook(({ operation }) => {
+			hookResolve?.(operation);
+		});
+
 		const unsubscribe = db.reactiveExecute({
 			query: "SELECT * FROM User;",
 			arguments: [],
@@ -302,7 +306,7 @@ describe("Reactive queries", () => {
 				},
 			],
 			callback: (data) => {
-				emittedUser = data.rows[0];
+				reactiveResolve?.(data.rows[0]);
 			},
 		});
 
@@ -321,9 +325,8 @@ describe("Reactive queries", () => {
 			);
 		});
 
-		const operation = await promise;
-
-		await sleep(0);
+		const operation = await hookPromise;
+		const emittedUser = await reactivePromise;
 
 		expect(operation).toEqual("INSERT");
 		expect(emittedUser).toDeepEqual({
