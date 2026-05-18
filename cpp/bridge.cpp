@@ -257,7 +257,7 @@ BridgeResult opsqlite_execute_prepared_statement(
           // always copy the data
           memcpy(data, blob, blob_size);
           row.values.emplace_back(
-              ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+              ArrayBuffer{.data = std::shared_ptr<uint8_t[]>{data},
                           .size = static_cast<size_t>(blob_size)});
           break;
         }
@@ -430,7 +430,7 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
             auto *data = new uint8_t[blob_size];
             memcpy(data, blob, blob_size);
             row.emplace_back(
-                ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+                ArrayBuffer{.data = std::shared_ptr<uint8_t[]>{data},
                             .size = static_cast<size_t>(blob_size)});
             break;
           }
@@ -570,7 +570,7 @@ BridgeResult opsqlite_execute_host_objects(
             // always copy the data
             memcpy(data, blob, blob_size);
             row.values.emplace_back(
-                ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+                ArrayBuffer{.data = std::shared_ptr<uint8_t[]>{data},
                             .size = static_cast<size_t>(blob_size)});
             break;
           }
@@ -719,7 +719,7 @@ opsqlite_execute_raw(sqlite3 *db, std::string const &query,
             auto *data = new uint8_t[blob_size];
             memcpy(data, blob, blob_size);
             row.emplace_back(
-                ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+                ArrayBuffer{.data = std::shared_ptr<uint8_t[]>{data},
                             .size = static_cast<size_t>(blob_size)});
             break;
           }

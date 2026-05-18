@@ -312,7 +312,7 @@ BridgeResult opsqlite_libsql_execute_prepared_statement(
                 memcpy(data, value_blob.ptr, value_blob.len);
                 libsql_free_blob(value_blob);
                 row_host_object.values.emplace_back(
-                    ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+                    ArrayBuffer{.data = std::shared_ptr<uint8_t[]>{data},
                                 .size = static_cast<size_t>(value_blob.len)});
                 break;
             }
@@ -466,7 +466,7 @@ BridgeResult opsqlite_libsql_execute(DB const &db, std::string const &query,
                 memcpy(data, blob_value.ptr, blob_value.len);
                 libsql_free_blob(blob_value);
                 out_row.emplace_back(
-                    ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+                    ArrayBuffer{.data = std::shared_ptr<uint8_t[]>{data},
                                 .size = static_cast<size_t>(blob_value.len)});
                 break;
             }
@@ -571,7 +571,7 @@ BridgeResult opsqlite_libsql_execute_with_host_objects(
                 memcpy(data, value_blob.ptr, value_blob.len);
                 libsql_free_blob(value_blob);
                 row_host_object.values.emplace_back(
-                    ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+                    ArrayBuffer{.data = std::shared_ptr<uint8_t[]>{data},
                                 .size = static_cast<size_t>(value_blob.len)});
                 break;
             }
@@ -698,7 +698,7 @@ opsqlite_libsql_execute_raw(DB const &db, std::string const &query,
                 memcpy(data, value_blob.ptr, value_blob.len);
                 libsql_free_blob(value_blob);
                 row_vector.emplace_back(
-                    ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+                    ArrayBuffer{.data = std::shared_ptr<uint8_t[]>{data},
                                 .size = static_cast<size_t>(value_blob.len)});
                 break;
             }

@@ -670,7 +670,7 @@ BridgeResult opsqlite_execute_prepared_statement(
         auto ptr = turso_statement_row_value_bytes_ptr(stmt->statement, i);
         auto *data = new uint8_t[static_cast<size_t>(size)];
         memcpy(data, ptr, static_cast<size_t>(size));
-        row.values.emplace_back(ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+        row.values.emplace_back(ArrayBuffer{.data = std::shared_ptr<uint8_t[]>{data},
                                             .size = static_cast<size_t>(size)});
         break;
       }
@@ -787,7 +787,7 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
           auto ptr = turso_statement_row_value_bytes_ptr(statement, i);
           auto *data = new uint8_t[static_cast<size_t>(size)];
           memcpy(data, ptr, static_cast<size_t>(size));
-          row.emplace_back(ArrayBuffer{.data = std::shared_ptr<uint8_t>{data},
+          row.emplace_back(ArrayBuffer{.data = std::shared_ptr<uint8_t[]>{data},
                                        .size = static_cast<size_t>(size)});
           break;
         }
