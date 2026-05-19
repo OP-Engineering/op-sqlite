@@ -593,12 +593,13 @@ void opsqlite_attach(sqlite3 *db, std::string const &doc_path,
                      std::string const &secondary_db_name,
                      std::string const &alias) {
   auto secondary_db_path = opsqlite_get_db_path(secondary_db_name, doc_path);
-  auto statement = "ATTACH DATABASE '" + secondary_db_path + "' AS " + alias;
-  opsqlite_execute(db, statement, nullptr);
+  std::vector<JSVariant> params = {secondary_db_path, alias};
+  opsqlite_execute(db, "ATTACH DATABASE ? AS ?", &params);
 }
 
 void opsqlite_detach(sqlite3 *db, std::string const &alias) {
-  opsqlite_execute(db, "DETACH DATABASE " + alias, nullptr);
+  std::vector<JSVariant> params = {alias};
+  opsqlite_execute(db, "DETACH DATABASE ?", &params);
 }
 
 sqlite3_stmt *opsqlite_prepare_statement(sqlite3 *db,

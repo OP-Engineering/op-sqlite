@@ -155,14 +155,13 @@ void opsqlite_libsql_attach(DB const &db, std::string const &docPath,
                             std::string const &databaseToAttach,
                             std::string const &alias) {
     std::string dbPath = opsqlite_get_db_path(databaseToAttach, docPath);
-    std::string statement = "ATTACH DATABASE '" + dbPath + "' AS " + alias;
-
-    opsqlite_libsql_execute(db, statement, nullptr);
+    std::vector<JSVariant> params = {dbPath, alias};
+    opsqlite_libsql_execute(db, "ATTACH DATABASE ? AS ?", &params);
 }
 
 void opsqlite_libsql_detach(DB const &db, std::string const &alias) {
-    std::string statement = "DETACH DATABASE " + alias;
-    opsqlite_libsql_execute(db, statement, nullptr);
+    std::vector<JSVariant> params = {alias};
+    opsqlite_libsql_execute(db, "DETACH DATABASE ?", &params);
 }
 
 int32_t opsqlite_libsql_get_reserved_bytes(DB const &db) {
