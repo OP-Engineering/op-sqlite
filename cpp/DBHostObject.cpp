@@ -277,6 +277,12 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
 
   function_map["close"] = HFN(this) {
     invalidated = true;
+    // Abort pending native SQLite work before waiting on the thread pool.
+#if !defined(OP_SQLITE_USE_LIBSQL) && !defined(OP_SQLITE_USE_TURSO)
+    if (db != nullptr) {
+      sqlite3_interrupt(db);
+    }
+#endif
     // Drain any in-flight async queries before closing the db handle.
     // Without this, a queued/running execute() on the thread pool may
     // dereference the freed sqlite3* pointer → heap corruption / SIGABRT.
@@ -319,6 +325,12 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
     }
 
     invalidated = true;
+    // Abort pending native SQLite work before waiting on the thread pool.
+#if !defined(OP_SQLITE_USE_LIBSQL) && !defined(OP_SQLITE_USE_TURSO)
+    if (db != nullptr) {
+      sqlite3_interrupt(db);
+    }
+#endif
     // Drain any in-flight async queries before closing/removing the db handle.
     // Without this, queued/running work may dereference a freed sqlite handle.
     thread_pool->waitFinished();
