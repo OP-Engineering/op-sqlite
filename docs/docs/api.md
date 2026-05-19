@@ -124,6 +124,8 @@ If you need identical behavior across platforms, avoid multi-statement SQL strin
 
 On native, `interrupt()` aborts any pending database operation on this connection. It is safe to call from a thread different from the one running the operation. The interrupted query returns `SQLITE_INTERRUPT`; any in-flight transaction is rolled back. This calls SQLite's native [`sqlite3_interrupt()`](https://sqlite.org/c3ref/interrupt.html).
 
+`interrupt()` is not available when op-sqlite is built with the `libsql` or `turso` backend.
+
 ```tsx
 const query = db.execute(longRunningQuery);
 

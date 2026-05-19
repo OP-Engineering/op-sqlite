@@ -300,6 +300,9 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
 #ifdef OP_SQLITE_USE_LIBSQL
     throw std::runtime_error("[op-sqlite][interrupt] sqlite3_interrupt is not "
                              "supported with libsql");
+#elif defined(OP_SQLITE_USE_TURSO)
+    throw std::runtime_error("[op-sqlite][interrupt] sqlite3_interrupt is not "
+                             "supported with Turso");
 #else
     if (db == nullptr) {
       throw std::runtime_error("[op-sqlite][interrupt] database is null");
