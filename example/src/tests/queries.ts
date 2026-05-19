@@ -139,7 +139,7 @@ describe("Queries tests", () => {
 
 		const queryPromise = db.execute(longQuery);
 
-		await new Promise((resolve) => setTimeout(resolve, 50));
+		await sleep(50);
 		db.interrupt();
 
 		let interrupted = false;
