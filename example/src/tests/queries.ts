@@ -14,7 +14,7 @@ import {
 	expect,
 	it,
 } from "@op-engineering/op-test";
-import { chance } from "./utils";
+import { chance, sleep } from "./utils";
 
 // import pkg from '../../package.json'
 
@@ -105,6 +105,91 @@ describe("Queries tests", () => {
 				),
 			).toEqual(true);
 		}
+	});
+
+	it("interrupt is safe to call with no in-flight query", () => {
+		if (isLibsql() || isTurso()) {
+			return;
+		}
+
+		let threw = false;
+		try {
+			db.interrupt();
+		} catch (_e) {
+			threw = true;
+		}
+
+		expect(threw).toEqual(false);
+	});
+
+	it("interrupt aborts an in-flight query and rolls back the transaction", async () => {
+		if (isLibsql() || isTurso()) {
+			return;
+		}
+
+		await db.execute("DROP TABLE IF EXISTS InterruptTest;");
+		await db.execute("CREATE TABLE InterruptTest (n INTEGER);");
+
+		const longQuery = `
+			WITH RECURSIVE seq(n) AS (
+				SELECT 1 UNION ALL SELECT n + 1 FROM seq WHERE n < 100000000
+			)
+			INSERT INTO InterruptTest SELECT n FROM seq;
+		`;
+
+		const queryPromise = db.execute(longQuery);
+
+		await sleep(50);
+		db.interrupt();
+
+		let interrupted = false;
+		try {
+			await queryPromise;
+		} catch (e: any) {
+			interrupted = /interrupt|interrupted|abort|code 9|SQLITE_INTERRUPT/i.test(
+				String(e?.message ?? e),
+			);
+		}
+
+		expect(interrupted).toEqual(true);
+
+		const count = await db.execute("SELECT COUNT(*) AS n FROM InterruptTest;");
+		expect(count.rows[0]!.n).toEqual(0);
+	});
+
+	it("close interrupts an in-flight query before teardown", async () => {
+		if (isLibsql() || isTurso()) {
+			return;
+		}
+
+		await db.execute("DROP TABLE IF EXISTS CloseInterruptTest;");
+		await db.execute("CREATE TABLE CloseInterruptTest (n INTEGER);");
+
+		const longQuery = `
+			WITH RECURSIVE seq(n) AS (
+				SELECT 1 UNION ALL SELECT n + 1 FROM seq WHERE n < 100000000
+			)
+			INSERT INTO CloseInterruptTest SELECT n FROM seq;
+		`;
+
+		const queryPromise = db.execute(longQuery);
+
+		await sleep(50);
+		const startedAt = Date.now();
+		db.close();
+		const elapsedMs = Date.now() - startedAt;
+
+		await queryPromise.catch(() => undefined);
+		expect(elapsedMs < 2000).toEqual(true);
+
+		const cleanupDb = open({
+			name: "queries.sqlite",
+			encryptionKey: "test",
+		});
+		cleanupDb.delete();
+
+		// @ts-expect-error Prevent afterEach from deleting a closed handle.
+		db = null;
 	});
 
 	it("executeSync", () => {

@@ -188,6 +188,7 @@ function enhanceWebDb(
 		closeAsync: async () => {
 			await db.closeAsync?.();
 		},
+		interrupt: unsupported("interrupt"),
 		delete: unsupported("delete"),
 		attach: unsupported("attach"),
 		detach: unsupported("detach"),
@@ -351,6 +352,9 @@ async function createWebDb(params: {
 			await promiser("close", {
 				dbId,
 			});
+		},
+		interrupt: () => {
+			throwSyncApiError("interrupt");
 		},
 		delete: () => {
 			throwSyncApiError("delete");
