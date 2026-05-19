@@ -3,13 +3,19 @@ cmake_minimum_required(VERSION 3.9.0)
 
 set (PACKAGE_NAME "op-sqlite")
 
+if (USE_SQLCIPHER)
+  # Put ../cpp/sqlcipher ahead of ../cpp on the include path so the SQLCipher
+  # header (which exposes sqlite3_key_v2 and friends) wins over the plain
+  # sqlite3.h that also lives in ../cpp. Quoted #include search has its own
+  # rules, but with this ordering both quoted and angle-bracket forms resolve
+  # to the SQLCipher header under USE_SQLCIPHER; without it the SQLCipher
+  # build was empirically picking up the plain header.
+  include_directories(../cpp/sqlcipher)
+endif()
+
 include_directories(
   ../cpp
 )
-
-if (USE_SQLCIPHER)
-  include_directories(../cpp/sqlcipher)
-endif()
 
 if (USE_LIBSQL)
   include_directories(src/main/jniLibs/include)

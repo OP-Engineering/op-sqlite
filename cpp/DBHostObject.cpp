@@ -251,6 +251,19 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
       secondary_db_path = secondary_db_path + location;
     }
 
+    // Reject zero bytes uniformly: libsql's libsql_bind_string takes a
+    // C-string and would silently truncate at the first zero byte;
+    // SQLite and Turso bind with explicit lengths. Failing loudly across
+    // all backends keeps behaviour consistent.
+    if (secondary_db_name.find('\0') != std::string::npos) {
+      throw std::runtime_error(
+          "[op-sqlite] attach secondaryDbFileName must not contain a zero byte");
+    }
+    if (alias.find('\0') != std::string::npos) {
+      throw std::runtime_error(
+          "[op-sqlite] attach alias must not contain a zero byte");
+    }
+
 #ifdef OP_SQLITE_USE_LIBSQL
     opsqlite_libsql_attach(db, secondary_db_path, secondary_db_name, alias);
 #else
@@ -266,6 +279,10 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
     }
 
     std::string alias = args[0].asString(rt).utf8(rt);
+    if (alias.find('\0') != std::string::npos) {
+      throw std::runtime_error(
+          "[op-sqlite] detach alias must not contain a zero byte");
+    }
 #ifdef OP_SQLITE_USE_LIBSQL
     opsqlite_libsql_detach(db, alias);
 #else

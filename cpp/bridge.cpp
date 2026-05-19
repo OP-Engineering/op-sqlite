@@ -103,7 +103,23 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
   if (!encryption_key.empty()) {
-    opsqlite_execute(db, "PRAGMA key = '" + encryption_key + "'", nullptr);
+    // Use the SQLCipher C API directly instead of `PRAGMA key = '...'`.
+    // Primary reason: removes the SQL-injection shape — if the key string
+    // is ever attacker-influenced, a payload like `'; ATTACH ...; --`
+    // would otherwise execute arbitrary SQL on the freshly-opened
+    // connection. Secondary benefits: the key is passed as a binary
+    // buffer with explicit length so embedded zero bytes in the key are
+    // preserved, and it never enters trace/log surfaces — defense in
+    // depth, not an exploit class on its own.
+    int key_status = sqlite3_key_v2(
+        db, "main", encryption_key.data(),
+        static_cast<int>(encryption_key.size()));
+    if (key_status != SQLITE_OK) {
+      const char *message = sqlite3_errmsg(db);
+      throw std::runtime_error(
+          "[op-sqlite] failed to set encryption key: " +
+          std::string(message != nullptr ? message : "unknown error"));
+    }
   }
 #endif
 
@@ -161,15 +177,17 @@ void opsqlite_close(sqlite3 *db) {
 void opsqlite_attach(sqlite3 *db, std::string const &doc_path,
                      std::string const &secondary_db_name,
                      std::string const &alias) {
+  // ATTACH/DETACH's filename and schema-name slots both accept parameters
+  // (verified on SQLite 3.50.6, behavior present across the 3.x series).
+  // Binding sidesteps every escaping/identifier-quoting concern.
   auto secondary_db_path = opsqlite_get_db_path(secondary_db_name, doc_path);
-  auto statement = "ATTACH DATABASE '" + secondary_db_path + "' AS " + alias;
-
-  opsqlite_execute(db, statement, nullptr);
+  std::vector<JSVariant> params = {secondary_db_path, alias};
+  opsqlite_execute(db, "ATTACH DATABASE ? AS ?", &params);
 }
 
 void opsqlite_detach(sqlite3 *db, std::string const &alias) {
-  std::string statement = "DETACH DATABASE " + alias;
-  opsqlite_execute(db, statement, nullptr);
+  std::vector<JSVariant> params = {alias};
+  opsqlite_execute(db, "DETACH DATABASE ?", &params);
 }
 
 void opsqlite_remove(sqlite3 *db, std::string const &name,
