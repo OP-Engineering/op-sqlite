@@ -386,28 +386,35 @@ it("Detach with injection payload does not execute trailing SQL", () => {
 	// resolves pre-fix. The trailing `DROP TABLE canary; --` would then
 	// run as a second prepared statement and the canary row would be gone.
 	// Post-fix the alias is passed via parameter binding, so the whole
-	// payload is the schema-name to detach; no such schema exists, DETACH
-	// errors with "no such database", canary survives.
+	// payload is the schema-name to detach; nothing matches. The core
+	// proof is that `canary` survives — backends differ on whether a
+	// missing-schema DETACH errors (sqlite/sqlcipher) or returns cleanly
+	// (libsql), so we don't assert on the throw shape.
 	db.attach({
 		secondaryDbFileName: "detachInjectionTest2.sqlite",
 		alias: "safe",
 	});
 
-	let threw = false;
 	try {
 		db.detach("safe; DROP TABLE canary; --");
 	} catch {
-		threw = true;
+		// Ignored — only the canary check below is load-bearing.
 	}
-	expect(threw).toBe(true);
 
 	const rows = db.executeSync("SELECT id FROM canary;").rows;
 	expect(rows.length).toBe(1);
 	expect(rows[0]!.id).toBe(42);
 
-	// Clean up the real `safe` schema we attached above. The detach above
-	// failed, so `safe` is still attached.
-	db.detach("safe");
+	// Best-effort cleanup of `safe`. On backends where the malicious
+	// detach above did not throw, libsql may also have detached the
+	// `safe` schema (treating the bound text as a literal alias-name
+	// that didn't match) or left it attached; either way, swallow the
+	// error so cleanup doesn't fail the test.
+	try {
+		db.detach("safe");
+	} catch {
+		// Already detached or never attached — ignore.
+	}
 	db.delete();
 
 	open({ name: "detachInjectionTest2.sqlite", encryptionKey: "test" }).delete();
