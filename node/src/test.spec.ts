@@ -1,3 +1,6 @@
+import * as fs from "node:fs";
+import * as path from "node:path";
+import * as os from "node:os";
 import { isIOSEmbedded, isLibsql, isSQLCipher, open } from "./index";
 
 describe("op-sqlite Node.js tests", () => {
@@ -87,7 +90,6 @@ describe("op-sqlite Node.js tests", () => {
 	});
 
 	test("Transaction commit", async () => {
-		// Skipped: better-sqlite3's transaction function doesn't support async/await
 		await db.transaction(async (tx) => {
 			await tx.execute("INSERT INTO test_users (name, age) VALUES (?, ?)", [
 				"David",
@@ -103,13 +105,12 @@ describe("op-sqlite Node.js tests", () => {
 		expect(result.rows[0].count).toBeGreaterThanOrEqual(5);
 	});
 
-	test.skip("Transaction rollback", async () => {
-		// Skipped: The transaction implementation doesn't properly return a promise,
-		// which causes issues with testing error handling
+	test("Transaction rollback", async () => {
 		const beforeCount = db.executeSync(
 			"SELECT COUNT(*) as count FROM test_users",
 		).rows[0].count;
 
+		let caught: Error | undefined;
 		try {
 			await db.transaction(async (tx) => {
 				await tx.execute("INSERT INTO test_users (name, age) VALUES (?, ?)", [
@@ -119,13 +120,22 @@ describe("op-sqlite Node.js tests", () => {
 				throw new Error("Rollback test");
 			});
 		} catch (error: any) {
-			// Expected error
+			caught = error;
 		}
+
+		expect(caught).toBeDefined();
+		expect(caught?.message).toBe("Rollback test");
 
 		const afterCount = db.executeSync(
 			"SELECT COUNT(*) as count FROM test_users",
 		).rows[0].count;
 		expect(beforeCount).toBe(afterCount);
+
+		const tempRow = db.executeSync(
+			"SELECT * FROM test_users WHERE name = ?",
+			["Temporary"],
+		);
+		expect(tempRow.rows.length).toBe(0);
 	});
 
 	test("Prepared statement", async () => {
@@ -178,6 +188,34 @@ describe("op-sqlite Node.js tests", () => {
 		expect(() => {
 			db.executeSync("SELECT * FROM secondary.products");
 		}).toThrow(/no such table|secondary/);
+	});
+
+	test("Load SQL file", async () => {
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "opsqlite-loadfile-"));
+		const sqlFilePath = path.join(tempDir, "seed.sql");
+		fs.writeFileSync(
+			sqlFilePath,
+			[
+				"CREATE TABLE loadfile_products (id INTEGER PRIMARY KEY, name TEXT)",
+				"INSERT INTO loadfile_products (name) VALUES ('Widget')",
+				"INSERT INTO loadfile_products (name) VALUES ('Gadget')",
+			].join(";\n") + ";\n",
+		);
+
+		try {
+			const loadResult = await db.loadFile(sqlFilePath);
+			expect(loadResult.commands).toBe(3);
+
+			const result = db.executeSync(
+				"SELECT name FROM loadfile_products ORDER BY id",
+			);
+			expect(result.rows.length).toBe(2);
+			expect(result.rows[0].name).toBe("Widget");
+			expect(result.rows[1].name).toBe("Gadget");
+		} finally {
+			db.executeSync("DROP TABLE IF EXISTS loadfile_products");
+			fs.rmSync(tempDir, { recursive: true, force: true });
+		}
 	});
 
 	test("Feature checks", () => {
