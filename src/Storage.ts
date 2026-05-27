@@ -93,4 +93,12 @@ export class Storage {
 	delete() {
 		this.db.delete();
 	}
+
+	async close() {
+		await this.db.closeAsync();
+	}
+
+	closeSync() {
+		this.db.close();
+	}
 }
