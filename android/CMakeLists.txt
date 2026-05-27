@@ -42,6 +42,7 @@ add_library(
   ${PACKAGE_NAME}
   SHARED
   ../cpp/OPSqlite.cpp
+  ../cpp/OPDB.cpp
   ../cpp/utils.cpp
   ../cpp/OPThreadPool.cpp
   ../cpp/SmartHostObject.cpp
@@ -51,7 +52,7 @@ add_library(
 )
 
 if (USE_SQLCIPHER)
-  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlcipher/sqlite3.h ../cpp/sqlcipher/sqlite3.c ../cpp/bridge.cpp ../cpp/bridge.h)
+  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlcipher/sqlite3.h ../cpp/sqlcipher/sqlite3.c ../cpp/OPBridge.cpp ../cpp/OPBridge.hpp)
 
   add_definitions(
     -DOP_SQLITE_USE_SQLCIPHER=1
@@ -75,7 +76,7 @@ elseif (USE_TURSO)
     -DOP_SQLITE_USE_TURSO=1
   )
 else()
- target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlite3.c ../cpp/bridge.cpp)
+ target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlite3.c ../cpp/OPBridge.cpp)
 endif()
 
 if (USE_SQLITE_VEC)
