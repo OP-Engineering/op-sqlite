@@ -65,4 +65,16 @@ describe("Storage", () => {
 		const keys = storage.getAllKeys();
 		expect(keys).toDeepEqual(["quack", "quack2"]);
 	});
+
+	it("can close database sync", () => {
+		storage.setItemSync("quack", "bark");
+		const res = storage.closeSync();
+		expect(res).toEqual(undefined);
+	});
+
+	it("can close database", async () => {
+		await storage.setItem("quack", "bark");
+		const res = await storage.close();
+		expect(res).toEqual(undefined);
+	});
 });
