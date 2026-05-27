@@ -2,7 +2,7 @@
 #include "SmartHostObject.h"
 #include "types.hpp"
 #ifndef OP_SQLITE_USE_LIBSQL
-#include "bridge.h"
+#include "OPBridge.hpp"
 #endif
 #include "OPThreadPool.h"
 #include "macros.hpp"

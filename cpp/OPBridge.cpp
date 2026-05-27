@@ -2,7 +2,7 @@
 // Allows a clear defined boundary between the JSI and the SQLite operations
 // so that threading operations are safe and contained within DBHostObject
 
-#include "bridge.h"
+#include "OPBridge.hpp"
 #include "DBHostObject.h"
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
@@ -85,7 +85,6 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
                        std::string const &encryption_key) {
 #else
 sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
-                       [[maybe_unused]] std::string const &crsqlite_path,
                        [[maybe_unused]] std::string const &sqlite_vec_path) {
 #endif
   std::string final_path = opsqlite_get_db_path(name, path);

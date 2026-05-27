@@ -2,10 +2,11 @@
 #include "DBHostObject.h"
 #include "DumbHostObject.h"
 #include "OPThreadPool.h"
+#include "OPDB.hpp"
 #ifdef OP_SQLITE_USE_LIBSQL
 #include "libsql/bridge.hpp"
 #else
-#include "bridge.h"
+#include "OPBridge.hpp"
 #endif
 #include "logs.h"
 #include "macros.hpp"
@@ -43,6 +44,38 @@ void invalidate() {
   dbs.clear();
 }
 
+jsi::Object create_db(jsi::Runtime &rt, const std::string &name, const std::string &path, const std::string &sqlite_vec_path) {
+  jsi::Object db(rt);
+  db.setNativeState(rt, std::make_shared<OPDB>(name, path, sqlite_vec_path));
+  
+  db.setProperty(rt, "execute", HFN0 {
+    auto opdb = that.asObject(rt).getNativeState<OPDB>(rt);
+    const std::string query = args[0].asString(rt).utf8(rt);
+    std::vector<JSVariant> params = count == 2 && args[1].isObject()
+    ? to_variant_vec(rt, args[1])
+    : std::vector<JSVariant>();
+    
+    return promisify(
+                     rt, opdb->thread_pool,
+                     [opdb, query, params]() {
+#ifdef OP_SQLITE_USE_LIBSQL
+                       auto status = opsqlite_libsql_execute(db, query, &params);
+#else
+                       auto status = opsqlite_execute(opdb->db, query, &params);
+#endif
+                       return status;
+                     },
+                     [](jsi::Runtime &rt, std::any prev) {
+                       auto status = std::any_cast<BridgeResult>(prev);
+                       return create_js_rows(rt, status);
+                     });
+
+  }));
+  
+  return db;
+}
+
+
 void install(jsi::Runtime &rt,
              const std::shared_ptr<react::CallInvoker> &_invoker,
              const char *base_path, const char *crsqlite_path,
@@ -53,6 +86,35 @@ void install(jsi::Runtime &rt,
   _sqlite_vec_path = std::string(sqlite_vec_path);
   opsqlite::invoker = _invoker;
   opsqlite::invalidated = false;
+  
+  auto openNativeState = HFN0 {
+    jsi::Object options = args[0].asObject(rt);
+    std::string name = options.getProperty(rt, "name").asString(rt).utf8(rt);
+    std::string path = std::string(_base_path);
+    std::string location;
+    std::string encryption_key;
+    
+    if (options.hasProperty(rt, "location")) {
+      location = options.getProperty(rt, "location").asString(rt).utf8(rt);
+    }
+    
+    if (options.hasProperty(rt, "encryptionKey")) {
+      encryption_key =
+      options.getProperty(rt, "encryptionKey").asString(rt).utf8(rt);
+    }
+    
+    if (!location.empty()) {
+      if (location == ":memory:") {
+        path = ":memory:";
+      } else if (location.rfind('/', 0) == 0) {
+        path = location;
+      } else {
+        path = path + "/" + location;
+      }
+    }
+    
+    return create_db(rt, name, path, _sqlite_vec_path);
+  });
 
   auto open = HFN0 {
     jsi::Object options = args[0].asObject(rt);
@@ -206,6 +268,7 @@ void install(jsi::Runtime &rt,
 
   jsi::Object module = jsi::Object(rt);
   module.setProperty(rt, "open", std::move(open));
+  module.setProperty(rt, "openNativeState", std::move(openNativeState));
   module.setProperty(rt, "isSQLCipher", std::move(is_sqlcipher));
   module.setProperty(rt, "isLibsql", std::move(is_libsql));
   module.setProperty(rt, "isTurso", std::move(is_turso));

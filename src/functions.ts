@@ -381,6 +381,25 @@ export const open = (params: {
 	return enhancedDb;
 };
 
+export const openNativeState = (params: {
+	name: string;
+	location?: string;
+	encryptionKey?: string;
+}): DB => {
+
+	if (params.location?.startsWith("file://")) {
+		console.warn(
+			"[op-sqlite] You are passing a path with 'file://' prefix, it's automatically removed",
+		);
+		params.location = params.location.substring(7);
+	}
+
+	const db = OPSQLite.openNativeState(params);
+	const enhancedDb = enhanceDB(db, params);
+
+	return enhancedDb;
+}
+
 /**
  * Async wrapper around open().
  * Useful for cross-platform code that also targets web where openAsync() is required.

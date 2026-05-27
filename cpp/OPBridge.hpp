@@ -32,7 +32,6 @@ sqlite3 *opsqlite_open(std::string const &dbName, std::string const &path,
                        std::string const &encryption_key);
 #else
 sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
-                       [[maybe_unused]] std::string const &crsqlite_path,
                        std::string const &sqlite_vec_path);
 #endif
 

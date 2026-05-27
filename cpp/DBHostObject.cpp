@@ -3,7 +3,7 @@
 #if OP_SQLITE_USE_LIBSQL
 #include "libsql/bridge.hpp"
 #else
-#include "bridge.h"
+#include "OPBridge.hpp"
 #endif
 #include "logs.h"
 #include <functional>
@@ -229,7 +229,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
 #elif OP_SQLITE_USE_LIBSQL
   db = opsqlite_libsql_open(db_name, path, crsqlite_path);
 #else
-  db = opsqlite_open(db_name, path, crsqlite_path, sqlite_vec_path);
+  db = opsqlite_open(db_name, path, sqlite_vec_path);
 #endif
   create_jsi_functions(rt);
 };

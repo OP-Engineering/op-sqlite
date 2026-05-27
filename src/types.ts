@@ -328,6 +328,11 @@ export type OPSQLiteProxy = {
 		location?: string;
 		encryptionKey?: string;
 	}) => _InternalDB;
+	openNativeState: (options: {
+		name: string;
+		location?: string;
+		encryptionKey?: string;
+	}) => _InternalDB;
 	openRemote: (options: { url: string; authToken: string }) => _InternalDB;
 	openSync: (options: DBParams) => _InternalDB;
 	isSQLCipher: () => boolean;
