@@ -141,18 +141,18 @@ Pod::Spec.new do |s|
   
   if use_sqlcipher then
     log_message.call("[OP-SQLITE] using SQLCipher")
-    exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h", "ios/libsql.xcframework/**/*"]
+    exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/libsql/OPBridge.cpp", "cpp/libsql/OPBridge.hpp", "cpp/libsql/libsql.h", "ios/libsql.xcframework/**/*"]
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_SQLCIPHER=1 HAVE_FULLFSYNC=1 SQLITE_HAS_CODEC SQLITE_TEMP_STORE=3 SQLITE_EXTRA_INIT=sqlcipher_extra_init SQLITE_EXTRA_SHUTDOWN=sqlcipher_extra_shutdown"
     s.dependency "OpenSSL-Universal"    
   elsif use_turso then
     log_message.call("[OP-SQLITE] using Turso SDK kit")
-    exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/bridge.h", "cpp/bridge.cpp", "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h", "ios/libsql_experimental.xcframework/**/*"]
+    exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/OPBridge.hpp", "cpp/OPBridge.cpp", "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/OPBridge.hpp", "cpp/libsql/OPBridge.cpp", "cpp/libsql/libsql.h", "ios/libsql_experimental.xcframework/**/*"]
   elsif use_libsql then
     log_message.call("[OP-SQLITE] ⚠️ Using libsql. If you have libsql questions please ask in the Turso Discord server.")
-    exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/bridge.h", "cpp/bridge.cpp", "ios/turso_sdk_kit.xcframework/**/*"]
+    exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/OPBridge.hpp", "cpp/OPBridge.cpp", "ios/turso_sdk_kit.xcframework/**/*"]
   else
     log_message.call("[OP-SQLITE] using pure SQLite")
-    exclude_files += ["cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h", "ios/libsql_experimental.xcframework/**/*", "ios/turso_sdk_kit.xcframework/**/*"]
+    exclude_files += ["cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/OPBridge.cpp", "cpp/libsql/OPBridge.hpp", "cpp/libsql/libsql.h", "ios/libsql_experimental.xcframework/**/*", "ios/turso_sdk_kit.xcframework/**/*"]
   end
 
   if !use_sqlite_vec then

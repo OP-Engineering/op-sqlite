@@ -1,4 +1,4 @@
-#include "bridge.h"
+#include "OPBridge.hpp"
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
 #include "utils.hpp"

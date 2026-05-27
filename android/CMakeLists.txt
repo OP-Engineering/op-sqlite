@@ -64,7 +64,7 @@ if (USE_SQLCIPHER)
 
   find_package(openssl REQUIRED CONFIG)
 elseif (USE_LIBSQL)
-  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/libsql/bridge.cpp)
+  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/libsql/OPBridge.cpp)
 
   add_definitions(
     -DOP_SQLITE_USE_LIBSQL=1
