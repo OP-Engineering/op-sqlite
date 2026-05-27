@@ -35,7 +35,6 @@ def reactNativeArchitectures() {
 def useSQLCipher = false
 def useLibsql = false
 def useTurso = false
-def useCRSQLite = false
 def performanceMode = false
 def sqliteFlags = ""
 def enableFTS5 = false
@@ -74,7 +73,6 @@ def opsqliteConfig = packageJson["op-sqlite"]
 if(opsqliteConfig) {
   println "[OP-SQLITE] Detected op-sqlite config from package.json at: " + packageJsonFile.absolutePath
   useSQLCipher = !!opsqliteConfig["sqlcipher"]
-  useCRSQLite = !!opsqliteConfig["crsqlite"]
   useSqliteVec = !!opsqliteConfig["sqliteVec"]
   performanceMode = opsqliteConfig["performanceMode"]
   sqliteFlags = opsqliteConfig["sqliteFlags"] ? opsqliteConfig["sqliteFlags"] : ""
@@ -95,10 +93,6 @@ if(useSQLCipher) {
   println "[OP-SQLITE] using turso backend."
 } else if(useLibsql) {
   println "[OP-SQLITE] using libsql. Report any issues to Turso"
-}
-
-if(useCRSQLite) {
-  println "[OP-SQLITE] using CR-SQLite"
 }
 
 if(performanceMode) {
@@ -171,10 +165,6 @@ android {
           cFlags += "-DOP_SQLITE_USE_TURSO=1"
           cppFlags += "-DOP_SQLITE_USE_TURSO=1"
         }
-        if(useCRSQLite) {
-          cFlags += "-DOP_SQLITE_USE_CRSQLITE=1"
-          cppFlags += "-DOP_SQLITE_USE_CRSQLITE=1"
-        }
         if(useSqliteVec) {
           cFlags += "-DOP_SQLITE_USE_SQLITE_VEC=1"
           cppFlags += "-DOP_SQLITE_USE_SQLITE_VEC=1"
@@ -202,7 +192,6 @@ android {
           "-DDEFAULT_SQLITE_FLAGS='${defaultSqliteFlags.join(' ')}'",
           "-DSQLITE_FLAGS='$sqliteFlags'",
           "-DUSE_SQLCIPHER=${useSQLCipher ? 1 : 0}",
-          "-DUSE_CRSQLITE=${useCRSQLite ? 1 : 0}",
           "-DUSE_LIBSQL=${useLibsql ? 1 : 0}",
           "-DUSE_TURSO=${useTurso ? 1 : 0}",
           "-DUSE_SQLITE_VEC=${useSqliteVec ? 1 : 0}",
@@ -272,9 +261,6 @@ android {
         }
         if (useTurso) {
           srcDirs += 'src/main/tursoLibs'
-        }
-        if (useCRSQLite) {
-          srcDirs += 'src/main/libcrsqlite'
         }
         if (useSqliteVec) {
           srcDirs += 'src/main/libsqlitevec'

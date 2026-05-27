@@ -227,17 +227,15 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &db_name,
 
 DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
                            std::string &db_name, std::string &path,
-                           std::string &crsqlite_path,
                            std::string &sqlite_vec_path,
                            std::string &encryption_key)
     : base_path(base_path), db_name(db_name), delete_db_name(db_name) {
   thread_pool = std::make_shared<ThreadPool>();
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
-  db = opsqlite_open(db_name, path, crsqlite_path, sqlite_vec_path,
-                     encryption_key);
+  db = opsqlite_open(db_name, path, sqlite_vec_path, encryption_key);
 #elif OP_SQLITE_USE_LIBSQL
-  db = opsqlite_libsql_open(db_name, path, crsqlite_path);
+  db = opsqlite_libsql_open(db_name, path);
 #else
   db = opsqlite_open(db_name, path, sqlite_vec_path);
 #endif

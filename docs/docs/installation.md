@@ -60,7 +60,6 @@ SQLite is very customizable on compilation level. op-sqlite also allows you add 
   // All the keys are optional, see the usage below
   "op-sqlite": {
     "sqlcipher": false
-    // "crsqlite": false,
     // "performanceMode": true,
     // "iosSqlite": false,
     // "sqliteFlags": "-DSQLITE_DQS=0 -DSQLITE_MY_FLAG=1",
@@ -77,7 +76,6 @@ SQLite is very customizable on compilation level. op-sqlite also allows you add 
 All keys are optional, only turn on the features you want:
 
 - `sqlcipher` allows to change the base sqlite implementation to [sqlcipher](https://www.zetetic.net/sqlcipher/), which encrypts all the database data with minimal overhead. You will still need to keep your encryption key secure. Read more about security in React Native [here](https://ospfranco.com/react-native-security-guide/).
-- `crsqlite` is an extension that allows replication to a server backed sqlite database copy. [Repo here](https://github.com/vlcn-io/cr-sqlite).
 - `performanceMode` turns on certain compilation flags that make sqlite speedier at the cost of disabling some features. You should almost always turn this on, but test your app thoroughly.
 - `iosSqlite` uses the embedded iOS version from sqlite, which saves disk space but may use an older version and cannot load extensions as Apple disables it due to security concerns. On Android SQLite is always compiled from source as each vendor messes with sqlite or uses outdated versions.
 - `sqliteFlags` allows you to pass your own compilation flags to further disable/enable features and extensions. It follows the C flag format: `-D[YOUR_FLAG]=[YOUR_VALUE]`. If you are running large queries on large databases sometimes on Android devices you might get a IO exception. You can disable temporary files by using adding the `"-DSQLITE_TEMP_STORE=2"` flag. Flags listed here are applied AFTER the library defaults (including those added by `performanceMode`), so they override any default with the same name on both iOS and Android. For example, setting `"sqliteFlags": "-DSQLITE_DQS=3"` re-enables double-quoted string literals even when `performanceMode` is on.

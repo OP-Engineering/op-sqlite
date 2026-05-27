@@ -40,7 +40,6 @@ app_package = JSON.parse(File.read(package_json_path))
 
 op_sqlite_config = app_package["op-sqlite"]
 use_sqlcipher = false
-use_crsqlite = false
 use_libsql = false
 use_turso = false
 performance_mode = false
@@ -53,7 +52,6 @@ tokenizers = []
 
 if(op_sqlite_config != nil)
   use_sqlcipher = op_sqlite_config["sqlcipher"] == true
-  use_crsqlite = op_sqlite_config["crsqlite"] == true
   use_libsql = op_sqlite_config["libsql"] == true
   use_turso = op_sqlite_config["turso"] == true
   performance_mode = op_sqlite_config["performanceMode"] || false
@@ -68,10 +66,6 @@ end
 if phone_version then
   if use_sqlcipher then
     raise "SQLCipher is not supported with phone version. It cannot load extensions."
-  end
-
-  if use_crsqlite then
-    raise "CRSQLite is not supported with phone version. It cannot load extensions."
   end
 
   if rtree then
@@ -161,11 +155,6 @@ Pod::Spec.new do |s|
     exclude_files += ["cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h", "ios/libsql_experimental.xcframework/**/*", "ios/turso_sdk_kit.xcframework/**/*"]
   end
 
-   # Exclude xcframeworks that aren't being used
-  if !use_crsqlite then
-    exclude_files += ["ios/crsqlite.xcframework/**/*"]
-  end
-
   if !use_sqlite_vec then
     exclude_files += ["ios/sqlitevec.xcframework/**/*"]
   end
@@ -194,12 +183,6 @@ Pod::Spec.new do |s|
     other_cflags += optimizedCflags
   end
 
-  if use_crsqlite then
-    log_message.call("[OP-SQLITE] using CRQSQLite 🤖")
-    xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_CRSQLITE=1"
-    frameworks.push("ios/crsqlite.xcframework")
-  end
-
   if use_sqlite_vec then
     log_message.call("[OP-SQLITE] using Sqlite Vec ↗️")
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_SQLITE_VEC=1"
@@ -208,11 +191,7 @@ Pod::Spec.new do |s|
 
   if use_libsql then
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_LIBSQL=1"
-    if use_crsqlite then
-      frameworks = ["ios/libsql_experimental.xcframework", "ios/crsqlite.xcframework"]
-    else
-      frameworks = ["ios/libsql_experimental.xcframework"]
-    end
+    frameworks = ["ios/libsql_experimental.xcframework"]
   end
 
   if use_turso then

@@ -79,8 +79,7 @@ DB opsqlite_libsql_open_sync(std::string const &name,
     return {.db = db, .c = c};
 }
 
-DB opsqlite_libsql_open(std::string const &name, std::string const &last_path,
-                        std::string const &crsqlitePath) {
+DB opsqlite_libsql_open(std::string const &name, std::string const &last_path) {
     std::string path = opsqlite_get_db_path(name, last_path);
 
     int status;
@@ -99,21 +98,6 @@ DB opsqlite_libsql_open(std::string const &name, std::string const &last_path,
     if (status != 0) {
         throw std::runtime_error(err);
     }
-
-#ifdef OP_SQLITE_USE_CRSQLITE
-    const char *errMsg;
-    const char *crsqliteEntryPoint = "sqlite3_crsqlite_init";
-
-    status = libsql_load_extension(c, crsqlitePath.c_str(), crsqliteEntryPoint,
-                                   &errMsg);
-
-    if (status != 0) {
-        throw std::runtime_error(errMsg);
-    } else {
-        LOGI("Loaded CRSQlite successfully");
-    }
-#endif
-
     return {.db = db, .c = c};
 }
 

@@ -26,7 +26,6 @@ namespace jsi = facebook::jsi;
 namespace react = facebook::react;
 
 std::string _base_path;
-std::string _extension_path;
 std::string _sqlite_vec_path;
 std::vector<std::shared_ptr<DBHostObject>> dbs;
 std::vector<std::shared_ptr<OPDB>> native_dbs;
@@ -635,11 +634,9 @@ jsi::Object create_db(jsi::Runtime &rt, const std::string &name,
 
 void install(jsi::Runtime &rt,
              const std::shared_ptr<react::CallInvoker> &_invoker,
-             const char *base_path, const char *extension_path,
-             const char *sqlite_vec_path) {
+             const char *base_path, const char *sqlite_vec_path) {
 
   _base_path = std::string(base_path);
-  _extension_path = std::string(extension_path);
   _sqlite_vec_path = std::string(sqlite_vec_path);
   opsqlite::invoker = _invoker;
   opsqlite::invalidated = false;
@@ -700,8 +697,7 @@ void install(jsi::Runtime &rt,
     }
 
     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-      rt, path, name, path, _extension_path, _sqlite_vec_path,
-      encryption_key);
+      rt, path, name, path, _sqlite_vec_path, encryption_key);
     dbs.emplace_back(db);
     return jsi::Object::createFromHostObject(rt, db);
   });

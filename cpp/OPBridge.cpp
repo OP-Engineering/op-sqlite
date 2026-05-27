@@ -80,7 +80,6 @@ std::string opsqlite_get_db_path(std::string const &db_name,
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
 sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
-                       std::string const &crsqlite_path,
                        std::string const &sqlite_vec_path,
                        std::string const &encryption_key) {
 #else
@@ -126,17 +125,6 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
   sqlite3_enable_load_extension(db, 1);
 #endif
 
-#ifdef OP_SQLITE_USE_CRSQLITE
-  const char *crsqliteEntryPoint = "sqlite3_crsqlite_init";
-
-  sqlite3_load_extension(db, crsqlite_path.c_str(), crsqliteEntryPoint,
-                         &errMsg);
-
-  if (errMsg != nullptr) {
-    throw std::runtime_error(errMsg);
-  }
-#endif
-
 #ifdef OP_SQLITE_USE_SQLITE_VEC
   const char *vec_entry_point = "sqlite3_vec_init";
 
@@ -166,10 +154,6 @@ void create_dirs_if_needed(const std::string &path) {
 }
 
 void opsqlite_close(sqlite3 *db) {
-#ifdef OP_SQLITE_USE_CRSQLITE
-  opsqlite_execute(db, "select crsql_finalize();", nullptr);
-#endif
-
   sqlite3_close_v2(db);
 }
 

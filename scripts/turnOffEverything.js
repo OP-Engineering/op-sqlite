@@ -12,7 +12,6 @@ packageJson['op-sqlite']['sqlcipher'] = false;
 packageJson['op-sqlite']['iosSqlite'] = false;
 packageJson['op-sqlite']['fts5'] = true;
 packageJson['op-sqlite']['rtree'] = true;
-packageJson['op-sqlite']['crsqlite'] = false;
 packageJson['op-sqlite']['sqliteVec'] = false;
 packageJson['op-sqlite']['tokenizers'] = ["wordtokenizer", "porter"];
 

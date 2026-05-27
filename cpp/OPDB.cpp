@@ -10,8 +10,6 @@ namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 
-extern std::string _extension_path;
-
 #if !defined(OP_SQLITE_USE_LIBSQL) && !defined(OP_SQLITE_USE_TURSO)
 namespace {
 
@@ -57,10 +55,9 @@ OPDB::OPDB(const std::string &name, const std::string &base_path,
   thread_pool = std::make_shared<ThreadPool>();
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
-  db = opsqlite_open(db_name, base_path, _extension_path, sqlite_vec_path,
-                     encryption_key);
+  db = opsqlite_open(db_name, base_path, sqlite_vec_path, encryption_key);
 #elif OP_SQLITE_USE_LIBSQL
-  db = opsqlite_libsql_open(db_name, base_path, _extension_path);
+  db = opsqlite_libsql_open(db_name, base_path);
 #else
   db = opsqlite_open(db_name, base_path, sqlite_vec_path);
 #endif
