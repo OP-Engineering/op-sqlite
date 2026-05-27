@@ -5,6 +5,7 @@ import {
 	isLibsql,
 	isTurso,
 	open,
+	openNativeState,
 	type SQLBatchTuple,
 } from "@op-engineering/op-sqlite";
 import {
@@ -13,6 +14,7 @@ import {
 	describe,
 	expect,
 	it,
+	itOnly,
 } from "@op-engineering/op-test";
 import { chance, sleep } from "./utils";
 
@@ -98,7 +100,10 @@ describe("Queries tests", () => {
 		try {
 			// @ts-expect-error
 			await db.execute("SELECT ?", [{ foo: "bar" }]);
-		} catch (e: any) {
+		} catch (e: unknown) {
+			if (!(e instanceof Error)) {
+				throw e;
+			}
 			expect(
 				e.message.includes(
 					"Object is not an ArrayBuffer or ArrayBuffer view",
@@ -145,7 +150,10 @@ describe("Queries tests", () => {
 		let interrupted = false;
 		try {
 			await queryPromise;
-		} catch (e: any) {
+		} catch (e: unknown) {
+						if (!(e instanceof Error)) {
+				throw e;
+			}
 			interrupted = /interrupt|interrupted|abort|code 9|SQLITE_INTERRUPT/i.test(
 				String(e?.message ?? e),
 			);
@@ -154,7 +162,7 @@ describe("Queries tests", () => {
 		expect(interrupted).toEqual(true);
 
 		const count = await db.execute("SELECT COUNT(*) AS n FROM InterruptTest;");
-		expect(count.rows[0]!.n).toEqual(0);
+		expect(count.rows[0]?.n).toEqual(0);
 	});
 
 	it("close interrupts an in-flight query before teardown", async () => {
@@ -338,15 +346,15 @@ describe("Queries tests", () => {
 
 		const sumRes = await db.execute("SELECT SUM(age) as sum FROM User;");
 
-		expect(sumRes.rows[0]!.sum).toEqual(age + age2);
+		expect(sumRes.rows[0]?.sum).toEqual(age + age2);
 
 		const maxRes = await db.execute("SELECT MAX(networth) as `max` FROM User;");
 		const minRes = await db.execute("SELECT MIN(networth) as `min` FROM User;");
 		const maxNetworth = Math.max(networth, networth2);
 		const minNetworth = Math.min(networth, networth2);
 
-		expect(maxRes.rows[0]!.max).toEqual(maxNetworth);
-		expect(minRes.rows[0]!.min).toEqual(minNetworth);
+		expect(maxRes.rows[0]?.max).toEqual(maxNetworth);
+		expect(minRes.rows[0]?.min).toEqual(minNetworth);
 	});
 
 	it("Executes all the statements in a single string", async () => {
@@ -362,13 +370,13 @@ describe("Queries tests", () => {
 			"SELECT name FROM sqlite_master WHERE type='table' AND name='T1';",
 		);
 
-		expect(t1name.rows[0]!.name).toEqual("T1");
+		expect(t1name.rows[0]?.name).toEqual("T1");
 
 		const t2name = await db.execute(
 			"SELECT name FROM sqlite_master WHERE type='table' AND name='T2';",
 		);
 
-		expect(t2name.rows[0]!.name).toEqual("T2");
+		expect(t2name.rows[0]?.name).toEqual("T2");
 	});
 
 	it("Failed insert", async () => {
@@ -381,7 +389,10 @@ describe("Queries tests", () => {
 				"INSERT INTO User (id, name, age, networth) VALUES(?, ?, ?, ?)",
 				[id, name, age, networth],
 			);
-		} catch (e: any) {
+		} catch (e: unknown) {
+			if (!(e instanceof Error)) {
+				throw e;
+			}
 			expect(typeof e).toEqual("object");
 
 			expect(!!e.message).toEqual(true);
@@ -485,7 +496,7 @@ describe("Queries tests", () => {
 					[id],
 				);
 
-				actual.push(results.rows[0]!.networth);
+				actual.push(results.rows[0].networth);
 			});
 
 			promises.push(promised);
@@ -572,7 +583,7 @@ describe("Queries tests", () => {
 				'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
 				[id, name, age, networth],
 			);
-		} catch (e: any) {
+		} catch (e: unknown) {
 			expect(!!e).toEqual(true);
 		}
 	});
@@ -754,9 +765,9 @@ describe("Queries tests", () => {
 			},
 		]);
 
-		res.rows[0]!.name = "quack_changed";
+		res.rows[0].name = "quack_changed";
 
-		expect(res.rows[0]!.name).toEqual("quack_changed");
+		expect(res.rows[0].name).toEqual("quack_changed");
 	});
 
 	it("DumbHostObject allows to write new props", async () => {
@@ -771,7 +782,7 @@ describe("Queries tests", () => {
 
 		const res = await db.executeWithHostObjects("SELECT * FROM User");
 
-		expect(res.rows!).toDeepEqual([
+		expect(res.rows).toDeepEqual([
 			{
 				id,
 				name,
@@ -781,9 +792,9 @@ describe("Queries tests", () => {
 			},
 		]);
 
-		res.rows[0]!.myWeirdProp = "quack_changed";
+		res.rows[0].myWeirdProp = "quack_changed";
 
-		expect(res.rows[0]!.myWeirdProp).toEqual("quack_changed");
+		expect(res.rows[0].myWeirdProp).toEqual("quack_changed");
 	});
 
 	it("Execute raw should return just an array of objects", async () => {
@@ -854,6 +865,16 @@ describe("Queries tests", () => {
 		const res = db.executeSync("PRAGMA user_version");
 		expect(res.rows).toDeepEqual([{ user_version: 0 }]);
 	});
+
+	itOnly("native state tests", async () => {
+		const nsdb = openNativeState({
+			name: "testns.sqlite"
+		})
+
+		const res = await nsdb.execute("SELECT 1")
+
+		expect(res.rows).toDeepEqual([{"1": 1}])
+	})
 
 	//  const sqliteVecEnabled = pkg?.['op-sqlite']?.sqliteVec === true;
 	//   if (sqliteVecEnabled) {
