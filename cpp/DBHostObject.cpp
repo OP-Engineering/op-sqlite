@@ -67,14 +67,24 @@ void DBHostObject::flush_pending_reactive_queries(
 }
 
 void DBHostObject::on_commit() {
-  invoker->invokeAsync([this](jsi::Runtime &rt) {
-    commit_hook_callback->asObject(rt).asFunction(rt).call(rt);
+  auto callback = commit_hook_callback;
+  if (callback == nullptr) {
+    return;
+  }
+
+  invoker->invokeAsync([callback](jsi::Runtime &rt) {
+    callback->asObject(rt).asFunction(rt).call(rt);
   });
 }
 
 void DBHostObject::on_rollback() {
-  invoker->invokeAsync([this](jsi::Runtime &rt) {
-    rollback_hook_callback->asObject(rt).asFunction(rt).call(rt);
+  auto callback = rollback_hook_callback;
+  if (callback == nullptr) {
+    return;
+  }
+
+  invoker->invokeAsync([callback](jsi::Runtime &rt) {
+    callback->asObject(rt).asFunction(rt).call(rt);
   });
 }
 

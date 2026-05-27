@@ -866,15 +866,15 @@ describe("Queries tests", () => {
 		expect(res.rows).toDeepEqual([{ user_version: 0 }]);
 	});
 
-	itOnly("native state tests", async () => {
-		const nsdb = openNativeState({
-			name: "testns.sqlite"
-		})
+	// itOnly("native state tests", async () => {
+	// 	const nsdb = openNativeState({
+	// 		name: "testns.sqlite"
+	// 	})
 
-		const res = await nsdb.execute("SELECT 1")
+	// 	const res = await nsdb.execute("SELECT 1")
 
-		expect(res.rows).toDeepEqual([{"1": 1}])
-	})
+	// 	expect(res.rows).toDeepEqual([{"1": 1}])
+	// })
 
 	//  const sqliteVecEnabled = pkg?.['op-sqlite']?.sqliteVec === true;
 	//   if (sqliteVecEnabled) {

@@ -71,25 +71,25 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
 	// spreading the object does not work with HostObjects (db)
 	// We need to manually assign the fields
 	const enhancedDb = {
-		delete: db.delete,
-		attach: db.attach,
-		detach: db.detach,
-		loadFile: db.loadFile,
-		updateHook: db.updateHook,
-		commitHook: db.commitHook,
-		rollbackHook: db.rollbackHook,
-		loadExtension: db.loadExtension,
-		getDbPath: db.getDbPath,
-		reactiveExecute: db.reactiveExecute,
-		sync: db.sync,
-		setReservedBytes: db.setReservedBytes,
-		getReservedBytes: db.getReservedBytes,
-		close: db.close,
-		interrupt: db.interrupt,
+		delete: db.delete.bind(db),
+		attach: db.attach.bind(db),
+		detach: db.detach.bind(db),
+		loadFile: db.loadFile.bind(db),
+		updateHook: db.updateHook.bind(db),
+		commitHook: db.commitHook.bind(db),
+		rollbackHook: db.rollbackHook.bind(db),
+		loadExtension: db.loadExtension.bind(db),
+		getDbPath: db.getDbPath.bind(db),
+		reactiveExecute: db.reactiveExecute.bind(db),
+		sync: db.sync.bind(db),
+		setReservedBytes: db.setReservedBytes.bind(db),
+		getReservedBytes: db.getReservedBytes.bind(db),
+		close: db.close.bind(db),
+		interrupt: db.interrupt.bind(db),
 		closeAsync: async () => {
 			db.close();
 		},
-		flushPendingReactiveQueries: db.flushPendingReactiveQueries,
+		flushPendingReactiveQueries: db.flushPendingReactiveQueries.bind(db),
 		executeBatch: async (
 			commands: SQLBatchTuple[],
 		): Promise<BatchQueryResult> => {
