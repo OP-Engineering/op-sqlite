@@ -797,7 +797,7 @@ void expoUpdatesWorkaround(const char *base_path) {
   std::string path = std::string(base_path);
   // Open a DB before anything else so that expo-updates does not mess up the
   // configuration
-  opsqlite_libsql_open("__dummy", path, "");
+  opsqlite_libsql_open("__dummy", path);
 #endif
 }
 

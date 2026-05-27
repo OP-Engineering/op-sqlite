@@ -57,12 +57,12 @@ DB opsqlite_libsql_open_sync(std::string const &name,
         .read_your_writes = '1',
         .encryption_key =
             encryption_key.empty() ? nullptr : encryption_key.c_str(),
-        .remote_encryption_key = remote_encryption_key.empty()
-                                     ? nullptr
-                                     : remote_encryption_key.c_str(),
         .sync_interval = sync_interval,
         .with_webpki = '1',
         .offline = offline,
+        .remote_encryption_key = remote_encryption_key.empty()
+                                     ? nullptr
+                                     : remote_encryption_key.c_str(),
     };
 
     status = libsql_open_sync_with_config(config, &db, &err);
