@@ -5,7 +5,6 @@ import {
 	isLibsql,
 	isTurso,
 	open,
-	openNativeState,
 	type SQLBatchTuple,
 } from "@op-engineering/op-sqlite";
 import {
@@ -14,7 +13,6 @@ import {
 	describe,
 	expect,
 	it,
-	itOnly,
 } from "@op-engineering/op-test";
 import { chance, sleep } from "./utils";
 
@@ -865,16 +863,6 @@ describe("Queries tests", () => {
 		const res = db.executeSync("PRAGMA user_version");
 		expect(res.rows).toDeepEqual([{ user_version: 0 }]);
 	});
-
-	// itOnly("native state tests", async () => {
-	// 	const nsdb = openNativeState({
-	// 		name: "testns.sqlite"
-	// 	})
-
-	// 	const res = await nsdb.execute("SELECT 1")
-
-	// 	expect(res.rows).toDeepEqual([{"1": 1}])
-	// })
 
 	//  const sqliteVecEnabled = pkg?.['op-sqlite']?.sqliteVec === true;
 	//   if (sqliteVecEnabled) {

@@ -1,5 +1,4 @@
 #include "bridge.h"
-#include "DBHostObject.h"
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
 #include "utils.hpp"
@@ -841,21 +840,6 @@ BridgeResult opsqlite_execute_raw(
   return {.affectedRows = response.affectedRows,
           .insertId = response.insertId};
 }
-
-void opsqlite_register_update_hook([[maybe_unused]] sqlite3 *db,
-                                   [[maybe_unused]] void *db_host_object_ptr) {}
-
-void opsqlite_deregister_update_hook([[maybe_unused]] sqlite3 *db) {}
-
-void opsqlite_register_commit_hook([[maybe_unused]] sqlite3 *db,
-                                   [[maybe_unused]] void *db_host_object_ptr) {}
-
-void opsqlite_deregister_commit_hook([[maybe_unused]] sqlite3 *db) {}
-
-void opsqlite_register_rollback_hook([[maybe_unused]] sqlite3 *db,
-                                     [[maybe_unused]] void *db_host_object_ptr) {}
-
-void opsqlite_deregister_rollback_hook([[maybe_unused]] sqlite3 *db) {}
 
 void opsqlite_load_extension([[maybe_unused]] sqlite3 *db,
                              [[maybe_unused]] std::string &path,

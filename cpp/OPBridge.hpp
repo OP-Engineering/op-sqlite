@@ -15,13 +15,6 @@ namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 
-/// Convenience types to avoid super long types
-typedef std::function<void(std::string dbName, std::string tableName,
-                           std::string operation, int rowId)>
-    UpdateCallback;
-typedef std::function<void(std::string dbName)> CommitCallback;
-typedef std::function<void(std::string dbName)> RollbackCallback;
-
 std::string opsqlite_get_db_path(std::string const &db_name,
                                  std::string const &location);
 
@@ -72,13 +65,6 @@ BatchResult opsqlite_execute_batch(sqlite3 *db,
 BridgeResult opsqlite_execute_raw(sqlite3 *db, std::string const &query,
                                   const std::vector<JSVariant> *params,
                                   std::vector<std::vector<JSVariant>> *results);
-
-void opsqlite_register_update_hook(sqlite3 *db, void *db_host_object_ptr);
-void opsqlite_deregister_update_hook(sqlite3 *db);
-void opsqlite_register_commit_hook(sqlite3 *db, void *db_host_object_ptr);
-void opsqlite_deregister_commit_hook(sqlite3 *db);
-void opsqlite_register_rollback_hook(sqlite3 *db, void *db_host_object_ptr);
-void opsqlite_deregister_rollback_hook(sqlite3 *db);
 
 sqlite3_stmt *opsqlite_prepare_statement(sqlite3 *db, std::string const &query);
 

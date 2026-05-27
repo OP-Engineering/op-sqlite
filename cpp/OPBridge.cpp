@@ -1,9 +1,8 @@
 // This file contains pure sqlite operations without JSI interaction
 // Allows a clear defined boundary between the JSI and the SQLite operations
-// so that threading operations are safe and contained within DBHostObject
+// so that threading operations are safe and contained within the DB state
 
 #include "OPBridge.hpp"
-#include "DBHostObject.h"
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
 #include "logs.h"
@@ -781,49 +780,6 @@ std::string operation_to_string(int operation_type) {
   default:
     throw std::runtime_error("Unknown SQLite operation on hook");
   }
-}
-
-void update_callback(void *db_host_object_ptr, int operation_type,
-                     [[maybe_unused]] char const *database, char const *table,
-                     sqlite3_int64 row_id) {
-  auto db_host_object = reinterpret_cast<DBHostObject *>(db_host_object_ptr);
-  db_host_object->on_update(std::string(table),
-                            operation_to_string(operation_type), row_id);
-}
-
-void opsqlite_register_update_hook(sqlite3 *db, void *db_host_object) {
-  sqlite3_update_hook(db, &update_callback, (void *)db_host_object);
-}
-
-void opsqlite_deregister_update_hook(sqlite3 *db) {
-  sqlite3_update_hook(db, nullptr, nullptr);
-}
-
-int commit_callback(void *db_host_object_ptr) {
-  auto db_host_object = reinterpret_cast<DBHostObject *>(db_host_object_ptr);
-  db_host_object->on_commit();
-  return 0;
-}
-
-void opsqlite_register_commit_hook(sqlite3 *db, void *db_host_object_ptr) {
-  sqlite3_commit_hook(db, &commit_callback, db_host_object_ptr);
-}
-
-void opsqlite_deregister_commit_hook(sqlite3 *db) {
-  sqlite3_commit_hook(db, nullptr, nullptr);
-}
-
-void rollback_callback(void *db_host_object_ptr) {
-  auto db_host_object = reinterpret_cast<DBHostObject *>(db_host_object_ptr);
-  db_host_object->on_rollback();
-}
-
-void opsqlite_register_rollback_hook(sqlite3 *db, void *db_host_object_ptr) {
-  sqlite3_rollback_hook(db, &rollback_callback, db_host_object_ptr);
-}
-
-void opsqlite_deregister_rollback_hook(sqlite3 *db) {
-  sqlite3_rollback_hook(db, nullptr, nullptr);
 }
 
 void opsqlite_load_extension(sqlite3 *db, std::string &path,

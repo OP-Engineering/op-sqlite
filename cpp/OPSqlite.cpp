@@ -1,5 +1,4 @@
 #include "OPSqlite.hpp"
-#include "DBHostObject.h"
 #include "DumbHostObject.h"
 #include "OPThreadPool.h"
 #include "OPDB.hpp"
@@ -27,7 +26,6 @@ namespace react = facebook::react;
 
 std::string _base_path;
 std::string _sqlite_vec_path;
-std::vector<std::shared_ptr<DBHostObject>> dbs;
 std::vector<std::shared_ptr<OPDB>> native_dbs;
 bool invalidated = false;
 std::shared_ptr<react::CallInvoker> invoker;
@@ -38,27 +36,17 @@ void invalidate() {
   // Global flag used by the threads to stop work
   invalidated = true;
 
-  for (const auto &db : dbs) {
-    db->invalidate();
-  }
-
   for (const auto &db : native_dbs) {
     db->invalidate();
   }
 
   // Clear our existing vector of shared pointers so they can be garbage
   // collected
-  dbs.clear();
   native_dbs.clear();
 }
 
-jsi::Object create_db(jsi::Runtime &rt, const std::string &name,
-                      const std::string &path,
-                      const std::string &sqlite_vec_path,
-                      const std::string &encryption_key) {
+jsi::Object create_db(jsi::Runtime &rt, const std::shared_ptr<OPDB> &opdb) {
   jsi::Object db(rt);
-  auto opdb = std::make_shared<OPDB>(name, path, sqlite_vec_path,
-                                     encryption_key);
   native_dbs.emplace_back(opdb);
   db.setNativeState(rt, opdb);
 
@@ -631,6 +619,14 @@ jsi::Object create_db(jsi::Runtime &rt, const std::string &name,
   return db;
 }
 
+jsi::Object create_db(jsi::Runtime &rt, const std::string &name,
+                      const std::string &path,
+                      const std::string &sqlite_vec_path,
+                      const std::string &encryption_key) {
+  return create_db(
+      rt, std::make_shared<OPDB>(name, path, sqlite_vec_path, encryption_key));
+}
+
 
 void install(jsi::Runtime &rt,
              const std::shared_ptr<react::CallInvoker> &_invoker,
@@ -641,7 +637,7 @@ void install(jsi::Runtime &rt,
   opsqlite::invoker = _invoker;
   opsqlite::invalidated = false;
   
-  auto openNativeState = HFN0 {
+  auto open = HFN0 {
     jsi::Object options = args[0].asObject(rt);
     std::string name = options.getProperty(rt, "name").asString(rt).utf8(rt);
     std::string path = std::string(_base_path);
@@ -668,38 +664,6 @@ void install(jsi::Runtime &rt,
     }
     
     return create_db(rt, name, path, _sqlite_vec_path, encryption_key);
-  });
-
-  auto open = HFN0 {
-    jsi::Object options = args[0].asObject(rt);
-    std::string name = options.getProperty(rt, "name").asString(rt).utf8(rt);
-    std::string path = std::string(_base_path);
-    std::string location;
-    std::string encryption_key;
-
-    if (options.hasProperty(rt, "location")) {
-      location = options.getProperty(rt, "location").asString(rt).utf8(rt);
-    }
-
-    if (options.hasProperty(rt, "encryptionKey")) {
-      encryption_key =
-          options.getProperty(rt, "encryptionKey").asString(rt).utf8(rt);
-    }
-
-    if (!location.empty()) {
-      if (location == ":memory:") {
-        path = ":memory:";
-      } else if (location.rfind('/', 0) == 0) {
-        path = location;
-      } else {
-        path = path + "/" + location;
-      }
-    }
-
-    std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-      rt, path, name, path, _sqlite_vec_path, encryption_key);
-    dbs.emplace_back(db);
-    return jsi::Object::createFromHostObject(rt, db);
   });
 
   auto is_sqlcipher = HFN(=) {
@@ -744,17 +708,13 @@ void install(jsi::Runtime &rt,
         options.getProperty(rt, "authToken").asString(rt).utf8(rt);
 
 #ifdef OP_SQLITE_USE_LIBSQL
-    std::shared_ptr<DBHostObject> db =
-        std::make_shared<DBHostObject>(rt, url, auth_token);
+    auto db = std::make_shared<OPDB>(url, auth_token);
 #else
     std::string path = std::string(_base_path);
-    std::shared_ptr<DBHostObject> db =
-        std::make_shared<DBHostObject>(rt, url, auth_token, path);
+    auto db = std::make_shared<OPDB>(url, auth_token, path);
 #endif
 
-    dbs.emplace_back(db);
-
-    return jsi::Object::createFromHostObject(rt, db);
+    return create_db(rt, db);
   });
 
   auto open_sync = HFN(=) {
@@ -803,26 +763,23 @@ void install(jsi::Runtime &rt,
     }
 
   #ifdef OP_SQLITE_USE_LIBSQL
-    std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-      rt, name, path, url, auth_token, sync_interval, offline, encryption_key,
+    auto db = std::make_shared<OPDB>(
+      name, path, url, auth_token, sync_interval, offline, encryption_key,
       remote_encryption_key);
   #else
     (void)sync_interval;
     (void)offline;
 
-    std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-      rt, name, path, url, auth_token, remote_encryption_key);
+    auto db = std::make_shared<OPDB>(
+      name, path, url, auth_token, remote_encryption_key);
   #endif
 
-    dbs.emplace_back(db);
-
-    return jsi::Object::createFromHostObject(rt, db);
+    return create_db(rt, db);
   });
 #endif
 
   jsi::Object module = jsi::Object(rt);
-  module.setProperty(rt, "open", std::move(openNativeState));
-//  module.setProperty(rt, "openNativeState", std::move(openNativeState));
+  module.setProperty(rt, "open", std::move(open));
   module.setProperty(rt, "isSQLCipher", std::move(is_sqlcipher));
   module.setProperty(rt, "isLibsql", std::move(is_libsql));
   module.setProperty(rt, "isTurso", std::move(is_turso));

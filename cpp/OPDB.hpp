@@ -45,6 +45,20 @@ public:
   OPDB(const std::string &name, const std::string &base_path,
        const std::string &sqlite_vec_path,
        const std::string &encryption_key);
+#ifdef OP_SQLITE_USE_LIBSQL
+  OPDB(const std::string &url, const std::string &auth_token);
+  OPDB(const std::string &name, const std::string &path,
+    const std::string &url, const std::string &auth_token,
+    int sync_interval, bool offline,
+    const std::string &encryption_key,
+    const std::string &remote_encryption_key);
+#elif defined(OP_SQLITE_USE_TURSO)
+  OPDB(const std::string &url, const std::string &auth_token,
+    const std::string &base_path);
+  OPDB(const std::string &name, const std::string &path,
+    const std::string &url, const std::string &auth_token,
+    const std::string &remote_encryption_key);
+#endif
   ~OPDB() override;
 
   void auto_register_update_hook();

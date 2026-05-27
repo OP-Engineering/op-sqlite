@@ -47,7 +47,6 @@ add_library(
   ../cpp/SmartHostObject.cpp
   ../cpp/PreparedStatementHostObject.cpp
   ../cpp/DumbHostObject.cpp
-  ../cpp/DBHostObject.cpp
   cpp-adapter.cpp
 )
 

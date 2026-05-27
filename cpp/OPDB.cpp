@@ -10,6 +10,17 @@ namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 
+#ifdef OP_SQLITE_USE_TURSO
+namespace {
+
+std::string turso_remote_db_name(const std::string &url) {
+  return "turso_remote_" + std::to_string(std::hash<std::string>{}(url)) +
+         ".sqlite";
+}
+
+} // namespace
+#endif
+
 #if !defined(OP_SQLITE_USE_LIBSQL) && !defined(OP_SQLITE_USE_TURSO)
 namespace {
 
@@ -62,6 +73,43 @@ OPDB::OPDB(const std::string &name, const std::string &base_path,
   db = opsqlite_open(db_name, base_path, sqlite_vec_path);
 #endif
 }
+
+#ifdef OP_SQLITE_USE_LIBSQL
+OPDB::OPDB(const std::string &url, const std::string &auth_token)
+    : db_name(url) {
+  thread_pool = std::make_shared<ThreadPool>();
+  db = opsqlite_libsql_open_remote(url, auth_token);
+}
+
+OPDB::OPDB(const std::string &name, const std::string &path,
+           const std::string &url, const std::string &auth_token,
+           int sync_interval, bool offline,
+           const std::string &encryption_key,
+           const std::string &remote_encryption_key)
+    : base_path(path), db_name(name), delete_db_name(name) {
+  thread_pool = std::make_shared<ThreadPool>();
+  db = opsqlite_libsql_open_sync(name, path, url, auth_token, sync_interval,
+                                 offline, encryption_key,
+                                 remote_encryption_key);
+}
+#elif defined(OP_SQLITE_USE_TURSO)
+OPDB::OPDB(const std::string &url, const std::string &auth_token,
+           const std::string &base_path)
+    : base_path(base_path), db_name(url),
+      delete_db_name(turso_remote_db_name(url)) {
+  thread_pool = std::make_shared<ThreadPool>();
+  db = opsqlite_open_remote(url, auth_token, base_path);
+}
+
+OPDB::OPDB(const std::string &name, const std::string &path,
+           const std::string &url, const std::string &auth_token,
+           const std::string &remote_encryption_key)
+    : base_path(path), db_name(name), delete_db_name(name) {
+  thread_pool = std::make_shared<ThreadPool>();
+  db = opsqlite_open_sync(name, path, url, auth_token,
+                          remote_encryption_key);
+}
+#endif
 
 #ifdef OP_SQLITE_USE_LIBSQL
 void OPDB::flush_pending_reactive_queries(
