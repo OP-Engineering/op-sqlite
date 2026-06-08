@@ -90,6 +90,7 @@
 	},
 	"workspaces": [
 		"example",
+		"opsqlite-expo-sample",
 		"node"
 	],
 	"prettier": {
