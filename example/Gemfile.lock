@@ -95,6 +95,7 @@ GEM
     nanaimo (0.3.0)
     nap (1.1.0)
     netrc (0.11.0)
+    nkf (0.2.0)
     prism (1.6.0)
     public_suffix (4.0.7)
     rexml (3.4.4)
@@ -118,7 +119,6 @@ PLATFORMS
   arm-linux-gnu
   arm-linux-musl
   arm64-darwin
-  ruby
   x86-linux-gnu
   x86-linux-musl
   x86_64-darwin
@@ -133,6 +133,7 @@ DEPENDENCIES
   concurrent-ruby (< 1.3.4)
   logger
   mutex_m
+  nkf
   xcodeproj (< 1.26.0)
 
 CHECKSUMS
@@ -144,6 +145,7 @@ CHECKSUMS
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
   benchmark (0.5.0) sha256=465df122341aedcb81a2a24b4d3bd19b6c67c1530713fd533f3ff034e419236c
   bigdecimal (4.0.1) sha256=8b07d3d065a9f921c80ceaea7c9d4ae596697295b584c296fe599dd0ad01c4a7
+  bundler (4.0.11) sha256=5bcec0fb78302e48d02ee46f10ee6e6942be647ba5b44a6d1ddfda9a240ce785
   claide (1.1.0) sha256=6d3c5c089dde904d96aa30e73306d0d4bd444b1accb9b3125ce14a3c0183f82e
   cocoapods (1.15.2) sha256=f0f5153de8d028d133b96f423e04f37fb97a1da0d11dda581a9f46c0cba4090a
   cocoapods-core (1.15.2) sha256=322650d97fe1ad4c0831a09669764b888bd91c6d79d0f6bb07281a17667a2136
@@ -183,6 +185,7 @@ CHECKSUMS
   nanaimo (0.3.0) sha256=aaaedc60497070b864a7e220f7c4b4cad3a0daddda2c30055ba8dae306342376
   nap (1.1.0) sha256=949691660f9d041d75be611bb2a8d2fd559c467537deac241f4097d9b5eea576
   netrc (0.11.0) sha256=de1ce33da8c99ab1d97871726cba75151113f117146becbe45aa85cb3dabee3f
+  nkf (0.2.0)
   prism (1.6.0) sha256=bfc0281a81718c4872346bc858dc84abd3a60cae78336c65ad35c8fbff641c6b
   public_suffix (4.0.7) sha256=8be161e2421f8d45b0098c042c06486789731ea93dc3a896d30554ee38b573b8
   rexml (3.4.4) sha256=19e0a2c3425dfbf2d4fc1189747bdb2f849b6c5e74180401b15734bc97b5d142
@@ -196,4 +199,4 @@ RUBY VERSION
   ruby 3.3.0
 
 BUNDLED WITH
-  4.0.1
+  4.0.11

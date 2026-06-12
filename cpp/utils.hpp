@@ -39,7 +39,8 @@ struct JSIStringDataAppender {
 inline std::string jsi_string_to_utf8(jsi::Runtime &rt,
                                       const jsi::String &value) {
     std::string result;
-    value.getStringData(rt, JSIStringDataAppender{&result});
+    JSIStringDataAppender cb{&result};
+    value.getStringData(rt, cb);
     return result;
 }
 
