@@ -93,7 +93,7 @@ inline JSVariant to_variant(jsi::Runtime &rt, const jsi::Value &value) {
       return JSVariant(doubleVal);
     }
   } else if (value.isString()) {
-    std::string strVal = value.asString(rt).utf8(rt);
+    std::string strVal = jsi_string_to_utf8(rt, value.asString(rt));
     return JSVariant(strVal);
   } else if (value.isObject()) {
     auto obj = value.asObject(rt);
@@ -145,7 +145,8 @@ std::vector<std::string> to_string_vec(jsi::Runtime &rt, jsi::Value const &xs) {
   jsi::Array values = xs.asObject(rt).asArray(rt);
   std::vector<std::string> res;
   for (int ii = 0; ii < values.length(rt); ii++) {
-    std::string value = values.getValueAtIndex(rt, ii).asString(rt).utf8(rt);
+    std::string value =
+        jsi_string_to_utf8(rt, values.getValueAtIndex(rt, ii).asString(rt));
     res.emplace_back(value);
   }
   return res;
@@ -267,7 +268,7 @@ void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &tuples,
     }
 
     const std::string query =
-        tuple.getValueAtIndex(rt, 0).asString(rt).utf8(rt);
+      jsi_string_to_utf8(rt, tuple.getValueAtIndex(rt, 0).asString(rt));
     if (length == 1) {
       commands->push_back({query});
       continue;

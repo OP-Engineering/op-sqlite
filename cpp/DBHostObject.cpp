@@ -241,13 +241,18 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
     auto obj_params = args[0].asObject(rt);
 
     std::string secondary_db_name =
-        obj_params.getProperty(rt, "secondaryDbFileName").asString(rt).utf8(rt);
+      jsi_string_to_utf8(rt,
+                 obj_params.getProperty(rt, "secondaryDbFileName")
+                   .asString(rt));
     std::string alias =
-        obj_params.getProperty(rt, "alias").asString(rt).utf8(rt);
+      jsi_string_to_utf8(rt,
+                 obj_params.getProperty(rt, "alias").asString(rt));
 
     if (obj_params.hasProperty(rt, "location")) {
       std::string location =
-          obj_params.getProperty(rt, "location").asString(rt).utf8(rt);
+        jsi_string_to_utf8(rt,
+                 obj_params.getProperty(rt, "location")
+                   .asString(rt));
       secondary_db_path = secondary_db_path + location;
     }
 
@@ -278,7 +283,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
       throw std::runtime_error("[op-sqlite] alias must be a strings");
     }
 
-    std::string alias = args[0].asString(rt).utf8(rt);
+    std::string alias = jsi_string_to_utf8(rt, args[0].asString(rt));
     if (alias.find('\0') != std::string::npos) {
       throw std::runtime_error(
           "[op-sqlite] detach alias must not contain a zero byte");
@@ -367,7 +372,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
   });
 
   function_map["executeRaw"] = HFN(this) {
-    const std::string query = args[0].asString(rt).utf8(rt);
+    const std::string query = jsi_string_to_utf8(rt, args[0].asString(rt));
     const std::vector<JSVariant> params = count == 2 && args[1].isObject()
                                               ? to_variant_vec(rt, args[1])
                                               : std::vector<JSVariant>();
@@ -394,7 +399,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
   });
 
   function_map["executeSync"] = HFN(this) {
-    std::string query = args[0].asString(rt).utf8(rt);
+    std::string query = jsi_string_to_utf8(rt, args[0].asString(rt));
     std::vector<JSVariant> params;
 
     if (count == 2) {
@@ -410,7 +415,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
   });
 
   function_map["executeRawSync"] = HFN(this) {
-    const std::string query = args[0].asString(rt).utf8(rt);
+    const std::string query = jsi_string_to_utf8(rt, args[0].asString(rt));
     std::vector<JSVariant> params = count == 2 && args[1].isObject()
                                         ? to_variant_vec(rt, args[1])
                                         : std::vector<JSVariant>();
@@ -427,7 +432,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
   });
 
   function_map["execute"] = HFN(this) {
-    const std::string query = args[0].asString(rt).utf8(rt);
+    const std::string query = jsi_string_to_utf8(rt, args[0].asString(rt));
     std::vector<JSVariant> params = count == 2 && args[1].isObject()
                                         ? to_variant_vec(rt, args[1])
                                         : std::vector<JSVariant>();
@@ -449,7 +454,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
   });
 
   function_map["executeWithHostObjects"] = HFN(this) {
-    const std::string query = args[0].asString(rt).utf8(rt);
+    const std::string query = jsi_string_to_utf8(rt, args[0].asString(rt));
     std::vector<JSVariant> params = count == 2 && args[1].isObject()
                                         ? to_variant_vec(rt, args[1])
                                         : std::vector<JSVariant>();
@@ -550,7 +555,8 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
           "[op-sqlite][loadFile] Incorrect parameter count");
     }
 
-    const std::string sqlFileName = args[0].asString(rt).utf8(rt);
+    const std::string sqlFileName =
+      jsi_string_to_utf8(rt, args[0].asString(rt));
 
     return promisify(
         rt, thread_pool,
@@ -611,10 +617,10 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
   });
 
   function_map["loadExtension"] = HFN(this) {
-    auto path = args[0].asString(rt).utf8(rt);
+    auto path = jsi_string_to_utf8(rt, args[0].asString(rt));
     std::string entry_point;
     if (count > 1 && args[1].isString()) {
-      entry_point = args[1].asString(rt).utf8(rt);
+      entry_point = jsi_string_to_utf8(rt, args[1].asString(rt));
     }
 
     opsqlite_load_extension(db, path, entry_point);
@@ -625,7 +631,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
     auto query = args[0].asObject(rt);
 
     const std::string query_str =
-        query.getProperty(rt, "query").asString(rt).utf8(rt);
+      jsi_string_to_utf8(rt, query.getProperty(rt, "query").asString(rt));
     auto js_args = query.getProperty(rt, "arguments");
     auto js_discriminators =
         query.getProperty(rt, "fireOn").asObject(rt).asArray(rt);
@@ -643,7 +649,9 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
       auto js_discriminator =
           js_discriminators.getValueAtIndex(rt, i).asObject(rt);
       std::string table =
-          js_discriminator.getProperty(rt, "table").asString(rt).utf8(rt);
+          jsi_string_to_utf8(rt,
+                   js_discriminator.getProperty(rt, "table")
+                     .asString(rt));
       std::vector<int> ids;
       if (js_discriminator.hasProperty(rt, "ids")) {
         auto js_ids =
@@ -679,7 +687,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
 #endif
 
   function_map["prepareStatement"] = HFN(this) {
-    auto query = args[0].asString(rt).utf8(rt);
+    auto query = jsi_string_to_utf8(rt, args[0].asString(rt));
 #ifdef OP_SQLITE_USE_LIBSQL
     libsql_stmt_t statement = opsqlite_libsql_prepare_statement(db, query);
 #else
@@ -701,7 +709,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
             "[op-sqlite][open] database location must be a string");
       }
 
-      std::string last_path = args[0].asString(rt).utf8(rt);
+      std::string last_path = jsi_string_to_utf8(rt, args[0].asString(rt));
 
       if (last_path == ":memory:") {
         path = ":memory:";
