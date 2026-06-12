@@ -13,21 +13,23 @@ export function performanceTest() {
       col8 TEXT, col9 TEXT, col10 TEXT, col11 TEXT, col12 TEXT, col13 TEXT, col14 TEXT
     )`,
   );
-
   // Clear table
   db.executeSync('DELETE FROM perf_table');
+  const testRow =Array(14).fill('test') ;
 
-  // Insert a single row for querying
-  db.executeSync(
-    `INSERT INTO perf_table (
-      col1, col2, col3, col4, col5, col6, col7,
-      col8, col9, col10, col11, col12, col13, col14
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    Array(14).fill('test'),
-  );
-
-  // Performance test: query 100000 times
   let start = performance.now();
+
+  for (let i = 0; i < 1_000; i++) {
+    // Insert a single row for querying
+    db.executeSync(
+      `INSERT INTO perf_table (
+        col1, col2, col3, col4, col5, col6, col7,
+        col8, col9, col10, col11, col12, col13, col14
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      testRow,
+    );
+  }
+
   for (let i = 0; i < 100000; i++) {
     db.executeSync('SELECT * FROM perf_table WHERE id = 1');
   }
