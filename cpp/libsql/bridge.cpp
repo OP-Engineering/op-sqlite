@@ -744,9 +744,10 @@ opsqlite_libsql_execute_batch(DB const &db,
         throw std::runtime_error("No SQL commands provided");
     }
 
+    int affectedRows = 0;
+    opsqlite_libsql_execute(db, "BEGIN TRANSACTION;", nullptr);
+
     try {
-        int affectedRows = 0;
-        // opsqlite_libsql_execute(db, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
         for (int i = 0; i < commandCount; i++) {
             auto command = commands->at(i);
             // We do not provide a datastructure to receive query data because
@@ -755,16 +756,19 @@ opsqlite_libsql_execute_batch(DB const &db,
                 opsqlite_libsql_execute(db, command.sql, &command.params);
             affectedRows += result.affectedRows;
         }
-        // opsqlite_libsql_execute(db, "COMMIT", nullptr);
+
+        opsqlite_libsql_execute(db, "COMMIT;", nullptr);
+
         return BatchResult{
             .affectedRows = affectedRows,
             .commands = static_cast<int>(commandCount),
         };
-    } catch (std::exception &exc) {
-        // opsqlite_libsql_execute(db, "ROLLBACK", nullptr);
-        return BatchResult{
-            .message = exc.what(),
-        };
+    } catch (...) {
+        try {
+            opsqlite_libsql_execute(db, "ROLLBACK;", nullptr);
+        } catch (...) {
+        }
+        throw;
     }
 }
 

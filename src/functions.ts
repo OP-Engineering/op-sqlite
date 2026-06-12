@@ -1,7 +1,6 @@
 import { NativeModules, Platform } from "react-native";
 import type {
 	_InternalDB,
-	_PendingTransaction,
 	BatchQueryResult,
 	DB,
 	DBParams,
@@ -43,29 +42,23 @@ const proxy = global.__OPSQLiteProxy;
 export const OPSQLite = proxy as OPSQLiteProxy;
 
 function enhanceDB(db: _InternalDB, options: DBParams): DB {
-	const lock = {
-		queue: [] as _PendingTransaction[],
-		inProgress: false,
-	};
+	const hasNativeTransactionLock =
+		typeof db.acquireTransactionLock === "function" &&
+		typeof db.releaseTransactionLock === "function";
 
-	const startNextTransaction = () => {
-		if (lock.inProgress) {
-			// Transaction is already in process bail out
+	const hasNativeTransactionMethods =
+		typeof db.beginTransaction === "function" &&
+		typeof db.commitTransaction === "function" &&
+		typeof db.rollbackTransaction === "function";
+
+	let hasReactiveQueries = false;
+
+	const flushReactiveIfNeeded = async () => {
+		if (!hasReactiveQueries) {
 			return;
 		}
 
-		if (lock.queue.length) {
-			lock.inProgress = true;
-			const tx = lock.queue.shift();
-
-			if (!tx) {
-				throw new Error("Could not get a operation on database");
-			}
-
-			setImmediate(() => {
-				tx.start();
-			});
-		}
+		await db.flushPendingReactiveQueries();
 	};
 
 	// spreading the object does not work with HostObjects (db)
@@ -80,7 +73,12 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
 		rollbackHook: db.rollbackHook,
 		loadExtension: db.loadExtension,
 		getDbPath: db.getDbPath,
-		reactiveExecute: db.reactiveExecute,
+		reactiveExecute: (
+			params: Parameters<_InternalDB["reactiveExecute"]>[0],
+		) => {
+			hasReactiveQueries = true;
+			return db.reactiveExecute(params);
+		},
 		sync: db.sync,
 		setReservedBytes: db.setReservedBytes,
 		getReservedBytes: db.getReservedBytes,
@@ -93,41 +91,9 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
 		executeBatch: async (
 			commands: SQLBatchTuple[],
 		): Promise<BatchQueryResult> => {
-			async function run() {
-				try {
-					enhancedDb.executeSync("BEGIN TRANSACTION;");
-
-					const res = await db.executeBatch(commands as any[]);
-
-					enhancedDb.executeSync("COMMIT;");
-
-					await db.flushPendingReactiveQueries();
-
-					return res;
-				} catch (executionError) {
-					try {
-						enhancedDb.executeSync("ROLLBACK;");
-					} catch (rollbackError) {
-						throw rollbackError;
-					}
-
-					throw executionError;
-				} finally {
-					lock.inProgress = false;
-					startNextTransaction();
-				}
-			}
-
-			return await new Promise((resolve, reject) => {
-				const tx: _PendingTransaction = {
-					start: () => {
-						run().then(resolve).catch(reject);
-					},
-				};
-
-				lock.queue.push(tx);
-				startNextTransaction();
-			});
+			const res = await db.executeBatch(commands as any[]);
+			await flushReactiveIfNeeded();
+			return res;
 		},
 		executeWithHostObjects: async (
 			query: string,
@@ -228,51 +194,65 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
 		transaction: async (
 			fn: (tx: Transaction) => Promise<void>,
 		): Promise<void> => {
-			let isFinalized = false;
+			if (!hasNativeTransactionLock) {
+				throw new Error(
+					"Native transaction lock is unavailable. Make sure JS and native op-sqlite versions are in sync.",
+				);
+			}
 
-			const execute = async (query: string, params?: Scalar[]) => {
-				if (isFinalized) {
-					throw Error(
-						`OP-Sqlite Error: Database: ${
-							options.name || options.url
-						}. Cannot execute query on finalized transaction`,
-					);
-				}
-				return await enhancedDb.execute(query, params);
-			};
+			if (!hasNativeTransactionMethods) {
+				throw new Error(
+					"Native transaction methods are unavailable. Make sure JS and native op-sqlite versions are in sync.",
+				);
+			}
 
-			const commit = async (): Promise<QueryResult> => {
-				if (isFinalized) {
-					throw Error(
-						`OP-Sqlite Error: Database: ${
-							options.name || options.url
-						}. Cannot execute query on finalized transaction`,
-					);
-				}
-				const result = enhancedDb.executeSync("COMMIT;");
+			await db.acquireTransactionLock!();
 
-				await db.flushPendingReactiveQueries();
+			try {
+				let isFinalized = false;
 
-				isFinalized = true;
-				return result;
-			};
+				const execute = async (query: string, params?: Scalar[]) => {
+					if (isFinalized) {
+						throw Error(
+							`OP-Sqlite Error: Database: ${
+								options.name || options.url
+							}. Cannot execute query on finalized transaction`,
+						);
+					}
+					return await enhancedDb.execute(query, params);
+				};
 
-			const rollback = (): QueryResult => {
-				if (isFinalized) {
-					throw Error(
-						`OP-Sqlite Error: Database: ${
-							options.name || options.url
-						}. Cannot execute query on finalized transaction`,
-					);
-				}
-				const result = enhancedDb.executeSync("ROLLBACK;");
-				isFinalized = true;
-				return result;
-			};
+				const commit = async (): Promise<QueryResult> => {
+					if (isFinalized) {
+						throw Error(
+							`OP-Sqlite Error: Database: ${
+								options.name || options.url
+							}. Cannot execute query on finalized transaction`,
+						);
+					}
+					const result = db.commitTransaction!();
 
-			async function run() {
+					await flushReactiveIfNeeded();
+
+					isFinalized = true;
+					return result;
+				};
+
+				const rollback = (): QueryResult => {
+					if (isFinalized) {
+						throw Error(
+							`OP-Sqlite Error: Database: ${
+								options.name || options.url
+							}. Cannot execute query on finalized transaction`,
+						);
+					}
+					const result = db.rollbackTransaction!();
+					isFinalized = true;
+					return result;
+				};
+
 				try {
-					enhancedDb.executeSync("BEGIN TRANSACTION;");
+					db.beginTransaction!();
 
 					await fn({
 						commit,
@@ -281,7 +261,7 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
 					});
 
 					if (!isFinalized) {
-						commit();
+						await commit();
 					}
 				} catch (executionError) {
 					if (!isFinalized) {
@@ -293,23 +273,10 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
 					}
 
 					throw executionError;
-				} finally {
-					lock.inProgress = false;
-					isFinalized = false;
-					startNextTransaction();
 				}
+			} finally {
+				db.releaseTransactionLock!();
 			}
-
-			return await new Promise((resolve, reject) => {
-				const tx: _PendingTransaction = {
-					start: () => {
-						run().then(resolve).catch(reject);
-					},
-				};
-
-				lock.queue.push(tx);
-				startNextTransaction();
-			});
 		},
 	};
 

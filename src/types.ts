@@ -111,6 +111,11 @@ export type _InternalDB = {
 	}) => void;
 	detach: (alias: string) => void;
 	transaction: (fn: (tx: Transaction) => Promise<void>) => Promise<void>;
+	acquireTransactionLock?: () => Promise<void>;
+	releaseTransactionLock?: () => void;
+	beginTransaction?: () => QueryResult;
+	commitTransaction?: () => QueryResult;
+	rollbackTransaction?: () => QueryResult;
 	executeSync: (query: string, params?: Scalar[]) => QueryResult;
 	execute: (query: string, params?: Scalar[]) => Promise<QueryResult>;
 	executeWithHostObjects: (

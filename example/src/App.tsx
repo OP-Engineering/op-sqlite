@@ -36,10 +36,10 @@ export default function App() {
 				console.log("OPSQLITE_TEST_RESULT:FAIL");
 			}
 
-			setTimeout(() => {
+			setTimeout(async () => {
 			  try {
 			    global?.gc?.();
-			    let perfRes = performanceTest();
+			    let perfRes = await performanceTest();
 			    setPerfResult(perfRes);
 			  } catch (e) {
 			    // intentionally left blank

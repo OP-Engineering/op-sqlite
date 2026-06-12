@@ -880,15 +880,31 @@ opsqlite_execute_batch(sqlite3 *db,
   }
 
   int affectedRows = 0;
-  // opsqlite_execute(db, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
-  for (int i = 0; i < commandCount; i++) {
-    const auto &command = commands->at(i);
-    // We do not provide a datastructure to receive query data because we
-    // don't need/want to handle this results in a batch execution
-    // There is also no need to commit/catch this transaction, this is done
-    // in the JS code
-    auto result = opsqlite_execute(db, command.sql, &command.params);
-    affectedRows += result.affectedRows;
+  const bool should_manage_transaction = sqlite3_get_autocommit(db) != 0;
+  if (should_manage_transaction) {
+    opsqlite_execute(db, "BEGIN TRANSACTION;", nullptr);
+  }
+
+  try {
+    for (int i = 0; i < commandCount; i++) {
+      const auto &command = commands->at(i);
+      // We do not provide a datastructure to receive query data because we
+      // don't need/want to handle this results in a batch execution
+      auto result = opsqlite_execute(db, command.sql, &command.params);
+      affectedRows += result.affectedRows;
+    }
+
+    if (should_manage_transaction) {
+      opsqlite_execute(db, "COMMIT;", nullptr);
+    }
+  } catch (...) {
+    if (should_manage_transaction) {
+      try {
+        opsqlite_execute(db, "ROLLBACK;", nullptr);
+      } catch (...) {
+      }
+    }
+    throw;
   }
 
   return BatchResult{

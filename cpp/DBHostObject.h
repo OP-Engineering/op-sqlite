@@ -3,6 +3,7 @@
 #include "OPThreadPool.h"
 #include "types.hpp"
 #include <ReactCommon/CallInvoker.h>
+#include <deque>
 #include <jsi/jsi.h>
 #include <set>
 #ifdef OP_SQLITE_USE_LIBSQL
@@ -39,6 +40,11 @@ struct ReactiveQuery {
 #endif
   std::vector<TableRowDiscriminator> discriminators;
   std::shared_ptr<jsi::Value> callback;
+};
+
+struct PendingTransactionLockWaiter {
+  std::shared_ptr<jsi::Value> resolve;
+  std::shared_ptr<jsi::Value> reject;
 };
 
 class JSI_EXPORT DBHostObject : public jsi::HostObject {
@@ -84,6 +90,9 @@ private:
   void auto_register_update_hook();
   void create_jsi_functions(jsi::Runtime &rt);
   void flush_pending_reactive_queries(const std::shared_ptr<jsi::Value> &resolve);
+  void resolve_next_transaction_lock_waiter(jsi::Runtime &rt);
+  void reject_all_transaction_lock_waiters(jsi::Runtime &rt,
+                                           const std::string &message);
 
   std::unordered_map<std::string, jsi::Value> function_map;
   std::string base_path;
@@ -95,6 +104,8 @@ private:
   std::shared_ptr<jsi::Value> rollback_hook_callback;
   std::vector<std::shared_ptr<ReactiveQuery>> reactive_queries;
   std::vector<PendingReactiveInvocation> pending_reactive_invocations;
+  std::deque<PendingTransactionLockWaiter> transaction_lock_waiters;
+  bool transaction_lock_in_progress = false;
   bool is_update_hook_registered = false;
   bool invalidated = false;
 #ifdef OP_SQLITE_USE_LIBSQL
