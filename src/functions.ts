@@ -1,286 +1,244 @@
 import { NativeModules, Platform } from "react-native";
 import type {
-	_InternalDB,
-	BatchQueryResult,
-	DB,
-	DBParams,
-	OPSQLiteProxy,
-	QueryResult,
-	Scalar,
-	SQLBatchTuple,
-	Transaction,
+  _InternalDB,
+  BatchQueryResult,
+  DB,
+  DBParams,
+  OPSQLiteProxy,
+  QueryResult,
+  Scalar,
+  SQLBatchTuple,
+  Transaction,
 } from "./types";
 
 declare global {
-	var __OPSQLiteProxy: object | undefined;
+  var __OPSQLiteProxy: object | undefined;
 }
 
 if (global.__OPSQLiteProxy == null) {
-	if (NativeModules.OPSQLite == null) {
-		throw new Error(
-			"Base module not found. Did you do a pod install/clear the gradle cache?",
-		);
-	}
+  if (NativeModules.OPSQLite == null) {
+    throw new Error("Base module not found. Did you do a pod install/clear the gradle cache?");
+  }
 
-	// Call the synchronous blocking install() function
-	const installed = NativeModules.OPSQLite.install();
-	if (!installed) {
-		throw new Error(
-			`Failed to install op-sqlite: The native OPSQLite Module could not be installed! Looks like something went wrong when installing JSI bindings, check the native logs for more info`,
-		);
-	}
+  // Call the synchronous blocking install() function
+  const installed = NativeModules.OPSQLite.install();
+  if (!installed) {
+    throw new Error(
+      `Failed to install op-sqlite: The native OPSQLite Module could not be installed! Looks like something went wrong when installing JSI bindings, check the native logs for more info`,
+    );
+  }
 
-	// Check again if the constructor now exists. If not, throw an error.
-	if (global.__OPSQLiteProxy == null) {
-		throw new Error(
-			"OPSqlite native object is not available. Something is wrong. Check the native logs for more information.",
-		);
-	}
+  // Check again if the constructor now exists. If not, throw an error.
+  if (global.__OPSQLiteProxy == null) {
+    throw new Error(
+      "OPSqlite native object is not available. Something is wrong. Check the native logs for more information.",
+    );
+  }
 }
 
 const proxy = global.__OPSQLiteProxy;
 export const OPSQLite = proxy as OPSQLiteProxy;
 
 function enhanceDB(db: _InternalDB, options: DBParams): DB {
-	const hasNativeTransactionLock =
-		typeof db.acquireTransactionLock === "function" &&
-		typeof db.releaseTransactionLock === "function";
+  let hasReactiveQueries = false;
 
-	const hasNativeTransactionMethods =
-		typeof db.beginTransaction === "function" &&
-		typeof db.commitTransaction === "function" &&
-		typeof db.rollbackTransaction === "function";
+  const flushReactiveIfNeeded = async () => {
+    if (!hasReactiveQueries) {
+      return;
+    }
 
-	let hasReactiveQueries = false;
+    await db.flushPendingReactiveQueries();
+  };
 
-	const flushReactiveIfNeeded = async () => {
-		if (!hasReactiveQueries) {
-			return;
-		}
+  // spreading the object does not work with HostObjects (db)
+  // We need to manually assign the fields
+  const enhancedDb = {
+    delete: db.delete,
+    attach: db.attach,
+    detach: db.detach,
+    loadFile: db.loadFile,
+    updateHook: db.updateHook,
+    commitHook: db.commitHook,
+    rollbackHook: db.rollbackHook,
+    loadExtension: db.loadExtension,
+    getDbPath: db.getDbPath,
+    reactiveExecute: (params: Parameters<_InternalDB["reactiveExecute"]>[0]) => {
+      hasReactiveQueries = true;
+      return db.reactiveExecute(params);
+    },
+    sync: db.sync,
+    setReservedBytes: db.setReservedBytes,
+    getReservedBytes: db.getReservedBytes,
+    close: db.close,
+    interrupt: db.interrupt,
+    closeAsync: async () => {
+      db.close();
+    },
+    flushPendingReactiveQueries: db.flushPendingReactiveQueries,
+    executeBatch: async (commands: SQLBatchTuple[]): Promise<BatchQueryResult> => {
+      const res = await db.executeBatch(commands as any[]);
+      await flushReactiveIfNeeded();
+      return res;
+    },
+    executeWithHostObjects: async (query: string, params?: Scalar[]): Promise<QueryResult> => {
+      return params
+        ? await db.executeWithHostObjects(query, params)
+        : await db.executeWithHostObjects(query);
+    },
+    executeRaw: async (query: string, params?: Scalar[]) => {
+      return db.executeRaw(query, params as Scalar[]);
+    },
+    executeRawSync: (query: string, params?: Scalar[]) => {
+      return db.executeRawSync(query, params as Scalar[]);
+    },
+    // Wrapper for executeRaw, drizzleORM uses this function
+    // at some point I changed the API but they did not pin their dependency to a specific version
+    // so re-inserting this so it starts working again
+    executeRawAsync: async (query: string, params?: Scalar[]) => {
+      return db.executeRaw(query, params as Scalar[]);
+    },
+    executeSync: (query: string, params?: Scalar[]): QueryResult => {
+      let res = params ? db.executeSync(query, params) : db.executeSync(query);
 
-		await db.flushPendingReactiveQueries();
-	};
+      if (!res.rows) {
+        const rows: Record<string, Scalar>[] = [];
+        for (let i = 0; i < (res.rawRows?.length ?? 0); i++) {
+          const row: Record<string, Scalar> = {};
+          const rawRow = res.rawRows![i]!;
+          for (let j = 0; j < res.columnNames!.length; j++) {
+            const columnName = res.columnNames![j]!;
+            const value = rawRow[j]!;
 
-	// spreading the object does not work with HostObjects (db)
-	// We need to manually assign the fields
-	const enhancedDb = {
-		delete: db.delete,
-		attach: db.attach,
-		detach: db.detach,
-		loadFile: db.loadFile,
-		updateHook: db.updateHook,
-		commitHook: db.commitHook,
-		rollbackHook: db.rollbackHook,
-		loadExtension: db.loadExtension,
-		getDbPath: db.getDbPath,
-		reactiveExecute: (
-			params: Parameters<_InternalDB["reactiveExecute"]>[0],
-		) => {
-			hasReactiveQueries = true;
-			return db.reactiveExecute(params);
-		},
-		sync: db.sync,
-		setReservedBytes: db.setReservedBytes,
-		getReservedBytes: db.getReservedBytes,
-		close: db.close,
-		interrupt: db.interrupt,
-		closeAsync: async () => {
-			db.close();
-		},
-		flushPendingReactiveQueries: db.flushPendingReactiveQueries,
-		executeBatch: async (
-			commands: SQLBatchTuple[],
-		): Promise<BatchQueryResult> => {
-			const res = await db.executeBatch(commands as any[]);
-			await flushReactiveIfNeeded();
-			return res;
-		},
-		executeWithHostObjects: async (
-			query: string,
-			params?: Scalar[],
-		): Promise<QueryResult> => {
-			return params
-				? await db.executeWithHostObjects(query, params)
-				: await db.executeWithHostObjects(query);
-		},
-		executeRaw: async (query: string, params?: Scalar[]) => {
-			return db.executeRaw(query, params as Scalar[]);
-		},
-		executeRawSync: (query: string, params?: Scalar[]) => {
-			return db.executeRawSync(query, params as Scalar[]);
-		},
-		// Wrapper for executeRaw, drizzleORM uses this function
-		// at some point I changed the API but they did not pin their dependency to a specific version
-		// so re-inserting this so it starts working again
-		executeRawAsync: async (query: string, params?: Scalar[]) => {
-			return db.executeRaw(query, params as Scalar[]);
-		},
-		executeSync: (query: string, params?: Scalar[]): QueryResult => {
-			let res = params ? db.executeSync(query, params) : db.executeSync(query);
+            row[columnName] = value;
+          }
+          rows.push(row);
+        }
 
-			if (!res.rows) {
-				const rows: Record<string, Scalar>[] = [];
-				for (let i = 0; i < (res.rawRows?.length ?? 0); i++) {
-					const row: Record<string, Scalar> = {};
-					const rawRow = res.rawRows![i]!;
-					for (let j = 0; j < res.columnNames!.length; j++) {
-						const columnName = res.columnNames![j]!;
-						const value = rawRow[j]!;
+        delete res.rawRows;
 
-						row[columnName] = value;
-					}
-					rows.push(row);
-				}
+        res = {
+          ...res,
+          rows,
+        };
+      }
 
-				delete res.rawRows;
+      return res;
+    },
+    executeAsync: async (query: string, params?: Scalar[] | undefined): Promise<QueryResult> => {
+      return db.execute(query, params);
+    },
+    execute: async (query: string, params?: Scalar[] | undefined): Promise<QueryResult> => {
+      let res = params ? await db.execute(query, params) : await db.execute(query);
 
-				res = {
-					...res,
-					rows,
-				};
-			}
+      if (!res.rows) {
+        const rows: Record<string, Scalar>[] = [];
+        for (let i = 0; i < (res.rawRows?.length ?? 0); i++) {
+          const row: Record<string, Scalar> = {};
+          const rawRow = res.rawRows![i]!;
+          for (let j = 0; j < res.columnNames!.length; j++) {
+            const columnName = res.columnNames![j]!;
+            const value = rawRow[j]!;
 
-			return res;
-		},
-		executeAsync: async (
-			query: string,
-			params?: Scalar[] | undefined,
-		): Promise<QueryResult> => {
-			return db.execute(query, params);
-		},
-		execute: async (
-			query: string,
-			params?: Scalar[] | undefined,
-		): Promise<QueryResult> => {
-			let res = params ? await db.execute(query, params) : await db.execute(query);
+            row[columnName] = value;
+          }
+          rows.push(row);
+        }
 
-			if (!res.rows) {
-				const rows: Record<string, Scalar>[] = [];
-				for (let i = 0; i < (res.rawRows?.length ?? 0); i++) {
-					const row: Record<string, Scalar> = {};
-					const rawRow = res.rawRows![i]!;
-					for (let j = 0; j < res.columnNames!.length; j++) {
-						const columnName = res.columnNames![j]!;
-						const value = rawRow[j]!;
+        delete res.rawRows;
 
-						row[columnName] = value;
-					}
-					rows.push(row);
-				}
+        res = {
+          ...res,
+          rows,
+        };
+      }
 
-				delete res.rawRows;
+      return res;
+    },
+    prepareStatement: (query: string) => {
+      const stmt = db.prepareStatement(query);
 
-				res = {
-					...res,
-					rows,
-				};
-			}
+      return {
+        bindSync: (params: Scalar[]) => {
+          stmt.bindSync(params);
+        },
+        bind: async (params: Scalar[]) => {
+          await stmt.bind(params);
+        },
+        execute: stmt.execute,
+      };
+    },
+    transaction: async (fn: (tx: Transaction) => Promise<void>): Promise<void> => {
+      await db.acquireTransactionLock();
 
-			return res;
-		},
-		prepareStatement: (query: string) => {
-			const stmt = db.prepareStatement(query);
+      try {
+        let isFinalized = false;
 
-			return {
-				bindSync: (params: Scalar[]) => {
-					stmt.bindSync(params);
-				},
-				bind: async (params: Scalar[]) => {
-					await stmt.bind(params);
-				},
-				execute: stmt.execute,
-			};
-		},
-		transaction: async (
-			fn: (tx: Transaction) => Promise<void>,
-		): Promise<void> => {
-			if (!hasNativeTransactionLock) {
-				throw new Error(
-					"Native transaction lock is unavailable. Make sure JS and native op-sqlite versions are in sync.",
-				);
-			}
+        const execute = async (query: string, params?: Scalar[]) => {
+          if (isFinalized) {
+            throw Error(
+              `OP-Sqlite Error: Database: ${
+                options.name || options.url
+              }. Cannot execute query on finalized transaction`,
+            );
+          }
+          return await enhancedDb.execute(query, params);
+        };
 
-			if (!hasNativeTransactionMethods) {
-				throw new Error(
-					"Native transaction methods are unavailable. Make sure JS and native op-sqlite versions are in sync.",
-				);
-			}
+        const commit = async (): Promise<QueryResult> => {
+          if (isFinalized) {
+            throw Error(
+              `OP-Sqlite Error: Database: ${
+                options.name || options.url
+              }. Cannot execute query on finalized transaction`,
+            );
+          }
+          const result = db.executeSync("COMMIT;");
 
-			await db.acquireTransactionLock!();
+          await flushReactiveIfNeeded();
 
-			try {
-				let isFinalized = false;
+          isFinalized = true;
+          return result;
+        };
 
-				const execute = async (query: string, params?: Scalar[]) => {
-					if (isFinalized) {
-						throw Error(
-							`OP-Sqlite Error: Database: ${
-								options.name || options.url
-							}. Cannot execute query on finalized transaction`,
-						);
-					}
-					return await enhancedDb.execute(query, params);
-				};
+        const rollback = (): QueryResult => {
+          if (isFinalized) {
+            throw Error(
+              `OP-Sqlite Error: Database: ${
+                options.name || options.url
+              }. Cannot execute query on finalized transaction`,
+            );
+          }
+          const result = db.executeSync("ROLLBACK");
+          isFinalized = true;
+          return result;
+        };
 
-				const commit = async (): Promise<QueryResult> => {
-					if (isFinalized) {
-						throw Error(
-							`OP-Sqlite Error: Database: ${
-								options.name || options.url
-							}. Cannot execute query on finalized transaction`,
-						);
-					}
-					const result = db.commitTransaction!();
+        try {
+          db.executeSync("BEGIN TRANSACTION");
 
-					await flushReactiveIfNeeded();
+          await fn({
+            commit,
+            execute,
+            rollback,
+          });
 
-					isFinalized = true;
-					return result;
-				};
+          if (!isFinalized) {
+            await commit();
+          }
+        } catch (executionError) {
+          if (!isFinalized) {
+            rollback();
+          }
 
-				const rollback = (): QueryResult => {
-					if (isFinalized) {
-						throw Error(
-							`OP-Sqlite Error: Database: ${
-								options.name || options.url
-							}. Cannot execute query on finalized transaction`,
-						);
-					}
-					const result = db.rollbackTransaction!();
-					isFinalized = true;
-					return result;
-				};
+          throw executionError;
+        }
+      } finally {
+        db.releaseTransactionLock();
+      }
+    },
+  };
 
-				try {
-					db.beginTransaction!();
-
-					await fn({
-						commit,
-						execute,
-						rollback,
-					});
-
-					if (!isFinalized) {
-						await commit();
-					}
-				} catch (executionError) {
-					if (!isFinalized) {
-						try {
-							rollback();
-						} catch (rollbackError) {
-							throw rollbackError;
-						}
-					}
-
-					throw executionError;
-				}
-			} finally {
-				db.releaseTransactionLock!();
-			}
-		},
-	};
-
-	return enhancedDb;
+  return enhancedDb;
 }
 
 /**
@@ -288,25 +246,23 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
  * Requires libsql or turso backend to be enabled in package.json.
  */
 export const openSync = (params: {
-	url: string;
-	authToken: string;
-	name: string;
-	location?: string;
-	libsqlSyncInterval?: number;
-	libsqlOffline?: boolean;
-	encryptionKey?: string;
-	remoteEncryptionKey?: string;
+  url: string;
+  authToken: string;
+  name: string;
+  location?: string;
+  libsqlSyncInterval?: number;
+  libsqlOffline?: boolean;
+  encryptionKey?: string;
+  remoteEncryptionKey?: string;
 }): DB => {
-	if (!isLibsql() && !isTurso()) {
-		throw new Error(
-			"This function is only available for libsql or turso backends",
-		);
-	}
+  if (!isLibsql() && !isTurso()) {
+    throw new Error("This function is only available for libsql or turso backends");
+  }
 
-	const db = OPSQLite.openSync(params);
-	const enhancedDb = enhanceDB(db, params);
+  const db = OPSQLite.openSync(params);
+  const enhancedDb = enhanceDB(db, params);
 
-	return enhancedDb;
+  return enhancedDb;
 };
 
 /**
@@ -314,38 +270,32 @@ export const openSync = (params: {
  * Requires libsql or turso backend to be enabled in package.json.
  */
 export const openRemote = (params: { url: string; authToken: string }): DB => {
-	if (!isLibsql() && !isTurso()) {
-		throw new Error(
-			"This function is only available for libsql or turso backends",
-		);
-	}
+  if (!isLibsql() && !isTurso()) {
+    throw new Error("This function is only available for libsql or turso backends");
+  }
 
-	const db = OPSQLite.openRemote(params);
-	const enhancedDb = enhanceDB(db, params);
+  const db = OPSQLite.openRemote(params);
+  const enhancedDb = enhanceDB(db, params);
 
-	return enhancedDb;
+  return enhancedDb;
 };
 
 /**
  * Open a connection to a local sqlite or sqlcipher database
  * If you want libsql remote or sync connections, use openSync or openRemote
  */
-export const open = (params: {
-	name: string;
-	location?: string;
-	encryptionKey?: string;
-}): DB => {
-	if (params.location?.startsWith("file://")) {
-		console.warn(
-			"[op-sqlite] You are passing a path with 'file://' prefix, it's automatically removed",
-		);
-		params.location = params.location.substring(7);
-	}
+export const open = (params: { name: string; location?: string; encryptionKey?: string }): DB => {
+  if (params.location?.startsWith("file://")) {
+    console.warn(
+      "[op-sqlite] You are passing a path with 'file://' prefix, it's automatically removed",
+    );
+    params.location = params.location.substring(7);
+  }
 
-	const db = OPSQLite.open(params);
-	const enhancedDb = enhanceDB(db, params);
+  const db = OPSQLite.open(params);
+  const enhancedDb = enhanceDB(db, params);
 
-	return enhancedDb;
+  return enhancedDb;
 };
 
 /**
@@ -353,11 +303,11 @@ export const open = (params: {
  * Useful for cross-platform code that also targets web where openAsync() is required.
  */
 export const openAsync = async (params: {
-	name: string;
-	location?: string;
-	encryptionKey?: string;
+  name: string;
+  location?: string;
+  encryptionKey?: string;
 }): Promise<DB> => {
-	return open(params);
+  return open(params);
 };
 
 /**
@@ -368,11 +318,11 @@ export const openAsync = async (params: {
  * @returns promise, rejects if failed to move the database, resolves if the operation was successful
  */
 export const moveAssetsDatabase = async (args: {
-	filename: string;
-	path?: string;
-	overwrite?: boolean;
+  filename: string;
+  path?: string;
+  overwrite?: boolean;
 }): Promise<boolean> => {
-	return NativeModules.OPSQLite.moveAssetsDatabase(args);
+  return NativeModules.OPSQLite.moveAssetsDatabase(args);
 };
 
 /**
@@ -384,27 +334,27 @@ export const moveAssetsDatabase = async (args: {
  * @returns
  */
 export const getDylibPath = (bundle: string, name: string): string => {
-	return NativeModules.OPSQLite.getDylibPath(bundle, name);
+  return NativeModules.OPSQLite.getDylibPath(bundle, name);
 };
 
 export const isSQLCipher = (): boolean => {
-	return OPSQLite.isSQLCipher();
+  return OPSQLite.isSQLCipher();
 };
 
 export const isLibsql = (): boolean => {
-	return OPSQLite.isLibsql();
+  return OPSQLite.isLibsql();
 };
 
 export const isTurso = (): boolean => {
-	return OPSQLite.isTurso();
+  return OPSQLite.isTurso();
 };
 
 export const isIOSEmbedded = (): boolean => {
-	if (Platform.OS !== "ios") {
-		return false;
-	}
+  if (Platform.OS !== "ios") {
+    return false;
+  }
 
-	return OPSQLite.isIOSEmbedded();
+  return OPSQLite.isIOSEmbedded();
 };
 
 /**

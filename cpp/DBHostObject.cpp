@@ -418,32 +418,6 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
     return create_js_rows(rt, status);
   });
 
-  function_map["beginTransaction"] = HFN(this) {
-#ifdef OP_SQLITE_USE_LIBSQL
-    auto status = opsqlite_libsql_execute(db, "BEGIN TRANSACTION;", nullptr);
-#else
-    auto status = opsqlite_execute(db, "BEGIN TRANSACTION;", nullptr);
-#endif
-    return create_js_rows(rt, status);
-  });
-
-  function_map["commitTransaction"] = HFN(this) {
-#ifdef OP_SQLITE_USE_LIBSQL
-    auto status = opsqlite_libsql_execute(db, "COMMIT;", nullptr);
-#else
-    auto status = opsqlite_execute(db, "COMMIT;", nullptr);
-#endif
-    return create_js_rows(rt, status);
-  });
-
-  function_map["rollbackTransaction"] = HFN(this) {
-#ifdef OP_SQLITE_USE_LIBSQL
-    auto status = opsqlite_libsql_execute(db, "ROLLBACK;", nullptr);
-#else
-    auto status = opsqlite_execute(db, "ROLLBACK;", nullptr);
-#endif
-    return create_js_rows(rt, status);
-  });
 
   function_map["executeRawSync"] = HFN(this) {
     const std::string query = jsi_string_to_utf8(rt, args[0].asString(rt));
@@ -565,11 +539,11 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
       auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
       auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-      if (!transaction_lock_in_progress) {
+      if (transaction_lock_in_progress) {
+        transaction_lock_waiters.push_back({resolve, reject});
+      } else {
         transaction_lock_in_progress = true;
         resolve->asObject(rt).asFunction(rt).call(rt, {});
-      } else {
-        transaction_lock_waiters.push_back({resolve, reject});
       }
 
       return {};

@@ -16,6 +16,7 @@ export async function performanceTest() {
   db.executeSync("DELETE FROM perf_table");
   const testRow = Array(14).fill("test");
 
+  console.log("Starting performance test");
   let start = performance.now();
 
   for (let i = 0; i < 200; i++) {
@@ -76,11 +77,13 @@ export async function performanceTest() {
     await Promise.all([firstPromise, secondPromise, thirdPromise]);
   }
 
+  console.log("Finished transactions");
+
   for (let i = 0; i < 100000; i++) {
-    await db.execute("SELECT * FROM perf_table WHERE id = 1");
+    db.executeSync("SELECT * FROM perf_table WHERE id = 1");
   }
   const end = performance.now();
-  // console.log(`Queried 100000 times in ${end - start} ms`);
+  console.log(`Performance test finished 🟢 in ${end - start} ms`);
 
   // await db.close();
   return end - start;
