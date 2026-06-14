@@ -19,31 +19,6 @@ namespace opsqlite {
 namespace jsi = facebook::jsi;
 namespace react = facebook::react;
 
-struct JSIStringDataAppender {
-    std::string *out;
-
-    void operator()(bool ascii, const void *data, size_t num) const {
-        if (ascii) {
-            out->append(static_cast<const char *>(data), num);
-            return;
-        }
-
-        const auto *u16 = static_cast<const char16_t *>(data);
-        out->reserve(out->size() + num);
-        for (size_t i = 0; i < num; i++) {
-            out->push_back(static_cast<char>(u16[i]));
-        }
-    }
-};
-
-inline std::string jsi_string_to_utf8(jsi::Runtime &rt,
-                                      const jsi::String &value) {
-    std::string result;
-    JSIStringDataAppender cb{&result};
-    value.getStringData(rt, cb);
-    return result;
-}
-
 jsi::Value to_jsi(jsi::Runtime &rt, const JSVariant &value);
 
 JSVariant to_variant(jsi::Runtime &rt, jsi::Value const &value);
