@@ -300,7 +300,7 @@ describe("Queries tests", () => {
     ]);
   });
 
-  it("Preserves non-ASCII strings when binding params (issue #417)", async () => {
+  it("Preserves non-ASCII strings when binding params", async () => {
     const value = JSON.stringify({
       bullet: "Kimball Wildlife Refuge • Burlingame State Park",
       smartQuotes: "John “Jack” Doe",
@@ -314,9 +314,13 @@ describe("Queries tests", () => {
     expect(result.rows[0]!.value).toEqual(value);
 
     const hexResult = await db.execute("SELECT hex(value) AS valueHex FROM UnicodeRepro;");
-    expect(hexResult.rows[0]!.valueHex.includes("E280A2")).toEqual(true);
-    expect(hexResult.rows[0]!.valueHex.includes("E2809C")).toEqual(true);
-    expect(hexResult.rows[0]!.valueHex.includes("E2809D")).toEqual(true);
+    const valueHex = hexResult.rows[0]?.valueHex;
+    if (typeof valueHex !== "string") {
+      throw new Error("Expected hex(value) to return a string");
+    }
+    expect(valueHex.includes("E280A2")).toEqual(true);
+    expect(valueHex.includes("E2809C")).toEqual(true);
+    expect(valueHex.includes("E2809D")).toEqual(true);
   });
 
   it("Query with sqlite functions", async () => {
