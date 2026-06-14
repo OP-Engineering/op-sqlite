@@ -56,22 +56,18 @@ void install(jsi::Runtime &rt,
 
   auto open = HFN0 {
     jsi::Object options = args[0].asObject(rt);
-    std::string name =
-        jsi_string_to_utf8(rt, options.getProperty(rt, "name").asString(rt));
+    std::string name = options.getProperty(rt, "name").asString(rt).utf8(rt);
     std::string path = std::string(_base_path);
     std::string location;
     std::string encryption_key;
 
     if (options.hasProperty(rt, "location")) {
-      location = jsi_string_to_utf8(
-          rt, options.getProperty(rt, "location").asString(rt));
+      location = options.getProperty(rt, "location").asString(rt).utf8(rt);
     }
 
     if (options.hasProperty(rt, "encryptionKey")) {
       encryption_key =
-          jsi_string_to_utf8(rt,
-                             options.getProperty(rt, "encryptionKey")
-                                 .asString(rt));
+          options.getProperty(rt, "encryptionKey").asString(rt).utf8(rt);
     }
 
     if (!location.empty()) {
@@ -126,12 +122,10 @@ void install(jsi::Runtime &rt,
   auto open_remote = HFN(=) {
     jsi::Object options = args[0].asObject(rt);
 
-    std::string url =
-      jsi_string_to_utf8(rt, options.getProperty(rt, "url").asString(rt));
+    std::string url = options.getProperty(rt, "url").asString(rt).utf8(rt);
 
     std::string auth_token =
-      jsi_string_to_utf8(rt,
-                 options.getProperty(rt, "authToken").asString(rt));
+      options.getProperty(rt, "authToken").asString(rt).utf8(rt);
 
 #ifdef OP_SQLITE_USE_LIBSQL
     std::shared_ptr<DBHostObject> db =
@@ -149,14 +143,11 @@ void install(jsi::Runtime &rt,
 
   auto open_sync = HFN(=) {
     jsi::Object options = args[0].asObject(rt);
-    std::string name =
-      jsi_string_to_utf8(rt, options.getProperty(rt, "name").asString(rt));
+    std::string name = options.getProperty(rt, "name").asString(rt).utf8(rt);
     std::string path = std::string(_base_path);
-    std::string url =
-      jsi_string_to_utf8(rt, options.getProperty(rt, "url").asString(rt));
+    std::string url = options.getProperty(rt, "url").asString(rt).utf8(rt);
     std::string auth_token =
-      jsi_string_to_utf8(rt,
-                 options.getProperty(rt, "authToken").asString(rt));
+      options.getProperty(rt, "authToken").asString(rt).utf8(rt);
 
     int sync_interval = 0;
     if (options.hasProperty(rt, "libsqlSyncInterval")) {
@@ -172,23 +163,18 @@ void install(jsi::Runtime &rt,
     std::string encryption_key;
     if (options.hasProperty(rt, "encryptionKey")) {
       encryption_key =
-          jsi_string_to_utf8(rt,
-                             options.getProperty(rt, "encryptionKey")
-                                 .asString(rt));
+        options.getProperty(rt, "encryptionKey").asString(rt).utf8(rt);
     }
 
     std::string remote_encryption_key;
     if (options.hasProperty(rt, "remoteEncryptionKey")) {
       remote_encryption_key =
-          jsi_string_to_utf8(rt,
-                             options.getProperty(rt, "remoteEncryptionKey")
-                                 .asString(rt));
+        options.getProperty(rt, "remoteEncryptionKey").asString(rt).utf8(rt);
     }
 
     std::string location;
     if (options.hasProperty(rt, "location")) {
-      location = jsi_string_to_utf8(
-          rt, options.getProperty(rt, "location").asString(rt));
+      location = options.getProperty(rt, "location").asString(rt).utf8(rt);
     }
     if (!location.empty()) {
       if (location == ":memory:") {
