@@ -8,21 +8,14 @@ import "./tests"; // import all tests to register them
 import {performanceTest} from './performance_test';
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-// import {open} from '@op-engineering/op-sqlite';
 
 export default function App() {
 	const [results, setResults] = useState<any>(null);
 	const [perfResult, setPerfResult] = useState<number>(0);
-	const [openTime, setOpenTime] = useState(0);
 
 	useEffect(() => {
 		console.log("App has started 🟢");
 		const work = async () => {
-			// let start = performance.now();
-			// open({
-			//   name: 'dummyDb.sqlite',
-			// });
-			// setOpenTime(performance.now() - start);
 
 			try {
 				console.log("TESTS STARTED 🟠");
@@ -36,15 +29,15 @@ export default function App() {
 				console.log("OPSQLITE_TEST_RESULT:FAIL");
 			}
 
-			setTimeout(() => {
+			setTimeout(async () => {
 			  try {
 			    global?.gc?.();
-			    let perfRes = performanceTest();
+			    let perfRes = await performanceTest();
 			    setPerfResult(perfRes);
 			  } catch (e) {
 			    // intentionally left blank
 			  }
-			}, 4000);
+			}, 1000);
 		};
 
 		work();
@@ -79,10 +72,7 @@ export default function App() {
 			<SafeAreaView style={styles.container}>
 				<View>
 					<Text style={styles.performanceText}>
-						Open DB time: {openTime.toFixed(0)} ms
-					</Text>
-					<Text style={styles.performanceText}>
-						100_000 query time: {perfResult.toFixed(0)} ms
+						Performance Test: {perfResult.toFixed(0)} ms
 					</Text>
 				</View>
 				<View style={styles.results}>{displayResults(results)}</View>

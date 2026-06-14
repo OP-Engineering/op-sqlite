@@ -1,11 +1,10 @@
-import {open} from '@op-engineering/op-sqlite';
+import { open } from "@op-engineering/op-sqlite";
 
-export function performanceTest() {
+export async function performanceTest() {
   const db = open({
-    name: 'perfTest.sqlite',
+    name: "perfTest.sqlite",
   });
 
-  // Create table with 14 columns
   db.executeSync(
     `CREATE TABLE IF NOT EXISTS perf_table (
       id INTEGER PRIMARY KEY,
@@ -13,29 +12,42 @@ export function performanceTest() {
       col8 TEXT, col9 TEXT, col10 TEXT, col11 TEXT, col12 TEXT, col13 TEXT, col14 TEXT
     )`,
   );
-  // Clear table
-  db.executeSync('DELETE FROM perf_table');
-  const testRow =Array(14).fill('test') ;
 
-  let start = performance.now();
+  const testRow = Array(14).fill("test");
+  const runDurations: number[] = [];
 
-  for (let i = 0; i < 1_000; i++) {
-    // Insert a single row for querying
-    db.executeSync(
-      `INSERT INTO perf_table (
+  for (let run = 0; run < 10; run++) {
+    db.executeSync("DELETE FROM perf_table");
+
+    const start = performance.now();
+
+    for (let i = 0; i < 200; i++) {
+      const txPromises = Array.from({ length: 10 }, () =>
+        db.transaction(async (tx) => {
+          await tx.execute(
+            `INSERT INTO perf_table (
         col1, col2, col3, col4, col5, col6, col7,
         col8, col9, col10, col11, col12, col13, col14
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      testRow,
-    );
+            testRow,
+          );
+        }),
+      );
+
+      await Promise.all(txPromises);
+    }
+
+    for (let i = 0; i < 100000; i++) {
+      db.executeSync("SELECT * FROM perf_table WHERE id = 1");
+    }
+
+    const end = performance.now();
+    runDurations.push(end - start);
   }
 
-  for (let i = 0; i < 100000; i++) {
-    db.executeSync('SELECT * FROM perf_table WHERE id = 1');
-  }
-  const end = performance.now();
-  // console.log(`Queried 100000 times in ${end - start} ms`);
+  const total = runDurations.reduce((sum, duration) => sum + duration, 0);
+  const average = total / runDurations.length;
 
   // await db.close();
-  return end - start;
+  return average;
 }

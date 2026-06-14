@@ -298,6 +298,8 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
   });
 
   function_map["close"] = HFN(this) {
+    reject_all_transaction_lock_waiters(rt,
+                                        "[op-sqlite] database is closed");
     invalidated = true;
     // Abort pending native SQLite work before waiting on the thread pool.
 #if !defined(OP_SQLITE_USE_LIBSQL) && !defined(OP_SQLITE_USE_TURSO)
@@ -346,6 +348,8 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
       throw std::runtime_error("[op-sqlite] Delete no longer takes arguments");
     }
 
+    reject_all_transaction_lock_waiters(rt,
+                      "[op-sqlite] database was deleted");
     invalidated = true;
     // Abort pending native SQLite work before waiting on the thread pool.
 #if !defined(OP_SQLITE_USE_LIBSQL) && !defined(OP_SQLITE_USE_TURSO)
@@ -413,6 +417,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
 
     return create_js_rows(rt, status);
   });
+
 
   function_map["executeRawSync"] = HFN(this) {
     const std::string query = jsi_string_to_utf8(rt, args[0].asString(rt));
@@ -521,6 +526,39 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
                           jsi::Value(batchResult.affectedRows));
           return res;
         });
+  });
+
+  function_map["acquireTransactionLock"] = HFN(this) {
+    if (invalidated) {
+      throw std::runtime_error(
+          "[op-sqlite][acquireTransactionLock] database is closed");
+    }
+
+    auto promiseCtr = rt.global().getPropertyAsFunction(rt, "Promise");
+    auto promise = promiseCtr.callAsConstructor(rt, HFN(this) {
+      auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
+      auto reject = std::make_shared<jsi::Value>(rt, args[1]);
+
+      if (transaction_lock_in_progress) {
+        transaction_lock_waiters.push_back({resolve, reject});
+      } else {
+        transaction_lock_in_progress = true;
+        resolve->asObject(rt).asFunction(rt).call(rt, {});
+      }
+
+      return {};
+    }));
+
+    return promise;
+  });
+
+  function_map["releaseTransactionLock"] = HFN(this) {
+    if (!transaction_lock_in_progress) {
+      return {};
+    }
+
+    resolve_next_transaction_lock_waiter(rt);
+    return {};
   });
 
 #if defined(OP_SQLITE_USE_LIBSQL) || defined(OP_SQLITE_USE_TURSO)
@@ -740,6 +778,29 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
 
     return promise;
   });
+}
+
+void DBHostObject::resolve_next_transaction_lock_waiter(jsi::Runtime &rt) {
+  if (!transaction_lock_waiters.empty()) {
+    auto waiter = transaction_lock_waiters.front();
+    transaction_lock_waiters.pop_front();
+    waiter.resolve->asObject(rt).asFunction(rt).call(rt, {});
+    return;
+  }
+
+  transaction_lock_in_progress = false;
+}
+
+void DBHostObject::reject_all_transaction_lock_waiters(
+    jsi::Runtime &rt, const std::string &message) {
+  transaction_lock_in_progress = false;
+  while (!transaction_lock_waiters.empty()) {
+    auto waiter = transaction_lock_waiters.front();
+    transaction_lock_waiters.pop_front();
+    jsi::JSError js_error(rt, message);
+    const auto &error_value = js_error.value();
+    waiter.reject->asObject(rt).asFunction(rt).call(rt, error_value);
+  }
 }
 
 std::vector<jsi::PropNameID> DBHostObject::getPropertyNames(jsi::Runtime &_rt) {
