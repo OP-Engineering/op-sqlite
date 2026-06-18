@@ -50,7 +50,7 @@ While the API surface is identical, there are some behavioral differences:
 - ✅ `open()` - Open database with name and location
 - ✅ `openV2()` - Open database with full path
 - ✅ `execute()` / `executeSync()` - Query execution
-- ✅ `executeRaw()` / `executeRawSync()` - Raw array results
+- ✅ `executeRaw()` / `executeRawSync()` - Raw row arrays plus column names
 - ✅ `executeBatch()` - Batch operations in transaction
 - ✅ `transaction()` - Transaction support
 - ✅ `prepareStatement()` - Prepared statements

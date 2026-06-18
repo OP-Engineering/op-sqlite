@@ -618,7 +618,7 @@ describe("Queries tests", () => {
     });
   });
 
-  it("Execute raw sync should return just an array of objects", async () => {
+  it("Execute raw sync should return raw rows and column names", async () => {
     const id = chance.integer();
     const name = chance.name();
     const age = chance.integer();
@@ -632,7 +632,8 @@ describe("Queries tests", () => {
     ]);
 
     const res = db.executeRawSync("SELECT id, name, age, networth FROM User");
-    expect(res).toDeepEqual([[id, name, age, networth]]);
+    expect(res.rawRows).toDeepEqual([[id, name, age, networth]]);
+    expect(res.columnNames).toDeepEqual(["id", "name", "age", "networth"]);
   });
 
   it("Transaction, rejects on callback error", async () => {
@@ -816,7 +817,7 @@ describe("Queries tests", () => {
     expect(res.rows[0]!.myWeirdProp).toEqual("quack_changed");
   });
 
-  it("Execute raw should return just an array of objects", async () => {
+  it("Execute raw should return raw rows and column names", async () => {
     const id = chance.integer();
     const name = chance.name();
     const age = chance.integer();
@@ -829,7 +830,8 @@ describe("Queries tests", () => {
     ]);
 
     const res = await db.executeRaw("SELECT id, name, age, networth FROM User");
-    expect(res).toDeepEqual([[id, name, age, networth]]);
+    expect(res.rawRows).toDeepEqual([[id, name, age, networth]]);
+    expect(res.columnNames).toDeepEqual(["id", "name", "age", "networth"]);
   });
 
   it("Create fts5 virtual table", async () => {

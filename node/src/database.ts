@@ -1,37 +1,40 @@
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import Database from 'better-sqlite3';
+import * as fs from "node:fs";
+import * as path from "node:path";
+import Database from "better-sqlite3";
 import type {
-    BatchQueryResult,
-    ColumnMetadata,
-    DB,
-    FileLoadResult,
-    PreparedStatement,
-    QueryResult,
-    Scalar,
-    SQLBatchTuple,
-    Transaction,
-    UpdateHookOperation,
-} from './types';
+  BatchQueryResult,
+  ColumnMetadata,
+  DB,
+  FileLoadResult,
+  PreparedStatement,
+  QueryResult,
+  RawQueryResult,
+  Scalar,
+  SQLBatchTuple,
+  Transaction,
+  UpdateHookOperation,
+} from "./types";
 
 export class NodeDatabase implements DB {
   private db: Database.Database;
   private dbPath: string;
-  private updateHookCallback?: ((params: {
-    table: string;
-    operation: UpdateHookOperation;
-    row?: any;
-    rowId: number;
-  }) => void) | null;
+  private updateHookCallback?:
+    | ((params: {
+        table: string;
+        operation: UpdateHookOperation;
+        row?: any;
+        rowId: number;
+      }) => void)
+    | null;
   private commitHookCallback?: (() => void) | null;
   private rollbackHookCallback?: (() => void) | null;
 
   constructor(name: string, location?: string) {
-    this.dbPath = ':memory:'
-    if(location !== ":memory:") {
-      const dbLocation = location || './';
+    this.dbPath = ":memory:";
+    if (location !== ":memory:") {
+      const dbLocation = location || "./";
       this.dbPath = path.join(dbLocation, name);
-  
+
       // Ensure directory exists
       const dir = path.dirname(this.dbPath);
       if (!fs.existsSync(dir)) {
@@ -46,15 +49,15 @@ export class NodeDatabase implements DB {
   private setupHooks(): void {
     // Setup update hook if needed
     // if (this.db.function) {
-      // Note: better-sqlite3 doesn't have direct update hook support
-      // This is a limitation compared to the native implementation
+    // Note: better-sqlite3 doesn't have direct update hook support
+    // This is a limitation compared to the native implementation
     // }
   }
 
   private convertParams(params?: Scalar[]): any[] | undefined {
     if (!params) return undefined;
 
-    return params.map(param => {
+    return params.map((param) => {
       if (param instanceof ArrayBuffer) {
         return Buffer.from(param);
       } else if (ArrayBuffer.isView(param)) {
@@ -65,10 +68,10 @@ export class NodeDatabase implements DB {
   }
 
   private convertRows(stmt: Database.Statement, rows: any[]): QueryResult {
-    const columnNames = stmt.columns().map(col => col.name);
+    const columnNames = stmt.columns().map((col) => col.name);
     const metadata: ColumnMetadata[] = stmt.columns().map((col, index) => ({
       name: col.name,
-      type: col.type || 'UNKNOWN',
+      type: col.type || "UNKNOWN",
       index,
     }));
 
@@ -86,17 +89,13 @@ export class NodeDatabase implements DB {
       const stmt = this.db.prepare(query);
 
       // Check if it's a SELECT query
-      const isSelect = query.trim().toUpperCase().startsWith('SELECT');
+      const isSelect = query.trim().toUpperCase().startsWith("SELECT");
 
       if (isSelect) {
-        const rows = convertedParams
-          ? stmt.all(...convertedParams)
-          : stmt.all();
+        const rows = convertedParams ? stmt.all(...convertedParams) : stmt.all();
         return this.convertRows(stmt, rows);
       } else {
-        const info = convertedParams
-          ? stmt.run(...convertedParams)
-          : stmt.run();
+        const info = convertedParams ? stmt.run(...convertedParams) : stmt.run();
 
         return {
           rowsAffected: info.changes,
@@ -118,20 +117,23 @@ export class NodeDatabase implements DB {
     return this.execute(query, params);
   }
 
-  executeRawSync(query: string, params?: Scalar[]): any[] {
+  executeRawSync(query: string, params?: Scalar[]): RawQueryResult {
     try {
       const convertedParams = this.convertParams(params);
       const stmt = this.db.prepare(query);
-      const rows = convertedParams
-        ? stmt.raw().all(...convertedParams)
-        : stmt.raw().all();
-      return rows;
+      const rawRows = convertedParams ? stmt.raw().all(...convertedParams) : stmt.raw().all();
+      const columnNames = stmt.columns().map((col) => col.name);
+      return {
+        rowsAffected: 0,
+        rawRows: rawRows as Scalar[][],
+        columnNames,
+      };
     } catch (error: any) {
       throw new Error(`SQL Error: ${error.message}`);
     }
   }
 
-  async executeRaw(query: string, params?: Scalar[]): Promise<any[]> {
+  async executeRaw(query: string, params?: Scalar[]): Promise<RawQueryResult> {
     return Promise.resolve(this.executeRawSync(query, params));
   }
 
@@ -166,11 +168,11 @@ export class NodeDatabase implements DB {
   }
 
   async loadFile(location: string): Promise<FileLoadResult> {
-    const fileContent = fs.readFileSync(location, 'utf-8');
+    const fileContent = fs.readFileSync(location, "utf-8");
     const statements = fileContent
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
+      .split(";")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
 
     let totalRowsAffected = 0;
     let commandCount = 0;
@@ -200,23 +202,23 @@ export class NodeDatabase implements DB {
         return { rowsAffected: 0, rows: [] };
       },
       rollback: () => {
-        throw new Error('ROLLBACK');
+        throw new Error("ROLLBACK");
       },
     };
 
     // Manually control transaction with BEGIN/COMMIT/ROLLBACK to support async operations
-    this.executeSync('BEGIN TRANSACTION');
+    this.executeSync("BEGIN TRANSACTION");
 
     try {
       await fn(transaction);
 
-      this.executeSync('COMMIT');
+      this.executeSync("COMMIT");
 
       if (this.commitHookCallback) {
         this.commitHookCallback();
       }
     } catch (error: any) {
-      this.executeSync('ROLLBACK');
+      this.executeSync("ROLLBACK");
 
       if (this.rollbackHookCallback) {
         this.rollbackHookCallback();
@@ -238,17 +240,13 @@ export class NodeDatabase implements DB {
         boundParams = this.convertParams(params) || [];
       },
       execute: async () => {
-        const isSelect = query.trim().toUpperCase().startsWith('SELECT');
+        const isSelect = query.trim().toUpperCase().startsWith("SELECT");
 
         if (isSelect) {
-          const rows = boundParams.length > 0
-            ? stmt.all(...boundParams)
-            : stmt.all();
+          const rows = boundParams.length > 0 ? stmt.all(...boundParams) : stmt.all();
           return this.convertRows(stmt, rows);
         } else {
-          const info = boundParams.length > 0
-            ? stmt.run(...boundParams)
-            : stmt.run();
+          const info = boundParams.length > 0 ? stmt.run(...boundParams) : stmt.run();
 
           return {
             rowsAffected: info.changes,
@@ -260,12 +258,8 @@ export class NodeDatabase implements DB {
     };
   }
 
-  attach(params: {
-    secondaryDbFileName: string;
-    alias: string;
-    location?: string;
-  }): void {
-    const dbLocation = params.location || './';
+  attach(params: { secondaryDbFileName: string; alias: string; location?: string }): void {
+    const dbLocation = params.location || "./";
     const dbPath = path.join(dbLocation, params.secondaryDbFileName);
     this.db.prepare(`ATTACH DATABASE ? AS ?`).run(dbPath, params.alias);
   }
@@ -282,11 +276,11 @@ export class NodeDatabase implements DB {
           row?: any;
           rowId: number;
         }) => void)
-      | null
+      | null,
   ): void {
     this.updateHookCallback = callback;
     // Note: better-sqlite3 doesn't support update hooks directly
-    console.warn('Update hooks are not fully supported in the Node.js implementation');
+    console.warn("Update hooks are not fully supported in the Node.js implementation");
   }
 
   commitHook(callback?: (() => void) | null): void {
@@ -321,18 +315,18 @@ export class NodeDatabase implements DB {
     callback: (response: any) => void;
   }): () => void {
     // Reactive queries are not supported in Node.js implementation
-    console.warn('Reactive queries are not supported in the Node.js implementation');
+    console.warn("Reactive queries are not supported in the Node.js implementation");
     return () => {};
   }
 
   sync(): void {
     // LibSQL sync is not supported in the Node.js implementation
-    throw new Error('sync() is only available with libsql');
+    throw new Error("sync() is only available with libsql");
   }
 
   setReservedBytes(reservedBytes: number): void {
     // SQLCipher specific, not supported in standard SQLite
-    console.warn('setReservedBytes is not supported in the Node.js implementation');
+    console.warn("setReservedBytes is not supported in the Node.js implementation");
   }
 
   getReservedBytes(): number {
