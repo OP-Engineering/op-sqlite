@@ -101,9 +101,9 @@ inline JSVariant to_variant(jsi::Runtime &rt, const jsi::Value &value) {
     size_t byteLength = 0;
     uint8_t *sourceData = nullptr;
     jsi::Function arrayBufferCtor =
-      rt.global().getPropertyAsFunction(rt, "ArrayBuffer");
+        rt.global().getPropertyAsFunction(rt, "ArrayBuffer");
     jsi::Function isViewFn =
-      arrayBufferCtor.getPropertyAsFunction(rt, "isView");
+        arrayBufferCtor.getPropertyAsFunction(rt, "isView");
     bool isArrayBufferView = isViewFn.call(rt, obj).getBool();
 
     if (obj.isArrayBuffer(rt)) {
@@ -244,15 +244,29 @@ jsi::Value
 create_raw_result(jsi::Runtime &rt, const BridgeResult &status,
                   const std::vector<std::vector<JSVariant>> *results) {
   size_t row_count = results->size();
-  jsi::Array res = jsi::Array(rt, row_count);
+  jsi::Object res(rt);
+  jsi::Array raw_rows = jsi::Array(rt, row_count);
   for (int i = 0; i < row_count; i++) {
     auto row = results->at(i);
     auto array = jsi::Array(rt, row.size());
     for (int j = 0; j < row.size(); j++) {
       array.setValueAtIndex(rt, j, to_jsi(rt, row[j]));
     }
-    res.setValueAtIndex(rt, i, array);
+    raw_rows.setValueAtIndex(rt, i, array);
   }
+
+  size_t column_count = status.column_names.size();
+  jsi::Array column_names = jsi::Array(rt, column_count);
+  for (int i = 0; i < column_count; i++) {
+    column_names.setValueAtIndex(
+        rt, i, jsi::String::createFromUtf8(rt, status.column_names.at(i)));
+  }
+
+  res.setProperty(rt, "rowsAffected", status.affectedRows);
+  res.setProperty(rt, "insertId", status.insertId);
+  res.setProperty(rt, "rawRows", std::move(raw_rows));
+  res.setProperty(rt, "columnNames", std::move(column_names));
+
   return res;
 }
 
@@ -266,7 +280,8 @@ void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &tuples,
       continue;
     }
 
-    const std::string query = tuple.getValueAtIndex(rt, 0).asString(rt).utf8(rt);
+    const std::string query =
+        tuple.getValueAtIndex(rt, 0).asString(rt).utf8(rt);
     if (length == 1) {
       commands->push_back({query});
       continue;

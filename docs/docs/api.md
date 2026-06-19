@@ -171,14 +171,42 @@ let results2 = await statement.execute();
 
 You only pay the price of parsing the query once, and each subsequent execution should be faster.
 
-## Raw execution
+## Execute Raw
 
-If you don't care about the keys you can use a simplified execution that will return an array of scalars. This should be a lot faster than the regular operation since objects with the same keys don’t need to be created.
+If you don't care about object rows you can use a simplified execution that returns row values in arrays plus the corresponding `columnNames`. This avoids creating a JS object per row and is typically faster than `execute()` for large result sets.
+
+### Breaking change notice
+
+Starting on version `17.0.0`, `executeRaw()` and `executeRawSync()` return an object instead of a bare array of rows.
+
+Previous shape:
+
+```tsx
+const rows = await db.executeRaw('SELECT * FROM Users;');
+// rows = [[123, 'Katie']]
+```
+
+Current shape:
+
+```tsx
+const result = await db.executeRaw('SELECT * FROM Users;');
+
+result.rawRows;
+// raw data in array format: [[123, 'Katie']]
+
+result.columnNames;
+// actual column names: ['id', 'name']
+```
+
+`rawRows` contains the raw data in array format, and `columnNames` contains the actual names of the columns. This change also applies to `executeRawSync()`.
 
 ```tsx
 let result = await db.executeRaw('SELECT * FROM Users;');
-// result = [[123, 'Katie', ...]]
+// result.rawRows = [[123, 'Katie', ...]]
+// result.columnNames = ['id', 'name', ...]
 ```
+
+If you need the old bare-array behavior, read from `result.rawRows`.
 
 ### Multiple Statements
 

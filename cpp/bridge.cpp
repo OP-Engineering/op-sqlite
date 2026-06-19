@@ -111,9 +111,8 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
     // buffer with explicit length so embedded zero bytes in the key are
     // preserved, and it never enters trace/log surfaces — defense in
     // depth, not an exploit class on its own.
-    int key_status = sqlite3_key_v2(
-        db, "main", encryption_key.data(),
-        static_cast<int>(encryption_key.size()));
+    int key_status = sqlite3_key_v2(db, "main", encryption_key.data(),
+                                    static_cast<int>(encryption_key.size()));
     if (key_status != SQLITE_OK) {
       const char *message = sqlite3_errmsg(db);
       throw std::runtime_error(
@@ -652,8 +651,7 @@ BridgeResult opsqlite_execute_host_objects(
           .insertId = static_cast<double>(latestInsertRowId)};
 }
 
-/// Executes returning data in raw arrays, a small performance optimization
-/// for certain use cases
+/// Executes returning data in raw arrays
 BridgeResult
 opsqlite_execute_raw(sqlite3 *db, std::string const &query,
                      const std::vector<JSVariant> *params,
@@ -666,6 +664,7 @@ opsqlite_execute_raw(sqlite3 *db, std::string const &query,
   bool isFailed = false;
 
   int step = SQLITE_OK;
+  std::vector<std::string> column_names;
 
   do {
     const char *queryStr =
@@ -695,6 +694,13 @@ opsqlite_execute_raw(sqlite3 *db, std::string const &query,
     std::string column_name, column_declared_type;
 
     int column_count = sqlite3_column_count(statement);
+
+    column_names.clear();
+    column_names.reserve(column_count);
+    for (int column_index = 0; column_index < column_count; column_index++) {
+      column_name = sqlite3_column_name(statement, column_index);
+      column_names.emplace_back(column_name);
+    }
 
     while (isConsuming) {
       step = sqlite3_step(statement);
@@ -781,7 +787,8 @@ opsqlite_execute_raw(sqlite3 *db, std::string const &query,
   long long latestInsertRowId = sqlite3_last_insert_rowid(db);
 
   return {.affectedRows = changedRowCount,
-          .insertId = static_cast<double>(latestInsertRowId)};
+          .insertId = static_cast<double>(latestInsertRowId),
+          .column_names = std::move(column_names)};
 }
 
 std::string operation_to_string(int operation_type) {

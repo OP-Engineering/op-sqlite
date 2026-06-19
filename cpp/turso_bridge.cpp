@@ -1,7 +1,7 @@
-#include "bridge.h"
 #include "DBHostObject.h"
 #include "DumbHostObject.h"
 #include "SmartHostObject.h"
+#include "bridge.h"
 #include "utils.hpp"
 
 #ifdef __APPLE__
@@ -50,8 +50,8 @@ inline TursoStmtHandle *to_turso_stmt(sqlite3_stmt *statement) {
   return reinterpret_cast<TursoStmtHandle *>(statement);
 }
 
-inline const turso_connection_t *require_turso_connection(
-    TursoDbHandle *handle, const std::string &context) {
+inline const turso_connection_t *
+require_turso_connection(TursoDbHandle *handle, const std::string &context) {
   if (handle == nullptr || handle->connection == nullptr) {
     throw std::runtime_error("[op-sqlite][turso] " + context +
                              ": invalid database connection");
@@ -66,9 +66,8 @@ void throw_if_turso_error(turso_status_code_t code, const char *error,
     return;
   }
 
-  throw std::runtime_error(
-      "[op-sqlite][turso] " + context +
-      (error != nullptr ? ": " + std::string(error) : ""));
+  throw std::runtime_error("[op-sqlite][turso] " + context +
+                           (error != nullptr ? ": " + std::string(error) : ""));
 }
 
 std::vector<char> read_binary_file(const std::string &path) {
@@ -89,8 +88,7 @@ std::vector<char> read_binary_file(const std::string &path) {
   return content;
 }
 
-void write_binary_file_atomic(const std::string &path,
-                              const char *data,
+void write_binary_file_atomic(const std::string &path, const char *data,
                               size_t size) {
   std::filesystem::path target(path);
   std::filesystem::create_directories(target.parent_path());
@@ -100,8 +98,9 @@ void write_binary_file_atomic(const std::string &path,
   {
     std::ofstream file(temp, std::ios::binary | std::ios::trunc);
     if (!file.is_open()) {
-      throw std::runtime_error("[op-sqlite][turso] failed to open temp file for write: " +
-                               temp.string());
+      throw std::runtime_error(
+          "[op-sqlite][turso] failed to open temp file for write: " +
+          temp.string());
     }
 
     if (size > 0) {
@@ -123,8 +122,8 @@ void write_binary_file_atomic(const std::string &path,
   }
 
   if (ec) {
-    throw std::runtime_error("[op-sqlite][turso] failed to atomically replace file: " +
-                             path);
+    throw std::runtime_error(
+        "[op-sqlite][turso] failed to atomically replace file: " + path);
   }
 }
 
@@ -154,7 +153,8 @@ void setup_turso_temp_dir(const std::string &db_path) {
     return;
   }
 
-  // Keep temp files in app-writable storage instead of restricted emulator temp dirs.
+  // Keep temp files in app-writable storage instead of restricted emulator temp
+  // dirs.
   setenv("TMPDIR", temp_dir.c_str(), 1);
   setenv("SQLITE_TMPDIR", temp_dir.c_str(), 1);
   setenv("TMP", temp_dir.c_str(), 1);
@@ -165,8 +165,8 @@ void process_sync_io_item(const turso_sync_io_item_t *item) {
   const auto kind = turso_sync_database_io_request_kind(item);
 
   if (kind == TURSO_SYNC_IO_HTTP) {
-    std::string message =
-        "[op-sqlite][turso] sync HTTP IO request is not supported by native op-sqlite Turso bridge yet";
+    std::string message = "[op-sqlite][turso] sync HTTP IO request is not "
+                          "supported by native op-sqlite Turso bridge yet";
     turso_slice_ref_t error = {.ptr = message.c_str(), .len = message.size()};
     turso_sync_database_io_poison(item, &error);
     return;
@@ -181,13 +181,15 @@ void process_sync_io_item(const turso_sync_io_item_t *item) {
       return;
     }
 
-    std::string path(static_cast<const char *>(request.path.ptr), request.path.len);
+    std::string path(static_cast<const char *>(request.path.ptr),
+                     request.path.len);
     auto buffer = read_binary_file(path);
     if (!buffer.empty()) {
       turso_slice_ref_t slice = {.ptr = buffer.data(), .len = buffer.size()};
       if (turso_sync_database_io_push_buffer(item, &slice) != TURSO_OK) {
         std::string message = "failed to push FULL_READ data";
-        turso_slice_ref_t error = {.ptr = message.c_str(), .len = message.size()};
+        turso_slice_ref_t error = {.ptr = message.c_str(),
+                                   .len = message.size()};
         turso_sync_database_io_poison(item, &error);
         return;
       }
@@ -206,7 +208,8 @@ void process_sync_io_item(const turso_sync_io_item_t *item) {
       return;
     }
 
-    std::string path(static_cast<const char *>(request.path.ptr), request.path.len);
+    std::string path(static_cast<const char *>(request.path.ptr),
+                     request.path.len);
 
     try {
       write_binary_file_atomic(path,
@@ -270,8 +273,8 @@ void bind_value(turso_statement_t *statement, size_t position,
   turso_status_code_t code = TURSO_OK;
 
   if (std::holds_alternative<bool>(value)) {
-    code = turso_statement_bind_positional_int(
-        statement, position, std::get<bool>(value) ? 1 : 0);
+    code = turso_statement_bind_positional_int(statement, position,
+                                               std::get<bool>(value) ? 1 : 0);
   } else if (std::holds_alternative<int>(value)) {
     code = turso_statement_bind_positional_int(statement, position,
                                                std::get<int>(value));
@@ -375,7 +378,7 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
 
   turso_database_config_t db_config = {
       .async_io = 0,
-    .path = handle->path.c_str(),
+      .path = handle->path.c_str(),
       .experimental_features = nullptr,
       .vfs = nullptr,
       .encryption_cipher = nullptr,
@@ -386,16 +389,14 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
   const turso_database_t *database = nullptr;
 
   try {
-    throw_if_turso_error(
-        turso_database_new(&db_config, &database, &error), error,
-        "create database at " + handle->path);
+    throw_if_turso_error(turso_database_new(&db_config, &database, &error),
+                         error, "create database at " + handle->path);
     throw_if_turso_error(turso_database_open(database, &error), error,
                          "open database at " + handle->path);
 
     turso_connection_t *connection = nullptr;
-    throw_if_turso_error(
-        turso_database_connect(database, &connection, &error), error,
-        "connect database at " + handle->path);
+    throw_if_turso_error(turso_database_connect(database, &connection, &error),
+                         error, "connect database at " + handle->path);
 
     handle->database = database;
     handle->connection = connection;
@@ -445,8 +446,9 @@ sqlite3 *opsqlite_open_sync(std::string const &name, std::string const &path,
       .partial_bootstrap_strategy_query = nullptr,
       .partial_bootstrap_segment_size = 0,
       .partial_bootstrap_prefetch = false,
-      .remote_encryption_key =
-          remote_encryption_key.empty() ? nullptr : remote_encryption_key.c_str(),
+      .remote_encryption_key = remote_encryption_key.empty()
+                                   ? nullptr
+                                   : remote_encryption_key.c_str(),
       .remote_encryption_cipher = nullptr,
   };
 
@@ -454,14 +456,14 @@ sqlite3 *opsqlite_open_sync(std::string const &name, std::string const &path,
   const turso_sync_database_t *sync_database = nullptr;
 
   try {
-    throw_if_turso_error(
-        turso_sync_database_new(&db_config, &sync_config, &sync_database, &error),
-        error, "create sync database at " + handle->path);
+    throw_if_turso_error(turso_sync_database_new(&db_config, &sync_config,
+                                                 &sync_database, &error),
+                         error, "create sync database at " + handle->path);
 
     const turso_sync_operation_t *open_operation = nullptr;
     throw_if_turso_error(
-        turso_sync_database_create(sync_database, &open_operation, &error), error,
-        "open/create sync database at " + handle->path);
+        turso_sync_database_create(sync_database, &open_operation, &error),
+        error, "open/create sync database at " + handle->path);
     run_sync_operation(sync_database, open_operation);
     turso_sync_operation_deinit(open_operation);
 
@@ -474,7 +476,8 @@ sqlite3 *opsqlite_open_sync(std::string const &name, std::string const &path,
     if (turso_sync_operation_result_kind(connect_operation) !=
         TURSO_ASYNC_RESULT_CONNECTION) {
       turso_sync_operation_deinit(connect_operation);
-      throw std::runtime_error("[op-sqlite][turso] sync connect did not return a connection");
+      throw std::runtime_error(
+          "[op-sqlite][turso] sync connect did not return a connection");
     }
 
     const turso_connection_t *connection = nullptr;
@@ -507,9 +510,9 @@ sqlite3 *opsqlite_open_sync(std::string const &name, std::string const &path,
 sqlite3 *opsqlite_open_remote(std::string const &url,
                               std::string const &auth_token,
                               std::string const &base_path) {
-  std::string remote_name =
-      "turso_remote_" + std::to_string(std::hash<std::string>{}(url)) +
-      ".sqlite";
+  std::string remote_name = "turso_remote_" +
+                            std::to_string(std::hash<std::string>{}(url)) +
+                            ".sqlite";
   return opsqlite_open_sync(remote_name, base_path, url, auth_token, "");
 }
 
@@ -540,24 +543,23 @@ void opsqlite_close(sqlite3 *db) {
 void opsqlite_sync(sqlite3 *db) {
   auto *handle = to_turso_db(db);
   if (handle == nullptr || handle->sync_database == nullptr) {
-    throw std::runtime_error("[op-sqlite][turso] sync is only available for sync/remote databases");
+    throw std::runtime_error(
+        "[op-sqlite][turso] sync is only available for sync/remote databases");
   }
 
   const char *error = nullptr;
 
   const turso_sync_operation_t *push_operation = nullptr;
-  throw_if_turso_error(
-      turso_sync_database_push_changes(handle->sync_database, &push_operation,
-                                       &error),
-      error, "push sync changes");
+  throw_if_turso_error(turso_sync_database_push_changes(
+                           handle->sync_database, &push_operation, &error),
+                       error, "push sync changes");
   run_sync_operation(handle->sync_database, push_operation);
   turso_sync_operation_deinit(push_operation);
 
   const turso_sync_operation_t *wait_operation = nullptr;
-  throw_if_turso_error(
-      turso_sync_database_wait_changes(handle->sync_database, &wait_operation,
-                                       &error),
-      error, "wait sync changes");
+  throw_if_turso_error(turso_sync_database_wait_changes(
+                           handle->sync_database, &wait_operation, &error),
+                       error, "wait sync changes");
   run_sync_operation(handle->sync_database, wait_operation);
 
   const turso_sync_changes_t *changes = nullptr;
@@ -608,10 +610,11 @@ sqlite3_stmt *opsqlite_prepare_statement(sqlite3 *db,
   turso_statement_t *statement = nullptr;
   const char *error = nullptr;
 
-  throw_if_turso_error(turso_connection_prepare_single(
-               require_turso_connection(handle, "prepare statement"),
-               query.c_str(), &statement, &error),
-                     error, "prepare statement");
+  throw_if_turso_error(
+      turso_connection_prepare_single(
+          require_turso_connection(handle, "prepare statement"), query.c_str(),
+          &statement, &error),
+      error, "prepare statement");
 
   auto *stmt_handle = new TursoStmtHandle();
   stmt_handle->statement = statement;
@@ -646,7 +649,8 @@ BridgeResult opsqlite_execute_prepared_statement(
       return;
     }
 
-    int col_count = static_cast<int>(turso_statement_column_count(stmt->statement));
+    int col_count =
+        static_cast<int>(turso_statement_column_count(stmt->statement));
     DumbHostObject row = DumbHostObject(metadatas);
 
     for (int i = 0; i < col_count; i++) {
@@ -654,11 +658,12 @@ BridgeResult opsqlite_execute_prepared_statement(
 
       switch (kind) {
       case TURSO_TYPE_INTEGER:
-        row.values.emplace_back(
-            static_cast<double>(turso_statement_row_value_int(stmt->statement, i)));
+        row.values.emplace_back(static_cast<double>(
+            turso_statement_row_value_int(stmt->statement, i)));
         break;
       case TURSO_TYPE_REAL:
-        row.values.emplace_back(turso_statement_row_value_double(stmt->statement, i));
+        row.values.emplace_back(
+            turso_statement_row_value_double(stmt->statement, i));
         break;
       case TURSO_TYPE_TEXT: {
         auto size = turso_statement_row_value_bytes_count(stmt->statement, i);
@@ -671,8 +676,9 @@ BridgeResult opsqlite_execute_prepared_statement(
         auto ptr = turso_statement_row_value_bytes_ptr(stmt->statement, i);
         auto *data = new uint8_t[static_cast<size_t>(size)];
         memcpy(data, ptr, static_cast<size_t>(size));
-        row.values.emplace_back(ArrayBuffer{.data = std::shared_ptr<uint8_t[]>{data},
-                                            .size = static_cast<size_t>(size)});
+        row.values.emplace_back(
+            ArrayBuffer{.data = std::shared_ptr<uint8_t[]>{data},
+                        .size = static_cast<size_t>(size)});
         break;
       }
       case TURSO_TYPE_NULL:
@@ -686,7 +692,8 @@ BridgeResult opsqlite_execute_prepared_statement(
   });
 
   if (metadatas != nullptr && metadatas->empty()) {
-    int col_count = static_cast<int>(turso_statement_column_count(stmt->statement));
+    int col_count =
+        static_cast<int>(turso_statement_column_count(stmt->statement));
 
     for (int i = 0; i < col_count; i++) {
       auto metadata = SmartHostObject();
@@ -714,8 +721,8 @@ BridgeResult opsqlite_execute_prepared_statement(
   reset_statement(stmt->statement);
 
   return {.affectedRows = changes,
-        .insertId = static_cast<double>(turso_connection_last_insert_rowid(
-          require_turso_connection(db_handle, "last_insert_rowid")))};
+          .insertId = static_cast<double>(turso_connection_last_insert_rowid(
+              require_turso_connection(db_handle, "last_insert_rowid")))};
 }
 
 BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
@@ -732,8 +739,9 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
     size_t tail = 0;
 
     auto code = turso_connection_prepare_first(
-      require_turso_connection(db_handle, "prepare statement in batch execute"),
-      query.c_str() + offset, &statement, &tail, &error);
+        require_turso_connection(db_handle,
+                                 "prepare statement in batch execute"),
+        query.c_str() + offset, &statement, &tail, &error);
     throw_if_turso_error(code, error, "prepare statement in batch execute");
 
     if (tail == 0) {
@@ -772,7 +780,8 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
         auto kind = turso_statement_row_value_kind(statement, i);
         switch (kind) {
         case TURSO_TYPE_INTEGER:
-          row.emplace_back(static_cast<double>(turso_statement_row_value_int(statement, i)));
+          row.emplace_back(
+              static_cast<double>(turso_statement_row_value_int(statement, i)));
           break;
         case TURSO_TYPE_REAL:
           row.emplace_back(turso_statement_row_value_double(statement, i));
@@ -809,8 +818,8 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
   }
 
   return {.affectedRows = changes,
-        .insertId = static_cast<double>(turso_connection_last_insert_rowid(
-          require_turso_connection(db_handle, "last_insert_rowid"))),
+          .insertId = static_cast<double>(turso_connection_last_insert_rowid(
+              require_turso_connection(db_handle, "last_insert_rowid"))),
           .rows = std::move(rows),
           .column_names = std::move(column_names)};
 }
@@ -825,14 +834,16 @@ BridgeResult opsqlite_execute_host_objects(
     opsqlite_bind_statement(statement, params);
   }
 
-  auto res = opsqlite_execute_prepared_statement(db, statement, results, metadatas);
+  auto res =
+      opsqlite_execute_prepared_statement(db, statement, results, metadatas);
   opsqlite_finalize_statement(statement);
   return res;
 }
 
-BridgeResult opsqlite_execute_raw(
-    sqlite3 *db, std::string const &query, const std::vector<JSVariant> *params,
-    std::vector<std::vector<JSVariant>> *results) {
+BridgeResult
+opsqlite_execute_raw(sqlite3 *db, std::string const &query,
+                     const std::vector<JSVariant> *params,
+                     std::vector<std::vector<JSVariant>> *results) {
 
   auto response = opsqlite_execute(db, query, params);
   if (results != nullptr) {
@@ -840,7 +851,8 @@ BridgeResult opsqlite_execute_raw(
   }
 
   return {.affectedRows = response.affectedRows,
-          .insertId = response.insertId};
+          .insertId = response.insertId,
+          .column_names = std::move(response.column_names)};
 }
 
 void opsqlite_register_update_hook([[maybe_unused]] sqlite3 *db,
@@ -853,20 +865,21 @@ void opsqlite_register_commit_hook([[maybe_unused]] sqlite3 *db,
 
 void opsqlite_deregister_commit_hook([[maybe_unused]] sqlite3 *db) {}
 
-void opsqlite_register_rollback_hook([[maybe_unused]] sqlite3 *db,
-                                     [[maybe_unused]] void *db_host_object_ptr) {}
+void opsqlite_register_rollback_hook(
+    [[maybe_unused]] sqlite3 *db, [[maybe_unused]] void *db_host_object_ptr) {}
 
 void opsqlite_deregister_rollback_hook([[maybe_unused]] sqlite3 *db) {}
 
 void opsqlite_load_extension([[maybe_unused]] sqlite3 *db,
                              [[maybe_unused]] std::string &path,
                              [[maybe_unused]] std::string &entry_point) {
-  throw std::runtime_error(
-      "[op-sqlite][turso] load_extension is not supported by Turso SDK kit backend");
+  throw std::runtime_error("[op-sqlite][turso] load_extension is not supported "
+                           "by Turso SDK kit backend");
 }
 
-BatchResult opsqlite_execute_batch(sqlite3 *db,
-                                   const std::vector<BatchArguments> *commands) {
+BatchResult
+opsqlite_execute_batch(sqlite3 *db,
+                       const std::vector<BatchArguments> *commands) {
   size_t command_count = commands->size();
   if (command_count == 0) {
     throw std::runtime_error("No SQL commands provided");
