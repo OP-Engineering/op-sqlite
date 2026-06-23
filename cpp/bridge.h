@@ -27,11 +27,12 @@ std::string opsqlite_get_db_path(std::string const &db_name,
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
 sqlite3 *opsqlite_open(std::string const &dbName, std::string const &path,
-                       std::string const &crsqlite_path,
+                       bool readOnly, std::string const &crsqlite_path,
                        std::string const &sqlite_vec_path,
                        std::string const &encryption_key);
 #else
 sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
+                       bool readOnly,
                        [[maybe_unused]] std::string const &crsqlite_path,
                        std::string const &sqlite_vec_path);
 #endif

@@ -60,6 +60,7 @@ void install(jsi::Runtime &rt,
     std::string path = std::string(_base_path);
     std::string location;
     std::string encryption_key;
+    bool readOnly = false;
 
     if (options.hasProperty(rt, "location")) {
       location = options.getProperty(rt, "location").asString(rt).utf8(rt);
@@ -68,6 +69,10 @@ void install(jsi::Runtime &rt,
     if (options.hasProperty(rt, "encryptionKey")) {
       encryption_key =
           options.getProperty(rt, "encryptionKey").asString(rt).utf8(rt);
+    }
+
+    if (options.hasProperty(rt, "readOnly")) {
+      readOnly = options.getProperty(rt, "readOnly").asBool();
     }
 
     if (!location.empty()) {
@@ -81,7 +86,7 @@ void install(jsi::Runtime &rt,
     }
 
     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-        rt, path, name, path, _crsqlite_path, _sqlite_vec_path, encryption_key);
+        rt, path, name, path, readOnly, _crsqlite_path, _sqlite_vec_path, encryption_key);
     dbs.emplace_back(db);
     return jsi::Object::createFromHostObject(rt, db);
   });

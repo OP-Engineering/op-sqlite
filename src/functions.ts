@@ -5,6 +5,7 @@ import type {
 	BatchQueryResult,
 	DB,
 	DBParams,
+	OpenOptions,
 	OPSQLiteProxy,
 	QueryResult,
 	Scalar,
@@ -363,11 +364,7 @@ export const openRemote = (params: { url: string; authToken: string }): DB => {
  * Open a connection to a local sqlite or sqlcipher database
  * If you want libsql remote or sync connections, use openSync or openRemote
  */
-export const open = (params: {
-	name: string;
-	location?: string;
-	encryptionKey?: string;
-}): DB => {
+export const open = (params: OpenOptions): DB => {
 	if (params.location?.startsWith("file://")) {
 		console.warn(
 			"[op-sqlite] You are passing a path with 'file://' prefix, it's automatically removed",
@@ -385,11 +382,7 @@ export const open = (params: {
  * Async wrapper around open().
  * Useful for cross-platform code that also targets web where openAsync() is required.
  */
-export const openAsync = async (params: {
-	name: string;
-	location?: string;
-	encryptionKey?: string;
-}): Promise<DB> => {
+export const openAsync = async (params: OpenOptions): Promise<DB> => {
 	return open(params);
 };
 

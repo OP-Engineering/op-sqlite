@@ -231,6 +231,21 @@ describe("DB setup tests", () => {
 			expect(!!e).toBe(true);
 		}
 	});
+
+	it("Can open read-only databases", async () => {
+		const db = open({
+			name: 'ignored',
+			location: ":memory:",
+			readOnly: true,
+		});
+		expect(!!db).toBe(true);
+
+		try {
+			await db.execute('CREATE TABLE foo (bar TEXT);');
+		} catch (e: any) {
+			expect(e.message).toContain('attempt to write a readonly database');
+		}
+	});
 });
 
 it("Can attach/dettach database", () => {
