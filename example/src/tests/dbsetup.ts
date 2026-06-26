@@ -241,13 +241,13 @@ describe("DB setup tests", () => {
 			});
 		}
 
-		if (isLibsql()) {
-			// libsql C bindings don't expose a way to open read-only databases, so the option is not supported.
+		if (isLibsql() || isTurso()) {
+			// libsql/turso C bindings don't expose a way to open read-only databases, so the option is not supported.
 			try {
 				openReadOnly();
 				throw new Error('should have failed');
 			} catch (e: any) {
-				expect(e.message).toContain('libsql does not support read-only databases');
+				expect(e.message).toContain('does not support read-only databases');
 			}
 
 			return;
