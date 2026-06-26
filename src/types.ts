@@ -16,7 +16,8 @@ export interface OpenOptions {
    * When set to true, the database is opened in read-only mode and any statement attempting to write to the database
    * will fail.
    * 
-   * This option is only supported for plain SQLite3 and SQLCipher.
+   * This option is only supported for plain SQLite3 and SQLCipher. When enabling this option with libsql enabled,
+   * opening databases will throw.
    */
   readOnly?: boolean;
 }

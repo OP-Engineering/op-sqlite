@@ -233,11 +233,27 @@ describe("DB setup tests", () => {
 	});
 
 	it("Can open read-only databases", async () => {
-		const db = open({
-			name: 'ignored',
-			location: ":memory:",
-			readOnly: true,
-		});
+		function openReadOnly() {
+			return open({
+				name: 'ignored',
+				location: ":memory:",
+				readOnly: true,
+			});
+		}
+
+		if (isLibsql()) {
+			// libsql C bindings don't expose a way to open read-only databases, so the option is not supported.
+			try {
+				openReadOnly();
+				throw new Error('should have failed');
+			} catch (e: any) {
+				expect(e.message).toContain('libsql does not support read-only databases');
+			}
+
+			return;
+		}
+
+		const db = openReadOnly();
 		expect(!!db).toBe(true);
 
 		try {
