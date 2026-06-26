@@ -217,6 +217,7 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &db_name,
 
 DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
                            std::string &db_name, std::string &path,
+                           bool readOnly,
                            std::string &crsqlite_path,
                            std::string &sqlite_vec_path,
                            std::string &encryption_key)
@@ -224,12 +225,15 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &base_path,
   thread_pool = std::make_shared<ThreadPool>();
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
-  db = opsqlite_open(db_name, path, crsqlite_path, sqlite_vec_path,
+  db = opsqlite_open(db_name, path, readOnly, crsqlite_path, sqlite_vec_path,
                      encryption_key);
 #elif OP_SQLITE_USE_LIBSQL
+  if (readOnly) {
+    throw std::runtime_error("libsql does not support read-only databases.");
+  }
   db = opsqlite_libsql_open(db_name, path, crsqlite_path);
 #else
-  db = opsqlite_open(db_name, path, crsqlite_path, sqlite_vec_path);
+  db = opsqlite_open(db_name, path, readOnly, crsqlite_path, sqlite_vec_path);
 #endif
   create_jsi_functions(rt);
 };

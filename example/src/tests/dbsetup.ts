@@ -231,6 +231,37 @@ describe("DB setup tests", () => {
 			expect(!!e).toBe(true);
 		}
 	});
+
+	it("Can open read-only databases", async () => {
+		function openReadOnly() {
+			return open({
+				name: 'ignored',
+				location: ":memory:",
+				readOnly: true,
+			});
+		}
+
+		if (isLibsql() || isTurso()) {
+			// libsql/turso C bindings don't expose a way to open read-only databases, so the option is not supported.
+			try {
+				openReadOnly();
+				throw new Error('should have failed');
+			} catch (e: any) {
+				expect(e.message).toContain('does not support read-only databases');
+			}
+
+			return;
+		}
+
+		const db = openReadOnly();
+		expect(!!db).toBe(true);
+
+		try {
+			await db.execute('CREATE TABLE foo (bar TEXT);');
+		} catch (e: any) {
+			expect(e.message).toContain('attempt to write a readonly database');
+		}
+	});
 });
 
 it("Can attach/dettach database", () => {

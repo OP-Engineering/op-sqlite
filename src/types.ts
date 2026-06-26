@@ -1,5 +1,27 @@
 export type Scalar = string | number | boolean | null | ArrayBuffer | ArrayBufferView;
 
+export interface OpenOptions {
+  /**
+   * The file name of the database to open.
+   */
+  name: string;
+  /**
+   * A directory prefix for the database file.
+   * 
+   * When set to `:memory:`, the name is ignored and an in-memory database is opened instead.
+   */
+  location?: string;
+  encryptionKey?: string;
+  /**
+   * When set to true, the database is opened in read-only mode and any statement attempting to write to the database
+   * will fail.
+   * 
+   * This option is only supported for plain SQLite3 and SQLCipher. When enabling this option with libsql enabled,
+   * opening databases will throw.
+   */
+  readOnly?: boolean;
+}
+
 /**
  * Object returned by SQL Query executions {
  *  insertId: Represent the auto-generated row id if applicable

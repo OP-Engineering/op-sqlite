@@ -5,6 +5,7 @@ import type {
   DB,
   DBParams,
   FileLoadResult,
+  OpenOptions,
   OPSQLiteProxy,
   PreparedStatement,
   QueryResult,
@@ -313,11 +314,7 @@ function enhanceWebDb(db: _InternalDB, options: { name?: string; location?: stri
   return enhancedDb;
 }
 
-async function createWebDb(params: {
-  name: string;
-  location?: string;
-  encryptionKey?: string;
-}): Promise<_InternalDB> {
+async function createWebDb(params: OpenOptions): Promise<_InternalDB> {
   if (params.encryptionKey) {
     throw new Error("[op-sqlite] SQLCipher is not supported on web.");
   }
@@ -328,6 +325,7 @@ async function createWebDb(params: {
   const filename = `file:${params.name}?vfs=opfs`;
   const opened = await promiser("open", {
     filename,
+    flags: params.readOnly ? 'r': 'c'
   });
 
   const dbId = opened?.dbId || opened?.result?.dbId;
@@ -444,16 +442,12 @@ async function createWebDb(params: {
  * Open a connection to a local sqlite database on web.
  * Web is async-only: use openAsync() and async methods like execute().
  */
-export const openAsync = async (params: {
-  name: string;
-  location?: string;
-  encryptionKey?: string;
-}): Promise<DB> => {
+export const openAsync = async (params: OpenOptions): Promise<DB> => {
   const db = await createWebDb(params);
   return enhanceWebDb(db, params);
 };
 
-export const open = (_params: { name: string; location?: string; encryptionKey?: string }): DB => {
+export const open = (_params:OpenOptions): DB => {
   throwSyncApiError("open");
 };
 

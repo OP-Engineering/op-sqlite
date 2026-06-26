@@ -80,11 +80,12 @@ std::string opsqlite_get_db_path(std::string const &db_name,
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
 sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
-                       std::string const &crsqlite_path,
+                       bool readOnly, std::string const &crsqlite_path,
                        std::string const &sqlite_vec_path,
                        std::string const &encryption_key) {
 #else
 sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
+                       bool readOnly,
                        [[maybe_unused]] std::string const &crsqlite_path,
                        [[maybe_unused]] std::string const &sqlite_vec_path) {
 #endif
@@ -92,8 +93,12 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
   char *errMsg;
   sqlite3 *db;
 
-  int flags =
-      SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX;
+  int flags = SQLITE_OPEN_FULLMUTEX;
+  if (readOnly) {
+    flags |= SQLITE_OPEN_READONLY;
+  } else {
+    flags |= SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
+  }
 
   int status = sqlite3_open_v2(final_path.c_str(), &db, flags, nullptr);
 
