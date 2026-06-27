@@ -38,7 +38,13 @@ jobs:
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
           jq --arg version "$TAG_NAME" '.version = $version' package.json > tmp.$$.json && mv tmp.$$.json package.json
-      - run: npm publish
+      - name: Publish to npm
+        run: |
+          if echo "$GITHUB_REF_NAME" | grep -qE '-(alpha|beta|rc)'; then
+            npm publish --tag beta
+          else
+            npm publish
+          fi
       - name: Create Github Release
         uses: elgohr/Github-Release-Action@v5
         env:
