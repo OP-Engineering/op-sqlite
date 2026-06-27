@@ -195,8 +195,7 @@ describe("Queries tests", () => {
 
     expect(res2.rowsAffected).toEqual(1);
     expect(res2.insertId).toEqual(1);
-    // expect(res2.rows).toBe([]);
-    expect(res2.rows).toBeFalsy();
+    expect(res2.rows.length).toEqual(0);
   });
 
   it("Insert", async () => {
