@@ -388,7 +388,6 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
     status =
         sqlite3_prepare_v2(db, query_str, -1, &statement, &remainingStatement);
 
-
     if (status != SQLITE_OK) {
       errorMessage = sqlite3_errmsg(db);
       throw std::runtime_error("[op-sqlite] sqlite query error: " +
@@ -405,15 +404,13 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
       opsqlite_bind_statement(statement, params);
     }
 
-    // Only pre-allocate row storage for read statements; write statements
-    // produce no rows so the default capacity of 0 is correct.
-    bool is_read_only = sqlite3_stmt_readonly(statement);
-    if (is_read_only) {
-      rows.reserve(20);
-      column_count = sqlite3_column_count(statement);
+    // sqlite3_column_count is the correct signal: it's non-zero for any
+    // statement that can return rows (SELECT, and write statements with
+    // RETURNING), regardless of sqlite3_stmt_readonly.
+    column_names.clear();
+    column_count = sqlite3_column_count(statement);
+    if (column_count > 0) {
       column_names.reserve(column_count);
-
-      // Do a first pass to get the column names
       for (int i = 0; i < column_count; i++) {
         column_name = sqlite3_column_name(statement, i);
         column_names.emplace_back(column_name);
@@ -429,11 +426,8 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
 
       switch (status) {
       case SQLITE_DONE:
-        if (!is_read_only) {
-          changedRowCount = sqlite3_changes(db);
-          latestInsertRowId = sqlite3_last_insert_rowid(db);
-        }
-
+        changedRowCount = sqlite3_changes(db);
+        latestInsertRowId = sqlite3_last_insert_rowid(db);
         is_consuming_rows = false;
         break;
 
