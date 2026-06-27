@@ -195,8 +195,7 @@ describe("Queries tests", () => {
 
     expect(res2.rowsAffected).toEqual(1);
     expect(res2.insertId).toEqual(1);
-    // expect(res2.rows).toBe([]);
-    expect(res2.rows?.length).toEqual(0);
+    expect(res2.rows.length).toEqual(0);
   });
 
   it("Insert", async () => {
@@ -889,6 +888,53 @@ describe("Queries tests", () => {
   it("Pragma user_version", () => {
     const res = db.executeSync("PRAGMA user_version");
     expect(res.rows).toDeepEqual([{ user_version: 0 }]);
+  });
+
+  it("INSERT RETURNING yields rows with correct columns", async () => {
+    if (isLibsql() || isTurso()) {
+      return;
+    }
+    const res = await db.execute(
+      "INSERT INTO User (id, name, age, networth) VALUES (?, ?, ?, ?) RETURNING id, name",
+      [42, "Alice", 30, 1234.56],
+    );
+    expect(res.rows.length).toBe(1);
+    expect(res.rows[0]!.id).toBe(42);
+    expect(res.rows[0]!.name).toBe("Alice");
+  });
+
+  it("UPDATE RETURNING yields updated rows", async () => {
+    if (isLibsql() || isTurso()) {
+      return;
+    }
+    await db.execute(
+      "INSERT INTO User (id, name, age, networth) VALUES (?, ?, ?, ?)",
+      [1, "Bob", 25, 500.0],
+    );
+    const res = await db.execute(
+      "UPDATE User SET name = ? WHERE id = ? RETURNING id, name",
+      ["Robert", 1],
+    );
+    expect(res.rows.length).toBe(1);
+    expect(res.rows[0]!.id).toBe(1);
+    expect(res.rows[0]!.name).toBe("Robert");
+  });
+
+  it("DELETE RETURNING yields deleted rows", async () => {
+    if (isLibsql() || isTurso()) {
+      return;
+    }
+    await db.execute(
+      "INSERT INTO User (id, name, age, networth) VALUES (?, ?, ?, ?)",
+      [99, "Eve", 40, 999.0],
+    );
+    const res = await db.execute(
+      "DELETE FROM User WHERE id = ? RETURNING id, name",
+      [99],
+    );
+    expect(res.rows.length).toBe(1);
+    expect(res.rows[0]!.id).toBe(99);
+    expect(res.rows[0]!.name).toBe("Eve");
   });
 
   //  const sqliteVecEnabled = pkg?.['op-sqlite']?.sqliteVec === true;

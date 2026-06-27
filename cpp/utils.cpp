@@ -1,3 +1,4 @@
+
 #include "utils.hpp"
 #include "SmartHostObject.h"
 #include "types.hpp"
@@ -15,7 +16,7 @@ namespace opsqlite {
 namespace jsi = facebook::jsi;
 namespace react = facebook::react;
 
-inline jsi::Value to_jsi(jsi::Runtime &rt, const JSVariant &value) {
+jsi::Value to_jsi(jsi::Runtime &rt, const JSVariant &value) {
   if (std::holds_alternative<bool>(value)) {
     return std::get<bool>(value);
   } else if (std::holds_alternative<int>(value)) {
@@ -76,7 +77,7 @@ inline jsi::Value to_jsi(jsi::Runtime &rt, const JSVariant &value) {
   //      value);
 }
 
-inline JSVariant to_variant(jsi::Runtime &rt, const jsi::Value &value) {
+JSVariant to_variant(jsi::Runtime &rt, const jsi::Value &value) {
   if (value.isNull() || value.isUndefined()) {
     return JSVariant(nullptr);
   } else if (value.isBool()) {
@@ -94,7 +95,7 @@ inline JSVariant to_variant(jsi::Runtime &rt, const jsi::Value &value) {
     }
   } else if (value.isString()) {
     std::string strVal = value.asString(rt).utf8(rt);
-    return JSVariant(strVal);
+    return JSVariant(std::move(strVal));
   } else if (value.isObject()) {
     auto obj = value.asObject(rt);
     size_t byteOffset = 0;
@@ -142,7 +143,7 @@ inline JSVariant to_variant(jsi::Runtime &rt, const jsi::Value &value) {
 }
 
 std::vector<std::string> to_string_vec(jsi::Runtime &rt, jsi::Value const &xs) {
-  jsi::Array values = xs.asObject(rt).asArray(rt);
+  jsi::Array const values = xs.asObject(rt).asArray(rt);
   std::vector<std::string> res;
   for (int ii = 0; ii < values.length(rt); ii++) {
     std::string value = values.getValueAtIndex(rt, ii).asString(rt).utf8(rt);
@@ -152,7 +153,7 @@ std::vector<std::string> to_string_vec(jsi::Runtime &rt, jsi::Value const &xs) {
 }
 
 std::vector<int> to_int_vec(jsi::Runtime &rt, jsi::Value const &xs) {
-  jsi::Array values = xs.asObject(rt).asArray(rt);
+  jsi::Array const values = xs.asObject(rt).asArray(rt);
   std::vector<int> res;
   for (int ii = 0; ii < values.length(rt); ii++) {
     int value = static_cast<int>(values.getValueAtIndex(rt, ii).asNumber());
@@ -162,13 +163,15 @@ std::vector<int> to_int_vec(jsi::Runtime &rt, jsi::Value const &xs) {
 }
 
 std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt, jsi::Value const &xs) {
-  std::vector<JSVariant> res;
-  jsi::Array values = xs.asObject(rt).asArray(rt);
+  jsi::Array const values = xs.asObject(rt).asArray(rt);
+  size_t arg_length = values.length(rt);
 
-  for (int ii = 0; ii < values.length(rt); ii++) {
-    jsi::Value value = values.getValueAtIndex(rt, ii);
-    res.emplace_back(to_variant(rt, value));
-  }
+  std::vector<JSVariant> res;
+  res.reserve(arg_length);
+
+  for (size_t ii = 0; ii < arg_length; ii++) {
+     res.emplace_back(to_variant(rt, values.getValueAtIndex(rt, ii)));
+   }
 
   return res;
 }
@@ -183,6 +186,11 @@ jsi::Value create_js_rows(jsi::Runtime &rt, const BridgeResult &status) {
 
   size_t row_count = status.rows.size();
   size_t column_count = status.column_names.size();
+
+  if (row_count == 0) {
+    res.setProperty(rt, "rows", jsi::Array(rt, 0));
+    return res;
+  }
 
   std::vector<jsi::PropNameID> column_prop_ids;
   column_prop_ids.reserve(column_count);

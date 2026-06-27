@@ -29,7 +29,7 @@ describe("Storage", () => {
 		expect(res).toEqual("bark");
 	});
 
-	it("can remove item sync", async () => {
+	it("Can remove item sync", async () => {
 		storage.setItemSync("foo", "bar");
 		storage.removeItemSync("foo");
 		const res = storage.getItemSync("foo");

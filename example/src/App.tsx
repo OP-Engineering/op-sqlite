@@ -5,7 +5,7 @@ import {
 } from "@op-engineering/op-test";
 import { useEffect, useState } from "react";
 import "./tests"; // import all tests to register them
-import {performanceTest} from './performance_test';
+import {performanceTest, insertTest} from './performance_test';
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 // import {open} from '@op-engineering/op-sqlite';
@@ -36,15 +36,16 @@ export default function App() {
 				console.log("OPSQLITE_TEST_RESULT:FAIL");
 			}
 
-			setTimeout(() => {
-			  try {
-			    global?.gc?.();
-			    let perfRes = performanceTest();
-			    setPerfResult(perfRes);
-			  } catch (e) {
-			    // intentionally left blank
-			  }
-			}, 4000);
+			// setTimeout(() => {
+			  // try {
+			  //   global?.gc?.();
+			  //   // let perfRes = performanceTest();
+     //      let perfRes = insertTest();
+			  //   setPerfResult(perfRes);
+			  // } catch (e) {
+			  //   // intentionally left blank
+			  // }
+			// }, 4000);
 		};
 
 		work();
