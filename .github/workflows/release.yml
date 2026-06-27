@@ -40,7 +40,7 @@ jobs:
           jq --arg version "$TAG_NAME" '.version = $version' package.json > tmp.$$.json && mv tmp.$$.json package.json
       - name: Publish to npm
         run: |
-          if echo "$GITHUB_REF_NAME" | grep -qE '-(alpha|beta|rc)'; then
+          if echo "$GITHUB_REF_NAME" | grep -q -- '-beta\|-alpha\|-rc'; then
             npm publish --tag beta
           else
             npm publish
