@@ -4,7 +4,7 @@ import {
 	runTests,
 } from "@op-engineering/op-test";
 import { useEffect, useState } from "react";
-// import "./tests"; // import all tests to register them
+import "./tests"; // import all tests to register them
 import {performanceTest, insertTest} from './performance_test';
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -24,27 +24,27 @@ export default function App() {
 			// });
 			// setOpenTime(performance.now() - start);
 
-			// try {
-			// 	console.log("TESTS STARTED 🟠");
-			// 	const results = await runTests();
-			// 	const passed = allTestsPassed(results);
-			// 	console.log("TESTS FINISHED 🟢");
-			// 	console.log(`OPSQLITE_TEST_RESULT:${passed ? "PASS" : "FAIL"}`);
-			// 	setResults(results);
-			// } catch (e) {
-			// 	console.log(`TEST FAILED 🟥 ${e}`);
-			// 	console.log("OPSQLITE_TEST_RESULT:FAIL");
-			// }
+			try {
+				console.log("TESTS STARTED 🟠");
+				const results = await runTests();
+				const passed = allTestsPassed(results);
+				console.log("TESTS FINISHED 🟢");
+				console.log(`OPSQLITE_TEST_RESULT:${passed ? "PASS" : "FAIL"}`);
+				setResults(results);
+			} catch (e) {
+				console.log(`TEST FAILED 🟥 ${e}`);
+				console.log("OPSQLITE_TEST_RESULT:FAIL");
+			}
 
 			// setTimeout(() => {
-			  try {
-			    global?.gc?.();
-			    // let perfRes = performanceTest();
-          let perfRes = insertTest();
-			    setPerfResult(perfRes);
-			  } catch (e) {
-			    // intentionally left blank
-			  }
+			  // try {
+			  //   global?.gc?.();
+			  //   // let perfRes = performanceTest();
+     //      let perfRes = insertTest();
+			  //   setPerfResult(perfRes);
+			  // } catch (e) {
+			  //   // intentionally left blank
+			  // }
 			// }, 4000);
 		};
 

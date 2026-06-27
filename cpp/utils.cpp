@@ -185,11 +185,12 @@ jsi::Value create_js_rows(jsi::Runtime &rt, const BridgeResult &status) {
   }
 
   size_t row_count = status.rows.size();
-  if (row_count == 0) {
-      return res;
-  }
-
   size_t column_count = status.column_names.size();
+
+  if (row_count == 0) {
+    res.setProperty(rt, "rows", jsi::Array(rt, 0));
+    return res;
+  }
 
   std::vector<jsi::PropNameID> column_prop_ids;
   column_prop_ids.reserve(column_count);

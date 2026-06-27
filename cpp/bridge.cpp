@@ -388,16 +388,17 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
     status =
         sqlite3_prepare_v2(db, query_str, -1, &statement, &remainingStatement);
 
-    // The statement did not fail to parse but there is nothing to do, just
-    // skip to the end
-    if (statement == nullptr) {
-      continue;
-    }
 
     if (status != SQLITE_OK) {
       errorMessage = sqlite3_errmsg(db);
       throw std::runtime_error("[op-sqlite] sqlite query error: " +
                                std::string(errorMessage));
+    }
+
+    // The statement did not fail to parse but there is nothing to do, just
+    // skip to the end
+    if (statement == nullptr) {
+      continue;
     }
 
     if (params != nullptr && !params->empty()) {
@@ -432,7 +433,7 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
           changedRowCount = sqlite3_changes(db);
           latestInsertRowId = sqlite3_last_insert_rowid(db);
         }
-          
+
         is_consuming_rows = false;
         break;
 
