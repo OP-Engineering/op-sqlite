@@ -94,7 +94,7 @@ inline JSVariant to_variant(jsi::Runtime &rt, const jsi::Value &value) {
     }
   } else if (value.isString()) {
     std::string strVal = value.asString(rt).utf8(rt);
-    return JSVariant(strVal);
+    return JSVariant(std::move(strVal));
   } else if (value.isObject()) {
     auto obj = value.asObject(rt);
     size_t byteOffset = 0;
@@ -161,14 +161,16 @@ std::vector<int> to_int_vec(jsi::Runtime &rt, jsi::Value const &xs) {
   return res;
 }
 
-std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt, jsi::Value const &xs) {
-  std::vector<JSVariant> res;
+inline std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt, jsi::Value const &xs) {
   jsi::Array values = xs.asObject(rt).asArray(rt);
+  size_t arg_length = values.length(rt);
 
-  for (int ii = 0; ii < values.length(rt); ii++) {
-    jsi::Value value = values.getValueAtIndex(rt, ii);
-    res.emplace_back(to_variant(rt, value));
-  }
+  std::vector<JSVariant> res;
+  res.reserve(arg_length);
+
+  for (size_t ii = 0; ii < arg_length; ii++) {
+     res.emplace_back(to_variant(rt, values.getValueAtIndex(rt, ii)));
+   }
 
   return res;
 }
@@ -182,6 +184,10 @@ jsi::Value create_js_rows(jsi::Runtime &rt, const BridgeResult &status) {
   }
 
   size_t row_count = status.rows.size();
+  if (row_count == 0) {
+      return res;
+  }
+
   size_t column_count = status.column_names.size();
 
   std::vector<jsi::PropNameID> column_prop_ids;

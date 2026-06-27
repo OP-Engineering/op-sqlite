@@ -1,5 +1,7 @@
 import {open} from '@op-engineering/op-sqlite';
 
+const ITERATIONS = 1000;
+
 export function performanceTest() {
   const db = open({
     name: 'perfTest.sqlite',
@@ -38,4 +40,29 @@ export function performanceTest() {
 
   // await db.close();
   return end - start;
+}
+
+export function insertTest() {
+  const db = open({
+    name: 'insertTest.sqlite'
+  });
+
+
+  db.executeSync("DROP TABLE IF EXISTS bench");
+  db.executeSync(
+    "CREATE TABLE bench (id INTEGER PRIMARY KEY, name TEXT, value REAL)",
+  );
+
+  // sync inserts
+  for (let i = 0; i < ITERATIONS; i++) {
+    db.executeSync("INSERT INTO bench VALUES (?,?,?)", [i, `n${i}`, i * 1.5]);
+  }
+
+  // select all
+  let t = performance.now();
+  for (let i = 0; i < ITERATIONS; i++) {
+    db.executeSync("SELECT * FROM bench");
+  }
+
+  return performance.now() - t;
 }

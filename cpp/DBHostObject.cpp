@@ -400,7 +400,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
     std::string query = args[0].asString(rt).utf8(rt);
     std::vector<JSVariant> params;
 
-    if (count == 2) {
+    if (count == 2 && !args[1].isNull() && !args[1].isUndefined()) {
       params = to_variant_vec(rt, args[1]);
     }
 #ifdef OP_SQLITE_USE_LIBSQL

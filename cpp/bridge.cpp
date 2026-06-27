@@ -10,6 +10,7 @@
 #include "utils.hpp"
 #include <filesystem>
 #include <iostream>
+#include <sqlite3.h>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
@@ -376,8 +377,9 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
   std::string column_name, column_declared_type;
   std::vector<std::string> column_names;
   std::vector<std::vector<JSVariant>> rows;
-  rows.reserve(20);
   std::vector<JSVariant> row;
+  int changedRowCount = 0;
+  long long latestInsertRowId = 0;
 
   do {
     const char *query_str =
@@ -386,38 +388,54 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
     status =
         sqlite3_prepare_v2(db, query_str, -1, &statement, &remainingStatement);
 
-    if (status != SQLITE_OK) {
-      errorMessage = sqlite3_errmsg(db);
-      throw std::runtime_error("[op-sqlite] sqlite query error: " +
-                               std::string(errorMessage));
-    }
-
     // The statement did not fail to parse but there is nothing to do, just
     // skip to the end
     if (statement == nullptr) {
       continue;
     }
 
+    if (status != SQLITE_OK) {
+      errorMessage = sqlite3_errmsg(db);
+      throw std::runtime_error("[op-sqlite] sqlite query error: " +
+                               std::string(errorMessage));
+    }
+
     if (params != nullptr && !params->empty()) {
       opsqlite_bind_statement(statement, params);
     }
 
-    column_count = sqlite3_column_count(statement);
-    column_names.reserve(column_count);
+    // Only pre-allocate row storage for read statements; write statements
+    // produce no rows so the default capacity of 0 is correct.
+    bool is_read_only = sqlite3_stmt_readonly(statement);
+    if (is_read_only) {
+      rows.reserve(20);
+      column_count = sqlite3_column_count(statement);
+      column_names.reserve(column_count);
+
+      // Do a first pass to get the column names
+      for (int i = 0; i < column_count; i++) {
+        column_name = sqlite3_column_name(statement, i);
+        column_names.emplace_back(column_name);
+      }
+    }
+
     bool is_consuming_rows = true;
     double double_value;
     const char *string_value;
-
-    // Do a first pass to get the column names
-    for (int i = 0; i < column_count; i++) {
-      column_name = sqlite3_column_name(statement, i);
-      column_names.emplace_back(column_name);
-    }
 
     while (is_consuming_rows) {
       status = sqlite3_step(statement);
 
       switch (status) {
+      case SQLITE_DONE:
+        if (!is_read_only) {
+          changedRowCount = sqlite3_changes(db);
+          latestInsertRowId = sqlite3_last_insert_rowid(db);
+        }
+          
+        is_consuming_rows = false;
+        break;
+
       case SQLITE_ROW:
         current_column = 0;
         row = std::vector<JSVariant>();
@@ -470,10 +488,6 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
         rows.emplace_back(std::move(row));
         break;
 
-      case SQLITE_DONE:
-        is_consuming_rows = false;
-        break;
-
       default:
         has_failed = true;
         is_consuming_rows = false;
@@ -481,6 +495,7 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
     }
 
     sqlite3_finalize(statement);
+
   } while (remainingStatement != nullptr &&
            strcmp(remainingStatement, "") != 0 && !has_failed);
 
@@ -490,8 +505,6 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
                              std::string(message));
   }
 
-  int changedRowCount = sqlite3_changes(db);
-  long long latestInsertRowId = sqlite3_last_insert_rowid(db);
   return {.affectedRows = changedRowCount,
           .insertId = static_cast<double>(latestInsertRowId),
           .rows = std::move(rows),
