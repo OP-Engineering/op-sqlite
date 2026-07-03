@@ -1,4 +1,5 @@
-![benchmark](benchmark3.jpg)
+![benchmark_ios](benchmark4.jpg)
+![benchmark_android](benchmark3.jpg)
 
 Created by [@ospfranco](https://twitter.com/ospfranco). **Please consider sponsoring!**.
 
