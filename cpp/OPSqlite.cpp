@@ -1,11 +1,11 @@
 #include "OPSqlite.hpp"
-#include "DBHostObject.h"
-#include "DumbHostObject.h"
-#include "OPThreadPool.h"
+#include "DBHostObject.hpp"
+#include "DumbHostObject.hpp"
+#include "OPThreadPool.hpp"
 #ifdef OP_SQLITE_USE_LIBSQL
 #include "libsql/bridge.hpp"
 #else
-#include "bridge.h"
+#include "bridge.hpp"
 #endif
 #include "logs.h"
 #include "macros.hpp"

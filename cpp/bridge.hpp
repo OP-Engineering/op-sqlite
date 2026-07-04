@@ -1,7 +1,7 @@
 #pragma once
 
-#include "DumbHostObject.h"
-#include "SmartHostObject.h"
+#include "DumbHostObject.hpp"
+#include "SmartHostObject.hpp"
 #include "types.hpp"
 #include "utils.hpp"
 #ifdef __ANDROID__

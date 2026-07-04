@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SmartHostObject.h"
+#include "SmartHostObject.hpp"
 #include "types.hpp"
 #include <any>
 #include <jsi/jsi.h>

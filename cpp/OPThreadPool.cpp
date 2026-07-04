@@ -1,4 +1,4 @@
-#include "OPThreadPool.h"
+#include "OPThreadPool.hpp"
 
 namespace opsqlite {
 

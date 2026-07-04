@@ -1,4 +1,4 @@
-#include "SmartHostObject.h"
+#include "SmartHostObject.hpp"
 #include "utils.hpp"
 
 namespace opsqlite {

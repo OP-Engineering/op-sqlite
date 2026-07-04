@@ -1,6 +1,6 @@
 #pragma once
 
-#include "OPThreadPool.h"
+#include "OPThreadPool.hpp"
 #include "types.hpp"
 #include <ReactCommon/CallInvoker.h>
 #include <jsi/jsi.h>

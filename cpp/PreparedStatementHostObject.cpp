@@ -1,8 +1,8 @@
-#include "PreparedStatementHostObject.h"
+#include "PreparedStatementHostObject.hpp"
 #if OP_SQLITE_USE_LIBSQL
 #include "libsql/bridge.hpp"
 #else
-#include "bridge.h"
+#include "bridge.hpp"
 #endif
 #include "macros.hpp"
 #include "utils.hpp"

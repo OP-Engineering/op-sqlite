@@ -13,7 +13,7 @@
 #include <sqlite3.h>
 #endif
 #endif
-#include "OPThreadPool.h"
+#include "OPThreadPool.hpp"
 #include <string>
 #include <utility>
 

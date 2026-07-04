@@ -1,7 +1,7 @@
 #pragma once
 
-#include "DumbHostObject.h"
-#include "SmartHostObject.h"
+#include "DumbHostObject.hpp"
+#include "SmartHostObject.hpp"
 #include "types.hpp"
 #include <jsi/jsi.h>
 #ifdef __ANDROID__
@@ -12,7 +12,7 @@
 #include <ReactCommon/CallInvoker.h>
 #include <string>
 #include <vector>
-#include "OPThreadPool.h"
+#include "OPThreadPool.hpp"
 
 namespace opsqlite {
 
