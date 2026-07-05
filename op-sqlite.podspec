@@ -155,7 +155,7 @@ Pod::Spec.new do |s|
     s.dependency "OpenSSL-Universal"
   elsif use_turso then
     log_message.call("[OP-SQLITE] using Turso SDK kit")
-    exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/bridge.h", "cpp/bridge.cpp", "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h", "ios/libsql_experimental.xcframework/**/*"]
+    exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/bridge.hpp", "cpp/bridge.cpp", "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/bridge.hpp", "cpp/libsql/bridge.cpp", "ios/libsql_experimental.xcframework/**/*"]
   elsif use_libsql then
     log_message.call("[OP-SQLITE] ⚠️ Using libsql. If you have libsql questions please ask in the Turso Discord server.")
     exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/bridge.h", "cpp/bridge.cpp", "ios/turso_sdk_kit.xcframework/**/*"]
