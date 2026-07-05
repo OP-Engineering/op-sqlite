@@ -36,16 +36,16 @@ export default function App() {
 				console.log("OPSQLITE_TEST_RESULT:FAIL");
 			}
 
-			// setTimeout(() => {
-			  // try {
-			  //   global?.gc?.();
-			  //   // let perfRes = performanceTest();
-     //      let perfRes = insertTest();
-			  //   setPerfResult(perfRes);
-			  // } catch (e) {
-			  //   // intentionally left blank
-			  // }
-			// }, 4000);
+			setTimeout(() => {
+			  try {
+			    global?.gc?.();
+			    // let perfRes = performanceTest();
+          let perfRes = insertTest();
+			    setPerfResult(perfRes);
+			  } catch (e) {
+			    // intentionally left blank
+			  }
+			}, 4000);
 		};
 
 		work();

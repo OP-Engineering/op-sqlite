@@ -1,6 +1,6 @@
 #include "bridge.hpp"
-#include "DumbHostObject.h"
-#include "SmartHostObject.h"
+#include "DumbHostObject.hpp"
+#include "SmartHostObject.hpp"
 #include "libsql.h"
 #include "logs.h"
 #include "utils.hpp"

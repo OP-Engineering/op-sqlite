@@ -1,11 +1,11 @@
 
 #include "utils.hpp"
-#include "SmartHostObject.h"
+#include "SmartHostObject.hpp"
 #include "types.hpp"
 #ifndef OP_SQLITE_USE_LIBSQL
-#include "bridge.h"
+#include "bridge.hpp"
 #endif
-#include "OPThreadPool.h"
+#include "OPThreadPool.hpp"
 #include "macros.hpp"
 #include <fstream>
 #include <sys/stat.h>

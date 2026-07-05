@@ -1,7 +1,7 @@
-#include "DBHostObject.h"
-#include "DumbHostObject.h"
-#include "SmartHostObject.h"
-#include "bridge.h"
+#include "DBHostObject.hpp"
+#include "DumbHostObject.hpp"
+#include "SmartHostObject.hpp"
+#include "bridge.hpp"
 #include "utils.hpp"
 
 #ifdef __APPLE__

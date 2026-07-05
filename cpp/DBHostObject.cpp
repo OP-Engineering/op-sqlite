@@ -1,9 +1,9 @@
-#include "DBHostObject.h"
-#include "PreparedStatementHostObject.h"
+#include "DBHostObject.hpp"
+#include "PreparedStatementHostObject.hpp"
 #if OP_SQLITE_USE_LIBSQL
 #include "libsql/bridge.hpp"
 #else
-#include "bridge.h"
+#include "bridge.hpp"
 #endif
 #include "logs.h"
 #include <functional>
