@@ -117,7 +117,7 @@ Pod::Spec.new do |s|
   source_files.reject! { |path| path == "cpp/turso_bridge.cpp" } unless use_turso
 
   # Strictly blocks all headers from being public
-  s.public_header_files = []
+  s.public_header_files = ["ios/OPSQLite.h", "cpp/sqlite3.h", "cpp/bridge.hpp"]
 
   # Set the path to the `c_sources` directory based on environment
   if is_user_app
