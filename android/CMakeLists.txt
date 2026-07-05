@@ -52,7 +52,7 @@ add_library(
 )
 
 if (USE_SQLCIPHER)
-  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlcipher/sqlite3.h ../cpp/sqlcipher/sqlite3.c ../cpp/bridge.cpp ../cpp/bridge.h)
+  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlcipher/sqlite3.h ../cpp/sqlcipher/sqlite3.c ../cpp/bridge.cpp ../cpp/bridge.hpp)
 
   add_definitions(
     -DOP_SQLITE_USE_SQLCIPHER=1
