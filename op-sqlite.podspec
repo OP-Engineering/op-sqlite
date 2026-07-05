@@ -17,7 +17,7 @@ if is_user_app
   current_dir = File.expand_path(__dir__)
   # Move one level up to the parent directory
   current_dir = File.dirname(current_dir)
-  
+
   # Find the package.json by searching up through parent directories
   loop do
     package_path = File.join(current_dir, "package.json")
@@ -30,7 +30,7 @@ if is_user_app
     break if parent_dir == current_dir  # reached filesystem root
     current_dir = parent_dir
   end
-  
+
   raise "package.json not found" if package_json_path.nil?
 else
   package_json_path = File.join(__dir__, "example", "package.json")
@@ -109,12 +109,15 @@ Pod::Spec.new do |s|
   log_message.call("[OP-SQLITE] Configuration found at #{package_json_path}")
 
   install_modules_dependencies(s)
-  
+
   # Base source files
   source_files = Dir.glob("ios/**/*.{h,hpp,m,mm}") + Dir.glob("cpp/**/*.{hpp,h,cpp,c}")
 
   # Backend bridges are selected explicitly by flags and should not be compiled by default.
   source_files.reject! { |path| path == "cpp/turso_bridge.cpp" } unless use_turso
+
+  # Strictly blocks all headers from being public
+  s.public_header_files = []
 
   # Set the path to the `c_sources` directory based on environment
   if is_user_app
@@ -136,20 +139,20 @@ Pod::Spec.new do |s|
 
   # Assign the collected source files to `s.source_files`
   s.source_files = source_files
-  
+
   xcconfig = {
     :GCC_PREPROCESSOR_DEFINITIONS => "",
-    :CLANG_CXX_LANGUAGE_STANDARD => "c++20",
+    :CLANG_CXX_LANGUAGE_STANDARD => "c++23",
     :GCC_OPTIMIZATION_LEVEL => "2",
   }
-  
+
   exclude_files = []
-  
+
   if use_sqlcipher then
     log_message.call("[OP-SQLITE] using SQLCipher")
     exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/libsql/bridge.c", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h", "ios/libsql.xcframework/**/*"]
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_SQLCIPHER=1 HAVE_FULLFSYNC=1 SQLITE_HAS_CODEC SQLITE_TEMP_STORE=3 SQLITE_EXTRA_INIT=sqlcipher_extra_init SQLITE_EXTRA_SHUTDOWN=sqlcipher_extra_shutdown"
-    s.dependency "OpenSSL-Universal"    
+    s.dependency "OpenSSL-Universal"
   elsif use_turso then
     log_message.call("[OP-SQLITE] using Turso SDK kit")
     exclude_files += ["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/bridge.h", "cpp/bridge.cpp", "cpp/sqlcipher/sqlite3.c", "cpp/sqlcipher/sqlite3.h", "cpp/libsql/bridge.h", "cpp/libsql/bridge.cpp", "cpp/libsql/libsql.h", "ios/libsql_experimental.xcframework/**/*"]
@@ -169,7 +172,7 @@ Pod::Spec.new do |s|
   if !use_sqlite_vec then
     exclude_files += ["ios/sqlitevec.xcframework/**/*"]
   end
-  
+
   other_cflags = '$(inherited) -DSQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION=1 -DHAVE_USLEEP=1 -DSQLITE_ENABLE_LOCKING_STYLE=0'
   optimizedCflags = ' -DSQLITE_DQS=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS=1 -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DEPRECATED=1 -DSQLITE_OMIT_PROGRESS_CALLBACK=1 -DSQLITE_OMIT_SHARED_CACHE=1 -DSQLITE_USE_ALLOCA=1 -DSQLITE_STRICT_SUBTYPE=1 -DSQLITE_THREADSAFE=2'
   frameworks = []
@@ -181,7 +184,7 @@ Pod::Spec.new do |s|
   if rtree then
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " SQLITE_ENABLE_RTREE=1"
   end
- 
+
   if phone_version then
     log_message.call("[OP-SQLITE] using iOS embedded SQLite 📱")
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_PHONE_VERSION=1"
@@ -229,7 +232,7 @@ Pod::Spec.new do |s|
     log_message.call("[OP_SQLITE] Tokenizers enabled: #{tokenizers}")
     if is_user_app then
       other_cflags += " -DTOKENIZERS_HEADER_PATH=\\\"../c_sources/tokenizers.h\\\""
-    else 
+    else
       other_cflags += " -DTOKENIZERS_HEADER_PATH=\\\"../example/c_sources/tokenizers.h\\\""
     end
   end
