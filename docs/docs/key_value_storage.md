@@ -12,6 +12,7 @@ import { Storage } from '@op-engineering/op-sqlite';
 // Storage is backed by it's own database
 // You can set the location like any other op-sqlite database
 const storage = new Storage({
+  name: 'myStorage.sqlite', // Optional, defaults to '__opsqlite_storage.sqlite'
   location: 'storage', // Optional, see location param on normal databases
   encryptionKey: 'myEncryptionKey', // Optional, only used when used against SQLCipher
 });

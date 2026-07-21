@@ -2,6 +2,7 @@ import { openAsync } from './functions.web';
 import { type DB } from './types';
 
 type StorageOptions = {
+  name?: string;
   location?: string;
   encryptionKey?: string;
 };
@@ -9,9 +10,12 @@ type StorageOptions = {
 export class Storage {
   private dbPromise: Promise<DB>;
 
-  constructor(options: StorageOptions) {
+  constructor({
+    name = '__opsqlite_storage.sqlite',
+    ...options
+  }: StorageOptions) {
     this.dbPromise = (async () => {
-      const db = await openAsync({ ...options, name: '__opsqlite_storage.sqlite' });
+      const db = await openAsync({ ...options, name });
       await db.execute(
         'CREATE TABLE IF NOT EXISTS storage (key TEXT PRIMARY KEY, value TEXT)'
       );

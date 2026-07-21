@@ -2,6 +2,7 @@ import { isTurso, open } from './functions';
 import type { DB } from './types';
 
 type StorageOptions = {
+  name?: string;
   location?: string;
   encryptionKey?: string;
 };
@@ -13,8 +14,11 @@ type StorageOptions = {
 export class Storage {
   private db: DB;
 
-  constructor(options: StorageOptions) {
-    this.db = open({ ...options, name: '__opsqlite_storage.sqlite' });
+  constructor({
+    name = '__opsqlite_storage.sqlite',
+    ...options
+  }: StorageOptions) {
+    this.db = open({ ...options, name });
     if (!isTurso()) {
       this.db.executeSync('PRAGMA mmap_size=268435456');
     }
