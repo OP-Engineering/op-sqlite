@@ -8,8 +8,10 @@
   "exports": {
     ".": {
       "source": "./src/index.ts",
-      "node": "./node/dist/index.js",
       "types": "./lib/typescript/src/index.d.ts",
+      "node": "./node/dist/index.js",
+      "browser": "./lib/module/index.web.js",
+      "react-native": "./lib/module/index.js",
       "default": "./lib/module/index.js"
     },
     "./package.json": "./package.json"
