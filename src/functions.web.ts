@@ -54,46 +54,71 @@ function ensureSingleStatement(sql: string): void {
   }
 }
 
-let promiserPromise: Promise<WorkerPromiser> | null = null;
+// Both Metro (Expo web) and Vite only statically discover a worker's URL
+// when it's written as a literal `new Worker(new URL("./relative", import.meta.url))`
+// expression -- this code runs on the main thread, where Expo's import.meta
+// polyfill *is* installed, so it's safe to use here (unlike inside the
+// worker itself; see opsqlite-web.worker.ts for why that file can't).
+// @sqlite.org/sqlite-wasm's own bundled worker also uses this pattern, but
+// with a bare (non-"./") specifier that Metro can't resolve, and it performs
+// *other*, unrelated `import.meta.url` reads inside the worker where the
+// polyfill is missing -- which is why we ship our own tiny worker built
+// against its lower-level API instead of using its worker directly.
+//
+// Metro's worker bundling only recognizes a *bare* `Worker` identifier as the
+// `new Worker(...)` callee (a `globalThis.Worker`/cast member expression does
+// not match), so `Worker` is declared as an ambient global here instead of
+// accessed through a cast -- that keeps this file type-checkable without
+// pulling in the DOM lib while still emitting the exact AST shape Metro's
+// static analysis looks for.
+declare const Worker: any;
 
-async function getPromiser(): Promise<WorkerPromiser> {
-  if (!promiserPromise) {
-    promiserPromise = (async () => {
-      let mod: any;
+let worker: any = null;
+let nextRequestId = 0;
+const pendingRequests = new Map<number, { resolve: (value: any) => void; reject: (error: Error) => void }>();
 
-      try {
-        mod = await import("@sqlite.org/sqlite-wasm");
-      } catch (error) {
-        throw new Error(
-          `[op-sqlite] Web support requires optional dependency @sqlite.org/sqlite-wasm. Install it in your app: npm i @sqlite.org/sqlite-wasm (or yarn add @sqlite.org/sqlite-wasm). Original error: ${(error as Error).message}`,
-        );
+function getWorker(): any {
+  if (!worker) {
+    worker = new Worker(new URL("./opsqlite-web.worker", import.meta.url), { type: "module" });
+
+    worker.onmessage = (event: { data: { id: number; result?: any; error?: { message: string } } }) => {
+      const { id, result, error } = event.data;
+      const pending = pendingRequests.get(id);
+      if (!pending) {
+        return;
       }
 
-      const makePromiser = mod.sqlite3Worker1Promiser as any;
-
-      const maybePromiser = makePromiser();
-
-      if (typeof maybePromiser === "function") {
-        return maybePromiser as WorkerPromiser;
+      pendingRequests.delete(id);
+      if (error) {
+        pending.reject(new Error(error.message));
+      } else {
+        pending.resolve(result);
       }
+    };
 
-      return (await maybePromiser) as WorkerPromiser;
-    })();
+    worker.onerror = (event: { message?: string }) => {
+      const error = new Error(
+        `[op-sqlite] Web worker failed to load. Make sure @sqlite.org/sqlite-wasm is installed (npm i @sqlite.org/sqlite-wasm) and that your bundler treats *.wasm as an asset (add "wasm" to metro.config.js's resolver.assetExts). Original error: ${event.message ?? "unknown"}`,
+      );
+      for (const pending of pendingRequests.values()) {
+        pending.reject(error);
+      }
+      pendingRequests.clear();
+    };
   }
 
-  return promiserPromise;
+  return worker;
 }
 
-async function ensureOpfs(promiser: WorkerPromiser): Promise<void> {
-  const config = await promiser("config-get", {});
-  const vfsList = config?.result?.vfsList;
+const callWorker: WorkerPromiser = (type, payload) => {
+  const w = getWorker();
+  const id = nextRequestId++;
 
-  if (!Array.isArray(vfsList) || !vfsList.includes("opfs")) {
-    throw new Error(
-      "[op-sqlite] OPFS is required on web for persistence. Ensure COOP/COEP headers are set and OPFS is available in this browser.",
-    );
-  }
-}
+  return new Promise((resolve, reject) => {
+    pendingRequests.set(id, { resolve, reject });
+    w.postMessage({ id, type, payload });
+  });
+};
 
 async function executeWorker(
   promiser: WorkerPromiser,
@@ -103,22 +128,21 @@ async function executeWorker(
 ): Promise<QueryResult> {
   ensureSingleStatement(query);
 
-  const response = await promiser("exec", {
-    dbId,
-    sql: query,
-    bind: params,
-    rowMode: "object",
-    resultRows: [],
-    columnNames: [],
-    returnValue: "resultRows",
-  });
+  let result: any;
+  try {
+    result = await promiser("exec", {
+      dbId,
+      sql: query,
+      bind: params,
+      rowMode: "object",
+    });
+  } catch (error) {
+    throw new Error(
+      `[op-sqlite] Web query failed. Ensure COOP/COEP headers are set and OPFS is available in this browser. Original error: ${(error as Error).message}`,
+    );
+  }
 
-  const result = response?.result;
-  const rows = Array.isArray(result?.resultRows)
-    ? (result.resultRows as Array<Record<string, Scalar>>)
-    : Array.isArray(result)
-      ? (result as Array<Record<string, Scalar>>)
-      : [];
+  const rows = Array.isArray(result?.resultRows) ? (result.resultRows as Array<Record<string, Scalar>>) : [];
   const columnNames = Array.isArray(result?.columnNames)
     ? (result.columnNames as string[])
     : rows.length > 0
@@ -319,18 +343,18 @@ async function createWebDb(params: OpenOptions): Promise<_InternalDB> {
     throw new Error("[op-sqlite] SQLCipher is not supported on web.");
   }
 
-  const promiser = await getPromiser();
-  await ensureOpfs(promiser);
+  const promiser = callWorker;
 
-  const filename = `file:${params.name}?vfs=opfs`;
-  const opened = await promiser("open", {
-    filename,
-    flags: params.readOnly ? 'r': 'c'
-  });
-
-  const dbId = opened?.dbId || opened?.result?.dbId;
-  if (!dbId || typeof dbId !== "string") {
-    throw new Error("[op-sqlite] Failed to open web sqlite database.");
+  const dbId = `${params.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  try {
+    await promiser("open", {
+      dbId,
+      filename: params.name,
+    });
+  } catch (error) {
+    throw new Error(
+      `[op-sqlite] Failed to open web sqlite database. Ensure COOP/COEP headers are set and OPFS is available in this browser. Original error: ${(error as Error).message}`,
+    );
   }
 
   return {
@@ -390,24 +414,15 @@ async function createWebDb(params: OpenOptions): Promise<_InternalDB> {
     executeRaw: async (query: string, bind?: Scalar[]): Promise<RawQueryResult> => {
       ensureSingleStatement(query);
 
-      const response = await promiser("exec", {
+      const result = await promiser("exec", {
         dbId,
         sql: query,
         bind,
         rowMode: "array",
-        resultRows: [],
-        returnValue: "resultRows",
       });
 
-      const result = response?.result;
-      const rawRows = Array.isArray(result?.resultRows)
-        ? (result.resultRows as Scalar[][])
-        : Array.isArray(result)
-          ? (result as Scalar[][])
-          : [];
-      const columnNames = Array.isArray(result?.columnNames)
-        ? (result.columnNames as string[])
-        : [];
+      const rawRows = Array.isArray(result?.resultRows) ? (result.resultRows as Scalar[][]) : [];
+      const columnNames = Array.isArray(result?.columnNames) ? (result.columnNames as string[]) : [];
 
       return {
         rowsAffected: toNumber(result?.changeCount) ?? 0,
