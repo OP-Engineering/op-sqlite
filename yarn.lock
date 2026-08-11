@@ -7410,7 +7410,7 @@ __metadata:
     react-native-builder-bob: "npm:^0.40.15"
     react-native-monorepo-config: "npm:^0.1.9"
     react-native-restart: "npm:^0.0.27"
-    react-native-safe-area-context: "npm:^5.6.2"
+    react-native-safe-area-context: "npm:^5.8.1"
     react-native-web: "npm:^0.21.2"
     tailwindcss: "npm:3.3.2"
     vite: "npm:^7.1.9"
@@ -8003,13 +8003,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-safe-area-context@npm:^5.6.2":
-  version: 5.7.0
-  resolution: "react-native-safe-area-context@npm:5.7.0"
+"react-native-safe-area-context@npm:^5.8.1":
+  version: 5.8.1
+  resolution: "react-native-safe-area-context@npm:5.8.1"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10c0/c3799e17321b41df1e0a10492c98472f8f8225ef0bbaf8146c4a9acb9519aae9ac11429059143c215e4402c2808e8445274850a339f8477522ded2461e18da80
+  checksum: 10c0/b04491f2dd97faf4a0afcb198ba803239676580a9523b23614346236149d0419abb8d0422574f4ce1782d606be6e5741b8e6841d807c48f69247a497a7a511aa
   languageName: node
   linkType: hard
 
