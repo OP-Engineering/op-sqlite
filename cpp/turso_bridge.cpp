@@ -370,7 +370,7 @@ std::string opsqlite_get_db_path(std::string const &db_name,
 }
 
 sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
-                       bool readOnly,
+                       bool readOnly, bool failOnCreate,
                        [[maybe_unused]] std::string const &crsqlite_path,
                        [[maybe_unused]] std::string const &sqlite_vec_path) {
   if (readOnly) {
@@ -378,6 +378,17 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
   }
   auto *handle = new TursoDbHandle();
   handle->path = opsqlite_get_db_path(name, path);
+
+  // Turso's API always creates the database file on open, there is no
+  // "open existing only" flag, so failOnCreate is enforced up front by
+  // checking for the file's existence.
+  if (failOnCreate && handle->path != ":memory:" &&
+      !std::filesystem::exists(handle->path)) {
+    std::string missing_path = handle->path;
+    delete handle;
+    throw std::runtime_error("unable to open database file: " + missing_path);
+  }
+
   setup_turso_temp_dir(handle->path);
 
   turso_database_config_t db_config = {

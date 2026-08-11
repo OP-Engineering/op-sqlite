@@ -45,8 +45,9 @@ class JSI_EXPORT DBHostObject : public jsi::HostObject {
 public:
   // Normal constructor shared between all backends
   DBHostObject(jsi::Runtime &rt, std::string &base_path, std::string &db_name,
-               std::string &path, bool readOnly, std::string &crsqlite_path,
-               std::string &sqlite_vec_path, std::string &encryption_key);
+               std::string &path, bool readOnly, bool failOnCreate,
+               std::string &crsqlite_path, std::string &sqlite_vec_path,
+               std::string &encryption_key);
 
 #ifdef OP_SQLITE_USE_LIBSQL
   // Constructor for remoteOpen, purely for remote databases

@@ -45,6 +45,23 @@ export const db = open({
 
 If you want to read more about securely storing your encryption key, [read this article](https://ospfranco.com/react-native-security-guide/). Again: **DO NOT OPEN MORE THAN ONE CONNECTION PER DATABASE**. Just export one single db connection for your entire application and reuse it everywhere.
 
+### Open Existing Only (failOnCreate)
+
+By default, `open()` creates the database file if it doesn't already exist. Pass `failOnCreate: true` to require the file to already exist; if it doesn't, the call throws instead of creating it. This is supported across all backends (plain SQLite3, SQLCipher, libsql and Turso).
+
+```tsx
+import { open } from '@op-engineering/op-sqlite';
+
+try {
+  const db = open({
+    name: 'myDb.sqlite',
+    failOnCreate: true,
+  });
+} catch (e) {
+  // The database file did not exist and was not created
+}
+```
+
 ### Remote and Sync Open (Libsql/Turso)
 
 For remote/sync scenarios, enable either the `libsql` or `turso` backend in your package configuration, then use `openRemote` or `openSync`.

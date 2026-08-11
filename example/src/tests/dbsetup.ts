@@ -262,6 +262,34 @@ describe("DB setup tests", () => {
 			expect(e.message).toContain('attempt to write a readonly database');
 		}
 	});
+
+	it("Respects failOnCreate", async () => {
+		const name = "failOnCreateTest.sqlite";
+
+		// Ensure a clean slate: the database file must not exist yet
+		const setupDb = open({ name });
+		setupDb.close();
+		setupDb.delete();
+
+		try {
+			open({ name, failOnCreate: true });
+			throw new Error("should have failed");
+		} catch (e: any) {
+			expect(e.message).toContain("unable to open database file");
+		}
+
+		// Creating the database file for real should allow a subsequent
+		// failOnCreate open to succeed, since it already exists
+		const db = open({ name });
+		await db.execute("CREATE TABLE IF NOT EXISTS foo (bar TEXT);");
+		db.close();
+
+		const reopened = open({ name, failOnCreate: true });
+		expect(!!reopened).toBe(true);
+		await reopened.execute("SELECT * FROM foo;");
+		reopened.close();
+		reopened.delete();
+	});
 });
 
 it("Can attach/dettach database", () => {

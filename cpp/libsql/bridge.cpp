@@ -80,8 +80,15 @@ DB opsqlite_libsql_open_sync(std::string const &name,
 }
 
 DB opsqlite_libsql_open(std::string const &name, std::string const &last_path,
-                        std::string const &crsqlitePath) {
+                        bool failOnCreate, std::string const &crsqlitePath) {
   std::string path = opsqlite_get_db_path(name, last_path);
+
+  // libsql_open_file always creates the database file if it is missing,
+  // there is no "open existing only" flag, so failOnCreate is enforced up
+  // front by checking for the file's existence.
+  if (failOnCreate && path != ":memory:" && !std::filesystem::exists(path)) {
+    throw std::runtime_error("unable to open database file: " + path);
+  }
 
   int status;
   libsql_database_t db;

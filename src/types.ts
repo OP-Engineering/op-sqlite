@@ -7,15 +7,22 @@ export interface OpenOptions {
   name: string;
   /**
    * A directory prefix for the database file.
-   * 
+   *
    * When set to `:memory:`, the name is ignored and an in-memory database is opened instead.
    */
   location?: string;
+  /**
+   * Encryption key when used against backends that support encryption (sqlcipher or libsql)
+   */
   encryptionKey?: string;
+  /**
+   * When set to true, database will only try to be opened. If the file does not exist the call will fail and no creation attempt will be made
+   */
+  failOnCreate?: boolean;
   /**
    * When set to true, the database is opened in read-only mode and any statement attempting to write to the database
    * will fail.
-   * 
+   *
    * This option is only supported for plain SQLite3 and SQLCipher. When enabling this option with libsql enabled,
    * opening databases will throw.
    */

@@ -33,7 +33,7 @@ std::string opsqlite_get_db_path(std::string const &name,
                                  std::string const &location);
 
 DB opsqlite_libsql_open(std::string const &name, std::string const &path,
-                        std::string const &crsqlitePath);
+                        bool failOnCreate, std::string const &crsqlitePath);
 
 DB opsqlite_libsql_open_remote(std::string const &url,
                                std::string const &auth_token);
