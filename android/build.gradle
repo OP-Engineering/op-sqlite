@@ -89,6 +89,10 @@ if(useLibsql && useTurso) {
   throw new GradleException("[OP-SQLITE] Error: libsql and turso backends are mutually exclusive.")
 }
 
+if(useLibsql && useCRSQLite) {
+  throw new GradleException("[OP-SQLITE] Error: You cannot use crsqlite with libsql.")
+}
+
 if(useSQLCipher) {
   println "[OP-SQLITE] using sqlcipher."
 } else if(useTurso) {

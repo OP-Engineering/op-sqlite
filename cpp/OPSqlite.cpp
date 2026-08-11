@@ -91,8 +91,7 @@ void install(jsi::Runtime &rt,
     }
 
     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-        rt, path, name, path, readOnly, failOnCreate, _crsqlite_path,
-        _sqlite_vec_path, encryption_key);
+        rt, path, name, path, readOnly, failOnCreate, encryption_key);
     dbs.emplace_back(db);
     return jsi::Object::createFromHostObject(rt, db);
   });
@@ -234,7 +233,7 @@ void expoUpdatesWorkaround(const char *base_path) {
   std::string path = std::string(base_path);
   // Open a DB before anything else so that expo-updates does not mess up the
   // configuration
-  opsqlite_libsql_open("__dummy", path, false, "");
+  opsqlite_libsql_open("__dummy", path, false);
 #endif
 }
 

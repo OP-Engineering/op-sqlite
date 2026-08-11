@@ -370,9 +370,7 @@ std::string opsqlite_get_db_path(std::string const &db_name,
 }
 
 sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
-                       bool readOnly, bool failOnCreate,
-                       [[maybe_unused]] std::string const &crsqlite_path,
-                       [[maybe_unused]] std::string const &sqlite_vec_path) {
+                       bool readOnly, bool failOnCreate) {
   if (readOnly) {
     throw std::runtime_error("turso does not support read-only databases.");
   }

@@ -87,6 +87,10 @@ if use_libsql and use_sqlite_vec then
     raise "You cannot use sqlite-vec with libsql. libsql already has vector search included."
 end
 
+if use_libsql and use_crsqlite then
+  raise "You cannot use crsqlite with libsql."
+end
+
 if use_turso and use_sqlite_vec then
   raise "You cannot use sqlite-vec with turso backend."
 end
@@ -211,11 +215,7 @@ Pod::Spec.new do |s|
 
   if use_libsql then
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_LIBSQL=1"
-    if use_crsqlite then
-      frameworks = ["ios/libsql_experimental.xcframework", "ios/crsqlite.xcframework"]
-    else
-      frameworks = ["ios/libsql_experimental.xcframework"]
-    end
+    frameworks = ["ios/libsql_experimental.xcframework"]
   end
 
   if use_turso then
