@@ -1,4 +1,4 @@
-import { NativeModules, Platform } from 'react-native';
+import { NativeModules, Platform } from "react-native";
 import type {
   _InternalDB,
   _PendingTransaction,
@@ -11,7 +11,7 @@ import type {
   Scalar,
   SQLBatchTuple,
   Transaction,
-} from './types';
+} from "./types";
 
 declare global {
   var __OPSQLiteProxy: object | undefined;
@@ -19,23 +19,21 @@ declare global {
 
 if (global.__OPSQLiteProxy == null) {
   if (NativeModules.OPSQLite == null) {
-    throw new Error(
-      'Base module not found. Did you do a pod install/clear the gradle cache?'
-    );
+    throw new Error("Base module not found. Did you do a pod install/clear the gradle cache?");
   }
 
   // Call the synchronous blocking install() function
   const installed = NativeModules.OPSQLite.install();
   if (!installed) {
     throw new Error(
-      `Failed to install op-sqlite: The native OPSQLite Module could not be installed! Looks like something went wrong when installing JSI bindings, check the native logs for more info`
+      `Failed to install op-sqlite: The native OPSQLite Module could not be installed! Looks like something went wrong when installing JSI bindings, check the native logs for more info`,
     );
   }
 
   // Check again if the constructor now exists. If not, throw an error.
   if (global.__OPSQLiteProxy == null) {
     throw new Error(
-      'OPSqlite native object is not available. Something is wrong. Check the native logs for more information.'
+      "OPSqlite native object is not available. Something is wrong. Check the native logs for more information.",
     );
   }
 }
@@ -60,7 +58,7 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
       const tx = lock.queue.shift();
 
       if (!tx) {
-        throw new Error('Could not get a operation on database');
+        throw new Error("Could not get a operation on database");
       }
 
       setImmediate(() => {
@@ -92,26 +90,20 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
       db.close();
     },
     flushPendingReactiveQueries: db.flushPendingReactiveQueries,
-    executeBatch: async (
-      commands: SQLBatchTuple[]
-    ): Promise<BatchQueryResult> => {
+    executeBatch: async (commands: SQLBatchTuple[]): Promise<BatchQueryResult> => {
       async function run() {
         try {
-          enhancedDb.executeSync('BEGIN TRANSACTION;');
+          enhancedDb.executeSync("BEGIN TRANSACTION;");
 
           const res = await db.executeBatch(commands as any[]);
 
-          enhancedDb.executeSync('COMMIT;');
+          enhancedDb.executeSync("COMMIT;");
 
           await db.flushPendingReactiveQueries();
 
           return res;
         } catch (executionError) {
-          try {
-            enhancedDb.executeSync('ROLLBACK;');
-          } catch (rollbackError) {
-            throw rollbackError;
-          }
+          enhancedDb.executeSync("ROLLBACK;");
 
           throw executionError;
         } finally {
@@ -131,10 +123,7 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
         startNextTransaction();
       });
     },
-    executeWithHostObjects: async (
-      query: string,
-      params?: Scalar[]
-    ): Promise<QueryResult> => {
+    executeWithHostObjects: async (query: string, params?: Scalar[]): Promise<QueryResult> => {
       return params
         ? await db.executeWithHostObjects(query, params)
         : await db.executeWithHostObjects(query);
@@ -151,19 +140,11 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
     executeRawAsync: async (query: string, params?: Scalar[]) => {
       return db.executeRaw(query, params as Scalar[]);
     },
-    executeAsync: async (
-      query: string,
-      params?: Scalar[] | undefined
-    ): Promise<QueryResult> => {
+    executeAsync: async (query: string, params?: Scalar[] | undefined): Promise<QueryResult> => {
       return db.execute(query, params);
     },
-    execute: async (
-      query: string,
-      params?: Scalar[] | undefined
-    ): Promise<QueryResult> => {
-      let res = params
-        ? await db.execute(query, params)
-        : await db.execute(query);
+    execute: async (query: string, params?: Scalar[] | undefined): Promise<QueryResult> => {
+      let res = params ? await db.execute(query, params) : await db.execute(query);
 
       if (!res.rows) {
         const rows: Record<string, Scalar>[] = [];
@@ -202,9 +183,7 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
         execute: stmt.execute,
       };
     },
-    transaction: async (
-      fn: (tx: Transaction) => Promise<void>
-    ): Promise<void> => {
+    transaction: async (fn: (tx: Transaction) => Promise<void>): Promise<void> => {
       let isFinalized = false;
 
       const execute = async (query: string, params?: Scalar[]) => {
@@ -212,7 +191,7 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
           throw Error(
             `OP-Sqlite Error: Database: ${
               options.name || options.url
-            }. Cannot execute query on finalized transaction`
+            }. Cannot execute query on finalized transaction`,
           );
         }
         return await enhancedDb.execute(query, params);
@@ -223,10 +202,10 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
           throw Error(
             `OP-Sqlite Error: Database: ${
               options.name || options.url
-            }. Cannot execute query on finalized transaction`
+            }. Cannot execute query on finalized transaction`,
           );
         }
-        const result = enhancedDb.executeSync('COMMIT;');
+        const result = enhancedDb.executeSync("COMMIT;");
 
         await db.flushPendingReactiveQueries();
 
@@ -239,17 +218,17 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
           throw Error(
             `OP-Sqlite Error: Database: ${
               options.name || options.url
-            }. Cannot execute query on finalized transaction`
+            }. Cannot execute query on finalized transaction`,
           );
         }
-        const result = enhancedDb.executeSync('ROLLBACK;');
+        const result = enhancedDb.executeSync("ROLLBACK;");
         isFinalized = true;
         return result;
       };
 
       async function run() {
         try {
-          enhancedDb.executeSync('BEGIN TRANSACTION;');
+          enhancedDb.executeSync("BEGIN TRANSACTION;");
 
           await fn({
             commit,
@@ -262,11 +241,7 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
           }
         } catch (executionError) {
           if (!isFinalized) {
-            try {
-              rollback();
-            } catch (rollbackError) {
-              throw rollbackError;
-            }
+            rollback();
           }
 
           throw executionError;
@@ -308,9 +283,7 @@ export const openSync = (params: {
   remoteEncryptionKey?: string;
 }): DB => {
   if (!isLibsql() && !isTurso()) {
-    throw new Error(
-      'This function is only available for libsql or turso backends'
-    );
+    throw new Error("This function is only available for libsql or turso backends");
   }
 
   const db = OPSQLite.openSync(params);
@@ -325,9 +298,7 @@ export const openSync = (params: {
  */
 export const openRemote = (params: { url: string; authToken: string }): DB => {
   if (!isLibsql() && !isTurso()) {
-    throw new Error(
-      'This function is only available for libsql or turso backends'
-    );
+    throw new Error("This function is only available for libsql or turso backends");
   }
 
   const db = OPSQLite.openRemote(params);
@@ -341,9 +312,9 @@ export const openRemote = (params: { url: string; authToken: string }): DB => {
  * If you want libsql remote or sync connections, use openSync or openRemote
  */
 export const open = (params: OpenOptions): DB => {
-  if (params.location?.startsWith('file://')) {
+  if (params.location?.startsWith("file://")) {
     console.warn(
-      "[op-sqlite] You are passing a path with 'file://' prefix, it's automatically removed"
+      "[op-sqlite] You are passing a path with 'file://' prefix, it's automatically removed",
     );
     params.location = params.location.substring(7);
   }
@@ -402,14 +373,9 @@ export const isTurso = (): boolean => {
 };
 
 export const isIOSEmbedded = (): boolean => {
-  if (Platform.OS !== 'ios') {
+  if (Platform.OS !== "ios") {
     return false;
   }
 
   return OPSQLite.isIOSEmbedded();
 };
-
-/**
- * @deprecated Use `isIOSEmbedded` instead. This alias will be removed in a future release.
- */
-export const isIOSEmbeeded = isIOSEmbedded;

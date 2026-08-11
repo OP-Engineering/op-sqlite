@@ -22,19 +22,22 @@ typedef std::function<void(std::string dbName, std::string tableName,
 typedef std::function<void(std::string dbName)> CommitCallback;
 typedef std::function<void(std::string dbName)> RollbackCallback;
 
+// Paths to the optional loadable extensions, set once in install() and
+// shared by every subsequent open() call instead of being threaded through
+// as parameters.
+extern std::string _crsqlite_path;
+extern std::string _sqlite_vec_path;
+
 std::string opsqlite_get_db_path(std::string const &db_name,
                                  std::string const &location);
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
 sqlite3 *opsqlite_open(std::string const &dbName, std::string const &path,
-                       bool readOnly, std::string const &crsqlite_path,
-                       std::string const &sqlite_vec_path,
+                       bool readOnly, bool failOnCreate,
                        std::string const &encryption_key);
 #else
 sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
-                       bool readOnly,
-                       [[maybe_unused]] std::string const &crsqlite_path,
-                       std::string const &sqlite_vec_path);
+                       bool readOnly, bool failOnCreate);
 #endif
 
 #ifdef OP_SQLITE_USE_TURSO

@@ -80,8 +80,15 @@ DB opsqlite_libsql_open_sync(std::string const &name,
 }
 
 DB opsqlite_libsql_open(std::string const &name, std::string const &last_path,
-                        std::string const &crsqlitePath) {
+                        bool failOnCreate) {
   std::string path = opsqlite_get_db_path(name, last_path);
+
+  // libsql_open_file always creates the database file if it is missing,
+  // there is no "open existing only" flag, so failOnCreate is enforced up
+  // front by checking for the file's existence.
+  if (failOnCreate && path != ":memory:" && !std::filesystem::exists(path)) {
+    throw std::runtime_error("unable to open database file: " + path);
+  }
 
   int status;
   libsql_database_t db;
@@ -99,20 +106,6 @@ DB opsqlite_libsql_open(std::string const &name, std::string const &last_path,
   if (status != 0) {
     throw std::runtime_error(err);
   }
-
-#ifdef OP_SQLITE_USE_CRSQLITE
-  const char *errMsg;
-  const char *crsqliteEntryPoint = "sqlite3_crsqlite_init";
-
-  status = libsql_load_extension(c, crsqlitePath.c_str(), crsqliteEntryPoint,
-                                 &errMsg);
-
-  if (status != 0) {
-    throw std::runtime_error(errMsg);
-  } else {
-    LOGI("Loaded CRSQlite successfully");
-  }
-#endif
 
   return {.db = db, .c = c};
 }

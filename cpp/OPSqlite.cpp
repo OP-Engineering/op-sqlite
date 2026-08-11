@@ -61,6 +61,7 @@ void install(jsi::Runtime &rt,
     std::string location;
     std::string encryption_key;
     bool readOnly = false;
+    bool failOnCreate = false;
 
     if (options.hasProperty(rt, "location")) {
       location = options.getProperty(rt, "location").asString(rt).utf8(rt);
@@ -75,6 +76,10 @@ void install(jsi::Runtime &rt,
       readOnly = options.getProperty(rt, "readOnly").asBool();
     }
 
+    if (options.hasProperty(rt, "failOnCreate")) {
+      failOnCreate = options.getProperty(rt, "failOnCreate").asBool();
+    }
+
     if (!location.empty()) {
       if (location == ":memory:") {
         path = ":memory:";
@@ -86,7 +91,7 @@ void install(jsi::Runtime &rt,
     }
 
     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-        rt, path, name, path, readOnly, _crsqlite_path, _sqlite_vec_path, encryption_key);
+        rt, path, name, path, readOnly, failOnCreate, encryption_key);
     dbs.emplace_back(db);
     return jsi::Object::createFromHostObject(rt, db);
   });
@@ -228,7 +233,7 @@ void expoUpdatesWorkaround(const char *base_path) {
   std::string path = std::string(base_path);
   // Open a DB before anything else so that expo-updates does not mess up the
   // configuration
-  opsqlite_libsql_open("__dummy", path, "");
+  opsqlite_libsql_open("__dummy", path, false);
 #endif
 }
 

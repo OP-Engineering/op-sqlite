@@ -81,14 +81,11 @@ std::string opsqlite_get_db_path(std::string const &db_name,
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
 sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
-                       bool readOnly, std::string const &crsqlite_path,
-                       std::string const &sqlite_vec_path,
+                       bool readOnly, bool failOnCreate,
                        std::string const &encryption_key) {
 #else
 sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
-                       bool readOnly,
-                       [[maybe_unused]] std::string const &crsqlite_path,
-                       [[maybe_unused]] std::string const &sqlite_vec_path) {
+                       bool readOnly, bool failOnCreate) {
 #endif
   std::string final_path = opsqlite_get_db_path(name, path);
   char *errMsg;
@@ -98,7 +95,10 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
   if (readOnly) {
     flags |= SQLITE_OPEN_READONLY;
   } else {
-    flags |= SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
+    flags |= SQLITE_OPEN_READWRITE;
+    if (!failOnCreate) {
+      flags |= SQLITE_OPEN_CREATE;
+    }
   }
 
   int status = sqlite3_open_v2(final_path.c_str(), &db, flags, nullptr);
@@ -135,7 +135,7 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
 #ifdef OP_SQLITE_USE_CRSQLITE
   const char *crsqliteEntryPoint = "sqlite3_crsqlite_init";
 
-  sqlite3_load_extension(db, crsqlite_path.c_str(), crsqliteEntryPoint,
+  sqlite3_load_extension(db, _crsqlite_path.c_str(), crsqliteEntryPoint,
                          &errMsg);
 
   if (errMsg != nullptr) {
@@ -146,7 +146,7 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
 #ifdef OP_SQLITE_USE_SQLITE_VEC
   const char *vec_entry_point = "sqlite3_vec_init";
 
-  sqlite3_load_extension(db, sqlite_vec_path.c_str(), vec_entry_point, &errMsg);
+  sqlite3_load_extension(db, _sqlite_vec_path.c_str(), vec_entry_point, &errMsg);
 
   if (errMsg != nullptr) {
     throw std::runtime_error(errMsg);
