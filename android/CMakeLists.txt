@@ -70,7 +70,7 @@ elseif (USE_LIBSQL)
     -DOP_SQLITE_USE_LIBSQL=1
   )
 elseif (USE_TURSO)
-  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/turso_bridge.cpp)
+  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/turso/turso_bridge.cpp)
 
   add_definitions(
     -DOP_SQLITE_USE_TURSO=1

@@ -27,27 +27,18 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      - name: install bundler dependencies
-        run: |
-          cd example
-          bundle install
-
-      - name: Cache cocoapods
-        id: cocoapods-cache
+      - name: Cache SwiftPM artifacts
         uses: actions/cache@v4
         with:
-          path: |
-            **/ios/Pods
-          key: ${{ runner.os }}-cocoapods-${{ hashFiles('example/ios/Podfile.lock') }}
+          path: ~/Library/Caches/ReactNative/spm-artifacts
+          key: ${{ runner.os }}-spm-artifacts-${{ hashFiles('example/node_modules/react-native/package.json') }}
           restore-keys: |
-            ${{ runner.os }}-cocoapods-
+            ${{ runner.os }}-spm-artifacts-
 
-      - name: Install cocoapods
+      - name: Set up SwiftPM
         run: |
           cd example/ios
-          bundle exec pod install
-        env:
-          NO_FLIPPER: 1
+          npx react-native spm update --yes
 
       - name: run tests
         run: |
@@ -66,27 +57,18 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      - name: install bundler dependencies
-        run: |
-          cd example
-          bundle install
-
-      - name: Cache cocoapods
-        id: cocoapods-cache
+      - name: Cache SwiftPM artifacts
         uses: actions/cache@v4
         with:
-          path: |
-            **/ios/Pods
-          key: ${{ runner.os }}-cocoapods-${{ hashFiles('example/ios/Podfile.lock') }}
+          path: ~/Library/Caches/ReactNative/spm-artifacts
+          key: ${{ runner.os }}-spm-artifacts-${{ hashFiles('example/node_modules/react-native/package.json') }}
           restore-keys: |
-            ${{ runner.os }}-cocoapods-
+            ${{ runner.os }}-spm-artifacts-
 
-      - name: Install cocoapods
+      - name: Set up SwiftPM
         run: |
           cd example/ios
-          bundle exec pod install
-        env:
-          NO_FLIPPER: 1
+          npx react-native spm update --yes
 
       - name: run tests
         run: |
@@ -105,27 +87,18 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      - name: install bundler dependencies
-        run: |
-          cd example
-          bundle install
-
-      - name: Cache cocoapods
-        id: cocoapods-cache
+      - name: Cache SwiftPM artifacts
         uses: actions/cache@v4
         with:
-          path: |
-            **/ios/Pods
-          key: ${{ runner.os }}-cocoapods-${{ hashFiles('example/ios/Podfile.lock') }}
+          path: ~/Library/Caches/ReactNative/spm-artifacts
+          key: ${{ runner.os }}-spm-artifacts-${{ hashFiles('example/node_modules/react-native/package.json') }}
           restore-keys: |
-            ${{ runner.os }}-cocoapods-
+            ${{ runner.os }}-spm-artifacts-
 
-      - name: Install cocoapods
+      - name: Set up SwiftPM
         run: |
           cd example/ios
-          bundle exec pod install
-        env:
-          NO_FLIPPER: 1
+          npx react-native spm update --yes
 
       - name: run tests
         run: |
@@ -144,27 +117,18 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      - name: install bundler dependencies
-        run: |
-          cd example
-          bundle install
-
-      - name: Cache cocoapods
-        id: cocoapods-cache
+      - name: Cache SwiftPM artifacts
         uses: actions/cache@v4
         with:
-          path: |
-            **/ios/Pods
-          key: ${{ runner.os }}-cocoapods-${{ hashFiles('example/ios/Podfile.lock') }}
+          path: ~/Library/Caches/ReactNative/spm-artifacts
+          key: ${{ runner.os }}-spm-artifacts-${{ hashFiles('example/node_modules/react-native/package.json') }}
           restore-keys: |
-            ${{ runner.os }}-cocoapods-
+            ${{ runner.os }}-spm-artifacts-
 
-      - name: Install cocoapods
+      - name: Set up SwiftPM
         run: |
           cd example/ios
-          bundle exec pod install
-        env:
-          NO_FLIPPER: 1
+          npx react-native spm update --yes
 
       - name: run tests
         run: |
@@ -414,27 +378,18 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      - name: install bundler dependencies
-        run: |
-          cd example
-          bundle install
-
-      - name: Cache cocoapods
-        id: cocoapods-cache
+      - name: Cache SwiftPM artifacts
         uses: actions/cache@v4
         with:
-          path: |
-            **/ios/Pods
-          key: ${{ runner.os }}-cocoapods-${{ hashFiles('example/ios/Podfile.lock') }}
+          path: ~/Library/Caches/ReactNative/spm-artifacts
+          key: ${{ runner.os }}-spm-artifacts-${{ hashFiles('example/node_modules/react-native/package.json') }}
           restore-keys: |
-            ${{ runner.os }}-cocoapods-
+            ${{ runner.os }}-spm-artifacts-
 
-      - name: Install cocoapods
+      - name: Set up SwiftPM
         run: |
           cd example/ios
-          bundle exec pod install
-        env:
-          NO_FLIPPER: 1
+          npx react-native spm update --yes
 
       - name: run tests
         run: |
