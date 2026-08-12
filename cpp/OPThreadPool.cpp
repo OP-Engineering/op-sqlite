@@ -77,6 +77,10 @@ void ThreadPool::doWork() {
       ++busy;
     }
     task();
+    // Release the task (and everything it captured, e.g. JSI values) before
+    // signalling idle, so waitFinished()/close() can't observe busy == 0
+    // while task-owned resources are still pending destruction.
+    task = nullptr;
     {
       std::lock_guard<std::mutex> g(workQueueMutex);
       --busy;

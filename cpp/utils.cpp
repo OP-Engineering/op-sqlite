@@ -383,8 +383,7 @@ promisify(jsi::Runtime &rt, std::shared_ptr<ThreadPool> thread_pool,
     auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
     auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-    auto task = [lambda = lambda, thread_pool,
-                 resolve_callback = resolve_callback,
+    auto task = [lambda = lambda, resolve_callback = resolve_callback,
                  resolve = std::move(resolve), reject = std::move(reject)]() {
       try {
         std::any result = lambda();
@@ -394,7 +393,7 @@ promisify(jsi::Runtime &rt, std::shared_ptr<ThreadPool> thread_pool,
         }
 
         opsqlite::invoker->invokeAsync(
-            [result = std::move(result), resolve = resolve,
+            [result = std::move(result), resolve = resolve, reject = reject,
              resolve_callback = resolve_callback](jsi::Runtime &rt) {
               auto jsi_result = resolve_callback(rt, result);
               resolve->asObject(rt).asFunction(rt).call(rt, jsi_result);
