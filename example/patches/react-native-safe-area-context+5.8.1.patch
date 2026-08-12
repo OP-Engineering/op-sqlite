@@ -77,3 +77,19 @@ index 0000000..9747084
 +    ],
 +    cxxLanguageStandard: .cxx20
 +)
+diff --git a/node_modules/react-native-safe-area-context/react-native-spm-prefix.h b/node_modules/react-native-safe-area-context/react-native-spm-prefix.h
+new file mode 100644
+index 0000000..af5cea0
+--- /dev/null
++++ b/node_modules/react-native-safe-area-context/react-native-spm-prefix.h
+@@ -0,0 +1,10 @@
++// AUTO-SCAFFOLDED by react-native spm scaffold — mirrors CocoaPods' default
++// prefix header so ObjC sources that rely on an implicit Foundation/UIKit
++// import compile under SPM (which has no prefix-header mechanism). Safe to
++// delete + regenerate via `npx react-native spm scaffold`.
++#ifdef __OBJC__
++#import <Foundation/Foundation.h>
++#if __has_include(<UIKit/UIKit.h>)
++#import <UIKit/UIKit.h>
++#endif
++#endif
