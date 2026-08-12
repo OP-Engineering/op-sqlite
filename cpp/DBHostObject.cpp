@@ -787,6 +787,18 @@ void DBHostObject::invalidate() {
   }
 
   invalidated = true;
+
+  // Abort whatever is currently inside sqlite3_step so the drain below can
+  // actually finish. Parity with the close and delete host functions, which
+  // already do this. Without it a long running query holds the pool past React
+  // Native's module invalidation budget, after which the runtime is destroyed
+  // anyway and the drain has bought nothing.
+#if !defined(OP_SQLITE_USE_LIBSQL) && !defined(OP_SQLITE_USE_TURSO)
+  if (db != nullptr) {
+    sqlite3_interrupt(db);
+  }
+#endif
+
   // Drain in-flight thread pool work before closing the db handle.
   // restartPool() joins threads (waiting for the current task) but then
   // needlessly re-creates the pool. waitFinished() is sufficient: it
