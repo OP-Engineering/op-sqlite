@@ -87,6 +87,18 @@ private:
 
   std::unordered_map<std::string, jsi::Value> function_map;
   std::string base_path;
+  // Bound at construction, on the JS thread, to the generation that created
+  // this database.
+  //
+  // NOTE: these deliberately shadow the process-global opsqlite::invoker and
+  // opsqlite::generation_alive inside every member function, which is what
+  // fixes the update/commit/rollback hooks and flush_pending_reactive_queries
+  // without touching each call site. Reading the globals at callback time
+  // instead lets a database belonging to a torn-down runtime post work into the
+  // runtime that replaced it, and then call asFunction() on a jsi::Value owned
+  // by the dead one.
+  std::shared_ptr<react::CallInvoker> invoker = opsqlite::invoker;
+  std::shared_ptr<std::atomic<bool>> alive = opsqlite::generation_alive;
   std::shared_ptr<ThreadPool> thread_pool;
   std::string db_name;
   std::string delete_db_name;
