@@ -31,6 +31,16 @@ ThreadPool::~ThreadPool() {
   workQueueConditionVariable.notify_all();
 
   for (auto &thread : threads) {
+    // Never join ourselves. If the pool's last owner is released on one of its
+    // own workers, join() throws std::system_error ("thread::join failed:
+    // Resource deadlock avoided") and takes the process with it. Not capturing
+    // the pool in the promisify task should make this unreachable; this is a
+    // backstop, not the fix.
+    if (thread.get_id() == std::this_thread::get_id()) {
+      thread.detach();
+      continue;
+    }
+
     if (thread.joinable()) {
       thread.join();
     }
