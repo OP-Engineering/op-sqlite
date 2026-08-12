@@ -20,6 +20,9 @@ namespace react = facebook::react;
 #ifdef OP_SQLITE_USE_LIBSQL
 void DBHostObject::flush_pending_reactive_queries(
     const std::shared_ptr<jsi::Value> &resolve) {
+  if (alive != nullptr && !alive->load()) {
+    return;
+  }
   invoker->invokeAsync([resolve](jsi::Runtime &rt) {
     resolve->asObject(rt).asFunction(rt).call(rt, {});
   });
@@ -33,6 +36,9 @@ std::string turso_remote_db_name(const std::string &url) {
 
 void DBHostObject::flush_pending_reactive_queries(
   const std::shared_ptr<jsi::Value> &resolve) {
+  if (alive != nullptr && !alive->load()) {
+    return;
+  }
   invoker->invokeAsync([resolve](jsi::Runtime &rt) {
     resolve->asObject(rt).asFunction(rt).call(rt, {});
   });
@@ -40,6 +46,9 @@ void DBHostObject::flush_pending_reactive_queries(
 #else
 void DBHostObject::flush_pending_reactive_queries(
     const std::shared_ptr<jsi::Value> &resolve) {
+  if (alive != nullptr && !alive->load()) {
+    return;
+  }
   for (const auto &query_ptr : pending_reactive_queries) {
     auto query = query_ptr.get();
 
@@ -67,12 +76,18 @@ void DBHostObject::flush_pending_reactive_queries(
 }
 
 void DBHostObject::on_commit() {
+  if (alive != nullptr && !alive->load()) {
+    return;
+  }
   invoker->invokeAsync([this](jsi::Runtime &rt) {
     commit_hook_callback->asObject(rt).asFunction(rt).call(rt);
   });
 }
 
 void DBHostObject::on_rollback() {
+  if (alive != nullptr && !alive->load()) {
+    return;
+  }
   invoker->invokeAsync([this](jsi::Runtime &rt) {
     rollback_hook_callback->asObject(rt).asFunction(rt).call(rt);
   });
@@ -80,6 +95,10 @@ void DBHostObject::on_rollback() {
 
 void DBHostObject::on_update(const std::string &table,
                              const std::string &operation, long long row_id) {
+  if (alive != nullptr && !alive->load()) {
+    return;
+  }
+
   if (update_hook_callback != nullptr) {
     invoker->invokeAsync([callback = update_hook_callback, table, operation,
                           row_id](jsi::Runtime &rt) {

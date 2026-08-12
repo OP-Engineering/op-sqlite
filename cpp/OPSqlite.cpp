@@ -27,12 +27,20 @@ std::string _sqlite_vec_path;
 std::vector<std::shared_ptr<DBHostObject>> dbs;
 bool invalidated = false;
 std::shared_ptr<react::CallInvoker> invoker;
+std::shared_ptr<std::atomic<bool>> generation_alive;
 
 // React native will try to clean the module on JS context invalidation
 // (CodePush/Hot Reload) The clearState function is called
 void invalidate() {
   // Global flag used by the threads to stop work
   invalidated = true;
+
+  // Mark THIS generation dead. Work queued by it holds a copy of the flag, so
+  // it drops its completions instead of resolving into a runtime that is being
+  // torn down.
+  if (generation_alive != nullptr) {
+    generation_alive->store(false);
+  }
 
   for (const auto &db : dbs) {
     db->invalidate();
@@ -53,6 +61,7 @@ void install(jsi::Runtime &rt,
   _sqlite_vec_path = std::string(sqlite_vec_path);
   opsqlite::invoker = _invoker;
   opsqlite::invalidated = false;
+  opsqlite::generation_alive = std::make_shared<std::atomic<bool>>(true);
 
   auto open = HFN0 {
     jsi::Object options = args[0].asObject(rt);
