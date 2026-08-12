@@ -28,7 +28,7 @@ jobs:
         uses: ./.github/actions/setup
 
       - name: Cache SwiftPM artifacts
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/Library/Caches/ReactNative/spm-artifacts
           key: ${{ runner.os }}-spm-artifacts-${{ hashFiles('example/node_modules/react-native/package.json') }}

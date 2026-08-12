@@ -248,7 +248,10 @@ if useSqlcipher {
   excludedDirs.formUnion(["cpp/sqlcipher", "cpp/libsql"])
 } else if useLibsql {
   print("[OP-SQLITE] ⚠️ Using libsql. If you have libsql questions please ask in the Turso Discord server.")
-  excludedSources.formUnion(["cpp/sqlite3.c", "cpp/sqlite3.h"])
+  // cpp/bridge.cpp is the default (non-libsql) bridge; it and
+  // cpp/libsql/bridge.cpp both define opsqlite_get_db_path and friends —
+  // compiling both is a duplicate-symbol link error.
+  excludedSources.formUnion(["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/bridge.cpp", "cpp/bridge.hpp"])
   excludedDirs.insert("cpp/sqlcipher")
 } else {
   print("[OP-SQLITE] using pure SQLite")
@@ -456,16 +459,22 @@ let package = Package(
       // constructed so everything left under `path` is exactly the wanted
       // set, and the default auto-scan is the well-trodden SPM code path.
       exclude: targetExcludes,
-      // SPM's default publicHeadersPath ("include") doesn't exist in this
-      // podspec-shaped layout; SPM requires a real directory here for a
-      // C-family target. "cpp" holds the bulk of the public headers
-      // (sqlite3.h, bridge.hpp); nothing outside this package consumes
-      // OpSqlite's headers directly (React reaches native modules through
-      // the TurboModule registry, not header imports), so which real
-      // directory is chosen is a formality, not a semantic choice.
-      publicHeadersPath: "cpp",
+      // cpp/bridge.cpp reaches SQLite via `#include <sqlite3.h>` (angle
+      // form). cpp/sqlite3.h and cpp/sqlcipher/sqlite3.h are two different
+      // files with that same name; CocoaPods disambiguates via its header
+      // map, built fresh from source_files/exclude_files each `pod install`.
+      // SPM has no header map — publicHeadersPath is the closest equivalent
+      // (SPM exposes/searches that one directory's headers for the target),
+      // so it has to track the same backend switch as the exclude logic
+      // above, or SQLCipher's build silently sees plain SQLite's sqlite3.h
+      // (no sqlite3_key_v2) instead of its own.
+      publicHeadersPath: useSqlcipher ? "cpp/sqlcipher" : "cpp",
       cSettings: defineCSettings + [
         .headerSearchPath("."),
+        // Explicit backstop for the same sqlite3.h disambiguation described
+        // above, in case publicHeadersPath's implicit search isn't given
+        // priority over some other path on a future toolchain.
+        .headerSearchPath(useSqlcipher ? "cpp/sqlcipher" : "cpp"),
         // cpp/libsql/bridge.hpp unconditionally `#include`s libsql.h (it's
         // pulled in from always-compiled files like DBHostObject.hpp, not
         // just the libsql backend), so libsql.h must resolve regardless of
@@ -476,12 +485,23 @@ let package = Package(
         // from SPM's own source bookkeeping — the header stays on disk and
         // still resolves via this search path regardless.
         .headerSearchPath("ios/libsql_experimental.xcframework/ios-arm64/libsql_experimental.framework/Headers"),
-        .unsafeFlags(["-O2", "-include", "op-sqlite-spm-prefix.h"]),
+        .unsafeFlags(
+          ["-O2", "-include", "op-sqlite-spm-prefix.h"]
+            // cpp/turso/turso_bridge.cpp includes <turso_sdk_kit/turso.h> —
+            // framework-style angle include. The xcframework ships no
+            // module map, so this only resolves via clang's plain
+            // framework-header lookup, which needs an explicit -F pointing
+            // at the directory containing turso_sdk_kit.framework (headers
+            // are identical across arch slices, so any one slice works).
+            + (useTurso ? ["-F", "ios/turso_sdk_kit.xcframework/ios-arm64"] : [])),
       ],
       cxxSettings: defineCXXSettings + [
         .headerSearchPath("."),
+        .headerSearchPath(useSqlcipher ? "cpp/sqlcipher" : "cpp"),
         .headerSearchPath("ios/libsql_experimental.xcframework/ios-arm64/libsql_experimental.framework/Headers"),
-        .unsafeFlags(["-O2", "-include", "op-sqlite-spm-prefix.h"]),
+        .unsafeFlags(
+          ["-O2", "-include", "op-sqlite-spm-prefix.h"]
+            + (useTurso ? ["-F", "ios/turso_sdk_kit.xcframework/ios-arm64"] : [])),
       ],
       linkerSettings: linkerSettings
     )
