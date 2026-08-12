@@ -12,6 +12,7 @@
 #include "utils.hpp"
 #include <functional>
 #include <iostream>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -25,6 +26,10 @@ std::string _base_path;
 std::string _crsqlite_path;
 std::string _sqlite_vec_path;
 std::vector<std::shared_ptr<DBHostObject>> dbs;
+// Guards `dbs`. Two JS runtime generations overlap during a bridgeless reload,
+// so open() and invalidate() can touch this vector from different threads at
+// the same time.
+std::mutex dbs_mutex;
 bool invalidated = false;
 std::shared_ptr<react::CallInvoker> invoker;
 std::shared_ptr<std::atomic<bool>> generation_alive;
@@ -42,13 +47,21 @@ void invalidate() {
     generation_alive->store(false);
   }
 
-  for (const auto &db : dbs) {
-    db->invalidate();
+  // Take ownership of the registry under the lock before touching it. This runs
+  // on the outgoing generation's TurboModule queue, while the incoming
+  // generation's open() may already be emplacing into `dbs` on its own JS
+  // thread: RCTHost constructs the new RCTInstance without waiting for the old
+  // one to finish invalidating. Iterating the vector directly can therefore run
+  // off a reallocated buffer.
+  std::vector<std::shared_ptr<DBHostObject>> closing;
+  {
+    std::lock_guard<std::mutex> g(dbs_mutex);
+    closing.swap(dbs);
   }
 
-  // Clear our existing vector of shared pointers so they can be garbage
-  // collected
-  dbs.clear();
+  for (const auto &db : closing) {
+    db->invalidate();
+  }
 }
 
 void install(jsi::Runtime &rt,
@@ -101,7 +114,10 @@ void install(jsi::Runtime &rt,
 
     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
         rt, path, name, path, readOnly, failOnCreate, encryption_key);
-    dbs.emplace_back(db);
+    {
+      std::lock_guard<std::mutex> g(dbs_mutex);
+      dbs.emplace_back(db);
+    }
     return jsi::Object::createFromHostObject(rt, db);
   });
 
@@ -155,7 +171,10 @@ void install(jsi::Runtime &rt,
         std::make_shared<DBHostObject>(rt, url, auth_token, path);
 #endif
 
-    dbs.emplace_back(db);
+    {
+      std::lock_guard<std::mutex> g(dbs_mutex);
+      dbs.emplace_back(db);
+    }
 
     return jsi::Object::createFromHostObject(rt, db);
   });
@@ -217,7 +236,10 @@ void install(jsi::Runtime &rt,
       rt, name, path, url, auth_token, remote_encryption_key);
   #endif
 
-    dbs.emplace_back(db);
+    {
+      std::lock_guard<std::mutex> g(dbs_mutex);
+      dbs.emplace_back(db);
+    }
 
     return jsi::Object::createFromHostObject(rt, db);
   });
