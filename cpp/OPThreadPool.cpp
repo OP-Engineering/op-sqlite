@@ -48,8 +48,10 @@ void ThreadPool::queueWork(const std::function<void(void)> &task) {
   // Push the request to the queue
   workQueue.push(task);
 
-  // Notify one thread that there are requests to process
-  workQueueConditionVariable.notify_one();
+  // Wake every waiter. waitFinished() and doWork() share this condition
+  // variable, so notify_one() can hand the wakeup to the wrong one and leave
+  // the other asleep.
+  workQueueConditionVariable.notify_all();
 }
 
 // Function used by the threads to grab work from the queue
@@ -85,7 +87,7 @@ void ThreadPool::doWork() {
       std::lock_guard<std::mutex> g(workQueueMutex);
       --busy;
     }
-    workQueueConditionVariable.notify_one();
+    workQueueConditionVariable.notify_all();
   }
 }
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <condition_variable>
 #include <exception>
 #include <mutex>
@@ -34,8 +35,9 @@ private:
   std::queue<std::function<void(void)>> workQueue;
 
   // This will be set to true when the thread pool is shutting down. This
-  // tells the threads to stop looping and finish
-  bool done;
+  // tells the threads to stop looping and finish.
+  // Atomic because doWork() reads it in `while (!done)` outside the mutex.
+  std::atomic<bool> done;
 
   // Function used by the threads to grab work from the queue
   void doWork();
