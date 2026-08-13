@@ -11,18 +11,18 @@
 namespace opsqlite {
 
 extern std::shared_ptr<facebook::react::CallInvoker> invoker;
-extern bool invalidated;
 
 // Liveness of the current JS runtime generation. Replaced by install() and
 // cleared by invalidate(), so each generation gets its own flag rather than
-// sharing the process-global `invalidated` bool.
+// sharing one process-global bool.
 //
 // Whoever queues work copies the shared_ptr when the work is created, so it
-// always observes ITS OWN generation's liveness. Checking a process-global
-// instead is wrong in both directions during a bridgeless reload, where two
-// generations overlap: an outgoing generation clearing it would suppress the
-// incoming generation's callbacks, and an incoming generation setting it would
-// re-enable the outgoing generation's.
+// always observes ITS OWN generation's liveness. install() also returns this
+// same shared_ptr so invalidate() can be handed it back directly, rather
+// than reading this global -- which, during a bridgeless reload where two
+// generations briefly overlap, might already have been reassigned to the
+// incoming generation's flag by the time the outgoing generation's
+// invalidate() runs.
 extern std::shared_ptr<std::atomic<bool>> generation_alive;
 
 struct ArrayBuffer {

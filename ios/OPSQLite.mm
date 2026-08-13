@@ -6,6 +6,16 @@
 #import <ReactCommon/RCTTurboModule.h>
 #import <jsi/jsi.h>
 
+@interface OPSQLite () {
+  // This generation's liveness flag. Set by install(), consumed by
+  // invalidate() -- kept as a plain ivar (not routed through the JS
+  // runtime) because invalidate() runs with no Runtime reference at all,
+  // and this module instance is itself per-generation: RN constructs a
+  // fresh one for every new RCTInstance.
+  std::shared_ptr<std::atomic<bool>> _generationAlive;
+}
+@end
+
 @implementation OPSQLite
 
 @synthesize bridge = _bridge;
@@ -95,8 +105,9 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
   NSString *sqlite_vec_path = @"";
 #endif
 
-  opsqlite::install(runtime, callInvoker, [documentPath UTF8String],
-                    [crsqlite_path UTF8String], [sqlite_vec_path UTF8String]);
+  _generationAlive =
+      opsqlite::install(runtime, callInvoker, [documentPath UTF8String],
+                       [crsqlite_path UTF8String], [sqlite_vec_path UTF8String]);
   return @true;
 }
 
@@ -151,7 +162,8 @@ RCT_EXPORT_METHOD(moveAssetsDatabase : (NSDictionary *)args resolve : (
 }
 
 - (void)invalidate {
-  opsqlite::invalidate();
+  opsqlite::invalidate(_generationAlive);
+  _generationAlive = nullptr;
 }
 
 + (void)expoUpdatesWorkaround {
