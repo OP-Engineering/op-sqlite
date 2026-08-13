@@ -452,7 +452,7 @@ promisify(jsi::Runtime &rt, std::shared_ptr<ThreadPool> thread_pool,
       }
     };
 
-    thread_pool->queueWork(task);
+    thread_pool->queue_work(task);
 
     return jsi::Value(nullptr);
   });

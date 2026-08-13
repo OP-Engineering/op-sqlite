@@ -6,9 +6,9 @@
 #include "bridge.hpp"
 #endif
 #include "logs.h"
-#include <functional>
 #include "macros.hpp"
 #include "utils.hpp"
+#include <functional>
 #include <iostream>
 #include <utility>
 
@@ -35,7 +35,7 @@ std::string turso_remote_db_name(const std::string &url) {
 }
 
 void DBHostObject::flush_pending_reactive_queries(
-  const std::shared_ptr<jsi::Value> &resolve) {
+    const std::shared_ptr<jsi::Value> &resolve) {
   if (alive != nullptr && !alive->load()) {
     return;
   }
@@ -226,8 +226,8 @@ DBHostObject::DBHostObject(jsi::Runtime &rt, std::string &db_name,
 
   thread_pool = std::make_shared<ThreadPool>();
 
-  db = opsqlite_open_sync(db_name, path, url, auth_token,
-                          remote_encryption_key);
+  db =
+      opsqlite_open_sync(db_name, path, url, auth_token, remote_encryption_key);
 
   create_jsi_functions(rt);
 }
@@ -261,12 +261,13 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
     auto obj_params = args[0].asObject(rt);
 
     std::string secondary_db_name =
-      obj_params.getProperty(rt, "secondaryDbFileName").asString(rt).utf8(rt);
-    std::string alias = obj_params.getProperty(rt, "alias").asString(rt).utf8(rt);
+        obj_params.getProperty(rt, "secondaryDbFileName").asString(rt).utf8(rt);
+    std::string alias =
+        obj_params.getProperty(rt, "alias").asString(rt).utf8(rt);
 
     if (obj_params.hasProperty(rt, "location")) {
       std::string location =
-        obj_params.getProperty(rt, "location").asString(rt).utf8(rt);
+          obj_params.getProperty(rt, "location").asString(rt).utf8(rt);
       secondary_db_path = secondary_db_path + location;
     }
 
@@ -275,8 +276,8 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
     // SQLite and Turso bind with explicit lengths. Failing loudly across
     // all backends keeps behaviour consistent.
     if (secondary_db_name.find('\0') != std::string::npos) {
-      throw std::runtime_error(
-          "[op-sqlite] attach secondaryDbFileName must not contain a zero byte");
+      throw std::runtime_error("[op-sqlite] attach secondaryDbFileName must "
+                               "not contain a zero byte");
     }
     if (alias.find('\0') != std::string::npos) {
       throw std::runtime_error(
@@ -322,7 +323,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
     // Drain any in-flight async queries before closing the db handle.
     // Without this, a queued/running execute() on the thread pool may
     // dereference the freed sqlite3* pointer → heap corruption / SIGABRT.
-    thread_pool->waitFinished();
+    thread_pool->wait_finished();
 #ifdef OP_SQLITE_USE_LIBSQL
     opsqlite_libsql_close(db);
     db = {};
@@ -369,11 +370,11 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
 #endif
     // Drain any in-flight async queries before closing/removing the db handle.
     // Without this, queued/running work may dereference a freed sqlite handle.
-    thread_pool->waitFinished();
+    thread_pool->wait_finished();
 
     if (delete_db_name.empty()) {
-      throw std::runtime_error(
-        "[op-sqlite][delete] delete() is not supported for remote-only databases");
+      throw std::runtime_error("[op-sqlite][delete] delete() is not supported "
+                               "for remote-only databases");
     }
 
 #ifdef OP_SQLITE_USE_LIBSQL
@@ -644,7 +645,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
     auto query = args[0].asObject(rt);
 
     const std::string query_str =
-      query.getProperty(rt, "query").asString(rt).utf8(rt);
+        query.getProperty(rt, "query").asString(rt).utf8(rt);
     auto js_args = query.getProperty(rt, "arguments");
     auto js_discriminators =
         query.getProperty(rt, "fireOn").asObject(rt).asArray(rt);
@@ -661,7 +662,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
     for (size_t i = 0; i < js_discriminators.length(rt); i++) {
       auto js_discriminator =
           js_discriminators.getValueAtIndex(rt, i).asObject(rt);
-        std::string table =
+      std::string table =
           js_discriminator.getProperty(rt, "table").asString(rt).utf8(rt);
       std::vector<int> ids;
       if (js_discriminator.hasProperty(rt, "ids")) {
@@ -744,7 +745,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
         flush_pending_reactive_queries(resolve);
       };
 
-      thread_pool->queueWork(task);
+      thread_pool->queue_work(task);
 
       return {};
     }));
@@ -800,11 +801,7 @@ void DBHostObject::invalidate() {
 #endif
 
   // Drain in-flight thread pool work before closing the db handle.
-  // restartPool() joins threads (waiting for the current task) but then
-  // needlessly re-creates the pool. waitFinished() is sufficient: it
-  // blocks until the queue is empty and no worker is busy, then the
-  // ThreadPool destructor (via shared_ptr release) joins the threads.
-  thread_pool->waitFinished();
+  thread_pool->wait_finished();
 
 #ifdef OP_SQLITE_USE_LIBSQL
   opsqlite_libsql_close(db);
