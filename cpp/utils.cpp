@@ -170,8 +170,8 @@ std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt, jsi::Value const &xs) {
   res.reserve(arg_length);
 
   for (size_t ii = 0; ii < arg_length; ii++) {
-     res.emplace_back(to_variant(rt, values.getValueAtIndex(rt, ii)));
-   }
+    res.emplace_back(to_variant(rt, values.getValueAtIndex(rt, ii)));
+  }
 
   return res;
 }
@@ -383,8 +383,7 @@ promisify(jsi::Runtime &rt, std::shared_ptr<ThreadPool> thread_pool,
     auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
     auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
-    auto task = [lambda = lambda, thread_pool,
-                 resolve_callback = resolve_callback,
+    auto task = [lambda = lambda, resolve_callback = resolve_callback,
                  resolve = std::move(resolve), reject = std::move(reject)]() {
       try {
         std::any result = lambda();
@@ -393,8 +392,10 @@ promisify(jsi::Runtime &rt, std::shared_ptr<ThreadPool> thread_pool,
           return;
         }
 
+        // reject is also captured in the invokeAsync lambda
+        // so it can be safely disposed on the JS thread
         opsqlite::invoker->invokeAsync(
-            [result = std::move(result), resolve = resolve,
+            [result = std::move(result), resolve = resolve, reject = reject,
              resolve_callback = resolve_callback](jsi::Runtime &rt) {
               auto jsi_result = resolve_callback(rt, result);
               resolve->asObject(rt).asFunction(rt).call(rt, jsi_result);
@@ -404,23 +405,30 @@ promisify(jsi::Runtime &rt, std::shared_ptr<ThreadPool> thread_pool,
         // runtime_error to the generic exception We have to
         // explicitly catch it
         // https://github.com/facebook/react-native/issues/48027
+        //
+        // resolve is also captured in the invokeAsync lambda
+        // so it can be safely disposed on the JS thread
         auto what = e.what();
-        opsqlite::invoker->invokeAsync(
-            [what = std::string(what), reject = reject](jsi::Runtime &rt) {
-              auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-              auto error = errorCtr.callAsConstructor(
-                  rt, jsi::String::createFromAscii(rt, what));
-              reject->asObject(rt).asFunction(rt).call(rt, error);
-            });
+        opsqlite::invoker->invokeAsync([what = std::string(what),
+                                        resolve = resolve,
+                                        reject = reject](jsi::Runtime &rt) {
+          auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+          auto error = errorCtr.callAsConstructor(
+              rt, jsi::String::createFromAscii(rt, what));
+          reject->asObject(rt).asFunction(rt).call(rt, error);
+        });
       } catch (std::exception &exc) {
         auto what = exc.what();
-        opsqlite::invoker->invokeAsync(
-            [what = std::string(what), reject = reject](jsi::Runtime &rt) {
-              auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
-              auto error = errorCtr.callAsConstructor(
-                  rt, jsi::String::createFromAscii(rt, what));
-              reject->asObject(rt).asFunction(rt).call(rt, error);
-            });
+        // resolve is also captured in the invokeAsync lambda
+        // so it can be safely disposed on the JS thread
+        opsqlite::invoker->invokeAsync([what = std::string(what),
+                                        resolve = resolve,
+                                        reject = reject](jsi::Runtime &rt) {
+          auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+          auto error = errorCtr.callAsConstructor(
+              rt, jsi::String::createFromAscii(rt, what));
+          reject->asObject(rt).asFunction(rt).call(rt, error);
+        });
       }
     };
 
