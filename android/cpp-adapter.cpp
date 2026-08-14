@@ -43,8 +43,7 @@ private:
     std::string dbPathStr = dbPath->toStdString();
 
     auto generation_alive = opsqlite::install(
-        *jsiRuntime, jsCallInvoker, dbPathStr.c_str(), "libcrsqlite",
-        "libsqlite_vec");
+        *jsiRuntime, jsCallInvoker, dbPathStr.c_str(), "libsqlite_vec");
 
     auto *handle = new std::shared_ptr<std::atomic<bool>>(generation_alive);
     return reinterpret_cast<jlong>(handle);

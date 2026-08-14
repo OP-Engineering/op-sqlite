@@ -79,12 +79,6 @@ else()
  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlite3.c ../cpp/bridge.cpp)
 endif()
 
-if (USE_CRSQLITE)
-  add_definitions(
-    -DOP_SQLITE_USE_CRSQLITE=1
-  )
-endif()
-
 if (USE_SQLITE_VEC)
   add_definitions(
     -DOP_SQLITE_USE_SQLITE_VEC=1

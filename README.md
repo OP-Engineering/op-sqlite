@@ -20,7 +20,6 @@ Some of the big supported features:
 - SQLCipher is supported as a compilation target
 - FTS5 plugin
 - Rtree plugin
-- cr-sqlite plugin
 - sqlite-vec plugin
 - Reactive queries
 - Custom tokenizers

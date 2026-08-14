@@ -40,7 +40,6 @@ app_package = JSON.parse(File.read(package_json_path))
 
 op_sqlite_config = app_package["op-sqlite"]
 use_sqlcipher = false
-use_crsqlite = false
 use_libsql = false
 use_turso = false
 performance_mode = false
@@ -53,7 +52,6 @@ tokenizers = []
 
 if(op_sqlite_config != nil)
   use_sqlcipher = op_sqlite_config["sqlcipher"] == true
-  use_crsqlite = op_sqlite_config["crsqlite"] == true
   use_libsql = op_sqlite_config["libsql"] == true
   use_turso = op_sqlite_config["turso"] == true
   performance_mode = op_sqlite_config["performanceMode"] || false
@@ -70,10 +68,6 @@ if phone_version then
     raise "SQLCipher is not supported with phone version. It cannot load extensions."
   end
 
-  if use_crsqlite then
-    raise "CRSQLite is not supported with phone version. It cannot load extensions."
-  end
-
   if rtree then
     raise "RTree is not supported with phone version. It cannot load extensions."
   end
@@ -85,10 +79,6 @@ end
 
 if use_libsql and use_sqlite_vec then
     raise "You cannot use sqlite-vec with libsql. libsql already has vector search included."
-end
-
-if use_libsql and use_crsqlite then
-  raise "You cannot use crsqlite with libsql."
 end
 
 if use_turso and use_sqlite_vec then
@@ -169,10 +159,6 @@ Pod::Spec.new do |s|
   end
 
    # Exclude xcframeworks that aren't being used
-  if !use_crsqlite then
-    exclude_files += ["ios/crsqlite.xcframework/**/*"]
-  end
-
   if !use_sqlite_vec then
     exclude_files += ["ios/sqlitevec.xcframework/**/*"]
   end
@@ -199,12 +185,6 @@ Pod::Spec.new do |s|
   if performance_mode then
     log_message.call("[OP-SQLITE] Performance mode enabled")
     other_cflags += optimizedCflags
-  end
-
-  if use_crsqlite then
-    log_message.call("[OP-SQLITE] using CRQSQLite 🤖")
-    xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " OP_SQLITE_USE_CRSQLITE=1"
-    frameworks.push("ios/crsqlite.xcframework")
   end
 
   if use_sqlite_vec then

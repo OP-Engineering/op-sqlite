@@ -22,7 +22,6 @@ namespace jsi = facebook::jsi;
 namespace react = facebook::react;
 
 std::string _base_path;
-std::string _crsqlite_path;
 std::string _sqlite_vec_path;
 std::shared_ptr<react::CallInvoker> invoker;
 std::shared_ptr<std::atomic<bool>> generation_alive;
@@ -42,11 +41,9 @@ void invalidate(const std::shared_ptr<std::atomic<bool>> &generation_alive) {
 
 std::shared_ptr<std::atomic<bool>>
 install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker> &_invoker,
-        const char *base_path, const char *crsqlite_path,
-        const char *sqlite_vec_path) {
+        const char *base_path, const char *sqlite_vec_path) {
 
   _base_path = std::string(base_path);
-  _crsqlite_path = std::string(crsqlite_path);
   _sqlite_vec_path = std::string(sqlite_vec_path);
   opsqlite::invoker = _invoker;
 
