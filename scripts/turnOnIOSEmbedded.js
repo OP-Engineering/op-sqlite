@@ -6,7 +6,6 @@ const packageJson = JSON.parse(fs.readFileSync('./example/package.json'));
 // Modify the op-sqlite.sqlcipher key to true
 packageJson['op-sqlite']['iosSqlite'] = true;
 packageJson['op-sqlite']['sqlcipher'] = false;
-packageJson['op-sqlite']['crsqlite'] = false;
 packageJson['op-sqlite']['libsql'] = false;
 packageJson['op-sqlite']['turso'] = false;
 packageJson['op-sqlite']['sqliteVec'] = false;

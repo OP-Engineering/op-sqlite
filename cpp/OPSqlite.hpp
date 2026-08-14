@@ -17,8 +17,7 @@ namespace react = facebook::react;
 // look it up -- see the comment on opsqlite::generation_alive in types.hpp.
 std::shared_ptr<std::atomic<bool>>
 install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker> &invoker,
-        const char *base_path, const char *crsqlite_path,
-        const char *sqlite_vec_path);
+        const char *base_path, const char *sqlite_vec_path);
 void invalidate(const std::shared_ptr<std::atomic<bool>> &generation_alive);
 void expoUpdatesWorkaround(const char *base_path);
 

@@ -60,7 +60,6 @@
     "iosSqlite": false,
     "fts5": true,
     "rtree": true,
-    "crsqlite": false,
     "sqliteVec": false,
     "performanceMode": true,
     "tokenizers": [

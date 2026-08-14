@@ -492,13 +492,13 @@ Loading runtime extensions is supported. You need compile your extension to the 
         /main
           /jniLibs
             /arm64-v8a
-              libcrsqlite.so
+              libmyextension.so
             /armeabi-v7a
-              libcrsqlite.so
+              libmyextension.so
             /x86
-              libcrsqlite.so
+              libmyextension.so
             /x86_64
-              libcrsqlite.so
+              libmyextension.so
   ```
 
 ### iOS
@@ -514,9 +514,9 @@ Loading runtime extensions is supported. You need compile your extension to the 
   import {open, getDylibPath} from '@op-sqlite/op-engineering';
 
   const db = open(...);
-  let path = "libcrsqlite" // in Android it will be the name of the .so
+  let path = "libmyextension" // in Android it will be the name of the .so
   if (Platform.os == "ios") {
-    path = getDylibPath("io.vlcn.crsqlite", "crsqlite"); // You need to get the bundle name from the .framework/plist.info inside of the .xcframework you created and then the canonical name inside the same plist
+    path = getDylibPath("com.example.myextension", "myextension"); // You need to get the bundle name from the .framework/plist.info inside of the .xcframework you created and then the canonical name inside the same plist
   }
   // Extensions usually have a default entry point to be loaded, if the documentation says nothing, you should assume no entry point change
   db.loadExtension(path);
