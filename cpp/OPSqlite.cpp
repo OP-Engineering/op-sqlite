@@ -12,7 +12,6 @@
 #include "utils.hpp"
 #include <functional>
 #include <iostream>
-#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -25,56 +24,39 @@ namespace react = facebook::react;
 std::string _base_path;
 std::string _crsqlite_path;
 std::string _sqlite_vec_path;
-std::vector<std::shared_ptr<DBHostObject>> dbs;
-// Guards `dbs`. Two JS runtime generations overlap during a bridgeless reload,
-// so open() and invalidate() can touch this vector from different threads at
-// the same time.
-std::mutex dbs_mutex;
-bool invalidated = false;
 std::shared_ptr<react::CallInvoker> invoker;
 std::shared_ptr<std::atomic<bool>> generation_alive;
 
 // React native will try to clean the module on JS context invalidation
-// (CodePush/Hot Reload) The clearState function is called
-void invalidate() {
-  // Global flag used by the threads to stop work
-  invalidated = true;
-
-  // Mark THIS generation dead. Work queued by it holds a copy of the flag, so
-  // it drops its completions instead of resolving into a runtime that is being
-  // torn down.
+// (CodePush/Hot Reload) The clearState function is called. Each currently
+// open DBHostObject cleans itself up independently -- ~DBHostObject()
+// already calls invalidate() (interrupt + drain + close) whenever the JS
+// runtime destroys it, so there's no registry to walk here. All this needs
+// to do is mark THIS generation dead so in-flight async work drops its
+// result instead of resolving into whichever runtime replaces it.
+void invalidate(const std::shared_ptr<std::atomic<bool>> &generation_alive) {
   if (generation_alive != nullptr) {
     generation_alive->store(false);
   }
-
-  // Take ownership of the registry under the lock before touching it. This runs
-  // on the outgoing generation's TurboModule queue, while the incoming
-  // generation's open() may already be emplacing into `dbs` on its own JS
-  // thread: RCTHost constructs the new RCTInstance without waiting for the old
-  // one to finish invalidating. Iterating the vector directly can therefore run
-  // off a reallocated buffer.
-  std::vector<std::shared_ptr<DBHostObject>> closing;
-  {
-    std::lock_guard<std::mutex> g(dbs_mutex);
-    closing.swap(dbs);
-  }
-
-  for (const auto &db : closing) {
-    db->invalidate();
-  }
 }
 
-void install(jsi::Runtime &rt,
-             const std::shared_ptr<react::CallInvoker> &_invoker,
-             const char *base_path, const char *crsqlite_path,
-             const char *sqlite_vec_path) {
+std::shared_ptr<std::atomic<bool>>
+install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker> &_invoker,
+        const char *base_path, const char *crsqlite_path,
+        const char *sqlite_vec_path) {
 
   _base_path = std::string(base_path);
   _crsqlite_path = std::string(crsqlite_path);
   _sqlite_vec_path = std::string(sqlite_vec_path);
   opsqlite::invoker = _invoker;
-  opsqlite::invalidated = false;
-  opsqlite::generation_alive = std::make_shared<std::atomic<bool>>(true);
+
+  // Also returned to the caller: DBs opened by this generation shadow-copy
+  // the global at construction time (see DBHostObject.hpp), while
+  // invalidate() needs the shared_ptr handed back directly so it flips THIS
+  // generation's flag even if a newer, overlapping generation's install()
+  // has already reassigned the global.
+  auto local_generation_alive = std::make_shared<std::atomic<bool>>(true);
+  opsqlite::generation_alive = local_generation_alive;
 
   auto open = HFN0 {
     jsi::Object options = args[0].asObject(rt);
@@ -114,10 +96,6 @@ void install(jsi::Runtime &rt,
 
     std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
         rt, path, name, path, readOnly, failOnCreate, encryption_key);
-    {
-      std::lock_guard<std::mutex> g(dbs_mutex);
-      dbs.emplace_back(db);
-    }
     return jsi::Object::createFromHostObject(rt, db);
   });
 
@@ -170,11 +148,6 @@ void install(jsi::Runtime &rt,
     std::shared_ptr<DBHostObject> db =
         std::make_shared<DBHostObject>(rt, url, auth_token, path);
 #endif
-
-    {
-      std::lock_guard<std::mutex> g(dbs_mutex);
-      dbs.emplace_back(db);
-    }
 
     return jsi::Object::createFromHostObject(rt, db);
   });
@@ -236,11 +209,6 @@ void install(jsi::Runtime &rt,
       rt, name, path, url, auth_token, remote_encryption_key);
   #endif
 
-    {
-      std::lock_guard<std::mutex> g(dbs_mutex);
-      dbs.emplace_back(db);
-    }
-
     return jsi::Object::createFromHostObject(rt, db);
   });
 #endif
@@ -257,6 +225,8 @@ void install(jsi::Runtime &rt,
 #endif
 
   rt.global().setProperty(rt, "__OPSQLiteProxy", std::move(module));
+
+  return local_generation_alive;
 }
 
 void expoUpdatesWorkaround(const char *base_path) {

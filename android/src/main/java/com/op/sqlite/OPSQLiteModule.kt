@@ -13,6 +13,13 @@ import java.io.OutputStream
 import com.facebook.react.util.RNLog;
 
 internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextBaseJavaModule(context) {
+    // Handle for THIS generation's liveness flag, returned by install() and
+    // handed back to invalidate(). OPSQLiteModule is recreated per bridge/
+    // generation by OPSQLitePackage, unlike the OPSQLiteBridge singleton it
+    // calls into, so this instance field -- not that singleton -- is what
+    // carries per-generation identity across the JNI boundary.
+    private var generationAliveHandle: Long = 0
+
     override fun getName(): String {
         return NAME
     }
@@ -41,7 +48,7 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextB
     @ReactMethod(isBlockingSynchronousMethod = true)
     fun install(): Boolean {
         return try {
-            OPSQLiteBridge.instance.install(reactApplicationContext)
+            generationAliveHandle = OPSQLiteBridge.instance.install(reactApplicationContext)
             true
         } catch (exception: Exception) {
             Log.e(NAME, "Install exception: $exception")
@@ -105,7 +112,7 @@ internal class OPSQLiteModule(context: ReactApplicationContext?) : ReactContextB
 
     override fun invalidate() {
         super.invalidate()
-        OPSQLiteBridge.instance.invalidate()
+        OPSQLiteBridge.instance.invalidate(generationAliveHandle)
     }
 
     companion object {
