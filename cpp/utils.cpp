@@ -383,18 +383,34 @@ promisify(jsi::Runtime &rt, std::shared_ptr<ThreadPool> thread_pool,
     auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
     auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
+    // Bind this generation's invoker and liveness flag here, on the JS thread,
+    // while the promise is being constructed. Reading the process globals from
+    // the worker instead lets a task queued by a torn-down runtime post into the
+    // runtime that replaced it, and then call asFunction() on a jsi::Value that
+    // belongs to the dead one.
+    auto invoker = opsqlite::invoker;
+    auto alive = opsqlite::generation_alive;
+
     auto task = [lambda = lambda, resolve_callback = resolve_callback,
-                 resolve = std::move(resolve), reject = std::move(reject)]() {
+                 resolve = std::move(resolve), reject = std::move(reject),
+                 invoker, alive]() {
+      if (invoker == nullptr) {
+        return;
+      }
+
       try {
         std::any result = lambda();
 
-        if (opsqlite::invalidated) {
+        // This generation is gone. Posting now would schedule onto a runtime
+        // that is being torn down, where asFunction() sees an already
+        // invalidated PointerValue.
+        if (alive != nullptr && !alive->load()) {
           return;
         }
 
         // reject is also captured in the invokeAsync lambda
         // so it can be safely disposed on the JS thread
-        opsqlite::invoker->invokeAsync(
+        invoker->invokeAsync(
             [result = std::move(result), resolve = resolve, reject = reject,
              resolve_callback = resolve_callback](jsi::Runtime &rt) {
               auto jsi_result = resolve_callback(rt, result);
@@ -409,9 +425,11 @@ promisify(jsi::Runtime &rt, std::shared_ptr<ThreadPool> thread_pool,
         // resolve is also captured in the invokeAsync lambda
         // so it can be safely disposed on the JS thread
         auto what = e.what();
-        opsqlite::invoker->invokeAsync([what = std::string(what),
-                                        resolve = resolve,
-                                        reject = reject](jsi::Runtime &rt) {
+        if (alive != nullptr && !alive->load()) {
+          return;
+        }
+        invoker->invokeAsync([what = std::string(what), resolve = resolve,
+                              reject = reject](jsi::Runtime &rt) {
           auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
           auto error = errorCtr.callAsConstructor(
               rt, jsi::String::createFromAscii(rt, what));
@@ -419,11 +437,13 @@ promisify(jsi::Runtime &rt, std::shared_ptr<ThreadPool> thread_pool,
         });
       } catch (std::exception &exc) {
         auto what = exc.what();
+        if (alive != nullptr && !alive->load()) {
+          return;
+        }
         // resolve is also captured in the invokeAsync lambda
         // so it can be safely disposed on the JS thread
-        opsqlite::invoker->invokeAsync([what = std::string(what),
-                                        resolve = resolve,
-                                        reject = reject](jsi::Runtime &rt) {
+        invoker->invokeAsync([what = std::string(what), resolve = resolve,
+                              reject = reject](jsi::Runtime &rt) {
           auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
           auto error = errorCtr.callAsConstructor(
               rt, jsi::String::createFromAscii(rt, what));
@@ -432,7 +452,7 @@ promisify(jsi::Runtime &rt, std::shared_ptr<ThreadPool> thread_pool,
       }
     };
 
-    thread_pool->queueWork(task);
+    thread_pool->queue_work(task);
 
     return jsi::Value(nullptr);
   });
