@@ -143,6 +143,7 @@ android {
   namespace "com.op.sqlite"
 
   compileSdkVersion getExtOrIntegerDefault("compileSdkVersion")
+  ndkVersion getExtOrDefault("ndkVersion")
 
   defaultConfig {
     minSdkVersion getExtOrIntegerDefault("minSdkVersion")

@@ -27,5 +27,13 @@
     "target": "ESNext",
     "verbatimModuleSyntax": true,
   },
-  "exclude": ["docs"],
+  // "example/ios" now contains build/generated/autolinking/libs/<dep> —
+  // symlinks into node_modules created by SwiftPM's autolinker for
+  // self-managed deps (react-native-safe-area-context, react-native-restart).
+  // Since the symlink itself lives outside node_modules, tsc's automatic
+  // node_modules exclusion doesn't cover it, and it pulls those deps' own
+  // .ts/.tsx source (with their own, unrelated type errors) into our
+  // typecheck. CocoaPods never generated anything under example/ios/build,
+  // so this didn't come up before SwiftPM support was added.
+  "exclude": ["docs", "example/ios"],
 }

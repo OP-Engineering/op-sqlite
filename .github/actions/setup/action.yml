@@ -15,15 +15,21 @@ runs:
 
     - name: Cache dependencies
       id: yarn-cache
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: |
           **/node_modules
           .yarn/install-state.gz
-        # key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}-${{ hashFiles('**/package.json', '!node_modules/**') }}
+        # Deliberately no `restore-keys` fallback: a fallback match restores
+        # node_modules/.yarn/install-state.gz from an OLDER lockfile/package.json
+        # state (any change to either misses the exact key below), and `yarn
+        # install --immutable` then reconciles incrementally on top of that
+        # stale state instead of a clean install. patch-package (run via
+        # postinstall) is sensitive to exact package content and doesn't
+        # reliably re-apply patches in that scenario — this caused CI to
+        # intermittently fail with "cannot apply the following patch file"
+        # after any dependency version bump. Exact-match-or-miss avoids it.
         key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock', 'example/yarn.lock') }}-${{ hashFiles('package.json', 'example/package.json') }}
-        restore-keys: |
-          ${{ runner.os }}-yarn-
 
     - name: Install dependencies
       if: steps.yarn-cache.outputs.cache-hit != 'true'

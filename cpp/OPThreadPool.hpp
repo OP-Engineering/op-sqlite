@@ -3,6 +3,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <exception>
+#include <functional>
 #include <mutex>
 #include <queue>
 #include <stdio.h>

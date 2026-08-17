@@ -49,6 +49,7 @@ trap cleanup EXIT
 
 cd example || exit
 
+echo "Booting simulator"
 xcrun simctl boot "$(xcrun simctl list devices available | grep -m1 'Booted' || xcrun simctl list devices available | grep -m1 'Shutdown' | awk -F '[()]' '{print $2}')"
 
 DEVICE_ID=$(xcrun simctl list devices booted | grep -m1 Booted | awk -F '[()]' '{print $2}')
@@ -57,8 +58,7 @@ if [[ -z "${DEVICE_ID}" ]]; then
   exit 1
 fi
 
-# Prevent the simulator from auto-locking the screen, which suspends the app
-# xcrun simctl spawn "${DEVICE_ID}" defaults write com.apple.springboard idleTimerDuration -int 0 2>/dev/null || true
+echo "Simulator booted!"
 
 LOG_FILE="$(pwd)/ios-sim-log.txt"
 rm -f "${LOG_FILE}"
