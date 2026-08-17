@@ -28,6 +28,8 @@
     "*.rb",
     "react-native.config.js",
     "ios/**.xcframework",
+    "Package.swift",
+    "op-sqlite-spm-prefix.h",
     "!ios/build",
     "!android/build",
     "!android/gradle",
