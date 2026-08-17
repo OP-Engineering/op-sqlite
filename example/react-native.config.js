@@ -5,7 +5,12 @@ module.exports = {
   assets: ['./assets/'],
   project: {
     ios: {
-      automaticPodsInstallation: true,
+      // Auto pod-install conflicts with the SwiftPM setup (`npx react-native
+      // spm`) — it silently re-integrates CocoaPods into the .xcodeproj on
+      // every `npm run ios`, undoing `spm add --deintegrate`. Re-enable this
+      // (and run `pod install`) if you deliberately revert to CocoaPods via
+      // `npx react-native spm deinit`.
+      automaticPodsInstallation: false,
     },
   },
   dependencies: {

@@ -89,5 +89,17 @@ android/c_sources
 # c_sources/
 
 scripts/sqlite-vec-*
-turso/
+# Root-level turso SDK source checkout used by build-turso-binaries.sh — not
+# anchored with a trailing-slash-only pattern, this also matched cpp/turso/
+# (the real, tracked source dir for the turso backend bridge), silently
+# untracking turso_bridge.cpp after it was moved there.
+/turso/
 .tmp/
+
+# SwiftPM (regenerated on every manifest evaluation)
+.build/
+.swiftpm/
+Package.resolved
+# Leftover temp file if `react-native spm scaffold`/`read-podspec.js` gets
+# interrupted mid-run before its own cleanup step
+.spm-scaffold-*
