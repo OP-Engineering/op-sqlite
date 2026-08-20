@@ -14,6 +14,7 @@
 #include <sqlite3.h>
 #endif
 #endif
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -41,7 +42,9 @@ struct ReactiveQuery {
   std::shared_ptr<jsi::Value> callback;
 };
 
-class JSI_EXPORT DBHostObject : public jsi::HostObject {
+class JSI_EXPORT DBHostObject
+    : public jsi::HostObject,
+      public std::enable_shared_from_this<DBHostObject> {
 public:
   // Normal constructor shared between all backends
   DBHostObject(jsi::Runtime &rt, std::string &base_path, std::string &db_name,
@@ -82,6 +85,7 @@ public:
 private:
   std::set<std::shared_ptr<ReactiveQuery>> pending_reactive_queries;
   void auto_register_update_hook();
+  void release_hooks();
   void create_jsi_functions(jsi::Runtime &rt);
   void flush_pending_reactive_queries(const std::shared_ptr<jsi::Value> &resolve);
 

@@ -155,6 +155,10 @@ void DBHostObject::on_update(const std::string &table,
 }
 
 void DBHostObject::auto_register_update_hook() {
+  if (invalidated || db == nullptr) {
+    return;
+  }
+
   if (update_hook_callback == nullptr && reactive_queries.empty() &&
       is_update_hook_registered) {
     opsqlite_deregister_update_hook(db);
@@ -170,6 +174,15 @@ void DBHostObject::auto_register_update_hook() {
   is_update_hook_registered = true;
 }
 #endif
+
+void DBHostObject::release_hooks() {
+  reactive_queries.clear();
+  pending_reactive_queries.clear();
+  update_hook_callback = nullptr;
+  commit_hook_callback = nullptr;
+  rollback_hook_callback = nullptr;
+  is_update_hook_registered = false;
+}
 
 //    _____                _                   _
 //   / ____|              | |                 | |
@@ -324,6 +337,7 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
     // Without this, a queued/running execute() on the thread pool may
     // dereference the freed sqlite3* pointer → heap corruption / SIGABRT.
     thread_pool->wait_finished();
+    release_hooks();
 #ifdef OP_SQLITE_USE_LIBSQL
     opsqlite_libsql_close(db);
     db = {};
@@ -377,10 +391,13 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
                                "for remote-only databases");
     }
 
+    release_hooks();
 #ifdef OP_SQLITE_USE_LIBSQL
     opsqlite_libsql_remove(db, delete_db_name, base_path);
 #else
-    opsqlite_remove(db, delete_db_name, base_path);
+    auto *closing_db = db;
+    db = nullptr;
+    opsqlite_remove(closing_db, delete_db_name, base_path);
 #endif
 
     return {};
@@ -684,13 +701,19 @@ void DBHostObject::create_jsi_functions(jsi::Runtime &rt) {
 
     auto_register_update_hook();
 
-    auto unsubscribe = HFN2(this, reactiveQuery) {
-      auto it = std::find(reactive_queries.begin(), reactive_queries.end(),
-                          reactiveQuery);
-      if (it != reactive_queries.end()) {
-        reactive_queries.erase(it);
+    auto weak_self = weak_from_this();
+
+    auto unsubscribe = HFN2(weak_self, reactiveQuery) {
+      auto self = weak_self.lock();
+      if (self == nullptr) {
+        return {};
       }
-      auto_register_update_hook();
+      auto it = std::find(self->reactive_queries.begin(),
+                          self->reactive_queries.end(), reactiveQuery);
+      if (it != self->reactive_queries.end()) {
+        self->reactive_queries.erase(it);
+      }
+      self->auto_register_update_hook();
       return {};
     });
 
@@ -802,6 +825,7 @@ void DBHostObject::invalidate() {
 
   // Drain in-flight thread pool work before closing the db handle.
   thread_pool->wait_finished();
+  release_hooks();
 
 #ifdef OP_SQLITE_USE_LIBSQL
   opsqlite_libsql_close(db);
