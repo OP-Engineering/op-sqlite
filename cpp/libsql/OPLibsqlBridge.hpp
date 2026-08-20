@@ -1,10 +1,10 @@
 #pragma once
 
-#include "DumbHostObject.hpp"
-#include "SmartHostObject.hpp"
+#include "OPDumbHostObject.hpp"
+#include "OPSmartHostObject.hpp"
 #include "libsql.h"
-#include "types.hpp"
-#include "utils.hpp"
+#include "OPTypes.hpp"
+#include "OPUtils.hpp"
 #include <vector>
 
 #define LIBSQL_INT 1

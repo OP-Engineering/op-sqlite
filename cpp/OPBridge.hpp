@@ -1,9 +1,9 @@
 #pragma once
 
-#include "DumbHostObject.hpp"
-#include "SmartHostObject.hpp"
-#include "types.hpp"
-#include "utils.hpp"
+#include "OPDumbHostObject.hpp"
+#include "OPSmartHostObject.hpp"
+#include "OPTypes.hpp"
+#include "OPUtils.hpp"
 #ifdef __ANDROID__
 #include "sqlite3.h"
 #else

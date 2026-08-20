@@ -1,8 +1,8 @@
 #include "OPDatabase.hpp"
-#include "DumbHostObject.hpp"
-#include "SmartHostObject.hpp"
-#include "bridge.hpp"
-#include "utils.hpp"
+#include "OPDumbHostObject.hpp"
+#include "OPSmartHostObject.hpp"
+#include "OPBridge.hpp"
+#include "OPUtils.hpp"
 
 #ifdef __APPLE__
 extern "C" {

@@ -1,6 +1,6 @@
-#include "DumbHostObject.hpp"
-#include "SmartHostObject.hpp"
-#include "utils.hpp"
+#include "OPDumbHostObject.hpp"
+#include "OPSmartHostObject.hpp"
+#include "OPUtils.hpp"
 #include <iostream>
 
 namespace opsqlite {
