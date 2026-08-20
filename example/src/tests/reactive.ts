@@ -339,4 +339,18 @@ describe("Reactive queries", () => {
 
 		unsubscribe();
 	});
+
+	it("Unsubscribing after the database is closed does not crash", async () => {
+		const unsubscribe = db.reactiveExecute({
+			query: "SELECT * FROM User;",
+			arguments: [],
+			fireOn: [{ table: "User" }],
+			callback: () => {},
+		});
+
+		db.close();
+
+
+		unsubscribe();
+	});
 });
