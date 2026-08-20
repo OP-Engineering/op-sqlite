@@ -1,12 +1,12 @@
 #pragma once
 
 #include "OPThreadPool.hpp"
-#include "types.hpp"
+#include "OPTypes.hpp"
 #include <ReactCommon/CallInvoker.h>
 #include <jsi/jsi.h>
 #include <set>
 #ifdef OP_SQLITE_USE_LIBSQL
-#include "libsql/bridge.hpp"
+#include "libsql/OPLibsqlBridge.hpp"
 #else
 #ifdef __ANDROID__
 #include "sqlite3.h"

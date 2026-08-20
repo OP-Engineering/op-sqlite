@@ -1,13 +1,13 @@
 #include "OPDatabase.hpp"
-#include "PreparedStatementHostObject.hpp"
+#include "OPPreparedStatementHostObject.hpp"
 #if OP_SQLITE_USE_LIBSQL
-#include "libsql/bridge.hpp"
+#include "libsql/OPLibsqlBridge.hpp"
 #else
-#include "bridge.hpp"
+#include "OPBridge.hpp"
 #endif
-#include "logs.h"
-#include "macros.hpp"
-#include "utils.hpp"
+#include "OPLogs.h"
+#include "OPMacros.hpp"
+#include "OPUtils.hpp"
 #include <functional>
 #include <iostream>
 #include <utility>

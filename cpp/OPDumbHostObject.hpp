@@ -1,7 +1,7 @@
 #pragma once
 
-#include "SmartHostObject.hpp"
-#include "types.hpp"
+#include "OPSmartHostObject.hpp"
+#include "OPTypes.hpp"
 #include <any>
 #include <jsi/jsi.h>
 #include <stdio.h>

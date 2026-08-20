@@ -42,17 +42,17 @@ add_library(
   ${PACKAGE_NAME}
   SHARED
   ../cpp/OPSqlite.cpp
-  ../cpp/utils.cpp
+  ../cpp/OPUtils.cpp
   ../cpp/OPThreadPool.cpp
-  ../cpp/SmartHostObject.cpp
-  ../cpp/PreparedStatementHostObject.cpp
-  ../cpp/DumbHostObject.cpp
+  ../cpp/OPSmartHostObject.cpp
+  ../cpp/OPPreparedStatementHostObject.cpp
+  ../cpp/OPDumbHostObject.cpp
   ../cpp/OPDatabase.cpp
   cpp-adapter.cpp
 )
 
 if (USE_SQLCIPHER)
-  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlcipher/sqlite3.h ../cpp/sqlcipher/sqlite3.c ../cpp/bridge.cpp ../cpp/bridge.hpp)
+  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlcipher/sqlite3.h ../cpp/sqlcipher/sqlite3.c ../cpp/OPBridge.cpp ../cpp/OPBridge.hpp)
 
   add_definitions(
     -DOP_SQLITE_USE_SQLCIPHER=1
@@ -64,19 +64,19 @@ if (USE_SQLCIPHER)
 
   find_package(openssl REQUIRED CONFIG)
 elseif (USE_LIBSQL)
-  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/libsql/bridge.cpp)
+  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/libsql/OPLibsqlBridge.cpp)
 
   add_definitions(
     -DOP_SQLITE_USE_LIBSQL=1
   )
 elseif (USE_TURSO)
-  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/turso/turso_bridge.cpp)
+  target_sources(${PACKAGE_NAME} PRIVATE ../cpp/turso/OPTursoBridge.cpp)
 
   add_definitions(
     -DOP_SQLITE_USE_TURSO=1
   )
 else()
- target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlite3.c ../cpp/bridge.cpp)
+ target_sources(${PACKAGE_NAME} PRIVATE ../cpp/sqlite3.c ../cpp/OPBridge.cpp)
 endif()
 
 if (USE_SQLITE_VEC)

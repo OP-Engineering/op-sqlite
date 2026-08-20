@@ -191,7 +191,7 @@ var sourceFiles =
 // excludes (the vendored xcframeworks, and cpp/sqlcipher, cpp/libsql,
 // cpp/turso below) are reliable; those backend sources were relocated into
 // their own subdirectories specifically so they can be excluded that way.
-// `cpp/sqlite3.c`/`cpp/bridge.{c,cpp,hpp}` are the remaining individual-file
+// `cpp/sqlite3.c`/`cpp/OPBridge.{cpp,hpp}` are the remaining individual-file
 // exclusions (only reachable via the sqlcipher/turso/libsql/phone-version
 // branches, not the default path) — flagged as a known residual risk in
 // those configurations rather than moved, to keep this translation close to
@@ -237,14 +237,14 @@ if useSqlcipher {
   excludedDirs.insert("cpp/libsql")
 } else if useTurso {
   print("[OP-SQLITE] using Turso SDK kit")
-  excludedSources.formUnion(["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/bridge.hpp", "cpp/bridge.cpp"])
+  excludedSources.formUnion(["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/OPBridge.hpp", "cpp/OPBridge.cpp"])
   excludedDirs.formUnion(["cpp/sqlcipher", "cpp/libsql"])
 } else if useLibsql {
   print("[OP-SQLITE] ⚠️ Using libsql. If you have libsql questions please ask in the Turso Discord server.")
-  // cpp/bridge.cpp is the default (non-libsql) bridge; it and
-  // cpp/libsql/bridge.cpp both define opsqlite_get_db_path and friends —
+  // cpp/OPBridge.cpp is the default (non-libsql) bridge; it and
+  // cpp/libsql/OPLibsqlBridge.cpp both define opsqlite_get_db_path and friends —
   // compiling both is a duplicate-symbol link error.
-  excludedSources.formUnion(["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/bridge.cpp", "cpp/bridge.hpp"])
+  excludedSources.formUnion(["cpp/sqlite3.c", "cpp/sqlite3.h", "cpp/OPBridge.cpp", "cpp/OPBridge.hpp"])
   excludedDirs.insert("cpp/sqlcipher")
 } else {
   print("[OP-SQLITE] using pure SQLite")
@@ -443,7 +443,7 @@ let package = Package(
       // constructed so everything left under `path` is exactly the wanted
       // set, and the default auto-scan is the well-trodden SPM code path.
       exclude: targetExcludes,
-      // cpp/bridge.cpp reaches SQLite via `#include <sqlite3.h>` (angle
+      // cpp/OPBridge.cpp reaches SQLite via `#include <sqlite3.h>` (angle
       // form). cpp/sqlite3.h and cpp/sqlcipher/sqlite3.h are two different
       // files with that same name; CocoaPods disambiguates via its header
       // map, built fresh from source_files/exclude_files each `pod install`.
@@ -459,7 +459,7 @@ let package = Package(
         // above, in case publicHeadersPath's implicit search isn't given
         // priority over some other path on a future toolchain.
         .headerSearchPath(useSqlcipher ? "cpp/sqlcipher" : "cpp"),
-        // cpp/libsql/bridge.hpp unconditionally `#include`s libsql.h (it's
+        // cpp/libsql/OPLibsqlBridge.hpp unconditionally `#include`s libsql.h (it's
         // pulled in from always-compiled files like OPDatabase.hpp, not
         // just the libsql backend), so libsql.h must resolve regardless of
         // whether useLibsql links the actual xcframework binary. CocoaPods
@@ -470,7 +470,7 @@ let package = Package(
         // still resolves via this search path regardless.
         .headerSearchPath("ios/libsql_experimental.xcframework/ios-arm64/libsql_experimental.framework/Headers"),
       ]
-        // cpp/turso/turso_bridge.cpp includes <turso_sdk_kit/turso.h> —
+        // cpp/turso/OPTursoBridge.cpp includes <turso_sdk_kit/turso.h> —
         // framework-style angle include. The xcframework ships no module
         // map, so this only resolves via clang's plain framework-header
         // lookup, added below via -F (headers are identical across arch
