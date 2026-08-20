@@ -123,6 +123,35 @@ describe("DB setup tests", () => {
     }
   });
 
+  it("Throws instead of crashing when the database is used after close", () => {
+    const db = open({
+      name: "closedDbGuard.sqlite",
+    });
+
+    db.close();
+
+    const callsOnClosedDb = [
+      () => db.executeSync("SELECT 1;"),
+      () => db.prepareStatement("SELECT 1;"),
+      () => db.updateHook(() => {}),
+      () => db.commitHook(() => {}),
+      () => db.rollbackHook(() => {}),
+      () => db.attach({ secondaryDbFileName: "other", alias: "other" }),
+    ];
+
+    for (const call of callsOnClosedDb) {
+      let error: unknown = null;
+      try {
+        call();
+      } catch (e) {
+        error = e;
+      }
+      expect(!!error).toEqual(true);
+    }
+
+    db.delete();
+  });
+
   it("Should delete db", async () => {
     const db = open({
       name: "deleteTest",
