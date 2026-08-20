@@ -460,7 +460,7 @@ let package = Package(
         // priority over some other path on a future toolchain.
         .headerSearchPath(useSqlcipher ? "cpp/sqlcipher" : "cpp"),
         // cpp/libsql/bridge.hpp unconditionally `#include`s libsql.h (it's
-        // pulled in from always-compiled files like DBHostObject.hpp, not
+        // pulled in from always-compiled files like OPDatabase.hpp, not
         // just the libsql backend), so libsql.h must resolve regardless of
         // whether useLibsql links the actual xcframework binary. CocoaPods
         // papered over this with a broad recursive header search path;
