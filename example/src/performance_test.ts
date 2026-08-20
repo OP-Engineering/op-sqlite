@@ -42,6 +42,45 @@ export function performanceTest() {
   return end - start;
 }
 
+export async function performanceTestAsync() {
+  const db = open({
+    name: 'perfTestAsync.sqlite',
+  });
+
+  // Create table with 14 columns
+  await db.execute(
+    `CREATE TABLE IF NOT EXISTS perf_table (
+      id INTEGER PRIMARY KEY,
+      col1 TEXT, col2 TEXT, col3 TEXT, col4 TEXT, col5 TEXT, col6 TEXT, col7 TEXT,
+      col8 TEXT, col9 TEXT, col10 TEXT, col11 TEXT, col12 TEXT, col13 TEXT, col14 TEXT
+    )`,
+  );
+  // Clear table
+  await db.execute('DELETE FROM perf_table');
+  const testRow = Array(14).fill('test');
+
+  let start = performance.now();
+
+  for (let i = 0; i < 1_000; i++) {
+    // Insert a single row for querying
+    await db.execute(
+      `INSERT INTO perf_table (
+        col1, col2, col3, col4, col5, col6, col7,
+        col8, col9, col10, col11, col12, col13, col14
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      testRow,
+    );
+  }
+
+  for (let i = 0; i < 100000; i++) {
+    await db.execute('SELECT * FROM perf_table WHERE id = 1');
+  }
+  const end = performance.now();
+
+  // await db.close();
+  return end - start;
+}
+
 export function insertTest() {
   const db = open({
     name: 'insertTest.sqlite'

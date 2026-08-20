@@ -1,4 +1,4 @@
-#include "DBHostObject.hpp"
+#include "OPDatabase.hpp"
 #include "DumbHostObject.hpp"
 #include "SmartHostObject.hpp"
 #include "bridge.hpp"

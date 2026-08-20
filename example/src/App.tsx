@@ -5,7 +5,7 @@ import {
 } from "@op-engineering/op-test";
 import { useEffect, useState } from "react";
 import "./tests"; // import all tests to register them
-import {performanceTest, insertTest} from './performance_test';
+import {performanceTest, performanceTestAsync, insertTest} from './performance_test';
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 // import {open} from '@op-engineering/op-sqlite';
@@ -13,6 +13,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 export default function App() {
 	const [results, setResults] = useState<any>(null);
 	const [perfResult, setPerfResult] = useState<number>(0);
+	const [perfResultAsync, setPerfResultAsync] = useState<number>(0);
 	const [openTime, setOpenTime] = useState(0);
 
 	useEffect(() => {
@@ -37,14 +38,21 @@ export default function App() {
 			}
 
 			setTimeout(() => {
-			  try {
-			    global?.gc?.();
-			    // let perfRes = performanceTest();
-          let perfRes = insertTest();
-			    setPerfResult(perfRes);
-			  } catch (e) {
-			    // intentionally left blank
-			  }
+			  const runPerf = async () => {
+			    try {
+			      // global?.gc?.();
+			      // let perfRes = performanceTest();
+			      // let perfRes = insertTest();
+			      // setPerfResult(perfRes);
+
+			      // global?.gc?.();
+			      // let perfResAsync = await performanceTestAsync();
+			      // setPerfResultAsync(perfResAsync);
+			    } catch (e) {
+			      // intentionally left blank
+			    }
+			  };
+			  runPerf();
 			}, 4000);
 		};
 
@@ -83,7 +91,10 @@ export default function App() {
 						Open DB time: {openTime.toFixed(0)} ms
 					</Text>
 					<Text style={styles.performanceText}>
-						100_000 query time: {perfResult.toFixed(0)} ms
+						perf/insert test time: {perfResult.toFixed(0)} ms
+					</Text>
+					<Text style={styles.performanceText}>
+						perf test (async) time: {perfResultAsync.toFixed(0)} ms
 					</Text>
 				</View>
 				<View style={styles.results}>{displayResults(results)}</View>

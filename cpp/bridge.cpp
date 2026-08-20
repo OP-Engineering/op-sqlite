@@ -1,9 +1,9 @@
 // This file contains pure sqlite operations without JSI interaction
 // Allows a clear defined boundary between the JSI and the SQLite operations
-// so that threading operations are safe and contained within DBHostObject
+// so that threading operations are safe and contained within OPDatabase
 
 #include "bridge.hpp"
-#include "DBHostObject.hpp"
+#include "OPDatabase.hpp"
 #include "DumbHostObject.hpp"
 #include "SmartHostObject.hpp"
 #include "logs.h"
@@ -805,43 +805,43 @@ std::string operation_to_string(int operation_type) {
   }
 }
 
-void update_callback(void *db_host_object_ptr, int operation_type,
+void update_callback(void *opsqlite_db_ptr, int operation_type,
                      [[maybe_unused]] char const *database, char const *table,
                      sqlite3_int64 row_id) {
-  auto db_host_object = reinterpret_cast<DBHostObject *>(db_host_object_ptr);
-  db_host_object->on_update(std::string(table),
-                            operation_to_string(operation_type), row_id);
+  auto opsqlite_db = reinterpret_cast<OPDatabase *>(opsqlite_db_ptr);
+  opsqlite_db->on_update(std::string(table),
+                         operation_to_string(operation_type), row_id);
 }
 
-void opsqlite_register_update_hook(sqlite3 *db, void *db_host_object) {
-  sqlite3_update_hook(db, &update_callback, (void *)db_host_object);
+void opsqlite_register_update_hook(sqlite3 *db, void *opsqlite_db_ptr) {
+  sqlite3_update_hook(db, &update_callback, opsqlite_db_ptr);
 }
 
 void opsqlite_deregister_update_hook(sqlite3 *db) {
   sqlite3_update_hook(db, nullptr, nullptr);
 }
 
-int commit_callback(void *db_host_object_ptr) {
-  auto db_host_object = reinterpret_cast<DBHostObject *>(db_host_object_ptr);
-  db_host_object->on_commit();
+int commit_callback(void *opsqlite_db_ptr) {
+  auto opsqlite_db = reinterpret_cast<OPDatabase *>(opsqlite_db_ptr);
+  opsqlite_db->on_commit();
   return 0;
 }
 
-void opsqlite_register_commit_hook(sqlite3 *db, void *db_host_object_ptr) {
-  sqlite3_commit_hook(db, &commit_callback, db_host_object_ptr);
+void opsqlite_register_commit_hook(sqlite3 *db, void *opsqlite_db_ptr) {
+  sqlite3_commit_hook(db, &commit_callback, opsqlite_db_ptr);
 }
 
 void opsqlite_deregister_commit_hook(sqlite3 *db) {
   sqlite3_commit_hook(db, nullptr, nullptr);
 }
 
-void rollback_callback(void *db_host_object_ptr) {
-  auto db_host_object = reinterpret_cast<DBHostObject *>(db_host_object_ptr);
-  db_host_object->on_rollback();
+void rollback_callback(void *opsqlite_db_ptr) {
+  auto opsqlite_db = reinterpret_cast<OPDatabase *>(opsqlite_db_ptr);
+  opsqlite_db->on_rollback();
 }
 
-void opsqlite_register_rollback_hook(sqlite3 *db, void *db_host_object_ptr) {
-  sqlite3_rollback_hook(db, &rollback_callback, db_host_object_ptr);
+void opsqlite_register_rollback_hook(sqlite3 *db, void *opsqlite_db_ptr) {
+  sqlite3_rollback_hook(db, &rollback_callback, opsqlite_db_ptr);
 }
 
 void opsqlite_deregister_rollback_hook(sqlite3 *db) {

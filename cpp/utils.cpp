@@ -412,8 +412,8 @@ promisify(jsi::Runtime &rt, std::shared_ptr<ThreadPool> thread_pool,
         // so it can be safely disposed on the JS thread
         invoker->invokeAsync(
             [result = std::move(result), resolve = resolve, reject = reject,
-             resolve_callback = resolve_callback](jsi::Runtime &rt) {
-              auto jsi_result = resolve_callback(rt, result);
+             resolve_callback = resolve_callback](jsi::Runtime &rt) mutable {
+              auto jsi_result = resolve_callback(rt, std::move(result));
               resolve->asObject(rt).asFunction(rt).call(rt, jsi_result);
             });
       } catch (std::runtime_error &e) {

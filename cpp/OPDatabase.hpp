@@ -15,7 +15,6 @@
 #endif
 #endif
 #include <memory>
-#include <unordered_map>
 #include <vector>
 
 namespace opsqlite {
@@ -42,55 +41,52 @@ struct ReactiveQuery {
   std::shared_ptr<jsi::Value> callback;
 };
 
-class JSI_EXPORT DBHostObject
-    : public jsi::HostObject,
-      public std::enable_shared_from_this<DBHostObject> {
+class JSI_EXPORT OPDatabase
+    : public jsi::NativeState,
+      public std::enable_shared_from_this<OPDatabase> {
 public:
   // Normal constructor shared between all backends
-  DBHostObject(jsi::Runtime &rt, std::string &base_path, std::string &db_name,
+  OPDatabase(jsi::Runtime &rt, jsi::Object &js_object,
+               std::string &base_path, std::string &db_name,
                std::string &path, bool readOnly, bool failOnCreate,
                std::string &encryption_key);
 
 #ifdef OP_SQLITE_USE_LIBSQL
   // Constructor for remoteOpen, purely for remote databases
-  DBHostObject(jsi::Runtime &rt, std::string &url, std::string &auth_token);
+  OPDatabase(jsi::Runtime &rt, jsi::Object &js_object, std::string &url,
+               std::string &auth_token);
 
   // Constructor for a local database with remote sync
-  DBHostObject(jsi::Runtime &rt, std::string &db_name, std::string &path,
-               std::string &url, std::string &auth_token, int sync_interval,
-               bool offline, std::string &encryption_key,
+  OPDatabase(jsi::Runtime &rt, jsi::Object &js_object, std::string &db_name,
+               std::string &path, std::string &url, std::string &auth_token,
+               int sync_interval, bool offline, std::string &encryption_key,
                std::string &remote_encryption_key);
 #elif defined(OP_SQLITE_USE_TURSO)
   // Constructor for remoteOpen, purely for remote databases
-  DBHostObject(jsi::Runtime &rt, std::string &url, std::string &auth_token,
-               std::string &base_path);
+  OPDatabase(jsi::Runtime &rt, jsi::Object &js_object, std::string &url,
+               std::string &auth_token, std::string &base_path);
 
   // Constructor for a local database with remote sync
-  DBHostObject(jsi::Runtime &rt, std::string &db_name, std::string &path,
-               std::string &url, std::string &auth_token,
+  OPDatabase(jsi::Runtime &rt, jsi::Object &js_object, std::string &db_name,
+               std::string &path, std::string &url, std::string &auth_token,
                std::string &remote_encryption_key);
 #endif
 
-  std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &rt) override;
-  jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID) override;
-  void set(jsi::Runtime &rt, const jsi::PropNameID &name,
-           const jsi::Value &value) override;
   void on_update(const std::string &table, const std::string &operation,
                  long long row_id);
   void on_commit();
   void on_rollback();
   void invalidate();
-  ~DBHostObject() override;
+  ~OPDatabase() override;
 
 private:
   std::set<std::shared_ptr<ReactiveQuery>> pending_reactive_queries;
-  void auto_register_update_hook();
+  void sync_update_hook_registration();
   void release_hooks();
   void throw_if_closed(const char *function_name) const;
-  void create_jsi_functions(jsi::Runtime &rt);
+  void create_jsi_functions(jsi::Runtime &rt, jsi::Object &js_object);
   void flush_pending_reactive_queries(const std::shared_ptr<jsi::Value> &resolve);
 
-  std::unordered_map<std::string, jsi::Value> function_map;
   std::string base_path;
   // Bound at construction, on the JS thread, to the generation that created
   // this database.

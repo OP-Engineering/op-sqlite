@@ -1,5 +1,5 @@
 #include "OPSqlite.hpp"
-#include "DBHostObject.hpp"
+#include "OPDatabase.hpp"
 #include "DumbHostObject.hpp"
 #include "OPThreadPool.hpp"
 #ifdef OP_SQLITE_USE_LIBSQL
@@ -26,13 +26,17 @@ std::string _sqlite_vec_path;
 std::shared_ptr<react::CallInvoker> invoker;
 std::shared_ptr<std::atomic<bool>> generation_alive;
 
-// React native will try to clean the module on JS context invalidation
-// (CodePush/Hot Reload) The clearState function is called. Each currently
-// open DBHostObject cleans itself up independently -- ~DBHostObject()
-// already calls invalidate() (interrupt + drain + close) whenever the JS
-// runtime destroys it, so there's no registry to walk here. All this needs
-// to do is mark THIS generation dead so in-flight async work drops its
-// result instead of resolving into whichever runtime replaces it.
+// Each platform module calls its own invalidate() lifecycle hook when React
+// Native tears down the JS context (CodePush/Hot Reload, or any other
+// runtime teardown) -- OPSQLiteModule.invalidate() on Android, which reaches
+// this function through JNI's clearStateNativeJsi (see android/cpp-adapter.cpp),
+// and -[OPSQLite invalidate] on iOS (see ios/OPSQLite.mm). Each currently
+// open OPDatabase cleans itself up independently -- OPDatabase's own
+// invalidate() (interrupt + drain + close), called from its destructor,
+// already runs whenever the JS runtime destroys it, so there's no registry to
+// walk here. All THIS invalidate() needs to do is mark THIS generation dead so
+// in-flight async work drops its result instead of resolving into whichever
+// runtime replaces it.
 void invalidate(const std::shared_ptr<std::atomic<bool>> &generation_alive) {
   if (generation_alive != nullptr) {
     generation_alive->store(false);
@@ -40,15 +44,15 @@ void invalidate(const std::shared_ptr<std::atomic<bool>> &generation_alive) {
 }
 
 std::shared_ptr<std::atomic<bool>>
-install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker> &_invoker,
+install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker> &invoker,
         const char *base_path, const char *sqlite_vec_path) {
 
   _base_path = std::string(base_path);
   _sqlite_vec_path = std::string(sqlite_vec_path);
-  opsqlite::invoker = _invoker;
+  opsqlite::invoker = invoker;
 
   // Also returned to the caller: DBs opened by this generation shadow-copy
-  // the global at construction time (see DBHostObject.hpp), while
+  // the global at construction time (see OPDatabase.hpp), while
   // invalidate() needs the shared_ptr handed back directly so it flips THIS
   // generation's flag even if a newer, overlapping generation's install()
   // has already reassigned the global.
@@ -91,9 +95,11 @@ install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker> &_invoker,
       }
     }
 
-    std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-        rt, path, name, path, readOnly, failOnCreate, encryption_key);
-    return jsi::Object::createFromHostObject(rt, db);
+    jsi::Object js_db(rt);
+    std::shared_ptr<OPDatabase> db = std::make_shared<OPDatabase>(
+        rt, js_db, path, name, path, readOnly, failOnCreate, encryption_key);
+    js_db.setNativeState(rt, db);
+    return js_db;
   });
 
   auto is_sqlcipher = HFN(=) {
@@ -137,16 +143,18 @@ install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker> &_invoker,
     std::string auth_token =
       options.getProperty(rt, "authToken").asString(rt).utf8(rt);
 
+    jsi::Object js_db(rt);
 #ifdef OP_SQLITE_USE_LIBSQL
-    std::shared_ptr<DBHostObject> db =
-        std::make_shared<DBHostObject>(rt, url, auth_token);
+    std::shared_ptr<OPDatabase> db =
+        std::make_shared<OPDatabase>(rt, js_db, url, auth_token);
 #else
     std::string path = std::string(_base_path);
-    std::shared_ptr<DBHostObject> db =
-        std::make_shared<DBHostObject>(rt, url, auth_token, path);
+    std::shared_ptr<OPDatabase> db =
+        std::make_shared<OPDatabase>(rt, js_db, url, auth_token, path);
 #endif
 
-    return jsi::Object::createFromHostObject(rt, db);
+    js_db.setNativeState(rt, db);
+    return js_db;
   });
 
   auto open_sync = HFN(=) {
@@ -194,19 +202,21 @@ install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker> &_invoker,
       }
     }
 
+    jsi::Object js_db(rt);
   #ifdef OP_SQLITE_USE_LIBSQL
-    std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-      rt, name, path, url, auth_token, sync_interval, offline, encryption_key,
-      remote_encryption_key);
+    std::shared_ptr<OPDatabase> db = std::make_shared<OPDatabase>(
+      rt, js_db, name, path, url, auth_token, sync_interval, offline,
+      encryption_key, remote_encryption_key);
   #else
     (void)sync_interval;
     (void)offline;
 
-    std::shared_ptr<DBHostObject> db = std::make_shared<DBHostObject>(
-      rt, name, path, url, auth_token, remote_encryption_key);
+    std::shared_ptr<OPDatabase> db = std::make_shared<OPDatabase>(
+      rt, js_db, name, path, url, auth_token, remote_encryption_key);
   #endif
 
-    return jsi::Object::createFromHostObject(rt, db);
+    js_db.setNativeState(rt, db);
+    return js_db;
   });
 #endif
 
