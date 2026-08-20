@@ -440,7 +440,7 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
         [](jsi::Runtime &rt, std::any prev) {
           auto tuple = std::any_cast<
               std::tuple<BridgeResult, std::vector<std::vector<JSVariant>>>>(
-              prev);
+              std::move(prev));
 
           return create_raw_result(rt, std::get<0>(tuple), &std::get<1>(tuple));
         });
@@ -502,7 +502,7 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
           return status;
         },
         [](jsi::Runtime &rt, std::any prev) {
-          auto status = std::any_cast<BridgeResult>(prev);
+          auto status = std::any_cast<BridgeResult>(std::move(prev));
           return create_js_rows(rt, status);
         });
   }));
@@ -533,9 +533,10 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
         [](jsi::Runtime &rt, std::any prev) {
           auto tuple = std::any_cast<
               std::tuple<BridgeResult, std::vector<DumbHostObject>,
-                         std::shared_ptr<std::vector<SmartHostObject>>>>(prev);
-          auto results =
-              std::make_shared<std::vector<DumbHostObject>>(std::get<1>(tuple));
+                         std::shared_ptr<std::vector<SmartHostObject>>>>(
+              std::move(prev));
+          auto results = std::make_shared<std::vector<DumbHostObject>>(
+              std::move(std::get<1>(tuple)));
           return create_result(rt, std::get<0>(tuple), results.get(),
                                std::get<2>(tuple));
         });
@@ -573,7 +574,7 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
           return batchResult;
         },
         [](jsi::Runtime &rt, std::any prev) {
-          auto batchResult = std::any_cast<BatchResult>(prev);
+          auto batchResult = std::any_cast<BatchResult>(std::move(prev));
           auto res = jsi::Object(rt);
           res.setProperty(rt, "rowsAffected",
                           jsi::Value(batchResult.affectedRows));
@@ -627,7 +628,7 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
         rt, thread_pool,
         [this, sqlFileName]() { return import_sql_file(db, sqlFileName); },
         [](jsi::Runtime &rt, std::any prev) {
-          auto result = std::any_cast<BatchResult>(prev);
+          auto result = std::any_cast<BatchResult>(std::move(prev));
           auto res = jsi::Object(rt);
           res.setProperty(rt, "rowsAffected", jsi::Value(result.affectedRows));
           res.setProperty(rt, "commands", jsi::Value(result.commands));

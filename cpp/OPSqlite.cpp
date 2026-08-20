@@ -26,13 +26,17 @@ std::string _sqlite_vec_path;
 std::shared_ptr<react::CallInvoker> invoker;
 std::shared_ptr<std::atomic<bool>> generation_alive;
 
-// React native will try to clean the module on JS context invalidation
-// (CodePush/Hot Reload) The clearState function is called. Each currently
-// open OPDatabase cleans itself up independently -- ~OPDatabase()
-// already calls invalidate() (interrupt + drain + close) whenever the JS
-// runtime destroys it, so there's no registry to walk here. All this needs
-// to do is mark THIS generation dead so in-flight async work drops its
-// result instead of resolving into whichever runtime replaces it.
+// Each platform module calls its own invalidate() lifecycle hook when React
+// Native tears down the JS context (CodePush/Hot Reload, or any other
+// runtime teardown) -- OPSQLiteModule.invalidate() on Android, which reaches
+// this function through JNI's clearStateNativeJsi (see android/cpp-adapter.cpp),
+// and -[OPSQLite invalidate] on iOS (see ios/OPSQLite.mm). Each currently
+// open OPDatabase cleans itself up independently -- OPDatabase's own
+// invalidate() (interrupt + drain + close), called from its destructor,
+// already runs whenever the JS runtime destroys it, so there's no registry to
+// walk here. All THIS invalidate() needs to do is mark THIS generation dead so
+// in-flight async work drops its result instead of resolving into whichever
+// runtime replaces it.
 void invalidate(const std::shared_ptr<std::atomic<bool>> &generation_alive) {
   if (generation_alive != nullptr) {
     generation_alive->store(false);
@@ -40,12 +44,12 @@ void invalidate(const std::shared_ptr<std::atomic<bool>> &generation_alive) {
 }
 
 std::shared_ptr<std::atomic<bool>>
-install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker> &_invoker,
+install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker> &invoker,
         const char *base_path, const char *sqlite_vec_path) {
 
   _base_path = std::string(base_path);
   _sqlite_vec_path = std::string(sqlite_vec_path);
-  opsqlite::invoker = _invoker;
+  opsqlite::invoker = invoker;
 
   // Also returned to the caller: DBs opened by this generation shadow-copy
   // the global at construction time (see OPDatabase.hpp), while
