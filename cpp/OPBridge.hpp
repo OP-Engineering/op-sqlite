@@ -90,7 +90,8 @@ sqlite3_stmt *opsqlite_prepare_statement(sqlite3 *db, std::string const &query);
 void opsqlite_finalize_statement(sqlite3_stmt *statement);
 
 void opsqlite_bind_statement(sqlite3_stmt *statement,
-                             const std::vector<JSVariant> *params);
+                             const std::vector<JSVariant> *params,
+                             bool should_clear_bindings = true);
 
 BridgeResult opsqlite_execute_prepared_statement(
     sqlite3 *db, sqlite3_stmt *statement, std::vector<DumbHostObject> *results,

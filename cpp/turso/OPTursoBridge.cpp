@@ -345,7 +345,8 @@ void reset_statement(turso_statement_t *statement) {
 } // namespace
 
 void opsqlite_bind_statement(sqlite3_stmt *statement,
-                             const std::vector<JSVariant> *values) {
+                             const std::vector<JSVariant> *values,
+                             [[maybe_unused]] bool should_clear_bindings) {
   auto *stmt = to_turso_stmt(statement);
 
   for (size_t i = 0; i < values->size(); i++) {

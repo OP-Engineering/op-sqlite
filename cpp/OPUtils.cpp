@@ -9,12 +9,44 @@
 #include "OPMacros.hpp"
 #include <fstream>
 #include <sys/stat.h>
+#include <unordered_map>
 #include <utility>
 
 namespace opsqlite {
 
 namespace jsi = facebook::jsi;
 namespace react = facebook::react;
+
+namespace {
+
+// "rowsAffected"/"insertId"/"rows" are set on every execute() result
+// regardless of query, so their PropNameIDs are worth caching the same way
+// column_prop_ids are reused across rows -- except these are reused across
+// *calls* too. PropNameID is a handle scoped to the jsi::Runtime that
+// created it, and runtime "generations" can briefly overlap during a
+// bridgeless reload (see OPTypes.hpp), so the cache is keyed by Runtime*
+// rather than a single global. thread_local because JSI runtime access is
+// always confined to one thread at a time; no lock needed.
+struct ResultPropNames {
+  jsi::PropNameID rowsAffected;
+  jsi::PropNameID insertId;
+  jsi::PropNameID rows;
+};
+
+ResultPropNames &result_prop_names(jsi::Runtime &rt) {
+  static thread_local std::unordered_map<jsi::Runtime *, ResultPropNames> cache;
+  auto it = cache.find(&rt);
+  if (it != cache.end()) {
+    return it->second;
+  }
+  auto [inserted, _] = cache.emplace(
+      &rt, ResultPropNames{jsi::PropNameID::forAscii(rt, "rowsAffected"),
+                           jsi::PropNameID::forAscii(rt, "insertId"),
+                           jsi::PropNameID::forAscii(rt, "rows")});
+  return inserted->second;
+}
+
+} // namespace
 
 jsi::Value to_jsi(jsi::Runtime &rt, const JSVariant &value) {
   if (std::holds_alternative<bool>(value)) {
@@ -83,13 +115,14 @@ JSVariant to_variant(jsi::Runtime &rt, const jsi::Value &value) {
   } else if (value.isBool()) {
     return JSVariant(value.getBool());
   } else if (value.isNumber()) {
+    // Binding only ever emits sqlite3_bind_int (below) or sqlite3_bind_double
+    // (see opsqlite_bind_statement) — the long long alternative always fell
+    // through to sqlite3_bind_double anyway, so it added a redundant cast
+    // and comparison here for no behavioral difference.
     double doubleVal = value.asNumber();
     int intVal = (int)doubleVal;
-    long long longVal = (long)doubleVal;
     if (intVal == doubleVal) {
       return JSVariant(intVal);
-    } else if (longVal == doubleVal) {
-      return JSVariant(longVal);
     } else {
       return JSVariant(doubleVal);
     }
@@ -177,18 +210,19 @@ std::vector<JSVariant> to_variant_vec(jsi::Runtime &rt, jsi::Value const &xs) {
 }
 
 jsi::Value create_js_rows(jsi::Runtime &rt, const BridgeResult &status) {
+  auto &prop_names = result_prop_names(rt);
   jsi::Object res = jsi::Object(rt);
 
-  res.setProperty(rt, "rowsAffected", status.affectedRows);
+  res.setProperty(rt, prop_names.rowsAffected, status.affectedRows);
   if (status.affectedRows > 0 && status.insertId != 0) {
-    res.setProperty(rt, "insertId", jsi::Value(status.insertId));
+    res.setProperty(rt, prop_names.insertId, jsi::Value(status.insertId));
   }
 
   size_t row_count = status.rows.size();
   size_t column_count = status.column_names.size();
 
   if (row_count == 0) {
-    res.setProperty(rt, "rows", jsi::Array(rt, 0));
+    res.setProperty(rt, prop_names.rows, jsi::Array(rt, 0));
     return res;
   }
 
@@ -207,7 +241,7 @@ jsi::Value create_js_rows(jsi::Runtime &rt, const BridgeResult &status) {
     }
     rows.setValueAtIndex(rt, i, std::move(row));
   }
-  res.setProperty(rt, "rows", std::move(rows));
+  res.setProperty(rt, prop_names.rows, std::move(rows));
 
   return res;
 }
@@ -216,11 +250,12 @@ jsi::Value
 create_result(jsi::Runtime &rt, const BridgeResult &status,
               std::vector<DumbHostObject> *results,
               std::shared_ptr<std::vector<SmartHostObject>> metadata) {
+  auto &prop_names = result_prop_names(rt);
   jsi::Object res = jsi::Object(rt);
 
-  res.setProperty(rt, "rowsAffected", status.affectedRows);
+  res.setProperty(rt, prop_names.rowsAffected, status.affectedRows);
   if (status.affectedRows > 0 && status.insertId != 0) {
-    res.setProperty(rt, "insertId", jsi::Value(status.insertId));
+    res.setProperty(rt, prop_names.insertId, jsi::Value(status.insertId));
   }
 
   size_t rowCount = results->size();
@@ -232,7 +267,7 @@ create_result(jsi::Runtime &rt, const BridgeResult &status,
                           jsi::Object::createFromHostObject(
                               rt, std::make_shared<DumbHostObject>(obj)));
   }
-  res.setProperty(rt, "rows", std::move(array));
+  res.setProperty(rt, prop_names.rows, std::move(array));
 
   size_t column_count = metadata->size();
   auto column_array = jsi::Array(rt, column_count);
@@ -251,6 +286,7 @@ create_result(jsi::Runtime &rt, const BridgeResult &status,
 jsi::Value
 create_raw_result(jsi::Runtime &rt, const BridgeResult &status,
                   const std::vector<std::vector<JSVariant>> *results) {
+  auto &prop_names = result_prop_names(rt);
   size_t row_count = results->size();
   jsi::Object res(rt);
   jsi::Array raw_rows = jsi::Array(rt, row_count);
@@ -270,8 +306,8 @@ create_raw_result(jsi::Runtime &rt, const BridgeResult &status,
         rt, i, jsi::String::createFromUtf8(rt, status.column_names.at(i)));
   }
 
-  res.setProperty(rt, "rowsAffected", status.affectedRows);
-  res.setProperty(rt, "insertId", status.insertId);
+  res.setProperty(rt, prop_names.rowsAffected, status.affectedRows);
+  res.setProperty(rt, prop_names.insertId, status.insertId);
   res.setProperty(rt, "rawRows", std::move(raw_rows));
   res.setProperty(rt, "columnNames", std::move(column_names));
 

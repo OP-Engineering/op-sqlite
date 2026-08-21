@@ -25,8 +25,11 @@
 namespace opsqlite {
 
 inline void opsqlite_bind_statement(sqlite3_stmt *statement,
-                                    const std::vector<JSVariant> *values) {
-  sqlite3_clear_bindings(statement);
+                                    const std::vector<JSVariant> *values,
+                                    bool should_clear_bindings) {
+  if (should_clear_bindings) {
+    sqlite3_clear_bindings(statement);
+  }
 
   size_t size = values->size();
 
@@ -386,7 +389,7 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
     }
 
     if (params != nullptr && !params->empty()) {
-      opsqlite_bind_statement(statement, params);
+      opsqlite_bind_statement(statement, params, /* should_clear_bindings */ false);
     }
 
     // sqlite3_column_count is the correct signal: it's non-zero for any
@@ -527,7 +530,7 @@ BridgeResult opsqlite_execute_host_objects(
     }
 
     if (params != nullptr && !params->empty()) {
-      opsqlite_bind_statement(statement, params);
+      opsqlite_bind_statement(statement, params, /* should_clear_bindings */ false);
     }
 
     int i, count, column_type;
@@ -685,7 +688,7 @@ opsqlite_execute_raw(sqlite3 *db, std::string const &query,
     }
 
     if (params != nullptr && !params->empty()) {
-      opsqlite_bind_statement(statement, params);
+      opsqlite_bind_statement(statement, params, /* should_clear_bindings */ false);
     }
 
     int i, column_type;
