@@ -714,7 +714,7 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
     auto variant_args = to_variant_vec(rt, js_args);
 
     sqlite3_stmt *stmt = opsqlite_prepare_statement(db, query_str);
-    opsqlite_bind_statement(stmt, &variant_args);
+    opsqlite_bind_statement(stmt, &variant_args, /* should_clear_bindings */ false);
 
     auto callback =
         std::make_shared<jsi::Value>(query.getProperty(rt, "callback"));

@@ -83,13 +83,14 @@ JSVariant to_variant(jsi::Runtime &rt, const jsi::Value &value) {
   } else if (value.isBool()) {
     return JSVariant(value.getBool());
   } else if (value.isNumber()) {
+    // Binding only ever emits sqlite3_bind_int (below) or sqlite3_bind_double
+    // (see opsqlite_bind_statement) — the long long alternative always fell
+    // through to sqlite3_bind_double anyway, so it added a redundant cast
+    // and comparison here for no behavioral difference.
     double doubleVal = value.asNumber();
     int intVal = (int)doubleVal;
-    long long longVal = (long)doubleVal;
     if (intVal == doubleVal) {
       return JSVariant(intVal);
-    } else if (longVal == doubleVal) {
-      return JSVariant(longVal);
     } else {
       return JSVariant(doubleVal);
     }
