@@ -322,6 +322,7 @@ function enhanceWebDb(db: _InternalDB, options: { name?: string; location?: stri
         execute: async () => {
           return db.execute(query, currentParams);
         },
+        executeSync: unsupported("executeSync"),
       };
     },
     loadExtension: unsupported("loadExtension"),

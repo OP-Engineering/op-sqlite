@@ -124,6 +124,7 @@ export type PreparedStatement = {
   bind: (params: any[]) => Promise<void>;
   bindSync: (params: any[]) => void;
   execute: () => Promise<QueryResult>;
+  executeSync: () => QueryResult;
 };
 
 export type _InternalDB = {
