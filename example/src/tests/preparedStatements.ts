@@ -99,4 +99,30 @@ describe("PreparedStatements", () => {
 		const results = await selectStatement.execute();
 		expect(results.rows.length).toEqual(5);
 	});
+
+	it("prepared statement, executeSync", () => {
+		const statement = db.prepareStatement("SELECT * FROM User;");
+		let results = statement.executeSync();
+
+		expect(results.rows?.length).toEqual(3);
+		results = statement.executeSync();
+
+		expect(results.rows.length).toEqual(3);
+	});
+
+	it("prepared statement, bindsync + executeSync", () => {
+		const statement = db.prepareStatement(
+			'INSERT INTO "User" (id, name) VALUES(?,?);',
+		);
+
+		statement.bindSync([4, "Juan"]);
+		statement.executeSync();
+
+		statement.bindSync([5, "Pedro"]);
+		statement.executeSync();
+
+		const selectStatement = db.prepareStatement("SELECT * FROM User;");
+		const results = selectStatement.executeSync();
+		expect(results.rows.length).toEqual(5);
+	});
 });
