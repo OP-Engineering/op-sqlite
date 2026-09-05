@@ -184,6 +184,10 @@ let results1 = await statement.execute();
 
 await statement.bind(['Carlos']);
 let results2 = await statement.execute();
+
+// Or use the synchronous version of execute
+statement.bindSync(['Pedro']);
+let results3 = statement.executeSync();
 ```
 
 You only pay the price of parsing the query once, and each subsequent execution should be faster.
