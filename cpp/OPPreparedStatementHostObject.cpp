@@ -105,6 +105,26 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
           });
     });
   }
+  if (name == "executeSync") {
+    return HFN(this) {
+      if (_stmt == nullptr) {
+        throw std::runtime_error("statement has been freed");
+      }
+
+      std::vector<DumbHostObject> results;
+      auto metadata = std::make_shared<std::vector<SmartHostObject>>();
+#ifdef OP_SQLITE_USE_LIBSQL
+      auto status = opsqlite_libsql_execute_prepared_statement(
+          _db, _stmt, &results, metadata);
+#else
+      auto status =
+          opsqlite_execute_prepared_statement(_db, _stmt, &results, metadata);
+#endif
+
+      return create_result(rt, status, &results, metadata);
+    });
+  }
+
   return {};
 }
 

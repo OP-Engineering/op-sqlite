@@ -181,6 +181,7 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
           await stmt.bind(params);
         },
         execute: stmt.execute,
+        executeSync: stmt.executeSync,
       };
     },
     transaction: async (fn: (tx: Transaction) => Promise<void>): Promise<void> => {
