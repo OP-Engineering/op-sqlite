@@ -97,7 +97,7 @@ Pod::Spec.new do |s|
   s.license      = package["license"]
   s.authors      = package["author"]
 
-  s.platforms    = { :ios => min_ios_version_supported, :tvos => "13.0", :osx => "10.15", :visionos => "1.0" }
+  s.platforms    = { :ios => min_ios_version_supported, :tvos => "13.0", :osx => "10.15", :visionos => "1.0", :watchos => "9.0" }
   s.source       = { :git => "https://github.com/op-engineering/op-sqlite.git", :tag => "#{s.version}" }
 
   log_message.call("[OP-SQLITE] Configuration found at #{package_json_path}")
