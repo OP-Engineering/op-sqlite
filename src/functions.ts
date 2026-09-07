@@ -8,10 +8,15 @@ import type {
   OpenOptions,
   OPSQLiteProxy,
   QueryResult,
+  RBUApplyOptions,
+  RBUApplyResult,
   Scalar,
   SQLBatchTuple,
   Transaction,
 } from "./types";
+import { normalizeRBUError, RBUError, validateRBUOptions } from "./rbu";
+
+export { RBUError };
 
 declare global {
   var __OPSQLiteProxy: object | undefined;
@@ -379,4 +384,23 @@ export const isIOSEmbedded = (): boolean => {
   }
 
   return OPSQLite.isIOSEmbedded();
+};
+
+/** Returns whether RBU was compiled into the active native SQLite backend. */
+export const isRBUEnabled = (): boolean => {
+  return OPSQLite.isRBUEnabled();
+};
+
+/**
+ * Applies a prepared RBU update using a native background thread.
+ * Ordinary connections to the target must be closed before calling this function.
+ */
+export const applyRBU = async (options: RBUApplyOptions): Promise<RBUApplyResult> => {
+  validateRBUOptions(options);
+
+  try {
+    return await OPSQLite.applyRBU(options);
+  } catch (error) {
+    throw normalizeRBUError(error);
+  }
 };

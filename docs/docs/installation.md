@@ -65,6 +65,7 @@ SQLite is very customizable on compilation level. op-sqlite also allows you add 
     // "sqliteFlags": "-DSQLITE_DQS=0 -DSQLITE_MY_FLAG=1",
     // "fts5": true,
     // "rtree": true,
+    // "rbu": true,
     // "libsql": true,
     // "turso": true,
     // "sqliteVec": true,
@@ -82,6 +83,7 @@ All keys are optional, only turn on the features you want:
 - `fts5` enables the full [text search extension](https://www.sqlite.org/fts5.html).
 - `tokenizers` allows you to write your own C tokenizers. Read more in the corresponding section in this documentation.
 - `rtree` enables the [rtree extension](https://www.sqlite.org/rtree.html)
+- `rbu` enables SQLite's resumable bulk update extension. See [Resumable bulk updates](./rbu.md).
 - `sqliteVec` enables [sqlite-vec](https://github.com/asg017/sqlite-vec), an extension for RAG embeddings
 - `turso` switches the backend to Turso SDK kit and enables `openRemote`, `openSync` and `sync` APIs for remote/sync workflows.
 

@@ -5,6 +5,7 @@ import "./hooks";
 import "./preparedStatements";
 import "./queries";
 import "./reactive";
+import "./rbu";
 import "./storage";
 import "./tokenizer";
 import "./web";
