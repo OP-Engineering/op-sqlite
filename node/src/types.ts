@@ -99,6 +99,23 @@ export type DBParams = {
   syncInterval?: number;
 };
 
+export type RBUApplyOptions = {
+  targetPath: string;
+  updatePath: string;
+  statePath?: string;
+  /** Maximum sqlite3rbu_step() calls before persisting state. Defaults to 1000. */
+  maxSteps?: number;
+};
+
+export type RBUState = "oal" | "move" | "checkpoint" | "done" | "error" | "unknown";
+
+export type RBUApplyResult = {
+  status: "paused" | "complete";
+  steps: number;
+  progress: number;
+  state: RBUState;
+};
+
 export type OPSQLiteProxy = {
   open: (options: { name: string; location?: string; encryptionKey?: string }) => DB;
   openV2: (options: { path: string; encryptionKey?: string }) => DB;
@@ -108,4 +125,6 @@ export type OPSQLiteProxy = {
   isLibsql: () => boolean;
   isTurso: () => boolean;
   isIOSEmbedded: () => boolean;
+  isRBUEnabled: () => boolean;
+  applyRBU: (options: RBUApplyOptions) => Promise<RBUApplyResult>;
 };

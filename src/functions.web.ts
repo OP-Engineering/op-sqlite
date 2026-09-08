@@ -9,11 +9,16 @@ import type {
   OPSQLiteProxy,
   PreparedStatement,
   QueryResult,
+  RBUApplyOptions,
+  RBUApplyResult,
   RawQueryResult,
   Scalar,
   SQLBatchTuple,
   Transaction,
 } from "./types";
+import { RBUError, validateRBUOptions } from "./rbu";
+
+export { RBUError };
 
 type WorkerPromiser = (type: string, args?: Record<string, unknown>) => Promise<any>;
 
@@ -510,6 +515,15 @@ export const isTurso = (): boolean => {
 
 export const isIOSEmbedded = (): boolean => {
   return false;
+};
+
+export const isRBUEnabled = (): boolean => {
+  return false;
+};
+
+export const applyRBU = async (options: RBUApplyOptions): Promise<RBUApplyResult> => {
+  validateRBUOptions(options);
+  throw new RBUError(21, "[op-sqlite][RBU] applyRBU() is not supported on web");
 };
 
 /**

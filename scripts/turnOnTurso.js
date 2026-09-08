@@ -9,6 +9,7 @@ packageJson['op-sqlite']['libsql'] = false;
 packageJson['op-sqlite']['sqlcipher'] = false;
 packageJson['op-sqlite']['iosSqlite'] = false;
 packageJson['op-sqlite']['sqliteVec'] = false;
+packageJson['op-sqlite']['rbu'] = false;
 packageJson['op-sqlite']['tokenizers'] = [];
 
 // Save the updated package.json file

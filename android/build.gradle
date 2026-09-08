@@ -60,6 +60,7 @@ def sqliteFlags = ""
 def enableFTS5 = false
 def useSqliteVec = false
 def enableRtree = false
+def enableRBU = false
 def tokenizers = []
 
 // On the example app, the package.json is located at the root of the project
@@ -100,11 +101,16 @@ if(opsqliteConfig) {
   useLibsql = !!opsqliteConfig["libsql"]
   useTurso = !!opsqliteConfig["turso"]
   enableRtree = !!opsqliteConfig["rtree"]
+  enableRBU = !!opsqliteConfig["rbu"]
   tokenizers = opsqliteConfig["tokenizers"] ? opsqliteConfig["tokenizers"] : []
 }
 
 if(useLibsql && useTurso) {
   throw new GradleException("[OP-SQLITE] Error: libsql and turso backends are mutually exclusive.")
+}
+
+if(enableRBU && (useSQLCipher || useLibsql || useTurso)) {
+  throw new GradleException("[OP-SQLITE] Error: RBU currently supports only the bundled vanilla SQLite backend.")
 }
 
 if(useSQLCipher) {
@@ -125,6 +131,10 @@ if(enableFTS5) {
 
 if(enableRtree) {
   println "[OP-SQLITE] RTree enabled"
+}
+
+if(enableRBU) {
+  println "[OP-SQLITE] RBU enabled"
 }
 
 if(useSqliteVec) {
@@ -157,6 +167,9 @@ if (enableFTS5) {
 }
 if (enableRtree) {
   defaultSqliteFlags += "-DSQLITE_ENABLE_RTREE=1"
+}
+if (enableRBU) {
+  defaultSqliteFlags += "-DSQLITE_ENABLE_RBU=1"
 }
 
 android {
