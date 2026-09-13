@@ -208,9 +208,9 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
         }
         const result = enhancedDb.executeSync("COMMIT;");
 
-        await db.flushPendingReactiveQueries();
-
         isFinalized = true;
+
+        await db.flushPendingReactiveQueries();
         return result;
       };
 
@@ -238,7 +238,7 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
           });
 
           if (!isFinalized) {
-            commit();
+            await commit();
           }
         } catch (executionError) {
           if (!isFinalized) {
@@ -248,7 +248,6 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
           throw executionError;
         } finally {
           lock.inProgress = false;
-          isFinalized = false;
           startNextTransaction();
         }
       }

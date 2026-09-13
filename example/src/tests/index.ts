@@ -7,4 +7,5 @@ import "./queries";
 import "./reactive";
 import "./storage";
 import "./tokenizer";
+import "./transactions";
 import "./web";
