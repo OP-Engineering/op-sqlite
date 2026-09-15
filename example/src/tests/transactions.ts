@@ -1,5 +1,260 @@
 import { type DB, isLibsql, isTurso, open, type Transaction } from "@op-engineering/op-sqlite";
 import { afterEach, beforeEach, describe, expect, it } from "@op-engineering/op-test";
+import { chance } from "./utils";
+
+describe("Transactions", () => {
+  let db: DB;
+
+  beforeEach(async () => {
+    db = open({
+      name: "transactions.sqlite",
+      encryptionKey: "test",
+    });
+
+    await db.execute("DROP TABLE IF EXISTS User;");
+    await db.execute(
+      "CREATE TABLE User (id INT PRIMARY KEY, name TEXT NOT NULL, age INT, networth REAL, nickname TEXT) STRICT;",
+    );
+  });
+
+  afterEach(() => {
+    if (db) {
+      db.delete();
+      // @ts-expect-error
+      db = null;
+    }
+  });
+
+  it("Transaction, auto commit", async () => {
+    const id = chance.integer();
+    const name = chance.name();
+    const age = chance.integer();
+    const networth = chance.floating();
+
+    await db.transaction(async (tx) => {
+      const res = await tx.execute(
+        'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+        [id, name, age, networth],
+      );
+
+      expect(res.rowsAffected).toEqual(1);
+      expect(res.insertId).toEqual(1);
+      // expect(res.metadata).toEqual([]);
+      expect(res.rows).toDeepEqual([]);
+      expect(res.rows?.length).toEqual(0);
+    });
+
+    const res = await db.execute("SELECT * FROM User");
+    expect(res.rows).toDeepEqual([
+      {
+        id,
+        name,
+        age,
+        networth,
+        nickname: null,
+      },
+    ]);
+  });
+
+  it("Transaction, manual commit", async () => {
+    const id = chance.integer();
+    const name = chance.name();
+    const age = chance.integer();
+    const networth = chance.floating();
+
+    await db.transaction(async (tx) => {
+      const res = await tx.execute(
+        'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+        [id, name, age, networth],
+      );
+
+      expect(res.rowsAffected).toEqual(1);
+      expect(res.insertId).toEqual(1);
+      expect(res.rows).toDeepEqual([]);
+      expect(res.rows?.length).toEqual(0);
+
+      tx.commit();
+    });
+
+    const res = await db.execute("SELECT * FROM User");
+    expect(res.rows).toDeepEqual([
+      {
+        id,
+        name,
+        age,
+        networth,
+        nickname: null,
+      },
+    ]);
+  });
+
+  it("Transaction, executed in order", async () => {
+    const xs = 10;
+    const actual: unknown[] = [];
+
+    // ARRANGE: Generate expected data
+    const id = chance.integer();
+    const name = chance.name();
+    const age = chance.integer();
+
+    // ACT: Start multiple transactions to upsert and select the same record
+    const promises = [];
+    for (let i = 1; i <= xs; i++) {
+      const promised = db.transaction(async (tx) => {
+        // ACT: Upsert statement to create record / increment the value
+        await tx.execute(
+          `
+                INSERT OR REPLACE INTO [User] ([id], [name], [age], [networth])
+                SELECT ?, ?, ?,
+                  IFNULL((
+                    SELECT [networth] + 1000
+                    FROM [User]
+                    WHERE [id] = ?
+                  ), 0)
+            `,
+          [id, name, age, id],
+        );
+
+        // ACT: Select statement to get incremented value and store it for checking later
+        const results = await tx.execute("SELECT [networth] FROM [User] WHERE [id] = ?", [id]);
+
+        actual.push(results.rows[0]!.networth);
+      });
+
+      promises.push(promised);
+    }
+
+    // ACT: Wait for all transactions to complete
+    await Promise.all(promises);
+
+    // ASSERT: That the expected values where returned
+    const expected = Array(xs)
+      .fill(0)
+      .map((_, index) => index * 1000);
+
+    expect(actual).toDeepEqual(expected);
+  });
+
+  it("Incorrect transaction, manual rollback", async () => {
+    const id = chance.string();
+    const name = chance.name();
+    const age = chance.integer();
+    const networth = chance.floating();
+
+    await db.transaction(async (tx) => {
+      try {
+        await tx.execute('INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)', [
+          id,
+          name,
+          age,
+          networth,
+        ]);
+      } catch (_e) {
+        await tx.rollback();
+      }
+    });
+
+    const res = await db.execute("SELECT * FROM User");
+    expect(res.rows).toDeepEqual([]);
+  });
+
+  it("Rollback", async () => {
+    const id = chance.integer();
+    const name = chance.name();
+    const age = chance.integer();
+    const networth = chance.floating();
+
+    await db.transaction(async (tx) => {
+      await tx.execute('INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)', [
+        id,
+        name,
+        age,
+        networth,
+      ]);
+      await tx.rollback();
+      const res = await db.execute("SELECT * FROM User");
+      expect(res.rows).toDeepEqual([]);
+    });
+  });
+
+  it("Transaction, rejects on callback error", async () => {
+    const promised = db.transaction(() => {
+      throw new Error("Error from callback");
+    });
+
+    // ASSERT: should return a promise that eventually rejects
+    expect(typeof promised === "object");
+    try {
+      await promised;
+      // expect.fail('Should not resolve');
+    } catch (e) {
+      // expect(e).to.be.a.instanceof(Error);
+      expect((e as Error)?.message).toEqual("Error from callback");
+    }
+  });
+
+  it("Transaction, rejects on invalid query", async () => {
+    const promised = db.transaction(async (tx) => {
+      await tx.execute("SELECT * FROM [tableThatDoesNotExist];");
+    });
+
+    // ASSERT: should return a promise that eventually rejects
+    // expect(promised).to.have.property('then').that.is.a('function');
+    try {
+      await promised;
+      // expect.fail('Should not resolve');
+    } catch (e) {
+      // expect(e).to.be.a.instanceof(Error);
+      expect(((e as Error)?.message?.length ?? 0) > 0).toBe(true);
+    }
+  });
+
+  it("Transaction, handle async callback", async () => {
+    let ranCallback = false;
+    const promised = db.transaction(async (tx) => {
+      await new Promise<void>((done) => {
+        setTimeout(() => done(), 50);
+      });
+      tx.execute("SELECT * FROM User;");
+      ranCallback = true;
+    });
+
+    // ASSERT: should return a promise that eventually rejects
+    // expect(promised).to.have.property('then').that.is.a('function');
+    await promised;
+    expect(ranCallback).toEqual(true);
+  });
+
+  it("Handles concurrent transactions correctly", async () => {
+    const id = chance.integer();
+    const name = chance.name();
+    const age = chance.integer();
+    const networth = chance.floating();
+
+    const transaction1 = db.transaction(async (tx) => {
+      await tx.execute('INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)', [
+        id,
+        name,
+        age,
+        networth,
+      ]);
+    });
+
+    const transaction2 = db.transaction(async (tx) => {
+      await tx.execute('INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)', [
+        id + 1,
+        name,
+        age,
+        networth,
+      ]);
+    });
+
+    await Promise.all([transaction1, transaction2]);
+
+    const res = await db.execute("SELECT * FROM User");
+    expect(res.rows.length).toEqual(2);
+  });
+});
 
 describe("Transaction finalization", () => {
   let db: DB;
@@ -99,7 +354,7 @@ describe("Transaction finalization", () => {
       await db.transaction(async (tx) => {
         retained = tx;
         await tx.execute("INSERT INTO entries VALUES (1);");
-        if (finalization === "explicit commit") await tx.commit();
+        if (finalization === "explicit commit") tx.commit();
         if (finalization === "explicit rollback") tx.rollback();
       });
       if (!retained) throw new Error("Transaction callback did not run");
@@ -134,7 +389,7 @@ describe("Transaction finalization", () => {
     try {
       await db.transaction(async (tx) => {
         await tx.execute("INSERT INTO entries VALUES (1);");
-        await tx.commit();
+        tx.commit();
         throw failure;
       });
     } catch (error) {
