@@ -268,9 +268,9 @@ await db.transaction((tx) => {
   throw new Error('Random Error!');
 
   // You can manually commit or rollback
-  await tx.commit();
+  tx.commit();
   // or
-  await tx.rollback();
+  tx.rollback();
 });
 ```
 

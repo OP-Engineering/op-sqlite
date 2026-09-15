@@ -228,7 +228,7 @@ function enhanceWebDb(db: _InternalDB, options: { name?: string; location?: stri
           return res;
         };
 
-        const rollback = (): QueryResult => {
+        const rollback = async (): Promise<QueryResult> => {
           throwSyncApiError("rollback");
         };
 
@@ -247,16 +247,17 @@ function enhanceWebDb(db: _InternalDB, options: { name?: string; location?: stri
         try {
           await fn({
             execute,
-            commit,
-            rollback,
+            commit: commit as unknown as () => QueryResult,
+            rollback: rollback as unknown as () => QueryResult,
           });
 
           if (!finalized) {
             await commit();
           }
+
         } catch (error) {
           if (!finalized) {
-            await enhancedDb.execute("ROLLBACK;");
+            await rollback();
           }
 
           throw error;
