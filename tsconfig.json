@@ -16,8 +16,6 @@
     "noEmit": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
-    "noImplicitUseStrict": false,
-    "noStrictGenericChecks": false,
     "noUncheckedIndexedAccess": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
@@ -25,6 +23,9 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "ESNext",
+    // Needed for `global` (functions.ts) and `ImportMeta.url` (functions.web.ts).
+    // TS 7 stopped auto-including visible @types packages, so this must be explicit.
+    "types": ["node"],
     "verbatimModuleSyntax": true,
   },
   // "example/ios" now contains build/generated/autolinking/libs/<dep> —
@@ -35,5 +36,7 @@
   // .ts/.tsx source (with their own, unrelated type errors) into our
   // typecheck. CocoaPods never generated anything under example/ios/build,
   // so this didn't come up before SwiftPM support was added.
-  "exclude": ["docs", "example/ios"],
+  // "node" has its own tsconfig.json (with jest/node ambient types) and is
+  // typechecked separately via `yarn build:node`.
+  "exclude": ["docs", "example/ios", "node"],
 }

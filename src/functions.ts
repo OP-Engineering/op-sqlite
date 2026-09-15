@@ -140,10 +140,10 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
     executeRawAsync: async (query: string, params?: Scalar[]) => {
       return db.executeRaw(query, params as Scalar[]);
     },
-    executeAsync: async (query: string, params?: Scalar[] | undefined): Promise<QueryResult> => {
+    executeAsync: async (query: string, params?: Scalar[]): Promise<QueryResult> => {
       return db.execute(query, params);
     },
-    execute: async (query: string, params?: Scalar[] | undefined): Promise<QueryResult> => {
+    execute: async (query: string, params?: Scalar[]): Promise<QueryResult> => {
       let res = params ? await db.execute(query, params) : await db.execute(query);
 
       if (!res.rows) {
@@ -198,7 +198,7 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
         return await enhancedDb.execute(query, params);
       };
 
-      const commit = async (): Promise<QueryResult> => {
+      const commit = (): QueryResult => {
         if (isFinalized) {
           throw Error(
             `OP-Sqlite Error: Database: ${
@@ -206,11 +206,13 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
             }. Cannot execute query on finalized transaction`,
           );
         }
+
         const result = enhancedDb.executeSync("COMMIT;");
 
         isFinalized = true;
 
-        await db.flushPendingReactiveQueries();
+        void db.flushPendingReactiveQueries();
+
         return result;
       };
 
@@ -238,7 +240,7 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
           });
 
           if (!isFinalized) {
-            await commit();
+            commit();
           }
         } catch (executionError) {
           if (!isFinalized) {

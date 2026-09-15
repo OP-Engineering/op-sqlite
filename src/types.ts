@@ -102,8 +102,8 @@ export type FileLoadResult = BatchQueryResult & {
 };
 
 export type Transaction = {
-  commit: () => Promise<QueryResult>;
   execute: (query: string, params?: Scalar[]) => Promise<QueryResult>;
+  commit: () => QueryResult;
   rollback: () => QueryResult;
 };
 
