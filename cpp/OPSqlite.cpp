@@ -9,7 +9,9 @@
 #endif
 #include "OPLogs.h"
 #include "OPMacros.hpp"
+#include "OPRBU.hpp"
 #include "OPUtils.hpp"
+#include <cmath>
 #include <functional>
 #include <iostream>
 #include <string>
@@ -134,6 +136,84 @@ install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker> &invoker,
 #endif
   });
 
+  auto rbu_thread_pool = std::make_shared<ThreadPool>();
+
+  auto is_rbu_enabled = HFN(=) { return opsqlite::is_rbu_enabled(); });
+
+  auto apply_rbu = HFN(rbu_thread_pool) {
+    if (count != 1 || !args[0].isObject()) {
+      throw OPSQLiteError(
+          SQLITE_MISUSE,
+          "[op-sqlite][RBU] applyRBU expects one options object");
+    }
+
+    auto options = args[0].asObject(rt);
+    if (!options.hasProperty(rt, "targetPath") ||
+        !options.getProperty(rt, "targetPath").isString()) {
+      throw OPSQLiteError(SQLITE_MISUSE,
+                          "[op-sqlite][RBU] targetPath must be a string");
+    }
+    if (!options.hasProperty(rt, "updatePath") ||
+        !options.getProperty(rt, "updatePath").isString()) {
+      throw OPSQLiteError(SQLITE_MISUSE,
+                          "[op-sqlite][RBU] updatePath must be a string");
+    }
+
+    const auto target_path =
+        options.getProperty(rt, "targetPath").asString(rt).utf8(rt);
+    const auto update_path =
+        options.getProperty(rt, "updatePath").asString(rt).utf8(rt);
+    std::string state_path;
+    if (options.hasProperty(rt, "statePath") &&
+        !options.getProperty(rt, "statePath").isUndefined() &&
+        !options.getProperty(rt, "statePath").isNull()) {
+      if (!options.getProperty(rt, "statePath").isString()) {
+        throw OPSQLiteError(SQLITE_MISUSE,
+                            "[op-sqlite][RBU] statePath must be a string");
+      }
+      state_path = options.getProperty(rt, "statePath").asString(rt).utf8(rt);
+    }
+
+    constexpr std::uint64_t default_max_steps = 1000;
+    auto max_steps = default_max_steps;
+    if (options.hasProperty(rt, "maxSteps") &&
+        !options.getProperty(rt, "maxSteps").isUndefined() &&
+        !options.getProperty(rt, "maxSteps").isNull()) {
+      const auto value = options.getProperty(rt, "maxSteps");
+      if (!value.isNumber()) {
+        throw OPSQLiteError(
+            SQLITE_MISUSE,
+            "[op-sqlite][RBU] maxSteps must be a positive integer");
+      }
+      const auto number = value.asNumber();
+      if (!std::isfinite(number) || number < 1 ||
+          std::floor(number) != number || number > 9007199254740991.0) {
+        throw OPSQLiteError(
+            SQLITE_MISUSE,
+            "[op-sqlite][RBU] maxSteps must be a positive integer");
+      }
+      max_steps = static_cast<std::uint64_t>(number);
+    }
+
+    return promisify(
+        rt, rbu_thread_pool,
+        [target_path, update_path, state_path, max_steps]() {
+          return std::any(opsqlite::apply_rbu(target_path, update_path,
+                                              state_path, max_steps));
+        },
+        [](jsi::Runtime &rt, std::any result) {
+          const auto rbu_result = std::any_cast<RBUResult>(result);
+          jsi::Object value(rt);
+          value.setProperty(rt, "status",
+                            jsi::String::createFromUtf8(rt, rbu_result.status));
+          value.setProperty(rt, "steps", static_cast<double>(rbu_result.steps));
+          value.setProperty(rt, "progress", rbu_result.progress);
+          value.setProperty(rt, "state",
+                            jsi::String::createFromUtf8(rt, rbu_result.state));
+          return value;
+        });
+  });
+
 #if defined(OP_SQLITE_USE_LIBSQL) || defined(OP_SQLITE_USE_TURSO)
   auto open_remote = HFN(=) {
     jsi::Object options = args[0].asObject(rt);
@@ -226,6 +306,8 @@ install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker> &invoker,
   module.setProperty(rt, "isLibsql", std::move(is_libsql));
   module.setProperty(rt, "isTurso", std::move(is_turso));
   module.setProperty(rt, "isIOSEmbedded", std::move(is_ios_embedded));
+  module.setProperty(rt, "isRBUEnabled", std::move(is_rbu_enabled));
+  module.setProperty(rt, "applyRBU", std::move(apply_rbu));
 #if defined(OP_SQLITE_USE_LIBSQL) || defined(OP_SQLITE_USE_TURSO)
   module.setProperty(rt, "openRemote", std::move(open_remote));
   module.setProperty(rt, "openSync", std::move(open_sync));

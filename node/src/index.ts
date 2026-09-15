@@ -1,6 +1,6 @@
 import * as path from "node:path";
 import { NodeDatabase } from "./database";
-import type { DB, DBParams, OPSQLiteProxy } from "./types";
+import type { DB, DBParams, OPSQLiteProxy, RBUApplyOptions, RBUApplyResult } from "./types";
 
 export { NodeDatabase as Database } from "./database";
 export type {
@@ -12,11 +12,27 @@ export type {
 	OPSQLiteProxy,
 	PreparedStatement,
 	QueryResult,
+	RBUApplyOptions,
+	RBUApplyResult,
+	RBUState,
 	Scalar,
 	SQLBatchTuple,
 	Transaction,
 	UpdateHookOperation,
 } from "./types";
+
+export class RBUError extends Error {
+	code: number;
+
+	constructor(code: number, message: string, cause?: unknown) {
+		super(message);
+		this.name = "RBUError";
+		this.code = code;
+		if (cause !== undefined) {
+			(this as Error & { cause?: unknown }).cause = cause;
+		}
+	}
+}
 
 class OPSQLiteProxyImpl implements OPSQLiteProxy {
 	open(options: {
@@ -71,6 +87,17 @@ class OPSQLiteProxyImpl implements OPSQLiteProxy {
 	isIOSEmbedded(): boolean {
 		return false;
 	}
+
+	isRBUEnabled(): boolean {
+		return false;
+	}
+
+	async applyRBU(_options: RBUApplyOptions): Promise<RBUApplyResult> {
+		throw new RBUError(
+			21,
+			"[op-sqlite][RBU] applyRBU() is not supported by the Node.js test facade",
+		);
+	}
 }
 
 // Create singleton instance
@@ -85,6 +112,8 @@ export const isSQLCipher = proxy.isSQLCipher.bind(proxy);
 export const isLibsql = proxy.isLibsql.bind(proxy);
 export const isTurso = proxy.isTurso.bind(proxy);
 export const isIOSEmbedded = proxy.isIOSEmbedded.bind(proxy);
+export const isRBUEnabled = proxy.isRBUEnabled.bind(proxy);
+export const applyRBU = proxy.applyRBU.bind(proxy);
 
 // Default export
 export default proxy;

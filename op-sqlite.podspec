@@ -47,6 +47,7 @@ phone_version = false
 sqlite_flags = ""
 fts5 = false
 rtree = false
+rbu = false
 use_sqlite_vec = false
 tokenizers = []
 
@@ -59,8 +60,13 @@ if(op_sqlite_config != nil)
   sqlite_flags = op_sqlite_config["sqliteFlags"] || ""
   fts5 = op_sqlite_config["fts5"] == true
   rtree = op_sqlite_config["rtree"] == true
+  rbu = op_sqlite_config["rbu"] == true
   use_sqlite_vec = op_sqlite_config["sqliteVec"] == true
   tokenizers = op_sqlite_config["tokenizers"] || []
+end
+
+if rbu and (use_sqlcipher or use_libsql or use_turso or phone_version) then
+  raise "RBU currently supports only the bundled vanilla SQLite backend. Disable rbu or the alternate backend."
 end
 
 if phone_version then
@@ -173,6 +179,11 @@ Pod::Spec.new do |s|
 
   if rtree then
     xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " SQLITE_ENABLE_RTREE=1"
+  end
+
+  if rbu then
+    log_message.call("[OP-SQLITE] RBU enabled")
+    xcconfig[:GCC_PREPROCESSOR_DEFINITIONS] += " SQLITE_ENABLE_RBU=1"
   end
 
   if phone_version then

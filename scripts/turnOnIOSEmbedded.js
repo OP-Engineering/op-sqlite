@@ -10,6 +10,7 @@ packageJson['op-sqlite']['libsql'] = false;
 packageJson['op-sqlite']['turso'] = false;
 packageJson['op-sqlite']['sqliteVec'] = false;
 packageJson['op-sqlite']['rtree'] = false;
+packageJson['op-sqlite']['rbu'] = false;
 packageJson['op-sqlite']['fts5'] = true;
 
 // Save the updated package.json file

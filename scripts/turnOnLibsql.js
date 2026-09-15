@@ -8,6 +8,7 @@ packageJson['op-sqlite']['libsql'] = true;
 packageJson['op-sqlite']['turso'] = false;
 packageJson['op-sqlite']['sqlcipher'] = false;
 packageJson['op-sqlite']['iosSqlite'] = false;
+packageJson['op-sqlite']['rbu'] = false;
 delete packageJson['op-sqlite']['tokenizers'];
 packageJson['op-sqlite']['sqliteVec'] = false;
 

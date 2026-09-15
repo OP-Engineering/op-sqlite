@@ -1,7 +1,15 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
-import { isIOSEmbedded, isLibsql, isSQLCipher, open } from "./index";
+import {
+  applyRBU,
+  isIOSEmbedded,
+  isLibsql,
+  isRBUEnabled,
+  isSQLCipher,
+  open,
+  RBUError,
+} from "./index";
 
 describe("op-sqlite Node.js tests", () => {
   let db: ReturnType<typeof open>;
@@ -23,6 +31,14 @@ describe("op-sqlite Node.js tests", () => {
   test("Database opens successfully", () => {
     const path = db.getDbPath();
     expect(path).toContain("test.sqlite");
+  });
+
+  test("RBU APIs report the unsupported Node.js facade", async () => {
+    expect(isRBUEnabled()).toBe(false);
+    expect(new RBUError(14, "test")).toMatchObject({ code: 14, message: "test" });
+    await expect(
+      applyRBU({ targetPath: "target.sqlite", updatePath: "update.sqlite" }),
+    ).rejects.toMatchObject({ code: 21 });
   });
 
   test("Create table", () => {

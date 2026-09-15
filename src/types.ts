@@ -335,6 +335,28 @@ export type DBParams = {
   syncInterval?: number;
 };
 
+export type RBUApplyOptions = {
+  /** Absolute path to the existing target SQLite database. */
+  targetPath: string;
+  /** Absolute path to an RBU update database prepared for the exact target version. */
+  updatePath: string;
+  /** Optional path to a separate persistent RBU state database. */
+  statePath?: string;
+  /** Maximum sqlite3rbu_step() calls before persisting state. Defaults to 1000. */
+  maxSteps?: number;
+};
+
+export type RBUState = "oal" | "move" | "checkpoint" | "done" | "error" | "unknown";
+
+export type RBUApplyResult = {
+  status: "paused" | "complete";
+  /** Number of RBU steps performed by this call. */
+  steps: number;
+  /** SQLite's cumulative sqlite3rbu_progress() value. */
+  progress: number;
+  state: RBUState;
+};
+
 export type OPSQLiteProxy = {
   open: (options: { name: string; location?: string; encryptionKey?: string }) => _InternalDB;
   openRemote: (options: { url: string; authToken: string }) => _InternalDB;
@@ -343,4 +365,6 @@ export type OPSQLiteProxy = {
   isLibsql: () => boolean;
   isTurso: () => boolean;
   isIOSEmbedded: () => boolean;
+  isRBUEnabled: () => boolean;
+  applyRBU: (options: RBUApplyOptions) => Promise<RBUApplyResult>;
 };

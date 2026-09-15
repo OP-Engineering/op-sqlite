@@ -4,11 +4,20 @@
 #include <atomic>
 #include <memory>
 #include <sqlite3.h>
+#include <stdexcept>
 #include <string>
 #include <variant>
 #include <vector>
 
 namespace opsqlite {
+
+class OPSQLiteError : public std::runtime_error {
+public:
+  OPSQLiteError(int code, const std::string &message)
+      : std::runtime_error(message), code(code) {}
+
+  int code;
+};
 
 extern std::shared_ptr<facebook::react::CallInvoker> invoker;
 

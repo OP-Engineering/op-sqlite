@@ -73,6 +73,7 @@ let phoneVersion = (opsqliteConfig["iosSqlite"] as? Bool) == true
 let sqliteFlags = (opsqliteConfig["sqliteFlags"] as? String) ?? ""
 let fts5 = (opsqliteConfig["fts5"] as? Bool) == true
 let rtree = (opsqliteConfig["rtree"] as? Bool) == true
+let rbu = (opsqliteConfig["rbu"] as? Bool) == true
 let useSqliteVec = (opsqliteConfig["sqliteVec"] as? Bool) == true
 let tokenizers = (opsqliteConfig["tokenizers"] as? [String]) ?? []
 
@@ -95,6 +96,9 @@ if useTurso && useSqliteVec {
 }
 if useTurso && useLibsql {
   fatalError("[OP-SQLITE] You cannot enable both libsql and turso backend.")
+}
+if rbu && (useSqlcipher || useLibsql || useTurso || phoneVersion) {
+  fatalError("[OP-SQLITE] RBU currently supports only the bundled vanilla SQLite backend.")
 }
 if !tokenizers.isEmpty && useTurso {
   fatalError("[OP-SQLITE] Tokenizers are not supported with turso backend. Please disable tokenizers or do not enable turso.")
@@ -294,6 +298,10 @@ if useSqlcipher {
 }
 if fts5 { defines.append(("SQLITE_ENABLE_FTS5", "1")) }
 if rtree { defines.append(("SQLITE_ENABLE_RTREE", "1")) }
+if rbu {
+  print("[OP-SQLITE] RBU enabled")
+  defines.append(("SQLITE_ENABLE_RBU", "1"))
+}
 if phoneVersion { defines.append(("OP_SQLITE_USE_PHONE_VERSION", "1")) }
 if performanceMode {
   print("[OP-SQLITE] Performance mode enabled")
