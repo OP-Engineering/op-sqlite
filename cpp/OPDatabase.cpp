@@ -79,8 +79,10 @@ void OPDatabase::on_commit() {
   if (alive != nullptr && !alive->load()) {
     return;
   }
-  invoker->invokeAsync([this](jsi::Runtime &rt) {
-    commit_hook_callback->asObject(rt).asFunction(rt).call(rt);
+  invoker->invokeAsync([callback = commit_hook_callback](jsi::Runtime &rt) {
+    if (callback != nullptr) {
+      callback->asObject(rt).asFunction(rt).call(rt);
+    }
   });
 }
 
@@ -88,8 +90,10 @@ void OPDatabase::on_rollback() {
   if (alive != nullptr && !alive->load()) {
     return;
   }
-  invoker->invokeAsync([this](jsi::Runtime &rt) {
-    rollback_hook_callback->asObject(rt).asFunction(rt).call(rt);
+  invoker->invokeAsync([callback = rollback_hook_callback](jsi::Runtime &rt) {
+    if (callback != nullptr) {
+      callback->asObject(rt).asFunction(rt).call(rt);
+    }
   });
 }
 
