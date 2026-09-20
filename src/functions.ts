@@ -93,6 +93,39 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
     executeBatch: async (commands: SQLBatchTuple[]): Promise<BatchQueryResult> => {
       async function run() {
         try {
+          await enhancedDb.execute("BEGIN TRANSACTION;");
+
+          const res = await db.executeBatch(commands as any[]);
+
+          await enhancedDb.execute("COMMIT;");
+
+          await db.flushPendingReactiveQueries();
+
+          return res;
+        } catch (executionError) {
+          await enhancedDb.execute("ROLLBACK;");
+
+          throw executionError;
+        } finally {
+          lock.inProgress = false;
+          startNextTransaction();
+        }
+      }
+
+      return await new Promise((resolve, reject) => {
+        const tx: _PendingTransaction = {
+          start: () => {
+            run().then(resolve).catch(reject);
+          },
+        };
+
+        lock.queue.push(tx);
+        startNextTransaction();
+      });
+    },
+    executeBatchSync: async (commands: SQLBatchTuple[]): Promise<BatchQueryResult> => {
+      async function run() {
+        try {
           enhancedDb.executeSync("BEGIN TRANSACTION;");
 
           const res = await db.executeBatch(commands as any[]);

@@ -750,27 +750,23 @@ opsqlite_libsql_execute_batch(DB const &db,
     throw std::runtime_error("No SQL commands provided");
   }
 
-  try {
-    int affectedRows = 0;
-    // opsqlite_libsql_execute(db, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
-    for (int i = 0; i < commandCount; i++) {
-      auto command = commands->at(i);
-      // We do not provide a datastructure to receive query data because
-      // we don't need/want to handle this results in a batch execution
-      auto result = opsqlite_libsql_execute(db, command.sql, &command.params);
-      affectedRows += result.affectedRows;
-    }
-    // opsqlite_libsql_execute(db, "COMMIT", nullptr);
-    return BatchResult{
-        .affectedRows = affectedRows,
-        .commands = static_cast<int>(commandCount),
-    };
-  } catch (std::exception &exc) {
-    // opsqlite_libsql_execute(db, "ROLLBACK", nullptr);
-    return BatchResult{
-        .message = exc.what(),
-    };
+  int affectedRows = 0;
+  // Transaction control (BEGIN/COMMIT/ROLLBACK) is left to the JS side, so
+  // any exception here must propagate to reject the JS promise instead of
+  // being swallowed - otherwise the wrapping COMMIT would persist a partial
+  // batch instead of the ROLLBACK the caller expects.
+  for (int i = 0; i < commandCount; i++) {
+    auto command = commands->at(i);
+    // We do not provide a datastructure to receive query data because
+    // we don't need/want to handle this results in a batch execution
+    auto result = opsqlite_libsql_execute(db, command.sql, &command.params);
+    affectedRows += result.affectedRows;
   }
+
+  return BatchResult{
+      .affectedRows = affectedRows,
+      .commands = static_cast<int>(commandCount),
+  };
 }
 
 } // namespace opsqlite

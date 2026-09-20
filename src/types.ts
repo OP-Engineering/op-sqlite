@@ -248,10 +248,24 @@ export type DB = {
    * Executes all the queries in the params inside a single transaction
    *
    * It's faster than executing single queries as data is sent to the native side only once
+   *
+   * The BEGIN/COMMIT/ROLLBACK statements that wrap the batch are executed asynchronously,
+   * off the JS thread. Use this over `executeBatchSync` unless you specifically need the
+   * transaction boundaries to block the JS thread.
    * @param commands
    * @returns Promise<BatchQueryResult>
    */
   executeBatch: (commands: SQLBatchTuple[]) => Promise<BatchQueryResult>;
+  /**
+   * Same as `executeBatch` but the BEGIN/COMMIT/ROLLBACK statements that wrap the batch
+   * are executed synchronously on the JS thread. For large batches this can block the JS
+   * thread for a noticeable amount of time (the COMMIT is where SQLite writes the WAL
+   * frames/fsyncs), so prefer `executeBatch` unless you have a specific reason to need
+   * synchronous transaction boundaries.
+   * @param commands
+   * @returns Promise<BatchQueryResult>
+   */
+  executeBatchSync: (commands: SQLBatchTuple[]) => Promise<BatchQueryResult>;
   /**
    * Loads a SQLite Dump from disk. It will be the fastest way to execute a large set of queries as no JS is involved
    */
