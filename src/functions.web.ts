@@ -300,6 +300,10 @@ function enhanceWebDb(db: _InternalDB, options: { name?: string; location?: stri
         rowsAffected: 0,
       };
     },
+    // Web has no synchronous native APIs, so there is no distinct blocking behavior to offer.
+    executeBatchSync: async (commands: SQLBatchTuple[]): Promise<BatchQueryResult> => {
+      return enhancedDb.executeBatch(commands);
+    },
     loadFile: async (_location: string): Promise<FileLoadResult> => {
       throw new Error("[op-sqlite] loadFile() is not supported on web.");
     },

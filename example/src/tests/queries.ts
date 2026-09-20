@@ -483,6 +483,96 @@ describe("Queries tests", () => {
     ]);
   });
 
+  it("executeBatchSync", async () => {
+    const id1 = chance.integer();
+    const name1 = chance.name();
+    const age1 = chance.integer();
+    const networth1 = chance.floating();
+
+    const id2 = chance.integer();
+    const name2 = chance.name();
+    const age2 = chance.integer();
+    const networth2 = chance.floating();
+
+    const commands: SQLBatchTuple[] = [
+      ['SELECT * FROM "User"', []],
+      ['SELECT * FROM "User"'],
+      [
+        'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+        [id1, name1, age1, networth1],
+      ],
+      [
+        'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+        [[id2, name2, age2, networth2]],
+      ],
+    ];
+
+    await db.executeBatchSync(commands);
+
+    const res = await db.execute("SELECT * FROM User");
+
+    expect(res.rows).toDeepEqual([
+      { id: id1, name: name1, age: age1, networth: networth1, nickname: null },
+      {
+        id: id2,
+        name: name2,
+        age: age2,
+        networth: networth2,
+        nickname: null,
+      },
+    ]);
+  });
+
+  it("executeBatch rolls back on error", async () => {
+    const id1 = chance.integer();
+    const name1 = chance.name();
+    const age1 = chance.integer();
+    const networth1 = chance.floating();
+
+    const commands: SQLBatchTuple[] = [
+      [
+        'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+        [id1, name1, age1, networth1],
+      ],
+      ["INSERT INTO [tableThatDoesNotExist] (id) VALUES(1)"],
+    ];
+
+    try {
+      await db.executeBatch(commands);
+      throw new Error("Should not resolve");
+    } catch (e) {
+      expect(((e as Error)?.message?.length ?? 0) > 0).toBe(true);
+    }
+
+    const res = await db.execute("SELECT * FROM User");
+    expect(res.rows).toDeepEqual([]);
+  });
+
+  it("executeBatchSync rolls back on error", async () => {
+    const id1 = chance.integer();
+    const name1 = chance.name();
+    const age1 = chance.integer();
+    const networth1 = chance.floating();
+
+    const commands: SQLBatchTuple[] = [
+      [
+        'INSERT INTO "User" (id, name, age, networth) VALUES(?, ?, ?, ?)',
+        [id1, name1, age1, networth1],
+      ],
+      ["INSERT INTO [tableThatDoesNotExist] (id) VALUES(1)"],
+    ];
+
+    try {
+      await db.executeBatchSync(commands);
+      throw new Error("Should not resolve");
+    } catch (e) {
+      expect(((e as Error)?.message?.length ?? 0) > 0).toBe(true);
+    }
+
+    const res = await db.execute("SELECT * FROM User");
+    expect(res.rows).toDeepEqual([]);
+  });
+
   it("Batch execute with BLOB", async () => {
     const db = open({
       name: "queries.sqlite",
