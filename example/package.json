@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "android": "react-native run-android",
-    "ios": "react-native run-ios --scheme='debug' --simulator='iPhone 16 Pro'",
+    "ios": "react-native run-ios --scheme='debug'",
     "run:ios:unused": "xcodebuild -workspace ios/OPSQLiteExample.xcworkspace -scheme release -configuration Release -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' clean build",
     "run:ios:release": "react-native run-ios --scheme='release' --no-packager",
     "postinstall": "patch-package",

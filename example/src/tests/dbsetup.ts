@@ -12,7 +12,7 @@ import {
 import { describe, expect, it } from "@op-engineering/op-test";
 import { Platform } from "react-native";
 
-let expectedVersion = "3.51.3";
+let expectedVersion = "3.53.4";
 let flavor = "sqlite";
 
 if (isLibsql()) {
@@ -22,7 +22,7 @@ if (isLibsql()) {
   expectedVersion = "3.50.4";
   flavor = "turso";
 } else if (isSQLCipher()) {
-  expectedVersion = "3.51.3";
+  expectedVersion = "3.53.4";
   flavor = "sqlcipher";
 }
 
