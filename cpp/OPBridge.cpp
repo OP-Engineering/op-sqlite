@@ -137,6 +137,10 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
                        bool readOnly, bool failOnCreate) {
 #endif
   std::string final_path = opsqlite_get_db_path(name, path);
+  // Written to only on failure by both sqlite3_load_extension below and the
+  // tokenizer init calls TOKENIZER_LIST expands into, so it starts out null.
+  // Unused when neither of those is configured into the build.
+  [[maybe_unused]] char *errMsg = nullptr;
   sqlite3 *db;
 
   int flags = SQLITE_OPEN_FULLMUTEX;
@@ -181,9 +185,6 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
 
 #ifdef OP_SQLITE_USE_SQLITE_VEC
   const char *vec_entry_point = "sqlite3_vec_init";
-  // sqlite3_load_extension only writes to this on failure, so it starts out
-  // null.
-  char *errMsg = nullptr;
 
   int vec_status = sqlite3_load_extension(db, _sqlite_vec_path.c_str(),
                                           vec_entry_point, &errMsg);
