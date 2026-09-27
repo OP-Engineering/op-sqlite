@@ -96,9 +96,14 @@ install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker> &invoker,
     }
 
     jsi::Object js_db(rt);
-    std::shared_ptr<OPDatabase> db = std::make_shared<OPDatabase>(
-        rt, js_db, path, name, path, readOnly, failOnCreate, encryption_key);
-    js_db.setNativeState(rt, db);
+    try {
+      std::shared_ptr<OPDatabase> db = std::make_shared<OPDatabase>(
+          rt, js_db, path, name, path, readOnly, failOnCreate, encryption_key);
+      js_db.setNativeState(rt, db);
+    } catch (const SQLiteError &e) {
+      throw_js_error(rt, e);
+    }
+
     return js_db;
   });
 

@@ -313,11 +313,15 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
           "[op-sqlite] attach alias must not contain a zero byte");
     }
 
+    try {
 #ifdef OP_SQLITE_USE_LIBSQL
-    opsqlite_libsql_attach(db, secondary_db_path, secondary_db_name, alias);
+      opsqlite_libsql_attach(db, secondary_db_path, secondary_db_name, alias);
 #else
-    opsqlite_attach(db, secondary_db_path, secondary_db_name, alias);
+      opsqlite_attach(db, secondary_db_path, secondary_db_name, alias);
 #endif
+    } catch (const SQLiteError &e) {
+      throw_js_error(rt, e);
+    }
 
     return {};
   }));
@@ -334,11 +338,15 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
       throw std::runtime_error(
           "[op-sqlite] detach alias must not contain a zero byte");
     }
+    try {
 #ifdef OP_SQLITE_USE_LIBSQL
-    opsqlite_libsql_detach(db, alias);
+      opsqlite_libsql_detach(db, alias);
 #else
-    opsqlite_detach(db, alias);
+      opsqlite_detach(db, alias);
 #endif
+    } catch (const SQLiteError &e) {
+      throw_js_error(rt, e);
+    }
 
     return {};
   }));
@@ -459,13 +467,18 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
     if (count == 2 && !args[1].isNull() && !args[1].isUndefined()) {
       params = to_variant_vec(rt, args[1]);
     }
+
+    try {
 #ifdef OP_SQLITE_USE_LIBSQL
-    auto status = opsqlite_libsql_execute(db, query, &params);
+      auto status = opsqlite_libsql_execute(db, query, &params);
 #else
-    auto status = opsqlite_execute(db, query, &params);
+      auto status = opsqlite_execute(db, query, &params);
 #endif
 
-    return create_js_rows(rt, status);
+      return create_js_rows(rt, status);
+    } catch (const SQLiteError &e) {
+      throw_js_error(rt, e);
+    }
   }));
 
   js_object.setProperty(rt, "executeRawSync", HFN(this) {
@@ -478,13 +491,17 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
 
     std::vector<std::vector<JSVariant>> results;
 
+    try {
 #ifdef OP_SQLITE_USE_LIBSQL
-    auto status = opsqlite_libsql_execute_raw(db, query, &params, &results);
+      auto status = opsqlite_libsql_execute_raw(db, query, &params, &results);
 #else
-    auto status = opsqlite_execute_raw(db, query, &params, &results);
+      auto status = opsqlite_execute_raw(db, query, &params, &results);
 #endif
 
-    return create_raw_result(rt, status, &results);
+      return create_raw_result(rt, status, &results);
+    } catch (const SQLiteError &e) {
+      throw_js_error(rt, e);
+    }
   }));
 
   js_object.setProperty(rt, "execute", HFN(this) {
@@ -701,7 +718,12 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
       entry_point = args[1].asString(rt).utf8(rt);
     }
 
-    opsqlite_load_extension(db, path, entry_point);
+    try {
+      opsqlite_load_extension(db, path, entry_point);
+    } catch (const SQLiteError &e) {
+      throw_js_error(rt, e);
+    }
+
     return {};
   }));
 
@@ -717,7 +739,12 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
         query.getProperty(rt, "fireOn").asObject(rt).asArray(rt);
     auto variant_args = to_variant_vec(rt, js_args);
 
-    sqlite3_stmt *stmt = opsqlite_prepare_statement(db, query_str);
+    sqlite3_stmt *stmt = nullptr;
+    try {
+      stmt = opsqlite_prepare_statement(db, query_str);
+    } catch (const SQLiteError &e) {
+      throw_js_error(rt, e);
+    }
     opsqlite_bind_statement(stmt, &variant_args, /* should_clear_bindings */ false);
 
     auto callback =
@@ -777,7 +804,12 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
 #ifdef OP_SQLITE_USE_LIBSQL
     libsql_stmt_t statement = opsqlite_libsql_prepare_statement(db, query);
 #else
-    sqlite3_stmt *statement = opsqlite_prepare_statement(db, query);
+    sqlite3_stmt *statement = nullptr;
+    try {
+      statement = opsqlite_prepare_statement(db, query);
+    } catch (const SQLiteError &e) {
+      throw_js_error(rt, e);
+    }
 #endif
     auto preparedStatementHostObject =
         std::make_shared<PreparedStatementHostObject>(db, statement,

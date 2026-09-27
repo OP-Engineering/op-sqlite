@@ -1,6 +1,7 @@
 import "./blob";
 import "./constants";
 import "./dbsetup";
+import "./errorCodes";
 import "./hooks";
 import "./preparedStatements";
 import "./queries";

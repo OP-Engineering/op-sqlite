@@ -13,6 +13,7 @@ export type {
 	QueryResult,
 	Scalar,
 	SQLBatchTuple,
+	SQLiteError,
 	Transaction,
 	UpdateHookOperation,
 } from "./types";
