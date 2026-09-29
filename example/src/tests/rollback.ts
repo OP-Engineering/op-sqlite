@@ -1,4 +1,4 @@
-import { type DB, isTurso, open } from "@op-engineering/op-sqlite";
+import { type DB, isLibsql, isTurso, open } from "@op-engineering/op-sqlite";
 import { afterEach, beforeEach, describe, expect, it } from "@op-engineering/op-test";
 
 async function captureError(fn: () => unknown): Promise<Error> {
@@ -78,7 +78,9 @@ describe("Rollback after SQLite already rolled back", () => {
   });
 
   it("tx.rollback() after SQLite rolled back does not throw", async () => {
-    if (isTurso()) {
+    // libsql cannot report the transaction state, so the ROLLBACK is issued
+    // and fails with "no transaction is active"
+    if (isTurso() || isLibsql()) {
       return;
     }
 
