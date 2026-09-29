@@ -4,9 +4,13 @@ sidebar_position: 11
 
 # API Changes
 
-## 18.1.0
+## 19.0.0
 
 - Errors coming from SQLite now carry their result codes: rejected/thrown `Error`s from `execute`, `executeSync`, `executeRaw`, `executeRawSync`, `executeBatch`, `prepareStatement`, `attach`, `detach`, `loadExtension` and `open` expose `code` (primary) and `extendedCode` (extended), and both are repeated in the message. Only the plain SQLite3 and SQLCipher backends report them; libsql, Turso, web and node only expose a message. See [Error codes](./api.md#error-codes).
+- `executeBatch`, `transaction` and `loadFile` now always reject with the error that made them fail. Before, when SQLite had already rolled the transaction back on its own (`RAISE(ROLLBACK)` in a trigger, or a `COMMIT` failing with `SQLITE_FULL`/`SQLITE_IOERR`), the wrapper's `ROLLBACK` failed with `cannot rollback - no transaction is active` and that error replaced the real one. If the connection is left inside the transaction after a failed `ROLLBACK`, a new error saying so is thrown instead. In `transaction`, a failed `ROLLBACK` is attached to the original error as `rollbackError`, and in the stuck case the original error is kept as `cause`.
+- The `BEGIN`/`COMMIT`/`ROLLBACK` around `executeBatch` now run natively, in the same background call as the batch, instead of as separate calls from JS.
+- **Breaking:** Removed `executeBatchSync`. Its only difference was running `BEGIN`/`COMMIT` synchronously on the JS thread, and those now run natively for `executeBatch`. Use `executeBatch` instead.
+- `tx.rollback()` no longer throws when SQLite has already rolled the transaction back.
 
 ## 18.0.0
 

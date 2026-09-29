@@ -396,6 +396,15 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
 #endif
   }));
 
+  // libsql exposes no way to read the autocommit state, the JS side falls
+  // back to always attempting the ROLLBACK when this is missing
+#ifndef OP_SQLITE_USE_LIBSQL
+  js_object.setProperty(rt, "inTransaction", HFN(this) {
+    throw_if_closed("inTransaction");
+    return jsi::Value(opsqlite_in_transaction(db));
+  }));
+#endif
+
   js_object.setProperty(rt, "delete", HFN(this) {
     if (count != 0) {
       throw std::runtime_error("[op-sqlite] Delete no longer takes arguments");

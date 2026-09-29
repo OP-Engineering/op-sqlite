@@ -208,6 +208,11 @@ export type _InternalDB = {
   setReservedBytes: (reservedBytes: number) => void;
   getReservedBytes: () => number;
   flushPendingReactiveQueries: () => Promise<void>;
+  /**
+   * Whether the connection has an open transaction (sqlite3_get_autocommit == 0).
+   * Undefined on backends that cannot report it (libsql, web).
+   */
+  inTransaction?: () => boolean;
 };
 
 export type DB = {
@@ -287,23 +292,12 @@ export type DB = {
    *
    * It's faster than executing single queries as data is sent to the native side only once
    *
-   * The BEGIN/COMMIT/ROLLBACK statements that wrap the batch are executed asynchronously,
-   * off the JS thread. Use this over `executeBatchSync` unless you specifically need the
-   * transaction boundaries to block the JS thread.
+   * The BEGIN/COMMIT/ROLLBACK statements that wrap the batch run natively, off the JS
+   * thread, in the same call as the batch itself.
    * @param commands
    * @returns Promise<BatchQueryResult>
    */
   executeBatch: (commands: SQLBatchTuple[]) => Promise<BatchQueryResult>;
-  /**
-   * Same as `executeBatch` but the BEGIN/COMMIT/ROLLBACK statements that wrap the batch
-   * are executed synchronously on the JS thread. For large batches this can block the JS
-   * thread for a noticeable amount of time (the COMMIT is where SQLite writes the WAL
-   * frames/fsyncs), so prefer `executeBatch` unless you have a specific reason to need
-   * synchronous transaction boundaries.
-   * @param commands
-   * @returns Promise<BatchQueryResult>
-   */
-  executeBatchSync: (commands: SQLBatchTuple[]) => Promise<BatchQueryResult>;
   /**
    * Loads a SQLite Dump from disk. It will be the fastest way to execute a large set of queries as no JS is involved
    */

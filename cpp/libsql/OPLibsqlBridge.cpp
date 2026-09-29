@@ -750,23 +750,26 @@ opsqlite_libsql_execute_batch(DB const &db,
     throw std::runtime_error("No SQL commands provided");
   }
 
-  int affectedRows = 0;
-  // Transaction control (BEGIN/COMMIT/ROLLBACK) is left to the JS side, so
-  // any exception here must propagate to reject the JS promise instead of
-  // being swallowed - otherwise the wrapping COMMIT would persist a partial
-  // batch instead of the ROLLBACK the caller expects.
-  for (int i = 0; i < commandCount; i++) {
-    auto command = commands->at(i);
-    // We do not provide a datastructure to receive query data because
-    // we don't need/want to handle this results in a batch execution
-    auto result = opsqlite_libsql_execute(db, command.sql, &command.params);
-    affectedRows += result.affectedRows;
-  }
+  return run_in_transaction(
+      [&db](const char *sql) { opsqlite_libsql_execute(db, sql, nullptr); },
+      // libsql exposes no way to read the autocommit state
+      []() -> std::optional<bool> { return std::nullopt; },
+      "BEGIN TRANSACTION", [&]() {
+        int affectedRows = 0;
+        for (int i = 0; i < commandCount; i++) {
+          const auto &command = commands->at(i);
+          // We do not provide a datastructure to receive query data because
+          // we don't need/want to handle this results in a batch execution
+          auto result =
+              opsqlite_libsql_execute(db, command.sql, &command.params);
+          affectedRows += result.affectedRows;
+        }
 
-  return BatchResult{
-      .affectedRows = affectedRows,
-      .commands = static_cast<int>(commandCount),
-  };
+        return BatchResult{
+            .affectedRows = affectedRows,
+            .commands = static_cast<int>(commandCount),
+        };
+      });
 }
 
 } // namespace opsqlite

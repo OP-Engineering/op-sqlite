@@ -889,6 +889,10 @@ void opsqlite_deregister_rollback_hook(sqlite3 *db) {
   sqlite3_rollback_hook(db, nullptr, nullptr);
 }
 
+bool opsqlite_in_transaction(sqlite3 *db) {
+  return sqlite3_get_autocommit(db) == 0;
+}
+
 void opsqlite_load_extension(sqlite3 *db, std::string &path,
                              std::string &entry_point) {
 #ifdef OP_SQLITE_USE_PHONE_VERSION
@@ -932,22 +936,24 @@ opsqlite_execute_batch(sqlite3 *db,
     throw std::runtime_error("No SQL commands provided");
   }
 
-  int affectedRows = 0;
-  // opsqlite_execute(db, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
-  for (int i = 0; i < commandCount; i++) {
-    const auto &command = commands->at(i);
-    // We do not provide a datastructure to receive query data because we
-    // don't need/want to handle this results in a batch execution
-    // There is also no need to commit/catch this transaction, this is done
-    // in the JS code
-    auto result = opsqlite_execute(db, command.sql, &command.params);
-    affectedRows += result.affectedRows;
-  }
+  return run_in_transaction(
+      [db](const char *sql) { opsqlite_execute(db, sql, nullptr); },
+      [db]() -> std::optional<bool> { return opsqlite_in_transaction(db); },
+      "BEGIN TRANSACTION", [&]() {
+        int affectedRows = 0;
+        for (int i = 0; i < commandCount; i++) {
+          const auto &command = commands->at(i);
+          // We do not provide a datastructure to receive query data because
+          // we don't need/want to handle this results in a batch execution
+          auto result = opsqlite_execute(db, command.sql, &command.params);
+          affectedRows += result.affectedRows;
+        }
 
-  return BatchResult{
-      .affectedRows = affectedRows,
-      .commands = static_cast<int>(commandCount),
-  };
+        return BatchResult{
+            .affectedRows = affectedRows,
+            .commands = static_cast<int>(commandCount),
+        };
+      });
 }
 
 } // namespace opsqlite

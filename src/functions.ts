@@ -12,6 +12,7 @@ import type {
   SQLBatchTuple,
   Transaction,
 } from "./types";
+import { rollbackAndRethrow } from "./rollback";
 
 declare global {
   var __OPSQLiteProxy: object | undefined;
@@ -67,6 +68,9 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
     }
   };
 
+  // Not available on libsql, which has no way to read the autocommit state
+  const inTransaction = db.inTransaction;
+
   // spreading the object does not work with HostObjects (db)
   // We need to manually assign the fields
   const enhancedDb = {
@@ -91,54 +95,15 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
     },
     flushPendingReactiveQueries: db.flushPendingReactiveQueries,
     executeBatch: async (commands: SQLBatchTuple[]): Promise<BatchQueryResult> => {
+      // BEGIN/COMMIT/ROLLBACK run natively around the batch. The lock is still
+      // needed so the batch never starts inside an open transaction()
       async function run() {
         try {
-          await enhancedDb.execute("BEGIN TRANSACTION;");
-
           const res = await db.executeBatch(commands as any[]);
-
-          await enhancedDb.execute("COMMIT;");
 
           await db.flushPendingReactiveQueries();
 
           return res;
-        } catch (executionError) {
-          await enhancedDb.execute("ROLLBACK;");
-
-          throw executionError;
-        } finally {
-          lock.inProgress = false;
-          startNextTransaction();
-        }
-      }
-
-      return await new Promise((resolve, reject) => {
-        const tx: _PendingTransaction = {
-          start: () => {
-            run().then(resolve).catch(reject);
-          },
-        };
-
-        lock.queue.push(tx);
-        startNextTransaction();
-      });
-    },
-    executeBatchSync: async (commands: SQLBatchTuple[]): Promise<BatchQueryResult> => {
-      async function run() {
-        try {
-          enhancedDb.executeSync("BEGIN TRANSACTION;");
-
-          const res = await db.executeBatch(commands as any[]);
-
-          enhancedDb.executeSync("COMMIT;");
-
-          await db.flushPendingReactiveQueries();
-
-          return res;
-        } catch (executionError) {
-          enhancedDb.executeSync("ROLLBACK;");
-
-          throw executionError;
         } finally {
           lock.inProgress = false;
           startNextTransaction();
@@ -257,6 +222,12 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
             }. Cannot execute query on finalized transaction`,
           );
         }
+        // SQLite may already have rolled back on its own (e.g. RAISE(ROLLBACK)
+        // caught inside fn), in which case ROLLBACK would throw
+        if (inTransaction?.() === false) {
+          isFinalized = true;
+          return { rowsAffected: 0, rows: [] };
+        }
         const result = enhancedDb.executeSync("ROLLBACK;");
         isFinalized = true;
         return result;
@@ -277,7 +248,12 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
           }
         } catch (executionError) {
           if (!isFinalized) {
-            rollback();
+            isFinalized = true;
+            await rollbackAndRethrow(
+              executionError,
+              () => enhancedDb.executeSync("ROLLBACK;"),
+              inTransaction,
+            );
           }
 
           throw executionError;
