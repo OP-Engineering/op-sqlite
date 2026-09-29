@@ -44,6 +44,7 @@ add_library(
   ../cpp/OPSqlite.cpp
   ../cpp/OPUtils.cpp
   ../cpp/OPThreadPool.cpp
+  ../cpp/OPRBU.cpp
   ../cpp/OPSmartHostObject.cpp
   ../cpp/OPPreparedStatementHostObject.cpp
   ../cpp/OPDumbHostObject.cpp

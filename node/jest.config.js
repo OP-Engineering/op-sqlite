@@ -17,6 +17,7 @@ export default {
           esModuleInterop: true,
           allowSyntheticDefaultImports: true,
           target: 'ES2020',
+          rootDir: '..',
           lib: ['ES2020'],
           types: ['node', 'jest'],
         },

@@ -417,6 +417,20 @@ promisify(jsi::Runtime &rt, std::shared_ptr<ThreadPool> thread_pool,
               auto jsi_result = resolve_callback(rt, std::move(result));
               resolve->asObject(rt).asFunction(rt).call(rt, jsi_result);
             });
+      } catch (OPSQLiteError &e) {
+        auto what = std::string(e.what());
+        auto code = e.code;
+        if (alive != nullptr && !alive->load()) {
+          return;
+        }
+        invoker->invokeAsync([what = std::move(what), code, resolve = resolve,
+                              reject = reject](jsi::Runtime &rt) {
+          auto errorCtr = rt.global().getPropertyAsFunction(rt, "Error");
+          auto error = errorCtr.callAsConstructor(
+              rt, jsi::String::createFromUtf8(rt, what));
+          error.asObject(rt).setProperty(rt, "code", code);
+          reject->asObject(rt).asFunction(rt).call(rt, error);
+        });
       } catch (std::runtime_error &e) {
         // On Android RN is broken and does not correctly match
         // runtime_error to the generic exception We have to

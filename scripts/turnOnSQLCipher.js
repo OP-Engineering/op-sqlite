@@ -8,6 +8,7 @@ packageJson['op-sqlite']['sqlcipher'] = true;
 packageJson['op-sqlite']['libsql'] = false;
 packageJson['op-sqlite']['turso'] = false;
 packageJson['op-sqlite']['iosSqlite'] = false;
+packageJson['op-sqlite']['rbu'] = false;
 packageJson['op-sqlite']['sqliteVec'] = false;
 
 // Save the updated package.json file

@@ -1,4 +1,4 @@
-import { type DB, open, openAsync } from "@op-engineering/op-sqlite";
+import { applyRBU, type DB, isRBUEnabled, open, openAsync } from "@op-engineering/op-sqlite";
 import { describe, expect, it } from "@op-engineering/op-test";
 import { Platform } from "react-native";
 
@@ -82,5 +82,19 @@ describe("Web backend", () => {
 		}
 
 		expect(didThrow).toEqual(true);
+	});
+
+	it("exports RBU APIs with a clear unsupported-platform error", async () => {
+		expect(isRBUEnabled()).toEqual(false);
+
+		let error: { code?: number; message?: string } | undefined;
+		try {
+			await applyRBU({ targetPath: "/target.sqlite", updatePath: "/update.sqlite" });
+		} catch (caught) {
+			error = caught as { code?: number; message?: string };
+		}
+
+		expect(error?.code).toEqual(21);
+		expect(error?.message?.includes("not supported on web")).toEqual(true);
 	});
 });
