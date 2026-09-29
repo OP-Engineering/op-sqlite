@@ -6,6 +6,7 @@ import "./hooks";
 import "./preparedStatements";
 import "./queries";
 import "./reactive";
+import "./rollback";
 import "./storage";
 import "./tokenizer";
 import "./transactions";

@@ -6,6 +6,7 @@
 #include "OPUtils.hpp"
 #include <filesystem>
 #include <iostream>
+#include <optional>
 #include <unordered_map>
 #include <variant>
 
@@ -204,6 +205,17 @@ void opsqlite_libsql_remove(DB &db, std::string const &name,
   remove(full_path.c_str());
 }
 
+/// libsql_next_row is where the statement actually runs, so errors raised
+/// while running it (constraint violations, RAISE() in a trigger...) are
+/// reported there and not by libsql_query_stmt. Copied before the rows and
+/// statement are released, then thrown once they are.
+std::optional<std::string> step_error(int status, const char *err) {
+  if (status == 0) {
+    return std::nullopt;
+  }
+  return std::string(err != nullptr ? err : "libsql error");
+}
+
 void opsqlite_libsql_bind_statement(libsql_stmt_t statement,
                                     const std::vector<JSVariant> *values) {
   const char *err;
@@ -344,9 +356,7 @@ BridgeResult opsqlite_libsql_execute_prepared_statement(
     err = nullptr;
   }
 
-  if (status != 0) {
-    fprintf(stderr, "%s\n", err);
-  }
+  auto error = step_error(status, err);
 
   libsql_free_rows(rows);
 
@@ -354,6 +364,10 @@ BridgeResult opsqlite_libsql_execute_prepared_statement(
   long long insert_row_id = libsql_last_insert_rowid(db.c);
 
   libsql_reset_stmt(stmt, &err);
+
+  if (error) {
+    throw std::runtime_error(*error);
+  }
 
   return {.affectedRows = static_cast<int>(changes),
           .insertId = static_cast<double>(insert_row_id)};
@@ -478,8 +492,14 @@ BridgeResult opsqlite_libsql_execute(DB const &db, std::string const &query,
     status = libsql_next_row(rows, &row, &err);
   }
 
+  auto error = step_error(status, err);
+
   libsql_free_rows(rows);
   libsql_free_stmt(stmt);
+
+  if (error) {
+    throw std::runtime_error(*error);
+  }
 
   unsigned long long changes = libsql_changes(db.c);
   long long insert_row_id = libsql_last_insert_rowid(db.c);
@@ -603,12 +623,14 @@ BridgeResult opsqlite_libsql_execute_with_host_objects(
     err = nullptr;
   }
 
-  if (status != 0) {
-    fprintf(stderr, "%s\n", err);
-  }
+  auto error = step_error(status, err);
 
   libsql_free_rows(rows);
   libsql_free_stmt(stmt);
+
+  if (error) {
+    throw std::runtime_error(*error);
+  }
 
   unsigned long long changes = libsql_changes(db.c);
   long long insert_row_id = libsql_last_insert_rowid(db.c);
@@ -727,12 +749,14 @@ opsqlite_libsql_execute_raw(DB const &db, std::string const &query,
     err = nullptr;
   }
 
-  if (status != 0) {
-    fprintf(stderr, "%s\n", err);
-  }
+  auto error = step_error(status, err);
 
   libsql_free_rows(rows);
   libsql_free_stmt(stmt);
+
+  if (error) {
+    throw std::runtime_error(*error);
+  }
 
   unsigned long long changes = libsql_changes(db.c);
   long long insert_row_id = libsql_last_insert_rowid(db.c);
@@ -750,23 +774,26 @@ opsqlite_libsql_execute_batch(DB const &db,
     throw std::runtime_error("No SQL commands provided");
   }
 
-  int affectedRows = 0;
-  // Transaction control (BEGIN/COMMIT/ROLLBACK) is left to the JS side, so
-  // any exception here must propagate to reject the JS promise instead of
-  // being swallowed - otherwise the wrapping COMMIT would persist a partial
-  // batch instead of the ROLLBACK the caller expects.
-  for (int i = 0; i < commandCount; i++) {
-    auto command = commands->at(i);
-    // We do not provide a datastructure to receive query data because
-    // we don't need/want to handle this results in a batch execution
-    auto result = opsqlite_libsql_execute(db, command.sql, &command.params);
-    affectedRows += result.affectedRows;
-  }
+  return run_in_transaction(
+      [&db](const char *sql) { opsqlite_libsql_execute(db, sql, nullptr); },
+      // libsql exposes no way to read the autocommit state
+      []() -> std::optional<bool> { return std::nullopt; },
+      "BEGIN TRANSACTION", [&]() {
+        int affectedRows = 0;
+        for (int i = 0; i < commandCount; i++) {
+          const auto &command = commands->at(i);
+          // We do not provide a datastructure to receive query data because
+          // we don't need/want to handle this results in a batch execution
+          auto result =
+              opsqlite_libsql_execute(db, command.sql, &command.params);
+          affectedRows += result.affectedRows;
+        }
 
-  return BatchResult{
-      .affectedRows = affectedRows,
-      .commands = static_cast<int>(commandCount),
-  };
+        return BatchResult{
+            .affectedRows = affectedRows,
+            .commands = static_cast<int>(commandCount),
+        };
+      });
 }
 
 } // namespace opsqlite

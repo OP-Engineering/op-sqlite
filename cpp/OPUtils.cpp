@@ -327,34 +327,22 @@ BatchResult import_sql_file(sqlite3 *db, std::string path) {
     throw std::runtime_error("Could not open file: " + path);
   }
 
-  try {
-    int affectedRows = 0;
-    int commands = 0;
-    opsqlite_execute(db, "BEGIN EXCLUSIVE TRANSACTION", nullptr);
-    while (std::getline(sqFile, line, '\n')) {
-      if (!line.empty()) {
-        try {
-          auto result = opsqlite_execute(db, line, nullptr);
-          affectedRows += result.affectedRows;
-          commands++;
-        } catch (std::exception &) {
-          opsqlite_execute(db, "ROLLBACK", nullptr);
-          sqFile.close();
-          // Rethrow the original exception object: `throw exc` would copy it
-          // into a plain std::exception, dropping both the message and the
-          // SQLite result codes.
-          throw;
+  // sqFile is closed by its destructor, on success and on failure alike
+  return run_in_transaction(
+      [db](const char *sql) { opsqlite_execute(db, sql, nullptr); },
+      [db]() -> std::optional<bool> { return opsqlite_in_transaction(db); },
+      "BEGIN EXCLUSIVE TRANSACTION", [&]() {
+        int affectedRows = 0;
+        int commands = 0;
+        while (std::getline(sqFile, line, '\n')) {
+          if (!line.empty()) {
+            auto result = opsqlite_execute(db, line, nullptr);
+            affectedRows += result.affectedRows;
+            commands++;
+          }
         }
-      }
-    }
-    sqFile.close();
-    opsqlite_execute(db, "COMMIT", nullptr);
-    return {"", affectedRows, commands};
-  } catch (std::exception &) {
-    sqFile.close();
-    opsqlite_execute(db, "ROLLBACK", nullptr);
-    throw;
-  }
+        return BatchResult{"", affectedRows, commands};
+      });
 }
 #endif
 

@@ -884,6 +884,12 @@ void opsqlite_register_rollback_hook(
 
 void opsqlite_deregister_rollback_hook([[maybe_unused]] sqlite3 *db) {}
 
+bool opsqlite_in_transaction(sqlite3 *db) {
+  auto connection =
+      require_turso_connection(to_turso_db(db), "in_transaction");
+  return !turso_connection_get_autocommit(connection);
+}
+
 void opsqlite_load_extension([[maybe_unused]] sqlite3 *db,
                              [[maybe_unused]] std::string &path,
                              [[maybe_unused]] std::string &entry_point) {
@@ -899,16 +905,20 @@ opsqlite_execute_batch(sqlite3 *db,
     throw std::runtime_error("No SQL commands provided");
   }
 
-  int affected_rows = 0;
+  return run_in_transaction(
+      [db](const char *sql) { opsqlite_execute(db, sql, nullptr); },
+      [db]() -> std::optional<bool> { return opsqlite_in_transaction(db); },
+      "BEGIN TRANSACTION", [&]() {
+        int affected_rows = 0;
+        for (size_t i = 0; i < command_count; i++) {
+          const auto &command = commands->at(i);
+          auto result = opsqlite_execute(db, command.sql, &command.params);
+          affected_rows += result.affectedRows;
+        }
 
-  for (size_t i = 0; i < command_count; i++) {
-    const auto &command = commands->at(i);
-    auto result = opsqlite_execute(db, command.sql, &command.params);
-    affected_rows += result.affectedRows;
-  }
-
-  return BatchResult{.affectedRows = affected_rows,
-                     .commands = static_cast<int>(command_count)};
+        return BatchResult{.affectedRows = affected_rows,
+                           .commands = static_cast<int>(command_count)};
+      });
 }
 
 } // namespace opsqlite

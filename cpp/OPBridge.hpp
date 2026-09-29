@@ -85,6 +85,11 @@ void opsqlite_deregister_commit_hook(sqlite3 *db);
 void opsqlite_register_rollback_hook(sqlite3 *db, void *opsqlite_db_ptr);
 void opsqlite_deregister_rollback_hook(sqlite3 *db);
 
+/// Whether the connection has an open transaction, i.e. it is not in
+/// autocommit mode. SQLite leaves it on its own after RAISE(ROLLBACK) or a
+/// failed COMMIT, so callers check this before issuing a ROLLBACK.
+bool opsqlite_in_transaction(sqlite3 *db);
+
 sqlite3_stmt *opsqlite_prepare_statement(sqlite3 *db, std::string const &query);
 
 void opsqlite_finalize_statement(sqlite3_stmt *statement);

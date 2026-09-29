@@ -314,13 +314,7 @@ const res = await db.executeBatch(commands);
 console.log(`Batch affected ${result.rowsAffected} rows`);
 ```
 
-`executeBatch` runs the `BEGIN`/`COMMIT`/`ROLLBACK` statements that wrap the batch asynchronously, off the JS thread. For very large batches the `COMMIT` is where SQLite actually writes the WAL frames/fsyncs, so this keeps the JS thread free while that happens.
-
-If you need those transaction boundaries to run synchronously on the JS thread instead, use `executeBatchSync`, which has the same signature and behavior otherwise:
-
-```tsx
-const res = await db.executeBatchSync(commands);
-```
+The `BEGIN`/`COMMIT`/`ROLLBACK` statements that wrap the batch run natively, in the same background call as the batch itself, so the JS thread stays free while SQLite commits.
 
 In some scenarios, dynamic applications may need to get some metadata information about the returned result set.
 

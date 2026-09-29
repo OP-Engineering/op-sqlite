@@ -14,6 +14,7 @@ import type {
   SQLBatchTuple,
   Transaction,
 } from "./types";
+import { rollbackAndRethrow } from "./rollback";
 
 type WorkerPromiser = (type: string, args?: Record<string, unknown>) => Promise<any>;
 
@@ -257,7 +258,10 @@ function enhanceWebDb(db: _InternalDB, options: { name?: string; location?: stri
 
         } catch (error) {
           if (!finalized) {
-            await rollback();
+            finalized = true;
+            // Not the user-facing rollback() above, which only reports that
+            // the sync API is unsupported on web
+            await rollbackAndRethrow(error, () => db.execute("ROLLBACK;"));
           }
 
           throw error;
@@ -291,18 +295,13 @@ function enhanceWebDb(db: _InternalDB, options: { name?: string; location?: stri
 
           await db.execute("COMMIT;");
         } catch (error) {
-          await db.execute("ROLLBACK;");
-          throw error;
+          await rollbackAndRethrow(error, () => db.execute("ROLLBACK;"));
         }
       });
 
       return {
         rowsAffected: 0,
       };
-    },
-    // Web has no synchronous native APIs, so there is no distinct blocking behavior to offer.
-    executeBatchSync: async (commands: SQLBatchTuple[]): Promise<BatchQueryResult> => {
-      return enhancedDb.executeBatch(commands);
     },
     loadFile: async (_location: string): Promise<FileLoadResult> => {
       throw new Error("[op-sqlite] loadFile() is not supported on web.");

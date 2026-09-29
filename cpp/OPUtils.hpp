@@ -10,6 +10,8 @@
 #include <sqlite3.h>
 #endif
 #include <ReactCommon/CallInvoker.h>
+#include <optional>
+#include <stdexcept>
 #include <string>
 #include <vector>
 #include "OPThreadPool.hpp"
@@ -44,6 +46,47 @@ void to_batch_arguments(jsi::Runtime &rt, jsi::Array const &batch_params,
                         std::vector<BatchArguments> *commands);
 
 BatchResult import_sql_file(sqlite3 *db, std::string path);
+
+/// Runs `work` between `begin` and COMMIT, rolling back if either throws.
+///
+/// SQLite sometimes rolls the transaction back on its own before we get to it
+/// (RAISE(ROLLBACK) in a trigger, a COMMIT failing with SQLITE_FULL or
+/// SQLITE_IOERR*). A ROLLBACK then fails with "cannot rollback - no
+/// transaction is active", which must never replace the original exception.
+///
+/// `in_transaction` returns std::nullopt on backends that cannot report the
+/// transaction state (libsql): the ROLLBACK is always attempted there and its
+/// failure dropped.
+template <typename Execute, typename InTransaction, typename Work>
+auto run_in_transaction(Execute &&execute, InTransaction &&in_transaction,
+                        const char *begin, Work &&work) -> decltype(work()) {
+  execute(begin);
+  try {
+    auto result = work();
+    execute("COMMIT");
+    return result;
+  } catch (std::exception &error) {
+    std::optional<bool> open = in_transaction();
+    if (!open.has_value() || *open) {
+      try {
+        execute("ROLLBACK");
+      } catch (std::exception &rollback_error) {
+        // Every following statement would silently run inside the failed
+        // transaction, which matters more than the original error
+        std::optional<bool> still_open = in_transaction();
+        if (still_open.has_value() && *still_open) {
+          throw std::runtime_error(
+              std::string("[op-sqlite] ROLLBACK failed and the connection is "
+                          "still inside a transaction: ") +
+              rollback_error.what() + ". Original error: " + error.what());
+        }
+      }
+    }
+    // Rethrow the original exception object: `throw error` would copy it
+    // into a plain std::exception, dropping the SQLite result codes.
+    throw;
+  }
+}
 
 bool folder_exists(const std::string &name);
 
