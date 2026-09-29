@@ -1,7 +1,7 @@
 #ifndef TOKENIZERS_H
 #define TOKENIZERS_H
 
-#define TOKENIZER_LIST opsqlite_wordtokenizer_init(db,&errMsg,nullptr);opsqlite_porter_init(db,&errMsg,nullptr);
+#define TOKENIZER_LIST opsqlite_wordtokenizer_init(db,&err_msg,nullptr);opsqlite_porter_init(db,&err_msg,nullptr);
 
 #include <sqlite3.h>
 

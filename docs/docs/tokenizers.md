@@ -18,7 +18,7 @@ op-sqlite has a novel way for you to create your tokenizers.
    }
    ```
 
-2. Run `pod install`. The podspec now contains a code generation step. It will create a `c_sources` folder at the root of your project. It will create a `tokenizers.h` file. DON’T TOUCH THIS FILE. It will be overwritten every time. You need to create a `c_sources/tokenizers.cpp` file. Here you need to provide your tokenizer implementation. The `tokenizer.h` file contains the function declaration that will be executed when registering your tokenizer. In this case here is a sample `tokenizers.cpp` implementation
+2. Run `pod install` (iOS) or a Gradle build (Android). Both contain a code generation step. It will create a `c_sources` folder at the root of your project. It will create a `tokenizers.h` file. DON’T TOUCH THIS FILE. It will be overwritten every time. You need to create a `c_sources/tokenizers.cpp` file. Here you need to provide your tokenizer implementation. The `tokenizer.h` file contains the function declaration that will be executed when registering your tokenizer. In this case here is a sample `tokenizers.cpp` implementation
 
    ```cpp
    #include "tokenizers.h"
@@ -102,7 +102,7 @@ op-sqlite has a novel way for you to create your tokenizers.
    You need to keep the namespace and the function signature intact. For now the `sqlite3_api_routines` parameter will always be a null pointer.
 
 3. Once you are done. You need to run `pod install` again. It will then copy the files you created to the pod sources in order to compile `op-sqlite` together with your new C++ code in one go.
-4. The code generation step is only implemented in Cocoapods. Every time you create/change a file inside of `c_sources` you will need to do a `pod install` to re-add the newly created files into the compilation process. This also applies for Android, at least the header file generation step. On your CI, you will also need to do a pod install even if your pods are cached, in order to copy the sources.
+4. The `tokenizers.h` generation runs in every pipeline: CocoaPods, SwiftPM and Gradle all call the same `generate_tokenizers_header_file.js` from the package, so an Android build no longer needs an iOS `pod install` to have happened first. Adding or removing a **file** inside `c_sources` still needs a `pod install` on iOS, since the pod's file list is fixed at install time; Android picks up new files on the next Gradle build. On your CI, you will also need to do a pod install even if your pods are cached, in order to copy the sources.
 5. You can then create a FTS5 virtual table with your tokenizer:
 
    ```tsx

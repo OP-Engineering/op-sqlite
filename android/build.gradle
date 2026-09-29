@@ -143,6 +143,38 @@ if(!tokenizers.isEmpty()) {
   println "[OP-SQLITE] Tokenizers enabled. Detected tokenizers: " + tokenizers
 }
 
+// Generates the tokenizers.h that cpp/OPBridge.cpp includes (through
+// TOKENIZERS_HEADER_PATH) and that the copied tokenizers.cpp includes by name.
+//
+// The generation itself lives in generate_tokenizers_header_file.js, shared with
+// the CocoaPods (generate_tokenizers_header_file.rb) and SwiftPM (Package.swift)
+// pipelines, so all three emit the same header. Before this, Android had no
+// generator of its own and could only build if an iOS pod install (or a header
+// committed to the repo) had produced the file first.
+//
+// Uses a plain ProcessBuilder rather than project.exec: this runs at
+// configuration time, where that API is deprecated/removed in recent Gradle.
+def generateTokenizersHeaderFile(List<String> names, File headerFile) {
+  def packageDir = buildscript.sourceFile.parentFile.parentFile
+  def script = new File(packageDir, "generate_tokenizers_header_file.js")
+  // NODE_BINARY is React Native's own convention for pointing at a specific node.
+  def node = System.getenv("NODE_BINARY")
+  if (!node) {
+    node = "node"
+  }
+
+  def command = [node, script.absolutePath, headerFile.absolutePath] + names
+  def process = new ProcessBuilder(command).redirectErrorStream(true).start()
+  def output = process.inputStream.text
+  def status = process.waitFor()
+
+  if (status != 0) {
+    throw new GradleException(
+      "[OP-SQLITE] Could not generate ${headerFile}. Command: ${command.join(' ')}\n" +
+      "Make sure node is on your PATH or set NODE_BINARY to its location.\n${output}")
+  }
+}
+
 // Build the list of library-default SQLite compile flags driven by package.json
 // toggles. These are emitted via CMake add_definitions() BEFORE the user-supplied
 // sqliteFlags, so that user flags take precedence when both define the same macro
@@ -194,17 +226,29 @@ android {
         // This are zeroes because they will be passed as C flags, so they become falsy
         def sourceFiles = 0
         // def tokenizerInitStrings = 0
+        def tokenizersHeaderDir = 0
         def tokenizersHeaderPath = 0
         if (!tokenizers.isEmpty()) {
           def sourceDir = isUserApp ? file("$rootDir/../../../c_sources") : file("$rootDir/../c_sources")
           def destDir = file("$buildscript.sourceFile.parentFile/c_sources")
+          // Generated into the app's own c_sources, exactly where the podspec and
+          // Package.swift put it, so the header the user's tokenizers.cpp includes
+          // is there no matter which platform was built last. The copy below then
+          // carries it over with the sources.
+          generateTokenizersHeaderFile(tokenizers, new File(sourceDir, "tokenizers.h"))
           copy {
             from sourceDir
             into destDir
             include "**/*.cpp", "**/*.h"
           }
           sourceFiles = fileTree(dir: destDir, include: ["**/*.cpp", "**/*.h"]).files.join(";")
-          tokenizersHeaderPath = "../c_sources/tokenizers.h"
+          // The header sits next to the copied tokenizer sources, not in cpp/, so
+          // it is reached through the include path. Passing a path relative to the
+          // file doing the #include would hardcode where in cpp/ that include is,
+          // and an absolute path in a C string literal would break on Windows
+          // separators.
+          tokenizersHeaderDir = destDir.absolutePath.replace('\\', '/')
+          tokenizersHeaderPath = "tokenizers.h"
         }
 
         cppFlags "-O3 -frtti -fexceptions -Wall -fstack-protector-all"
@@ -217,6 +261,7 @@ android {
           "-DUSE_TURSO=${useTurso ? 1 : 0}",
           "-DUSE_SQLITE_VEC=${useSqliteVec ? 1 : 0}",
           "-DUSER_DEFINED_SOURCE_FILES=${sourceFiles}",
+          "-DUSER_DEFINED_TOKENIZERS_HEADER_DIR='${tokenizersHeaderDir}'",
           "-DUSER_DEFINED_TOKENIZERS_HEADER_PATH='${tokenizersHeaderPath}'",
           "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
       }

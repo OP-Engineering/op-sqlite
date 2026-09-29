@@ -103,34 +103,51 @@ if !tokenizers.isEmpty && useTurso {
 print("[OP-SQLITE] SPM configuration found at \(appPackageJSONPath)")
 
 // MARK: - Tokenizer header generation
-// Direct translation of generate_tokenizers_header_file.rb.
+// The header contents come from generate_tokenizers_header_file.js, the one
+// implementation shared by every build pipeline (CocoaPods and Gradle call the
+// same script). This only has to find node and run it.
 
 func generateTokenizersHeaderFile(names: [String], filePath: String) {
-  let fileURL = URL(fileURLWithPath: filePath)
-  try? FileManager.default.createDirectory(
-    at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+  let scriptPath = packageRoot.appendingPathComponent("generate_tokenizers_header_file.js").path
 
-  let tokenizerList = names.map { "opsqlite_\($0)_init(db,&errMsg,nullptr);" }.joined()
-
-  var content = ""
-  content += "#ifndef TOKENIZERS_H\n"
-  content += "#define TOKENIZERS_H\n"
-  content += "\n"
-  content += "#define TOKENIZER_LIST \(tokenizerList)\n"
-  content += "\n"
-  content += "#include <sqlite3.h>\n"
-  content += "\n"
-  content += "namespace opsqlite {\n"
-  content += "\n"
-  for name in names {
-    content += "int opsqlite_\(name)_init(sqlite3 *db, char **error, sqlite3_api_routines const *api);\n"
+  // NODE_BINARY is React Native's own convention (it writes one into
+  // ios/.xcode.env). Xcode does not necessarily inherit the user's shell PATH,
+  // so fall back to a PATH lookup and then to the usual install locations.
+  var candidates: [String] = []
+  if let fromEnv = ProcessInfo.processInfo.environment["NODE_BINARY"], !fromEnv.isEmpty {
+    candidates.append(fromEnv)
   }
-  content += "\n"
-  content += "} // namespace opsqlite\n"
-  content += "\n"
-  content += "#endif // TOKENIZERS_H\n"
+  candidates += ["node", "/opt/homebrew/bin/node", "/usr/local/bin/node", "/usr/bin/node"]
 
-  try? content.write(to: fileURL, atomically: true, encoding: .utf8)
+  for node in candidates {
+    let process = Process()
+    // Going through `env` is what resolves a bare "node" against PATH.
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+    process.arguments = [node, scriptPath, filePath] + names
+    process.standardOutput = FileHandle.standardError
+
+    do {
+      try process.run()
+      process.waitUntilExit()
+      if process.terminationStatus == 0 {
+        return
+      }
+    } catch {
+      continue
+    }
+  }
+
+  // Not fatal, on purpose. Manifest evaluation happens in contexts we do not
+  // control (Xcode's package resolution, `swift package dump-package`), and
+  // SwiftPM sandboxes writes there, so the generation can legitimately fail
+  // while an already up-to-date header sits on disk -- the script exits 0
+  // without writing in that case, so reaching this point means it really could
+  // not produce the file. Killing the manifest would be worse than letting the
+  // compiler report the missing header.
+  FileHandle.standardError.write(
+    Data(
+      ("[OP-SQLITE] warning: could not generate \(filePath) with \(scriptPath). Make sure node is "
+        + "on your PATH or set NODE_BINARY to its location.\n").utf8))
 }
 
 // Mirrors FileUtils.cp_r: copies the contents of `source` into `destination`,
