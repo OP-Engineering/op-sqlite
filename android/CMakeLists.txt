@@ -93,6 +93,13 @@ find_library(LOG_LIB log)
 if (USER_DEFINED_SOURCE_FILES)
   target_sources(${PACKAGE_NAME} PRIVATE ${USER_DEFINED_SOURCE_FILES})
 
+  # tokenizers.h is generated next to those sources, outside ../cpp, so it is
+  # found through the include path instead of a path relative to whichever file
+  # does the #include.
+  if (USER_DEFINED_TOKENIZERS_HEADER_DIR)
+    include_directories(${USER_DEFINED_TOKENIZERS_HEADER_DIR})
+  endif()
+
   add_definitions("-DTOKENIZERS_HEADER_PATH=\"${USER_DEFINED_TOKENIZERS_HEADER_PATH}\"")
 endif()
 
