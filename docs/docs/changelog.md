@@ -4,6 +4,10 @@ sidebar_position: 11
 
 # API Changes
 
+## 18.1.0
+
+- Errors coming from SQLite now carry their result codes: rejected/thrown `Error`s from `execute`, `executeSync`, `executeRaw`, `executeRawSync`, `executeBatch`, `prepareStatement`, `attach`, `detach`, `loadExtension` and `open` expose `code` (primary) and `extendedCode` (extended), and both are repeated in the message. Only the plain SQLite3 and SQLCipher backends report them; libsql, Turso, web and node only expose a message. See [Error codes](./api.md#error-codes).
+
 ## 18.0.0
 
 - **Breaking:** Removed `crsqlite` support entirely. The `crsqlite` key in the `op-sqlite` `package.json` config no longer has any effect, and the bundled `cr-sqlite` extension binaries have been removed from the package (iOS `crsqlite.xcframework`, Android `libcrsqlite` `.so`s). If you need CR-SQLite, load it yourself as a runtime extension via `loadExtension` — see [Loading Extensions](./api.md#loading-extensions).

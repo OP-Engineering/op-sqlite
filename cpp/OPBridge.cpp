@@ -10,6 +10,7 @@
 #include "OPUtils.hpp"
 #include <filesystem>
 #include <iostream>
+#include <optional>
 #include <sqlite3.h>
 #include <sstream>
 #include <stdexcept>
@@ -23,6 +24,51 @@
 #endif
 
 namespace opsqlite {
+
+/// The codes are on the error object as `code`/`extendedCode` once it reaches
+/// JS, but they are also spelled out in the message so anything that only logs
+/// the message still shows them. SQLite's own description stays in the middle
+/// of the string, where a `toContain` style check still finds it.
+static SQLiteError build_error(std::string const &context,
+                               std::string const &message, int code,
+                               int extended_code) {
+  return {"[op-sqlite] " + context + ": " + message + " (code " +
+              std::to_string(code) + ", extended code " +
+              std::to_string(extended_code) + ")",
+          code, extended_code};
+}
+
+/// Snapshots the connection's error state at the point of failure.
+///
+/// The returned error is built, not thrown, on purpose: sqlite3_errmsg hands
+/// back a buffer owned by the connection which any later call on it -- both
+/// sqlite3_reset and sqlite3_finalize included -- is free to overwrite or
+/// free, and those same calls also move the result codes. Callers capture
+/// first, clean up, and only then throw.
+///
+/// `status` is what the failing call returned; it is only consulted if the
+/// connection somehow reports success.
+///
+/// The primary code is derived from the extended one rather than read through
+/// sqlite3_errcode(), which returns the extended code on connections where
+/// extended result codes have been switched on. SQLite guarantees the primary
+/// code lives in the low 8 bits of every extended code, so `code` stays
+/// primary either way.
+static SQLiteError capture_error(sqlite3 *db, std::string const &context,
+                                 int status) {
+  int extended_code = sqlite3_extended_errcode(db);
+
+  if (extended_code == SQLITE_OK) {
+    extended_code = status;
+  }
+
+  int code = extended_code & 0xff;
+
+  const char *message = sqlite3_errmsg(db);
+
+  return build_error(context, message != nullptr ? message : "unknown error",
+                     code, extended_code);
+}
 
 inline void opsqlite_bind_statement(sqlite3_stmt *statement,
                                     const std::vector<JSVariant> *values,
@@ -91,7 +137,10 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
                        bool readOnly, bool failOnCreate) {
 #endif
   std::string final_path = opsqlite_get_db_path(name, path);
-  char *errMsg;
+  // Written to only on failure by both sqlite3_load_extension below and the
+  // tokenizer init calls TOKENIZER_LIST expands into, so it starts out null.
+  // Unused when neither of those is configured into the build.
+  [[maybe_unused]] char *errMsg = nullptr;
   sqlite3 *db;
 
   int flags = SQLITE_OPEN_FULLMUTEX;
@@ -107,7 +156,9 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
   int status = sqlite3_open_v2(final_path.c_str(), &db, flags, nullptr);
 
   if (status != SQLITE_OK) {
-    throw std::runtime_error(sqlite3_errmsg(db));
+    auto error = capture_error(db, "could not open database", status);
+    sqlite3_close_v2(db);
+    throw error;
   }
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
@@ -123,10 +174,7 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
     int key_status = sqlite3_key_v2(db, "main", encryption_key.data(),
                                     static_cast<int>(encryption_key.size()));
     if (key_status != SQLITE_OK) {
-      const char *message = sqlite3_errmsg(db);
-      throw std::runtime_error(
-          "[op-sqlite] failed to set encryption key: " +
-          std::string(message != nullptr ? message : "unknown error"));
+      throw capture_error(db, "failed to set encryption key", key_status);
     }
   }
 #endif
@@ -138,10 +186,15 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
 #ifdef OP_SQLITE_USE_SQLITE_VEC
   const char *vec_entry_point = "sqlite3_vec_init";
 
-  sqlite3_load_extension(db, _sqlite_vec_path.c_str(), vec_entry_point, &errMsg);
+  int vec_status = sqlite3_load_extension(db, _sqlite_vec_path.c_str(),
+                                          vec_entry_point, &errMsg);
 
-  if (errMsg != nullptr) {
-    throw std::runtime_error(errMsg);
+  if (vec_status != SQLITE_OK) {
+    std::string message = errMsg != nullptr ? errMsg : "unknown error";
+    sqlite3_free(errMsg);
+
+    throw build_error("could not load sqlite-vec", message, vec_status & 0xff,
+                      vec_status);
   }
 #endif
 
@@ -210,10 +263,9 @@ BridgeResult opsqlite_execute_prepared_statement(
     sqlite3 *db, sqlite3_stmt *statement, std::vector<DumbHostObject> *results,
     std::shared_ptr<std::vector<SmartHostObject>> &metadatas) {
 
-  const char *errorMessage;
+  std::optional<SQLiteError> error;
 
   bool isConsuming = true;
-  bool isFailed = false;
 
   int result = SQLITE_OK;
 
@@ -310,18 +362,15 @@ BridgeResult opsqlite_execute_prepared_statement(
       break;
 
     default:
-      errorMessage = sqlite3_errmsg(db);
-      isFailed = true;
+      error = capture_error(db, "statement execution error", result);
       isConsuming = false;
     }
   }
 
   sqlite3_reset(statement);
 
-  if (isFailed) {
-    throw std::runtime_error(
-        "[op-sqlite] SQLite code: " + std::to_string(result) +
-        " execution error: " + std::string(errorMessage));
+  if (error.has_value()) {
+    throw *error;
   }
 
   int changedRowCount = sqlite3_changes(db);
@@ -340,10 +389,12 @@ sqlite3_stmt *opsqlite_prepare_statement(sqlite3 *db,
   int statementStatus =
       sqlite3_prepare_v2(db, queryStr, -1, &statement, nullptr);
 
-  if (statementStatus == SQLITE_ERROR) {
-    const char *message = sqlite3_errmsg(db);
-    throw std::runtime_error("[op-sqlite] SQL prepare statement error: " +
-                             std::string(message));
+  // Any non-OK status means there is no statement to hand back. Only
+  // SQLITE_ERROR used to be caught here, so a prepare that failed with e.g.
+  // SQLITE_BUSY or SQLITE_NOTADB returned a null statement as if it had
+  // succeeded.
+  if (statementStatus != SQLITE_OK) {
+    throw capture_error(db, "SQL prepare statement error", statementStatus);
   }
 
   return statement;
@@ -358,9 +409,8 @@ void opsqlite_finalize_statement(sqlite3_stmt *statement) {
 BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
                               const std::vector<JSVariant> *params) {
   sqlite3_stmt *statement;
-  const char *errorMessage = nullptr;
   const char *remainingStatement = nullptr;
-  bool has_failed = false;
+  std::optional<SQLiteError> error;
   int status, current_column, column_count, column_type;
   std::string column_name, column_declared_type;
   std::vector<std::string> column_names;
@@ -377,9 +427,7 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
         sqlite3_prepare_v2(db, query_str, -1, &statement, &remainingStatement);
 
     if (status != SQLITE_OK) {
-      errorMessage = sqlite3_errmsg(db);
-      throw std::runtime_error("[op-sqlite] sqlite query error: " +
-                               std::string(errorMessage));
+      throw capture_error(db, "sqlite query error", status);
     }
 
     // The statement did not fail to parse but there is nothing to do, just
@@ -472,7 +520,9 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
         break;
 
       default:
-        has_failed = true;
+        // Captured before the finalize below, which resets the connection's
+        // error state and invalidates the message buffer.
+        error = capture_error(db, "statement execution error", status);
         is_consuming_rows = false;
       }
     }
@@ -480,12 +530,10 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
     sqlite3_finalize(statement);
 
   } while (remainingStatement != nullptr &&
-           strcmp(remainingStatement, "") != 0 && !has_failed);
+           strcmp(remainingStatement, "") != 0 && !error.has_value());
 
-  if (has_failed) {
-    const char *message = sqlite3_errmsg(db);
-    throw std::runtime_error("[op-sqlite] statement execution error: " +
-                             std::string(message));
+  if (error.has_value()) {
+    throw *error;
   }
 
   return {.affectedRows = changedRowCount,
@@ -500,11 +548,10 @@ BridgeResult opsqlite_execute_host_objects(
     std::shared_ptr<std::vector<SmartHostObject>> &metadatas) {
 
   sqlite3_stmt *statement;
-  const char *errorMessage;
   const char *remainingStatement = nullptr;
+  std::optional<SQLiteError> error;
 
   bool isConsuming = true;
-  bool isFailed = false;
 
   int result = SQLITE_OK;
 
@@ -516,11 +563,8 @@ BridgeResult opsqlite_execute_host_objects(
         sqlite3_prepare_v2(db, queryStr, -1, &statement, &remainingStatement);
 
     if (statementStatus != SQLITE_OK) {
-      const char *message = sqlite3_errmsg(db);
-      throw std::runtime_error(
-          "[op-sqlite] SQL statement error on opsqlite_execute:\n" +
-          std::to_string(statementStatus) + " description:\n" +
-          std::string(message));
+      throw capture_error(db, "SQL statement error on opsqlite_execute",
+                          statementStatus);
     }
 
     // The statement did not fail to parse but there is nothing to do, just
@@ -629,20 +673,19 @@ BridgeResult opsqlite_execute_host_objects(
         break;
 
       default:
-        errorMessage = sqlite3_errmsg(db);
-        isFailed = true;
+        // Captured before the finalize below, which resets the connection's
+        // error state and invalidates the message buffer.
+        error = capture_error(db, "statement execution error", result);
         isConsuming = false;
       }
     }
 
     sqlite3_finalize(statement);
   } while (remainingStatement != nullptr &&
-           strcmp(remainingStatement, "") != 0 && !isFailed);
+           strcmp(remainingStatement, "") != 0 && !error.has_value());
 
-  if (isFailed) {
-    throw std::runtime_error(
-        "[op-sqlite] SQLite error code: " + std::to_string(result) +
-        ", description: " + std::string(errorMessage));
+  if (error.has_value()) {
+    throw *error;
   }
 
   int changedRowCount = sqlite3_changes(db);
@@ -658,11 +701,10 @@ opsqlite_execute_raw(sqlite3 *db, std::string const &query,
                      const std::vector<JSVariant> *params,
                      std::vector<std::vector<JSVariant>> *results) {
   sqlite3_stmt *statement;
-  const char *errorMessage;
   const char *remainingStatement = nullptr;
+  std::optional<SQLiteError> error;
 
   bool isConsuming = true;
-  bool isFailed = false;
 
   int step = SQLITE_OK;
   std::vector<std::string> column_names;
@@ -675,10 +717,7 @@ opsqlite_execute_raw(sqlite3 *db, std::string const &query,
         sqlite3_prepare_v2(db, queryStr, -1, &statement, &remainingStatement);
 
     if (statementStatus != SQLITE_OK) {
-      const char *message = sqlite3_errmsg(db);
-      throw std::runtime_error(
-          "[op-sqlite] SQL statement error:" + std::to_string(statementStatus) +
-          " description:" + std::string(message));
+      throw capture_error(db, "SQL statement error", statementStatus);
     }
 
     // The statement did not fail to parse but there is nothing to do, just
@@ -768,20 +807,19 @@ opsqlite_execute_raw(sqlite3 *db, std::string const &query,
         break;
 
       default:
-        errorMessage = sqlite3_errmsg(db);
-        isFailed = true;
+        // Captured before the finalize below, which resets the connection's
+        // error state and invalidates the message buffer.
+        error = capture_error(db, "statement execution error", step);
         isConsuming = false;
       }
     }
 
     sqlite3_finalize(statement);
   } while (remainingStatement != nullptr &&
-           strcmp(remainingStatement, "") != 0 && !isFailed);
+           strcmp(remainingStatement, "") != 0 && !error.has_value());
 
-  if (isFailed) {
-    throw std::runtime_error(
-        "[op-sqlite] SQLite error code: " + std::to_string(step) +
-        ", description: " + std::string(errorMessage));
+  if (error.has_value()) {
+    throw *error;
   }
 
   int changedRowCount = sqlite3_changes(db);
@@ -861,7 +899,7 @@ void opsqlite_load_extension(sqlite3 *db, std::string &path,
   status = sqlite3_enable_load_extension(db, 1);
 
   if (status != SQLITE_OK) {
-    throw std::runtime_error("Could not enable extension loading");
+    throw capture_error(db, "could not enable extension loading", status);
   }
 
   const char *entry_point_cstr = nullptr;
@@ -869,12 +907,19 @@ void opsqlite_load_extension(sqlite3 *db, std::string &path,
     entry_point_cstr = entry_point.c_str();
   }
 
-  char *error_message;
+  char *error_message = nullptr;
 
   status = sqlite3_load_extension(db, path.c_str(), entry_point_cstr,
                                   &error_message);
   if (status != SQLITE_OK) {
-    throw std::runtime_error(error_message);
+    // This message is allocated by sqlite3, it does not live on the connection
+    // like sqlite3_errmsg's does, so it has to be copied out and freed here.
+    std::string message =
+        error_message != nullptr ? error_message : "unknown error";
+    sqlite3_free(error_message);
+
+    throw build_error("could not load extension", message, status & 0xff,
+                      status);
   }
 #endif
 }

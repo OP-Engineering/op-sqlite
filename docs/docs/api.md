@@ -251,6 +251,29 @@ let res = db.executeSync('SELECT 1');
 
 On web, sync APIs intentionally throw. Use async methods only.
 
+## Error codes
+
+When SQLite is what failed, the thrown (or rejected) `Error` carries the [result codes](https://sqlite.org/rescode.html) of the call that failed as `code` (primary, e.g. `19` for `SQLITE_CONSTRAINT`) and `extendedCode` (e.g. `1555` for `SQLITE_CONSTRAINT_PRIMARYKEY`). Both are also repeated at the end of the message.
+
+Branch on the codes, never on the message: extensions substitute their own text (FTS5 reports corruption as `fts5: corruption found reading blob ...`), and the primary code on its own cannot tell `SQLITE_IOERR_FSYNC` from `SQLITE_IOERR_READ`.
+
+```tsx
+import { type SQLiteError, open } from '@op-engineering/op-sqlite';
+
+const db = open({ name: 'myDb.sqlite' });
+
+try {
+  await db.execute('INSERT INTO User (id) VALUES (?)', [1]);
+} catch (e) {
+  const error = e as SQLiteError;
+
+  console.log(error.code); // 19  (SQLITE_CONSTRAINT)
+  console.log(error.extendedCode); // 1555 (SQLITE_CONSTRAINT_PRIMARYKEY)
+}
+```
+
+Both properties are `undefined` when the failure did not come from SQLite — a closed database, bad arguments — and on the libsql, Turso, web and node backends, whose APIs only hand back a message.
+
 ## Transactions
 
 Wraps the code inside in a transaction. Any error thrown inside of the transaction body function will ROLLBACK the transaction.

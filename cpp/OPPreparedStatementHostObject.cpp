@@ -113,15 +113,20 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
 
       std::vector<DumbHostObject> results;
       auto metadata = std::make_shared<std::vector<SmartHostObject>>();
+
+      try {
 #ifdef OP_SQLITE_USE_LIBSQL
-      auto status = opsqlite_libsql_execute_prepared_statement(
-          _db, _stmt, &results, metadata);
+        auto status = opsqlite_libsql_execute_prepared_statement(
+            _db, _stmt, &results, metadata);
 #else
-      auto status =
-          opsqlite_execute_prepared_statement(_db, _stmt, &results, metadata);
+        auto status =
+            opsqlite_execute_prepared_statement(_db, _stmt, &results, metadata);
 #endif
 
-      return create_result(rt, status, &results, metadata);
+        return create_result(rt, status, &results, metadata);
+      } catch (const SQLiteError &e) {
+        throw_js_error(rt, e);
+      }
     });
   }
 

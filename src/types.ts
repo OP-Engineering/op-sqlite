@@ -1,5 +1,43 @@
 export type Scalar = string | number | boolean | null | ArrayBuffer | ArrayBufferView;
 
+/**
+ * Error thrown (or promise rejection) when SQLite itself fails.
+ *
+ * The result codes are what you should branch on, never the message: extensions
+ * substitute their own strings (FTS5 reports corruption as
+ * `fts5: corruption found reading blob ...`) and a primary code on its own
+ * cannot tell `SQLITE_IOERR_FSYNC` from `SQLITE_IOERR_READ`.
+ *
+ * ```ts
+ * try {
+ *   await db.execute("insert into t values (?)", [1]);
+ * } catch (e) {
+ *   const error = e as SQLiteError;
+ *   if (error.code === 11) {
+ *     // SQLITE_CORRUPT, error.extendedCode tells you which flavor
+ *   }
+ * }
+ * ```
+ *
+ * Both codes are only present on errors coming from SQLite on the sqlite and
+ * sqlcipher backends. Failures raised by op-sqlite itself (a closed database,
+ * bad arguments), the libsql and turso backends -- whose APIs only hand back a
+ * message -- and the web and node builds leave them undefined.
+ */
+export type SQLiteError = Error & {
+  /**
+   * Primary SQLite result code, e.g. `11` for `SQLITE_CORRUPT`.
+   * https://sqlite.org/rescode.html#primary_result_code_list
+   */
+  code?: number;
+  /**
+   * Extended SQLite result code, e.g. `267` for `SQLITE_CORRUPT_VTAB`. Equal to
+   * `code` when SQLite has no more specific code for the failure.
+   * https://sqlite.org/rescode.html#extended_result_code_list
+   */
+  extendedCode?: number;
+};
+
 export interface OpenOptions {
   /**
    * The file name of the database to open.
