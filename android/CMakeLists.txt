@@ -42,6 +42,7 @@ add_library(
   ${PACKAGE_NAME}
   SHARED
   ../cpp/OPSqlite.cpp
+  ../cpp/decimal.c
   ../cpp/OPUtils.cpp
   ../cpp/OPThreadPool.cpp
   ../cpp/OPSmartHostObject.cpp

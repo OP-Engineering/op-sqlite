@@ -23,6 +23,10 @@
 #define TOKENIZER_LIST
 #endif
 
+#ifdef OP_SQLITE_ENABLE_DECIMAL
+extern "C" int sqlite3_decimal_init(sqlite3 *, char **, const sqlite3_api_routines *);
+#endif
+
 namespace opsqlite {
 
 /// The codes are on the error object as `code`/`extendedCode` once it reaches
@@ -160,6 +164,16 @@ sqlite3 *opsqlite_open(std::string const &name, std::string const &path,
     sqlite3_close_v2(db);
     throw error;
   }
+
+#ifdef OP_SQLITE_ENABLE_DECIMAL
+  // Per-connection registration preserves SQLCipher's SQLITE_EXTRA_INIT hook.
+  status = sqlite3_decimal_init(db, nullptr, nullptr);
+  if (status != SQLITE_OK) {
+    auto error = capture_error(db, "could not initialize decimal extension", status);
+    sqlite3_close_v2(db);
+    throw error;
+  }
+#endif
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
   if (!encryption_key.empty()) {
