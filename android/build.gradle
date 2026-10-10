@@ -96,6 +96,9 @@ if(opsqliteConfig) {
   useSqliteVec = !!opsqliteConfig["sqliteVec"]
   performanceMode = opsqliteConfig["performanceMode"]
   sqliteFlags = opsqliteConfig["sqliteFlags"] ? opsqliteConfig["sqliteFlags"] : ""
+  if (opsqliteConfig["sqliteDecimal"] == true) {
+    sqliteFlags = "${sqliteFlags} -DOP_SQLITE_ENABLE_DECIMAL=1".trim()
+  }
   enableFTS5 = !!opsqliteConfig["fts5"]
   useLibsql = !!opsqliteConfig["libsql"]
   useTurso = !!opsqliteConfig["turso"]

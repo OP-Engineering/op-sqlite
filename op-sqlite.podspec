@@ -57,6 +57,9 @@ if(op_sqlite_config != nil)
   performance_mode = op_sqlite_config["performanceMode"] || false
   phone_version = op_sqlite_config["iosSqlite"] == true
   sqlite_flags = op_sqlite_config["sqliteFlags"] || ""
+  if op_sqlite_config["sqliteDecimal"] == true
+    sqlite_flags = "#{sqlite_flags} -DOP_SQLITE_ENABLE_DECIMAL=1".strip
+  end
   fts5 = op_sqlite_config["fts5"] == true
   rtree = op_sqlite_config["rtree"] == true
   use_sqlite_vec = op_sqlite_config["sqliteVec"] == true
