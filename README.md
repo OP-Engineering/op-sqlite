@@ -35,15 +35,26 @@ MIT License.
 
 ## Exact decimal SQL (optional)
 
-Set `"sqliteFlags": "-DOP_SQLITE_ENABLE_DECIMAL=1"` in the app's `op-sqlite`
-configuration and rebuild the native app. This statically includes SQLite's public-domain
+Enable `sqliteDecimal` in the app's `package.json` and rebuild the native app,
+just like the existing `sqliteVec` option:
+
+```json
+{
+  "op-sqlite": {
+    "sqliteDecimal": true
+  }
+}
+```
+
+This statically includes SQLite's public-domain
 `ext/misc/decimal.c` (SQLite 3.50.4) and registers it on every SQLite/SQLCipher connection.
 For example, `SELECT decimal_sum(amount) FROM payments` returns exact decimal TEXT;
 `SELECT decimal_sub('1000.00', '0.01')` returns `'999.99'`.
 
-The flag is off by default. It does not change column types or ordinary SQL `+`, `-`,
+The option is off by default and can be combined with `sqlcipher: true`.
+It does not change column types or ordinary SQL `+`, `-`,
 `SUM`, or comparisons. Pass decimal strings rather than JS numbers to avoid losing
 precision before SQLite receives the value. See [SQLite's decimal documentation](https://sqlite.org/floatingpoint.html#decext)
 for supported functions and input semantics. LibSQL/Turso use separate engines and
-are not covered by this flag. SQLCipher's extra-init hook remains intact; decimal is
+are not covered by this option. SQLCipher's extra-init hook remains intact; decimal is
 initialized per connection after `sqlite3_open_v2`.
