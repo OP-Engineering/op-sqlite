@@ -18,6 +18,13 @@ public:
   ~ThreadPool();
   void queue_work(const std::function<void(void)> &task);
   void wait_finished();
+  // Stops and joins the worker now. Called by close()/delete()/invalidate():
+  // the pool is shared with prepared statements and pending promises, so the
+  // destructor may run much later (only when the JS object is garbage
+  // collected), and until then every closed database kept a parked thread.
+  // Idempotent and safe to call concurrently. Work queued afterwards is
+  // rejected.
+  void shutdown();
 
 private:
   unsigned int busy{};
@@ -38,6 +45,9 @@ private:
   // tells the threads to stop looping and finish.
   // Atomic because do_work() reads it in `while (!done)` outside the mutex.
   std::atomic<bool> done;
+
+  // Set (under work_queue_mutex) by the first shutdown(); later calls return.
+  bool shut_down{false};
 
   // Function used by the threads to grab work from the queue
   void do_work();
