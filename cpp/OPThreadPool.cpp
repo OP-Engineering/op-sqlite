@@ -1,5 +1,7 @@
 #include "OPThreadPool.hpp"
 
+#include <stdexcept>
+
 namespace opsqlite {
 
 ThreadPool::ThreadPool() : done(false) {
@@ -27,23 +29,47 @@ ThreadPool::ThreadPool() : done(false) {
   }
 }
 
+// Set on a worker whose own pool was destroyed by the task it just ran (the
+// task held the last shared_ptr to the pool, e.g. a promise task). do_work()
+// must then return without touching the freed pool.
+static thread_local bool pool_destroyed_on_worker = false;
+
 // The destructor joins all the threads so the process (or in our RN case, this
 // main-thread/runtime generation) can exit gracefully. This will be executed if
 // there is any exception (e.g. creating the threads)
-ThreadPool::~ThreadPool() {
-  // So threads know it's time to shut down
-  done = true;
+ThreadPool::~ThreadPool() { shutdown(); }
+
+void ThreadPool::shutdown() {
+  std::vector<std::thread> to_join;
+  {
+    std::lock_guard<std::mutex> g(work_queue_mutex);
+    if (shut_down) {
+      return;
+    }
+    shut_down = true;
+    // Set under the mutex so a worker between its predicate check and its
+    // wait cannot miss the wake-up below.
+    done = true;
+    to_join.swap(threads);
+  }
 
   // Wake up all the threads, so they can finish and be joined
   work_pending.notify_all();
 
-  for (auto &thread : threads) {
-    if (thread.joinable()) {
+  for (auto &thread : to_join) {
+    if (!thread.joinable()) {
+      continue;
+    }
+    if (thread.get_id() == std::this_thread::get_id()) {
+      // The last reference was dropped by a task on this very worker: joining
+      // ourselves throws std::system_error (terminate). Detach; do_work()
+      // returns as soon as it sees the flag.
+      thread.detach();
+      pool_destroyed_on_worker = true;
+    } else {
       thread.join();
     }
   }
-
-  threads.clear();
 }
 
 // This function will be called by the server every time there is a request
@@ -51,6 +77,13 @@ ThreadPool::~ThreadPool() {
 void ThreadPool::queue_work(const std::function<void(void)> &task) {
   // Grab the mutex
   std::lock_guard<std::mutex> g(work_queue_mutex);
+
+  // A shut down pool has no worker: a task queued now would never run and its
+  // promise would never settle. Callers queue from a Promise executor, so the
+  // throw rejects the promise.
+  if (done) {
+    throw std::runtime_error("[op-sqlite] database is closed");
+  }
 
   // Push the request to the queue
   work_queue.push(task);
@@ -91,6 +124,13 @@ void ThreadPool::do_work() {
     // signalling idle, so wait_finished()/close() can't observe busy == 0
     // while task-owned resources are still pending destruction.
     task = nullptr;
+
+    // Releasing the task may have destroyed this pool (it held the last
+    // reference). If so, `this` is gone: touch nothing.
+    if (pool_destroyed_on_worker) {
+      pool_destroyed_on_worker = false;
+      return;
+    }
 
     {
       std::lock_guard<std::mutex> g(work_queue_mutex);

@@ -363,6 +363,8 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
     // Without this, a queued/running execute() on the thread pool may
     // dereference the freed sqlite3* pointer → heap corruption / SIGABRT.
     thread_pool->wait_finished();
+    // Free the worker thread now rather than when the JS object is collected.
+    thread_pool->shutdown();
     release_hooks();
 #ifdef OP_SQLITE_USE_LIBSQL
     opsqlite_libsql_close(db);
@@ -420,6 +422,7 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
     // Drain any in-flight async queries before closing/removing the db handle.
     // Without this, queued/running work may dereference a freed sqlite handle.
     thread_pool->wait_finished();
+    thread_pool->shutdown();
 
     if (delete_db_name.empty()) {
       throw std::runtime_error("[op-sqlite][delete] delete() is not supported "
@@ -891,6 +894,7 @@ void OPDatabase::invalidate() {
 
   // Drain in-flight thread pool work before closing the db handle.
   thread_pool->wait_finished();
+  thread_pool->shutdown();
   release_hooks();
 
 #ifdef OP_SQLITE_USE_LIBSQL
