@@ -107,8 +107,16 @@ jsi::Value create_js_error(jsi::Runtime &rt, const std::string &message,
 /// properties. A jsi::JSError carries our own Error object through untouched.
 [[noreturn]] void throw_js_error(jsi::Runtime &rt, const SQLiteError &error);
 
+/// The message every call on a closed database fails with:
+/// "[op-sqlite][<function_name>] database is closed".
+std::string database_closed_message(const char *function_name);
+
+/// `function_name` names the call in the "database is closed" rejection when
+/// the pool has already been shut down. It must be a string literal.
 jsi::Value
-promisify(jsi::Runtime &rt, std::shared_ptr<ThreadPool> thread_pool, std::function<std::any()> lambda,
+promisify(jsi::Runtime &rt, const char *function_name,
+          std::shared_ptr<ThreadPool> thread_pool,
+          std::function<std::any()> lambda,
           std::function<jsi::Value(jsi::Runtime &rt, std::any result)>
               resolve_callback);
 

@@ -181,8 +181,7 @@ void OPDatabase::sync_update_hook_registration() {
 
 void OPDatabase::throw_if_closed(const char *function_name) const {
   if (invalidated) {
-    throw std::runtime_error(std::string("[op-sqlite][") + function_name +
-                             "] database is closed");
+    throw std::runtime_error(database_closed_message(function_name));
   }
 }
 
@@ -362,8 +361,8 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
     // Drain any in-flight async queries before closing the db handle.
     // Without this, a queued/running execute() on the thread pool may
     // dereference the freed sqlite3* pointer → heap corruption / SIGABRT.
-    thread_pool->wait_finished();
-    // Free the worker thread now rather than when the JS object is collected.
+    // shutdown() runs everything already queued, then joins the worker now
+    // rather than when the JS object is collected.
     thread_pool->shutdown();
     release_hooks();
 #ifdef OP_SQLITE_USE_LIBSQL
@@ -412,6 +411,13 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
       throw std::runtime_error("[op-sqlite] Delete no longer takes arguments");
     }
 
+    // Checked before anything is torn down: the database stays open and usable
+    // when delete() is not supported.
+    if (delete_db_name.empty()) {
+      throw std::runtime_error("[op-sqlite][delete] delete() is not supported "
+                               "for remote-only databases");
+    }
+
     invalidated = true;
     // Abort pending native SQLite work before waiting on the thread pool.
 #if !defined(OP_SQLITE_USE_LIBSQL) && !defined(OP_SQLITE_USE_TURSO)
@@ -421,13 +427,7 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
 #endif
     // Drain any in-flight async queries before closing/removing the db handle.
     // Without this, queued/running work may dereference a freed sqlite handle.
-    thread_pool->wait_finished();
     thread_pool->shutdown();
-
-    if (delete_db_name.empty()) {
-      throw std::runtime_error("[op-sqlite][delete] delete() is not supported "
-                               "for remote-only databases");
-    }
 
     release_hooks();
 #ifdef OP_SQLITE_USE_LIBSQL
@@ -450,7 +450,7 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
                                               : std::vector<JSVariant>();
 
     return promisify(
-        rt, thread_pool,
+        rt, "executeRaw", thread_pool,
         [this, query, params]() {
           std::vector<std::vector<JSVariant>> results;
 #ifdef OP_SQLITE_USE_LIBSQL
@@ -525,7 +525,7 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
                                         : std::vector<JSVariant>();
 
     return promisify(
-        rt, thread_pool,
+        rt, "execute", thread_pool,
         [this, query, params]() {
 #ifdef OP_SQLITE_USE_LIBSQL
           auto status = opsqlite_libsql_execute(db, query, &params);
@@ -549,7 +549,7 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
                                         : std::vector<JSVariant>();
 
     return promisify(
-        rt, thread_pool,
+        rt, "executeWithHostObjects", thread_pool,
         [this, query, params]() {
           std::vector<DumbHostObject> results;
           std::shared_ptr<std::vector<SmartHostObject>> metadata =
@@ -597,7 +597,7 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
     to_batch_arguments(rt, batchParams, &commands);
 
     return promisify(
-        rt, thread_pool,
+        rt, "executeBatch", thread_pool,
         [this, commands]() {
 #ifdef OP_SQLITE_USE_LIBSQL
           auto batchResult = opsqlite_libsql_execute_batch(db, &commands);
@@ -658,7 +658,7 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
     const std::string sqlFileName = args[0].asString(rt).utf8(rt);
 
     return promisify(
-        rt, thread_pool,
+        rt, "loadFile", thread_pool,
         [this, sqlFileName]() { return import_sql_file(db, sqlFileName); },
         [](jsi::Runtime &rt, std::any prev) {
           auto result = std::any_cast<BatchResult>(std::move(prev));
@@ -865,7 +865,14 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
         flush_pending_reactive_queries(resolve);
       };
 
-      thread_pool->queue_work(task);
+      try {
+        thread_pool->queue_work(task);
+      } catch (const ThreadPoolStoppedError &) {
+        // Thrown from the executor, so the promise rejects with the same error
+        // as every other call on a closed database.
+        throw std::runtime_error(
+            database_closed_message("flushPendingReactiveQueries"));
+      }
 
       return {};
     }));
@@ -892,8 +899,8 @@ void OPDatabase::invalidate() {
   }
 #endif
 
-  // Drain in-flight thread pool work before closing the db handle.
-  thread_pool->wait_finished();
+  // Drain in-flight thread pool work and join the worker before closing the
+  // db handle.
   thread_pool->shutdown();
   release_hooks();
 

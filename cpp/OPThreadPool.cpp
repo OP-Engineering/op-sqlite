@@ -1,10 +1,10 @@
 #include "OPThreadPool.hpp"
 
-#include <stdexcept>
+#include <algorithm>
 
 namespace opsqlite {
 
-ThreadPool::ThreadPool() : done(false) {
+ThreadPool::ThreadPool() {
   // This returns the number of threads supported by the system. If the
   // function can't figure out this information, it returns 0. 0 is not good,
   // so we create at least 1
@@ -20,56 +20,86 @@ ThreadPool::ThreadPool() : done(false) {
   // You can achieve more performance when using more threads but you run
   // into race conditions. This request was brought forth by PowerSync.
   auto number_of_threads = 1;
-  for (unsigned i = 0; i < number_of_threads; ++i) {
-    // The threads will execute the private member `do_work`. Note that we
-    // need to pass a reference to the function (namespaced with the class
-    // name) as the first argument, and the current object as second
-    // argument
-    threads.emplace_back(&ThreadPool::do_work, this);
+  try {
+    for (unsigned i = 0; i < number_of_threads; ++i) {
+      // The threads will execute the private member `do_work`. Note that we
+      // need to pass a reference to the function (namespaced with the class
+      // name) as the first argument, and the current object as second
+      // argument
+      threads.emplace_back(&ThreadPool::do_work, this);
+      worker_ids.push_back(threads.back().get_id());
+    }
+  } catch (...) {
+    // The destructor does not run when a constructor throws, and destroying a
+    // joinable std::thread calls std::terminate. Stop and join the threads
+    // that did start before letting the exception out.
+    stop_accepting_work();
+    join_threads();
+    throw;
   }
 }
 
-// Set on a worker whose own pool was destroyed by the task it just ran (the
-// task held the last shared_ptr to the pool, e.g. a promise task). do_work()
-// must then return without touching the freed pool.
-static thread_local bool pool_destroyed_on_worker = false;
-
-// The destructor joins all the threads so the process (or in our RN case, this
-// main-thread/runtime generation) can exit gracefully. This will be executed if
-// there is any exception (e.g. creating the threads)
+// Joins the threads so the process (or in our RN case, this
+// main-thread/runtime generation) can exit gracefully. A no-op when shutdown()
+// already ran. Never runs on a worker as long as no task owns the pool (see the
+// rule in the header).
 ThreadPool::~ThreadPool() { shutdown(); }
 
-void ThreadPool::shutdown() {
-  std::vector<std::thread> to_join;
+bool ThreadPool::is_worker_thread() const {
+  return std::find(worker_ids.begin(), worker_ids.end(),
+                   std::this_thread::get_id()) != worker_ids.end();
+}
+
+void ThreadPool::stop_accepting_work() {
   {
-    std::lock_guard<std::mutex> g(work_queue_mutex);
-    if (shut_down) {
-      return;
-    }
-    shut_down = true;
     // Set under the mutex so a worker between its predicate check and its
     // wait cannot miss the wake-up below.
+    std::lock_guard<std::mutex> g(work_queue_mutex);
     done = true;
-    to_join.swap(threads);
   }
 
-  // Wake up all the threads, so they can finish and be joined
+  // Wake up all the threads, so they can drain the queue and finish
   work_pending.notify_all();
+}
 
-  for (auto &thread : to_join) {
-    if (!thread.joinable()) {
-      continue;
-    }
-    if (thread.get_id() == std::this_thread::get_id()) {
-      // The last reference was dropped by a task on this very worker: joining
-      // ourselves throws std::system_error (terminate). Detach; do_work()
-      // returns as soon as it sees the flag.
-      thread.detach();
-      pool_destroyed_on_worker = true;
-    } else {
+void ThreadPool::join_threads() {
+  // A second caller blocks here until the first caller's join has completed,
+  // so it can never free this object while the worker is still running.
+  std::lock_guard<std::mutex> g(join_mutex);
+  for (auto &thread : threads) {
+    if (thread.joinable()) {
       thread.join();
     }
   }
+  threads.clear();
+}
+
+void ThreadPool::shutdown() {
+  stop_accepting_work();
+
+  if (is_worker_thread()) {
+    // Called from a task (e.g. a database invalidated on the worker). The
+    // worker cannot join itself, and it will not pick up another task until
+    // this one returns, so run what is left here: when shutdown() returns,
+    // nothing else will run, as on every other thread. `busy` still counts the
+    // calling task, which do_work() releases as usual.
+    while (true) {
+      std::function<void(void)> task;
+      {
+        std::lock_guard<std::mutex> g(work_queue_mutex);
+        if (work_queue.empty()) {
+          break;
+        }
+        task = std::move(work_queue.front());
+        work_queue.pop();
+      }
+      task();
+    }
+    work_pending.notify_all();
+    return;
+  }
+
+  join_threads();
 }
 
 // This function will be called by the server every time there is a request
@@ -78,11 +108,10 @@ void ThreadPool::queue_work(const std::function<void(void)> &task) {
   // Grab the mutex
   std::lock_guard<std::mutex> g(work_queue_mutex);
 
-  // A shut down pool has no worker: a task queued now would never run and its
-  // promise would never settle. Callers queue from a Promise executor, so the
-  // throw rejects the promise.
+  // A stopped pool has no worker left to run the task, and its promise would
+  // never settle. Callers map this to their own "database is closed" error.
   if (done) {
-    throw std::runtime_error("[op-sqlite] database is closed");
+    throw ThreadPoolStoppedError();
   }
 
   // Push the request to the queue
@@ -95,8 +124,7 @@ void ThreadPool::queue_work(const std::function<void(void)> &task) {
 
 // Function used by the threads to grab work from the queue
 void ThreadPool::do_work() {
-  // Loop while the queue is not destructing
-  while (!done) {
+  while (true) {
     std::function<void(void)> task;
 
     // Create a scope, so we don't lock the queue for longer than necessary
@@ -108,8 +136,9 @@ void ThreadPool::do_work() {
         return done || !work_queue.empty();
       });
 
-      // If we are shutting down exit without trying to process more work
-      if (done) {
+      // Shutting down: finish only once every queued task has run, so no
+      // promise is left unsettled and wait_finished() cannot block forever.
+      if (work_queue.empty()) {
         break;
       }
 
@@ -124,13 +153,6 @@ void ThreadPool::do_work() {
     // signalling idle, so wait_finished()/close() can't observe busy == 0
     // while task-owned resources are still pending destruction.
     task = nullptr;
-
-    // Releasing the task may have destroyed this pool (it held the last
-    // reference). If so, `this` is gone: touch nothing.
-    if (pool_destroyed_on_worker) {
-      pool_destroyed_on_worker = false;
-      return;
-    }
 
     {
       std::lock_guard<std::mutex> g(work_queue_mutex);
