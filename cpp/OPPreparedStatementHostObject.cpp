@@ -1,4 +1,5 @@
 #include "OPPreparedStatementHostObject.hpp"
+#include "OPDatabase.hpp"
 #if OP_SQLITE_USE_LIBSQL
 #include "libsql/OPLibsqlBridge.hpp"
 #else
@@ -18,12 +19,22 @@ PreparedStatementHostObject::getPropertyNames(jsi::Runtime &rt) {
   return keys;
 }
 
+void PreparedStatementHostObject::throw_if_closed(
+    const char *function_name) const {
+  auto database = _database.lock();
+  if (database == nullptr || database->is_closed()) {
+    throw std::runtime_error(database_closed_message(function_name));
+  }
+}
+
 jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
                                             const jsi::PropNameID &propNameID) {
   auto name = propNameID.utf8(rt);
 
   if (name == "bind") {
     return HFN(this) {
+      throw_if_closed("bind");
+
       if (_stmt == nullptr) {
         throw std::runtime_error("statement has been freed");
       }
@@ -49,6 +60,8 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
 
   if (name == "bindSync") {
     return HFN(this) {
+      throw_if_closed("bindSync");
+
       if (_stmt == nullptr) {
         throw std::runtime_error("statement has been freed");
       }
@@ -72,6 +85,8 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
 
   if (name == "execute") {
     return HFN(this) {
+      throw_if_closed("execute");
+
       if (_stmt == nullptr) {
         throw std::runtime_error("statement has been freed");
       }
@@ -107,6 +122,8 @@ jsi::Value PreparedStatementHostObject::get(jsi::Runtime &rt,
   }
   if (name == "executeSync") {
     return HFN(this) {
+      throw_if_closed("executeSync");
+
       if (_stmt == nullptr) {
         throw std::runtime_error("statement has been freed");
       }

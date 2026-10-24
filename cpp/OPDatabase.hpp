@@ -77,6 +77,9 @@ public:
   void on_commit();
   void on_rollback();
   void invalidate();
+  // True once close(), delete() or invalidate() ran. Prepared statements check
+  // it before touching the connection handle they were created from.
+  bool is_closed() const { return invalidated; }
   ~OPDatabase() override;
 
 private:

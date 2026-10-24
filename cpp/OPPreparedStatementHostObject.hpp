@@ -21,16 +21,22 @@ namespace opsqlite {
 namespace jsi = facebook::jsi;
 namespace react = facebook::react;
 
+class OPDatabase;
+
 class PreparedStatementHostObject : public jsi::HostObject {
 public:
 #ifdef OP_SQLITE_USE_LIBSQL
-  PreparedStatementHostObject(DB const &db, libsql_stmt_t stmt,
+  PreparedStatementHostObject(std::weak_ptr<OPDatabase> database, DB const &db,
+                              libsql_stmt_t stmt,
                               std::shared_ptr<ThreadPool> thread_pool)
-      : _db(db), _stmt(stmt), _thread_pool(thread_pool) {};
+      : _database(std::move(database)), _db(db), _stmt(stmt),
+        _thread_pool(thread_pool) {};
 #else
-  PreparedStatementHostObject(sqlite3 *db, sqlite3_stmt *stmt,
+  PreparedStatementHostObject(std::weak_ptr<OPDatabase> database, sqlite3 *db,
+                              sqlite3_stmt *stmt,
                               std::shared_ptr<ThreadPool> thread_pool)
-      : _db(db), _stmt(stmt), _thread_pool(thread_pool) {};
+      : _database(std::move(database)), _db(db), _stmt(stmt),
+        _thread_pool(thread_pool) {};
 #endif
 
   ~PreparedStatementHostObject() override;
@@ -40,6 +46,11 @@ public:
   jsi::Value get(jsi::Runtime &rt, const jsi::PropNameID &propNameID) override;
 
 private:
+  // Throws the same error as OPDatabase::throw_if_closed once the database
+  // this statement came from is closed (or gone): `_db` is no longer valid.
+  void throw_if_closed(const char *function_name) const;
+
+  std::weak_ptr<OPDatabase> _database;
 #ifdef OP_SQLITE_USE_LIBSQL
   DB _db;
   libsql_stmt_t _stmt;
