@@ -1,9 +1,9 @@
 #include "OPLibsqlBridge.hpp"
 #include "OPDumbHostObject.hpp"
-#include "OPSmartHostObject.hpp"
-#include "libsql.h"
 #include "OPLogs.h"
+#include "OPSmartHostObject.hpp"
 #include "OPUtils.hpp"
+#include "libsql.h"
 #include <filesystem>
 #include <iostream>
 #include <optional>
@@ -777,8 +777,8 @@ opsqlite_libsql_execute_batch(DB const &db,
   return run_in_transaction(
       [&db](const char *sql) { opsqlite_libsql_execute(db, sql, nullptr); },
       // libsql exposes no way to read the autocommit state
-      []() -> std::optional<bool> { return std::nullopt; },
-      "BEGIN TRANSACTION", [&]() {
+      []() -> std::optional<bool> { return std::nullopt; }, "BEGIN TRANSACTION",
+      [&]() {
         int affectedRows = 0;
         for (int i = 0; i < commandCount; i++) {
           const auto &command = commands->at(i);

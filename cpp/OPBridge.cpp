@@ -5,8 +5,8 @@
 #include "OPBridge.hpp"
 #include "OPDatabase.hpp"
 #include "OPDumbHostObject.hpp"
-#include "OPSmartHostObject.hpp"
 #include "OPLogs.h"
+#include "OPSmartHostObject.hpp"
 #include "OPUtils.hpp"
 #include <filesystem>
 #include <iostream>
@@ -216,9 +216,7 @@ void create_dirs_if_needed(const std::string &path) {
   }
 }
 
-void opsqlite_close(sqlite3 *db) {
-  sqlite3_close_v2(db);
-}
+void opsqlite_close(sqlite3 *db) { sqlite3_close_v2(db); }
 
 void opsqlite_attach(sqlite3 *db, std::string const &doc_path,
                      std::string const &secondary_db_name,
@@ -437,7 +435,8 @@ BridgeResult opsqlite_execute(sqlite3 *db, std::string const &query,
     }
 
     if (params != nullptr && !params->empty()) {
-      opsqlite_bind_statement(statement, params, /* should_clear_bindings */ false);
+      opsqlite_bind_statement(statement, params,
+                              /* should_clear_bindings */ false);
     }
 
     // sqlite3_column_count is the correct signal: it's non-zero for any
@@ -574,7 +573,8 @@ BridgeResult opsqlite_execute_host_objects(
     }
 
     if (params != nullptr && !params->empty()) {
-      opsqlite_bind_statement(statement, params, /* should_clear_bindings */ false);
+      opsqlite_bind_statement(statement, params,
+                              /* should_clear_bindings */ false);
     }
 
     int i, count, column_type;
@@ -727,7 +727,8 @@ opsqlite_execute_raw(sqlite3 *db, std::string const &query,
     }
 
     if (params != nullptr && !params->empty()) {
-      opsqlite_bind_statement(statement, params, /* should_clear_bindings */ false);
+      opsqlite_bind_statement(statement, params,
+                              /* should_clear_bindings */ false);
     }
 
     int i, column_type;
@@ -939,7 +940,8 @@ opsqlite_execute_batch(sqlite3 *db,
   return run_in_transaction(
       [db](const char *sql) { opsqlite_execute(db, sql, nullptr); },
       [db]() -> std::optional<bool> { return opsqlite_in_transaction(db); },
-      "BEGIN TRANSACTION", [&]() {
+      "BEGIN TRANSACTION",
+      [&]() {
         int affectedRows = 0;
         for (int i = 0; i < commandCount; i++) {
           const auto &command = commands->at(i);

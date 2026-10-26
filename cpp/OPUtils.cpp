@@ -331,7 +331,8 @@ BatchResult import_sql_file(sqlite3 *db, std::string path) {
   return run_in_transaction(
       [db](const char *sql) { opsqlite_execute(db, sql, nullptr); },
       [db]() -> std::optional<bool> { return opsqlite_in_transaction(db); },
-      "BEGIN EXCLUSIVE TRANSACTION", [&]() {
+      "BEGIN EXCLUSIVE TRANSACTION",
+      [&]() {
         int affectedRows = 0;
         int commands = 0;
         while (std::getline(sqFile, line, '\n')) {
@@ -423,9 +424,9 @@ promisify(jsi::Runtime &rt, const char *function_name,
 
     // Bind this generation's invoker and liveness flag here, on the JS thread,
     // while the promise is being constructed. Reading the process globals from
-    // the worker instead lets a task queued by a torn-down runtime post into the
-    // runtime that replaced it, and then call asFunction() on a jsi::Value that
-    // belongs to the dead one.
+    // the worker instead lets a task queued by a torn-down runtime post into
+    // the runtime that replaced it, and then call asFunction() on a jsi::Value
+    // that belongs to the dead one.
     auto invoker = opsqlite::invoker;
     auto alive = opsqlite::generation_alive;
 

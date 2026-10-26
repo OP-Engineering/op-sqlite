@@ -69,10 +69,13 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
   // guard with an exception handler instead, in case that ever changes.
   facebook::jsi::Runtime *jsiRuntime = nullptr;
   @try {
-    id<OPSQLiteRuntimeProvider> runtimeProvider = (id<OPSQLiteRuntimeProvider>)_bridge;
+    id<OPSQLiteRuntimeProvider> runtimeProvider =
+        (id<OPSQLiteRuntimeProvider>)_bridge;
     jsiRuntime = (facebook::jsi::Runtime *)[runtimeProvider runtime];
   } @catch (NSException *exception) {
-    RCTLogError(@"[OP-SQLITE] Failed to obtain the JSI runtime from the bridge: %@", exception);
+    RCTLogError(
+        @"[OP-SQLITE] Failed to obtain the JSI runtime from the bridge: %@",
+        exception);
     return @false;
   }
   if (jsiRuntime == nil) {
@@ -122,7 +125,7 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install) {
 
   _generationAlive =
       opsqlite::install(runtime, callInvoker, [documentPath UTF8String],
-                       [sqlite_vec_path UTF8String]);
+                        [sqlite_vec_path UTF8String]);
   return @true;
 }
 
