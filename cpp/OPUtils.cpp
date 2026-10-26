@@ -5,8 +5,8 @@
 #ifndef OP_SQLITE_USE_LIBSQL
 #include "OPBridge.hpp"
 #endif
-#include "OPThreadPool.hpp"
 #include "OPMacros.hpp"
+#include "OPWorkerThread.hpp"
 #include <fstream>
 #include <sys/stat.h>
 #include <utility>
@@ -382,7 +382,7 @@ void log_to_console(jsi::Runtime &runtime, const std::string &message) {
   log.call(runtime, jsi::String::createFromUtf8(runtime, message));
 }
 
-/// Rejects a promisified call from the thread pool.
+/// Rejects a promisified call from the worker thread.
 ///
 /// `resolve` is captured in the invokeAsync lambda alongside `reject` so it is
 /// disposed on the JS thread. A negative `code` means the failure did not come
@@ -409,7 +409,7 @@ std::string database_closed_message(const char *function_name) {
 
 jsi::Value
 promisify(jsi::Runtime &rt, const char *function_name,
-          std::shared_ptr<ThreadPool> thread_pool,
+          std::shared_ptr<WorkerThread> worker_thread,
           std::function<std::any()> lambda,
           std::function<jsi::Value(jsi::Runtime &rt, std::any result)>
               resolve_callback) {
@@ -417,7 +417,7 @@ promisify(jsi::Runtime &rt, const char *function_name,
 
   auto executor = HFN4(lambda = std::move(lambda),
                        resolve_callback = std::move(resolve_callback),
-                       thread_pool, function_name) {
+                       worker_thread, function_name) {
     auto resolve = std::make_shared<jsi::Value>(rt, args[0]);
     auto reject = std::make_shared<jsi::Value>(rt, args[1]);
 
@@ -471,8 +471,8 @@ promisify(jsi::Runtime &rt, const char *function_name,
     };
 
     try {
-      thread_pool->queue_work(task);
-    } catch (const ThreadPoolStoppedError &) {
+      worker_thread->queue_work(task);
+    } catch (const WorkerThreadStoppedError &) {
       // Thrown from the executor, so the promise rejects with the same error
       // as every other call on a closed database.
       throw std::runtime_error(database_closed_message(function_name));

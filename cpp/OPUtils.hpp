@@ -9,12 +9,12 @@
 #else
 #include <sqlite3.h>
 #endif
+#include "OPWorkerThread.hpp"
 #include <ReactCommon/CallInvoker.h>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include "OPThreadPool.hpp"
 
 namespace opsqlite {
 
@@ -112,10 +112,10 @@ jsi::Value create_js_error(jsi::Runtime &rt, const std::string &message,
 std::string database_closed_message(const char *function_name);
 
 /// `function_name` names the call in the "database is closed" rejection when
-/// the pool has already been shut down. It must be a string literal.
+/// the worker thread has already been shut down. It must be a string literal.
 jsi::Value
 promisify(jsi::Runtime &rt, const char *function_name,
-          std::shared_ptr<ThreadPool> thread_pool,
+          std::shared_ptr<WorkerThread> worker_thread,
           std::function<std::any()> lambda,
           std::function<jsi::Value(jsi::Runtime &rt, std::any result)>
               resolve_callback);

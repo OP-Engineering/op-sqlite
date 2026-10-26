@@ -1,12 +1,12 @@
-// Standalone lifecycle checks for cpp/OPThreadPool.cpp. No React Native, no
-// JSI: it compiles the pool on its own and drives it the way OPDatabase does.
+// Standalone lifecycle checks for cpp/OPWorkerThread.cpp. No React Native, no
+// JSI: it compiles WorkerThread on its own and drives it the way OPDatabase
+// does.
 // Run it under ThreadSanitizer and AddressSanitizer with
-// scripts/test-thread-pool.sh.
+// scripts/test-worker-thread.sh.
 //
-// Every check runs under a watchdog: a hang (a wait_finished() that never
-// returns, a join that never completes) is reported as a failure instead of
-// stalling the run.
-#include "OPThreadPool.hpp"
+// Every check runs under a watchdog: a hang (a join that never completes) is
+// reported as a failure instead of stalling the run.
+#include "OPWorkerThread.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -27,8 +27,8 @@
 #include <dirent.h>
 #endif
 
-using opsqlite::ThreadPool;
-using opsqlite::ThreadPoolStoppedError;
+using opsqlite::WorkerThread;
+using opsqlite::WorkerThreadStoppedError;
 using namespace std::chrono_literals;
 
 static int thread_count() {
@@ -110,60 +110,60 @@ struct Gate {
   }
 };
 
-// (a) close() frees the worker now, while the pool is still referenced (by a
-// prepared statement, or by the JS object awaiting GC).
-static void closed_pools_release_their_threads() {
+// (a) close() frees the thread now, while the WorkerThread is still referenced
+// (by a prepared statement, or by the JS object awaiting GC).
+static void closed_workers_release_their_threads() {
   const int base = thread_count();
-  std::vector<std::shared_ptr<ThreadPool>> held;
+  std::vector<std::shared_ptr<WorkerThread>> held;
   for (int i = 0; i < 300; i++) {
-    auto pool = std::make_shared<ThreadPool>();
+    auto worker = std::make_shared<WorkerThread>();
     std::atomic<bool> ran{false};
-    pool->queue_work([&] { ran = true; });
-    pool->shutdown();
+    worker->queue_work([&] { ran = true; });
+    worker->shutdown();
     if (!ran) {
       check(false, "work queued before shutdown ran");
     }
-    held.push_back(pool);
+    held.push_back(worker);
   }
   const int extra = thread_count() - base;
-  check(extra <= 1, "300 shut down pools, still referenced, leave <= 1 extra "
-                    "thread (extra=" +
+  check(extra <= 1, "300 shut down workers, still referenced, leave <= 1 "
+                    "extra thread (extra=" +
                         std::to_string(extra) + ")");
 }
 
-// (b) Work queued on a stopped pool is refused with the pool's own error, so a
-// promise rejects instead of waiting on a queue nobody drains.
+// (b) Work queued on a stopped worker is refused with the worker's own error,
+// so a promise rejects instead of waiting on a queue nobody drains.
 static void queue_after_shutdown_throws() {
-  auto pool = std::make_shared<ThreadPool>();
-  pool->shutdown();
+  auto worker = std::make_shared<WorkerThread>();
+  worker->shutdown();
   bool threw = false;
   std::string what;
   try {
-    pool->queue_work([] {});
-  } catch (const ThreadPoolStoppedError &e) {
+    worker->queue_work([] {});
+  } catch (const WorkerThreadStoppedError &e) {
     threw = true;
     what = e.what();
   }
-  check(threw, "queue_work after shutdown throws ThreadPoolStoppedError");
-  check(what == "[op-sqlite] thread pool is stopped",
-        "the error is the pool's generic one (\"" + what + "\")");
-  pool->wait_finished();
-  check(true, "wait_finished after shutdown returns");
+  check(threw, "queue_work after shutdown throws WorkerThreadStoppedError");
+  check(what == "[op-sqlite] worker thread is stopped",
+        "the error is the worker's generic one (\"" + what + "\")");
+  worker->shutdown();
+  check(true, "a second shutdown returns");
 }
 
-// (c) Tasks queued before shutdown() all run before it returns, with or
-// without a wait_finished() first, and on the destructor path too.
+// (c) Tasks queued before shutdown() all run before it returns, and on the
+// destructor path too.
 static void queued_tasks_drain_on_shutdown() {
   {
-    auto pool = std::make_shared<ThreadPool>();
+    auto worker = std::make_shared<WorkerThread>();
     Gate gate;
     std::atomic<int> ran{0};
-    pool->queue_work([&] {
+    worker->queue_work([&] {
       gate.wait();
       ran++;
     });
     for (int i = 0; i < 50; i++) {
-      pool->queue_work([&] { ran++; });
+      worker->queue_work([&] { ran++; });
     }
     // The worker is parked in the first task, so all 50 are still queued
     // when shutdown() starts.
@@ -171,11 +171,9 @@ static void queued_tasks_drain_on_shutdown() {
       std::this_thread::sleep_for(20ms);
       gate.release();
     });
-    pool->shutdown();
+    worker->shutdown();
     check(ran == 51, "shutdown() drains the queue before returning (ran=" +
                          std::to_string(ran.load()) + "/51)");
-    pool->wait_finished();
-    check(true, "wait_finished after a draining shutdown returns");
     opener.join();
   }
   {
@@ -183,19 +181,19 @@ static void queued_tasks_drain_on_shutdown() {
     Gate gate;
     std::thread opener;
     {
-      auto pool = std::make_shared<ThreadPool>();
-      pool->queue_work([&] {
+      auto worker = std::make_shared<WorkerThread>();
+      worker->queue_work([&] {
         gate.wait();
         ran++;
       });
       for (int i = 0; i < 50; i++) {
-        pool->queue_work([&] { ran++; });
+        worker->queue_work([&] { ran++; });
       }
       opener = std::thread([&] {
         std::this_thread::sleep_for(20ms);
         gate.release();
       });
-    } // ~ThreadPool, no shutdown() and no wait_finished() before it
+    } // ~WorkerThread, no shutdown() before it
     check(ran == 51, "the destructor drains the queue too (ran=" +
                          std::to_string(ran.load()) + "/51)");
     opener.join();
@@ -207,10 +205,10 @@ static void queued_tasks_drain_on_shutdown() {
 // would free the mutex, condition variable and queue under it.
 static void concurrent_shutdowns_then_destructor() {
   for (int round = 0; round < 20; round++) {
-    auto *pool = new ThreadPool();
+    auto *worker = new WorkerThread();
     Gate started;
     std::atomic<bool> task_finished{false};
-    pool->queue_work([&] {
+    worker->queue_work([&] {
       started.release();
       std::this_thread::sleep_for(30ms);
       task_finished = true;
@@ -220,30 +218,30 @@ static void concurrent_shutdowns_then_destructor() {
     std::atomic<bool> first_saw_finished{false};
     std::atomic<bool> second_saw_finished{false};
     std::thread first([&] {
-      pool->shutdown();
+      worker->shutdown();
       first_saw_finished = task_finished.load();
     });
     std::thread second([&] {
-      // Start only once `first` has stopped the pool (queue_work refuses
+      // Start only once `first` has stopped the worker (queue_work refuses
       // work from then on) and is on its way into the join.
       while (true) {
         try {
-          pool->queue_work([] {});
-        } catch (const ThreadPoolStoppedError &) {
+          worker->queue_work([] {});
+        } catch (const WorkerThreadStoppedError &) {
           break;
         }
         std::this_thread::sleep_for(1ms);
       }
       std::this_thread::sleep_for(5ms);
-      pool->shutdown();
+      worker->shutdown();
       second_saw_finished = task_finished.load();
       if (!second_saw_finished) {
-        // Report before the delete below, which then frees the pool under
+        // Report before the delete below, which then frees the worker under
         // the running worker.
         check(false, "the second shutdown() returned before the join "
                      "completed");
       }
-      delete pool; // ~ThreadPool right after a shutdown() returned
+      delete worker; // ~WorkerThread right after a shutdown() returned
     });
     first.join();
     second.join();
@@ -258,52 +256,44 @@ static void concurrent_shutdowns_then_destructor() {
               "the join (20 rounds)");
 }
 
-// (e) shutdown() from a task on the pool's own worker, as OPDatabase's
-// invalidate()/destructor would if it ran there. It must not self-join, it
-// must not hang, the tasks behind it must still run, and `busy` must be
-// released so wait_finished() returns.
-static void shutdown_from_the_worker() {
-  auto pool = std::make_shared<ThreadPool>();
+// (e) shutdown() from a task running on the worker breaks the rule in the
+// header. It must fail loudly (std::system_error from the self-join) rather
+// than hang or terminate, the tasks behind it must still run, and a later
+// shutdown() from another thread must still join the worker cleanly.
+static void shutdown_from_the_worker_throws() {
+  auto worker = std::make_shared<WorkerThread>();
   Gate queued;
   std::atomic<int> after{0};
-  std::atomic<int> after_seen_by_shutdown{-1};
   std::atomic<bool> threw_on_worker{false};
-  pool->queue_work([&] {
+  worker->queue_work([&] {
     queued.wait();
-    pool->shutdown();
-    // Runs the rest inline: nothing is left to run once shutdown() returns.
-    after_seen_by_shutdown = after.load();
     try {
-      pool->queue_work([] {});
-    } catch (const ThreadPoolStoppedError &) {
+      worker->shutdown();
+    } catch (const std::system_error &) {
       threw_on_worker = true;
     }
   });
   for (int i = 0; i < 10; i++) {
-    pool->queue_work([&] { after++; });
+    worker->queue_work([&] { after++; });
   }
-  queued.release();
 
-  pool->wait_finished(); // hangs if do_work never decremented busy
-  check(true, "wait_finished returns after shutdown() ran on the worker");
-  check(after_seen_by_shutdown == 10,
-        "shutdown() on the worker ran the queued tasks before returning "
-        "(saw " +
-            std::to_string(after_seen_by_shutdown.load()) + "/10)");
-  check(threw_on_worker, "queue_work from the worker after its shutdown "
-                         "throws");
-  pool->wait_finished();
-  check(true, "a second wait_finished also returns");
-  pool->shutdown(); // joins the worker, which exited on its own
-  check(true, "shutdown() from another thread then joins the worker");
-  pool.reset();
-  check(true, "destructor after a worker-side shutdown");
+  // Release the worker while this thread is already in its own shutdown():
+  // the worker's call must throw rather than wait on a join of itself.
+  std::thread opener([&] {
+    std::this_thread::sleep_for(20ms);
+    queued.release();
+  });
+  worker->shutdown();
+  opener.join();
+  check(threw_on_worker, "shutdown() on the worker throws std::system_error");
+  check(after == 10, "the tasks queued behind it still ran (" +
+                         std::to_string(after.load()) + "/10)");
+  worker.reset();
+  check(true, "destructor after a worker-side shutdown attempt");
 }
 
 // (f) A constructor that cannot start its thread throws without terminating
-// the process. The pool starts one thread, so this exercises the failure of
-// the first (and only) one; the catch block's join of already-started
-// threads matters only if number_of_threads is raised.
+// the process.
 static void constructor_throw_is_clean() {
   std::mutex m;
   std::condition_variable cv;
@@ -324,7 +314,7 @@ static void constructor_throw_is_clean() {
   bool threw = false;
   if (exhausted) {
     try {
-      ThreadPool pool;
+      WorkerThread worker;
     } catch (const std::system_error &) {
       threw = true;
     }
@@ -345,22 +335,23 @@ static void constructor_throw_is_clean() {
   check(threw, "constructor throws std::system_error when its thread cannot "
                "start, without std::terminate (after " +
                    std::to_string(hogs.size()) + " threads)");
-  // The pool still works once threads are available again.
-  ThreadPool pool;
+  // The worker still works once threads are available again.
+  WorkerThread worker;
   std::atomic<bool> ran{false};
-  pool.queue_work([&] { ran = true; });
-  pool.shutdown();
-  check(ran, "a pool constructed afterwards works");
+  worker.queue_work([&] { ran = true; });
+  worker.shutdown();
+  check(ran, "a worker constructed afterwards works");
 }
 
 int main() {
-  with_watchdog("(a) closed pools release threads", 30s,
-                closed_pools_release_their_threads);
+  with_watchdog("(a) closed workers release threads", 30s,
+                closed_workers_release_their_threads);
   with_watchdog("(b) queue after shutdown", 10s, queue_after_shutdown_throws);
   with_watchdog("(c) drain on shutdown", 10s, queued_tasks_drain_on_shutdown);
   with_watchdog("(d) concurrent shutdowns + destructor", 30s,
                 concurrent_shutdowns_then_destructor);
-  with_watchdog("(e) shutdown from the worker", 10s, shutdown_from_the_worker);
+  with_watchdog("(e) shutdown from the worker", 10s,
+                shutdown_from_the_worker_throws);
   if (std::getenv("SKIP_CONSTRUCTOR_THROW") == nullptr) {
     with_watchdog("(f) constructor throw", 60s, constructor_throw_is_clean);
   }

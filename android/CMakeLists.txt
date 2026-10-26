@@ -43,7 +43,7 @@ add_library(
   SHARED
   ../cpp/OPSqlite.cpp
   ../cpp/OPUtils.cpp
-  ../cpp/OPThreadPool.cpp
+  ../cpp/OPWorkerThread.cpp
   ../cpp/OPSmartHostObject.cpp
   ../cpp/OPPreparedStatementHostObject.cpp
   ../cpp/OPDumbHostObject.cpp

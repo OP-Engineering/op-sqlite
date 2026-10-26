@@ -13,7 +13,7 @@
 #include <sqlite3.h>
 #endif
 #endif
-#include "OPThreadPool.hpp"
+#include "OPWorkerThread.hpp"
 #include <string>
 #include <utility>
 
@@ -28,15 +28,15 @@ public:
 #ifdef OP_SQLITE_USE_LIBSQL
   PreparedStatementHostObject(std::weak_ptr<OPDatabase> database, DB const &db,
                               libsql_stmt_t stmt,
-                              std::shared_ptr<ThreadPool> thread_pool)
+                              std::shared_ptr<WorkerThread> worker_thread)
       : _database(std::move(database)), _db(db), _stmt(stmt),
-        _thread_pool(thread_pool) {};
+        _worker_thread(worker_thread) {};
 #else
   PreparedStatementHostObject(std::weak_ptr<OPDatabase> database, sqlite3 *db,
                               sqlite3_stmt *stmt,
-                              std::shared_ptr<ThreadPool> thread_pool)
+                              std::shared_ptr<WorkerThread> worker_thread)
       : _database(std::move(database)), _db(db), _stmt(stmt),
-        _thread_pool(thread_pool) {};
+        _worker_thread(worker_thread) {};
 #endif
 
   ~PreparedStatementHostObject() override;
@@ -59,7 +59,7 @@ private:
   // This shouldn't be de-allocated until sqlite3_finalize is called on it
   sqlite3_stmt *_stmt;
 #endif
-  std::shared_ptr<ThreadPool> _thread_pool;
+  std::shared_ptr<WorkerThread> _worker_thread;
 };
 
 } // namespace opsqlite

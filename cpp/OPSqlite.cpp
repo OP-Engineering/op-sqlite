@@ -1,7 +1,7 @@
 #include "OPSqlite.hpp"
 #include "OPDatabase.hpp"
 #include "OPDumbHostObject.hpp"
-#include "OPThreadPool.hpp"
+#include "OPWorkerThread.hpp"
 #ifdef OP_SQLITE_USE_LIBSQL
 #include "libsql/OPLibsqlBridge.hpp"
 #else

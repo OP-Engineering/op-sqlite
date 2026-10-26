@@ -1,7 +1,7 @@
 #pragma once
 
-#include "OPThreadPool.hpp"
 #include "OPTypes.hpp"
+#include "OPWorkerThread.hpp"
 #include <ReactCommon/CallInvoker.h>
 #include <jsi/jsi.h>
 #include <set>
@@ -103,7 +103,7 @@ private:
   // by the dead one.
   std::shared_ptr<react::CallInvoker> invoker = opsqlite::invoker;
   std::shared_ptr<std::atomic<bool>> alive = opsqlite::generation_alive;
-  std::shared_ptr<ThreadPool> thread_pool;
+  std::shared_ptr<WorkerThread> worker_thread;
   std::string db_name;
   std::string delete_db_name;
   std::shared_ptr<jsi::Value> update_hook_callback;
