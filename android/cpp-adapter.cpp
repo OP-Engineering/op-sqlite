@@ -1,5 +1,5 @@
-#include "OPSqlite.hpp"
 #include "OPLogs.h"
+#include "OPSqlite.hpp"
 #include <ReactCommon/CallInvokerHolder.h>
 #include <atomic>
 #include <fbjni/fbjni.h>

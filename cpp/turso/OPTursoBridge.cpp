@@ -1,7 +1,7 @@
+#include "OPBridge.hpp"
 #include "OPDatabase.hpp"
 #include "OPDumbHostObject.hpp"
 #include "OPSmartHostObject.hpp"
-#include "OPBridge.hpp"
 #include "OPUtils.hpp"
 
 #ifdef __APPLE__
@@ -885,8 +885,7 @@ void opsqlite_register_rollback_hook(
 void opsqlite_deregister_rollback_hook([[maybe_unused]] sqlite3 *db) {}
 
 bool opsqlite_in_transaction(sqlite3 *db) {
-  auto connection =
-      require_turso_connection(to_turso_db(db), "in_transaction");
+  auto connection = require_turso_connection(to_turso_db(db), "in_transaction");
   return !turso_connection_get_autocommit(connection);
 }
 
@@ -908,7 +907,8 @@ opsqlite_execute_batch(sqlite3 *db,
   return run_in_transaction(
       [db](const char *sql) { opsqlite_execute(db, sql, nullptr); },
       [db]() -> std::optional<bool> { return opsqlite_in_transaction(db); },
-      "BEGIN TRANSACTION", [&]() {
+      "BEGIN TRANSACTION",
+      [&]() {
         int affected_rows = 0;
         for (size_t i = 0; i < command_count; i++) {
           const auto &command = commands->at(i);

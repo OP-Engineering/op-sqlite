@@ -41,35 +41,33 @@ struct ReactiveQuery {
   std::shared_ptr<jsi::Value> callback;
 };
 
-class JSI_EXPORT OPDatabase
-    : public jsi::NativeState,
-      public std::enable_shared_from_this<OPDatabase> {
+class JSI_EXPORT OPDatabase : public jsi::NativeState,
+                              public std::enable_shared_from_this<OPDatabase> {
 public:
   // Normal constructor shared between all backends
-  OPDatabase(jsi::Runtime &rt, jsi::Object &js_object,
-               std::string &base_path, std::string &db_name,
-               std::string &path, bool readOnly, bool failOnCreate,
-               std::string &encryption_key);
+  OPDatabase(jsi::Runtime &rt, jsi::Object &js_object, std::string &base_path,
+             std::string &db_name, std::string &path, bool readOnly,
+             bool failOnCreate, std::string &encryption_key);
 
 #ifdef OP_SQLITE_USE_LIBSQL
   // Constructor for remoteOpen, purely for remote databases
   OPDatabase(jsi::Runtime &rt, jsi::Object &js_object, std::string &url,
-               std::string &auth_token);
+             std::string &auth_token);
 
   // Constructor for a local database with remote sync
   OPDatabase(jsi::Runtime &rt, jsi::Object &js_object, std::string &db_name,
-               std::string &path, std::string &url, std::string &auth_token,
-               int sync_interval, bool offline, std::string &encryption_key,
-               std::string &remote_encryption_key);
+             std::string &path, std::string &url, std::string &auth_token,
+             int sync_interval, bool offline, std::string &encryption_key,
+             std::string &remote_encryption_key);
 #elif defined(OP_SQLITE_USE_TURSO)
   // Constructor for remoteOpen, purely for remote databases
   OPDatabase(jsi::Runtime &rt, jsi::Object &js_object, std::string &url,
-               std::string &auth_token, std::string &base_path);
+             std::string &auth_token, std::string &base_path);
 
   // Constructor for a local database with remote sync
   OPDatabase(jsi::Runtime &rt, jsi::Object &js_object, std::string &db_name,
-               std::string &path, std::string &url, std::string &auth_token,
-               std::string &remote_encryption_key);
+             std::string &path, std::string &url, std::string &auth_token,
+             std::string &remote_encryption_key);
 #endif
 
   void on_update(const std::string &table, const std::string &operation,
@@ -88,7 +86,8 @@ private:
   void release_hooks();
   void throw_if_closed(const char *function_name) const;
   void create_jsi_functions(jsi::Runtime &rt, jsi::Object &js_object);
-  void flush_pending_reactive_queries(const std::shared_ptr<jsi::Value> &resolve);
+  void
+  flush_pending_reactive_queries(const std::shared_ptr<jsi::Value> &resolve);
 
   std::string base_path;
   // Bound at construction, on the JS thread, to the generation that created

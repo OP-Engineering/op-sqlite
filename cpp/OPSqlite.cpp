@@ -29,14 +29,14 @@ std::shared_ptr<std::atomic<bool>> generation_alive;
 // Each platform module calls its own invalidate() lifecycle hook when React
 // Native tears down the JS context (CodePush/Hot Reload, or any other
 // runtime teardown) -- OPSQLiteModule.invalidate() on Android, which reaches
-// this function through JNI's clearStateNativeJsi (see android/cpp-adapter.cpp),
-// and -[OPSQLite invalidate] on iOS (see ios/OPSQLite.mm). Each currently
-// open OPDatabase cleans itself up independently -- OPDatabase's own
-// invalidate() (interrupt + drain + close), called from its destructor,
-// already runs whenever the JS runtime destroys it, so there's no registry to
-// walk here. All THIS invalidate() needs to do is mark THIS generation dead so
-// in-flight async work drops its result instead of resolving into whichever
-// runtime replaces it.
+// this function through JNI's clearStateNativeJsi (see
+// android/cpp-adapter.cpp), and -[OPSQLite invalidate] on iOS (see
+// ios/OPSQLite.mm). Each currently open OPDatabase cleans itself up
+// independently -- OPDatabase's own invalidate() (interrupt + drain + close),
+// called from its destructor, already runs whenever the JS runtime destroys it,
+// so there's no registry to walk here. All THIS invalidate() needs to do is
+// mark THIS generation dead so in-flight async work drops its result instead of
+// resolving into whichever runtime replaces it.
 void invalidate(const std::shared_ptr<std::atomic<bool>> &generation_alive) {
   if (generation_alive != nullptr) {
     generation_alive->store(false);
@@ -146,7 +146,7 @@ install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker> &invoker,
     std::string url = options.getProperty(rt, "url").asString(rt).utf8(rt);
 
     std::string auth_token =
-      options.getProperty(rt, "authToken").asString(rt).utf8(rt);
+        options.getProperty(rt, "authToken").asString(rt).utf8(rt);
 
     jsi::Object js_db(rt);
 #ifdef OP_SQLITE_USE_LIBSQL
@@ -168,7 +168,7 @@ install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker> &invoker,
     std::string path = std::string(_base_path);
     std::string url = options.getProperty(rt, "url").asString(rt).utf8(rt);
     std::string auth_token =
-      options.getProperty(rt, "authToken").asString(rt).utf8(rt);
+        options.getProperty(rt, "authToken").asString(rt).utf8(rt);
 
     int sync_interval = 0;
     if (options.hasProperty(rt, "libsqlSyncInterval")) {
@@ -184,13 +184,13 @@ install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker> &invoker,
     std::string encryption_key;
     if (options.hasProperty(rt, "encryptionKey")) {
       encryption_key =
-        options.getProperty(rt, "encryptionKey").asString(rt).utf8(rt);
+          options.getProperty(rt, "encryptionKey").asString(rt).utf8(rt);
     }
 
     std::string remote_encryption_key;
     if (options.hasProperty(rt, "remoteEncryptionKey")) {
       remote_encryption_key =
-        options.getProperty(rt, "remoteEncryptionKey").asString(rt).utf8(rt);
+          options.getProperty(rt, "remoteEncryptionKey").asString(rt).utf8(rt);
     }
 
     std::string location;
@@ -208,17 +208,17 @@ install(jsi::Runtime &rt, const std::shared_ptr<react::CallInvoker> &invoker,
     }
 
     jsi::Object js_db(rt);
-  #ifdef OP_SQLITE_USE_LIBSQL
+#ifdef OP_SQLITE_USE_LIBSQL
     std::shared_ptr<OPDatabase> db = std::make_shared<OPDatabase>(
-      rt, js_db, name, path, url, auth_token, sync_interval, offline,
-      encryption_key, remote_encryption_key);
-  #else
+        rt, js_db, name, path, url, auth_token, sync_interval, offline,
+        encryption_key, remote_encryption_key);
+#else
     (void)sync_interval;
     (void)offline;
 
     std::shared_ptr<OPDatabase> db = std::make_shared<OPDatabase>(
-      rt, js_db, name, path, url, auth_token, remote_encryption_key);
-  #endif
+        rt, js_db, name, path, url, auth_token, remote_encryption_key);
+#endif
 
     js_db.setNativeState(rt, db);
     return js_db;

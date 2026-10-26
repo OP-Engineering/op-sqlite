@@ -98,7 +98,7 @@ void OPDatabase::on_rollback() {
 }
 
 void OPDatabase::on_update(const std::string &table,
-                             const std::string &operation, long long row_id) {
+                           const std::string &operation, long long row_id) {
   if (alive != nullptr && !alive->load()) {
     return;
   }
@@ -203,7 +203,7 @@ void OPDatabase::release_hooks() {
 #ifdef OP_SQLITE_USE_LIBSQL
 // Remote connection constructor
 OPDatabase::OPDatabase(jsi::Runtime &rt, jsi::Object &js_object,
-                           std::string &url, std::string &auth_token)
+                       std::string &url, std::string &auth_token)
     : db_name(url) {
   worker_thread = std::make_shared<WorkerThread>();
   db = opsqlite_libsql_open_remote(url, auth_token);
@@ -213,11 +213,11 @@ OPDatabase::OPDatabase(jsi::Runtime &rt, jsi::Object &js_object,
 
 // Sync connection constructor
 OPDatabase::OPDatabase(jsi::Runtime &rt, jsi::Object &js_object,
-                           std::string &db_name, std::string &path,
-                           std::string &url, std::string &auth_token,
-                           int sync_interval, bool offline,
-                           std::string &encryption_key,
-                           std::string &remote_encryption_key)
+                       std::string &db_name, std::string &path,
+                       std::string &url, std::string &auth_token,
+                       int sync_interval, bool offline,
+                       std::string &encryption_key,
+                       std::string &remote_encryption_key)
     : base_path(path), db_name(db_name), delete_db_name(db_name) {
 
   worker_thread = std::make_shared<WorkerThread>();
@@ -232,8 +232,8 @@ OPDatabase::OPDatabase(jsi::Runtime &rt, jsi::Object &js_object,
 #elif defined(OP_SQLITE_USE_TURSO)
 // Remote connection constructor
 OPDatabase::OPDatabase(jsi::Runtime &rt, jsi::Object &js_object,
-                           std::string &url, std::string &auth_token,
-                           std::string &base_path)
+                       std::string &url, std::string &auth_token,
+                       std::string &base_path)
     : base_path(base_path), db_name(url),
       delete_db_name(turso_remote_db_name(url)) {
   worker_thread = std::make_shared<WorkerThread>();
@@ -244,9 +244,9 @@ OPDatabase::OPDatabase(jsi::Runtime &rt, jsi::Object &js_object,
 
 // Sync connection constructor
 OPDatabase::OPDatabase(jsi::Runtime &rt, jsi::Object &js_object,
-                           std::string &db_name, std::string &path,
-                           std::string &url, std::string &auth_token,
-                           std::string &remote_encryption_key)
+                       std::string &db_name, std::string &path,
+                       std::string &url, std::string &auth_token,
+                       std::string &remote_encryption_key)
     : base_path(path), db_name(db_name), delete_db_name(db_name) {
 
   worker_thread = std::make_shared<WorkerThread>();
@@ -260,9 +260,9 @@ OPDatabase::OPDatabase(jsi::Runtime &rt, jsi::Object &js_object,
 #endif
 
 OPDatabase::OPDatabase(jsi::Runtime &rt, jsi::Object &js_object,
-                           std::string &base_path, std::string &db_name,
-                           std::string &path, bool readOnly,
-                           bool failOnCreate, std::string &encryption_key)
+                       std::string &base_path, std::string &db_name,
+                       std::string &path, bool readOnly, bool failOnCreate,
+                       std::string &encryption_key)
     : base_path(base_path), db_name(db_name), delete_db_name(db_name) {
   worker_thread = std::make_shared<WorkerThread>();
 
@@ -280,7 +280,7 @@ OPDatabase::OPDatabase(jsi::Runtime &rt, jsi::Object &js_object,
 };
 
 void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
-                                        jsi::Object &js_object) {
+                                      jsi::Object &js_object) {
   js_object.setProperty(rt, "attach", HFN(this) {
     throw_if_closed("attach");
 
@@ -757,7 +757,8 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
     } catch (const SQLiteError &e) {
       throw_js_error(rt, e);
     }
-    opsqlite_bind_statement(stmt, &variant_args, /* should_clear_bindings */ false);
+    opsqlite_bind_statement(stmt, &variant_args,
+                            /* should_clear_bindings */ false);
 
     auto callback =
         std::make_shared<jsi::Value>(query.getProperty(rt, "callback"));

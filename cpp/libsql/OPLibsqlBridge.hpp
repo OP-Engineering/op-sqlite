@@ -2,9 +2,9 @@
 
 #include "OPDumbHostObject.hpp"
 #include "OPSmartHostObject.hpp"
-#include "libsql.h"
 #include "OPTypes.hpp"
 #include "OPUtils.hpp"
+#include "libsql.h"
 #include <vector>
 
 #define LIBSQL_INT 1
