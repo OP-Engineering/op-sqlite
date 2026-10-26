@@ -125,4 +125,51 @@ describe("PreparedStatements", () => {
 		const results = selectStatement.executeSync();
 		expect(results.rows.length).toEqual(5);
 	});
+
+	it("prepared statement, execute after close rejects", async () => {
+		const statement = db.prepareStatement("SELECT * FROM User;");
+		db.close();
+
+		// Rejects (does not throw synchronously), like db.execute after close
+		const promise = statement.execute();
+		let error: any;
+		try {
+			await promise;
+		} catch (e) {
+			error = e;
+		}
+
+		expect(error?.message).toContain(
+			"[op-sqlite][execute] database is closed",
+		);
+		expect(error.code).toEqual(undefined);
+	});
+
+	it("prepared statement, sync calls after close throw", () => {
+		const statement = db.prepareStatement(
+			'INSERT INTO "User" (id, name) VALUES(?,?);',
+		);
+		db.close();
+
+		let executeError: any;
+		try {
+			statement.executeSync();
+		} catch (e) {
+			executeError = e;
+		}
+		expect(executeError?.message).toContain(
+			"[op-sqlite][executeSync] database is closed",
+		);
+		expect(executeError.code).toEqual(undefined);
+
+		let bindError: any;
+		try {
+			statement.bindSync([4, "Juan"]);
+		} catch (e) {
+			bindError = e;
+		}
+		expect(bindError?.message).toContain(
+			"[op-sqlite][bindSync] database is closed",
+		);
+	});
 });

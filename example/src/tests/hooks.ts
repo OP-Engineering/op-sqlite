@@ -251,7 +251,7 @@ describe("Hooks", () => {
 	// capture raw `this` in the invoker->invokeAsync lambda and read
 	// commit_hook_callback/rollback_hook_callback (members of OPDatabase) when
 	// the lambda finally ran on the JS thread. close()/delete() only drain the
-	// native thread pool, not the invoker queue, so a db freed right after the
+	// native worker thread, not the invoker queue, so a db freed right after the
 	// hook fires but before the queued callback runs would leave that lambda
 	// dereferencing a dangling OPDatabase. Closing/deleting immediately after
 	// triggering the hook - without waiting for its callback to run - recreates

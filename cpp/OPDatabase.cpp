@@ -181,8 +181,7 @@ void OPDatabase::sync_update_hook_registration() {
 
 void OPDatabase::throw_if_closed(const char *function_name) const {
   if (invalidated) {
-    throw std::runtime_error(std::string("[op-sqlite][") + function_name +
-                             "] database is closed");
+    throw std::runtime_error(database_closed_message(function_name));
   }
 }
 
@@ -206,7 +205,7 @@ void OPDatabase::release_hooks() {
 OPDatabase::OPDatabase(jsi::Runtime &rt, jsi::Object &js_object,
                            std::string &url, std::string &auth_token)
     : db_name(url) {
-  thread_pool = std::make_shared<ThreadPool>();
+  worker_thread = std::make_shared<WorkerThread>();
   db = opsqlite_libsql_open_remote(url, auth_token);
 
   create_jsi_functions(rt, js_object);
@@ -221,7 +220,7 @@ OPDatabase::OPDatabase(jsi::Runtime &rt, jsi::Object &js_object,
                            std::string &remote_encryption_key)
     : base_path(path), db_name(db_name), delete_db_name(db_name) {
 
-  thread_pool = std::make_shared<ThreadPool>();
+  worker_thread = std::make_shared<WorkerThread>();
 
   db =
       opsqlite_libsql_open_sync(db_name, path, url, auth_token, sync_interval,
@@ -237,7 +236,7 @@ OPDatabase::OPDatabase(jsi::Runtime &rt, jsi::Object &js_object,
                            std::string &base_path)
     : base_path(base_path), db_name(url),
       delete_db_name(turso_remote_db_name(url)) {
-  thread_pool = std::make_shared<ThreadPool>();
+  worker_thread = std::make_shared<WorkerThread>();
   db = opsqlite_open_remote(url, auth_token, base_path);
 
   create_jsi_functions(rt, js_object);
@@ -250,7 +249,7 @@ OPDatabase::OPDatabase(jsi::Runtime &rt, jsi::Object &js_object,
                            std::string &remote_encryption_key)
     : base_path(path), db_name(db_name), delete_db_name(db_name) {
 
-  thread_pool = std::make_shared<ThreadPool>();
+  worker_thread = std::make_shared<WorkerThread>();
 
   db =
       opsqlite_open_sync(db_name, path, url, auth_token, remote_encryption_key);
@@ -265,7 +264,7 @@ OPDatabase::OPDatabase(jsi::Runtime &rt, jsi::Object &js_object,
                            std::string &path, bool readOnly,
                            bool failOnCreate, std::string &encryption_key)
     : base_path(base_path), db_name(db_name), delete_db_name(db_name) {
-  thread_pool = std::make_shared<ThreadPool>();
+  worker_thread = std::make_shared<WorkerThread>();
 
 #ifdef OP_SQLITE_USE_SQLCIPHER
   db = opsqlite_open(db_name, path, readOnly, failOnCreate, encryption_key);
@@ -353,16 +352,18 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
 
   js_object.setProperty(rt, "close", HFN(this) {
     invalidated = true;
-    // Abort pending native SQLite work before waiting on the thread pool.
+    // Abort pending native SQLite work before waiting on the worker thread.
 #if !defined(OP_SQLITE_USE_LIBSQL) && !defined(OP_SQLITE_USE_TURSO)
     if (db != nullptr) {
       sqlite3_interrupt(db);
     }
 #endif
     // Drain any in-flight async queries before closing the db handle.
-    // Without this, a queued/running execute() on the thread pool may
+    // Without this, a queued/running execute() on the worker thread may
     // dereference the freed sqlite3* pointer → heap corruption / SIGABRT.
-    thread_pool->wait_finished();
+    // shutdown() runs everything already queued, then joins the worker now
+    // rather than when the JS object is collected.
+    worker_thread->shutdown();
     release_hooks();
 #ifdef OP_SQLITE_USE_LIBSQL
     opsqlite_libsql_close(db);
@@ -410,8 +411,15 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
       throw std::runtime_error("[op-sqlite] Delete no longer takes arguments");
     }
 
+    // Checked before anything is torn down: the database stays open and usable
+    // when delete() is not supported.
+    if (delete_db_name.empty()) {
+      throw std::runtime_error("[op-sqlite][delete] delete() is not supported "
+                               "for remote-only databases");
+    }
+
     invalidated = true;
-    // Abort pending native SQLite work before waiting on the thread pool.
+    // Abort pending native SQLite work before waiting on the worker thread.
 #if !defined(OP_SQLITE_USE_LIBSQL) && !defined(OP_SQLITE_USE_TURSO)
     if (db != nullptr) {
       sqlite3_interrupt(db);
@@ -419,12 +427,7 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
 #endif
     // Drain any in-flight async queries before closing/removing the db handle.
     // Without this, queued/running work may dereference a freed sqlite handle.
-    thread_pool->wait_finished();
-
-    if (delete_db_name.empty()) {
-      throw std::runtime_error("[op-sqlite][delete] delete() is not supported "
-                               "for remote-only databases");
-    }
+    worker_thread->shutdown();
 
     release_hooks();
 #ifdef OP_SQLITE_USE_LIBSQL
@@ -447,7 +450,7 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
                                               : std::vector<JSVariant>();
 
     return promisify(
-        rt, thread_pool,
+        rt, "executeRaw", worker_thread,
         [this, query, params]() {
           std::vector<std::vector<JSVariant>> results;
 #ifdef OP_SQLITE_USE_LIBSQL
@@ -522,7 +525,7 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
                                         : std::vector<JSVariant>();
 
     return promisify(
-        rt, thread_pool,
+        rt, "execute", worker_thread,
         [this, query, params]() {
 #ifdef OP_SQLITE_USE_LIBSQL
           auto status = opsqlite_libsql_execute(db, query, &params);
@@ -546,7 +549,7 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
                                         : std::vector<JSVariant>();
 
     return promisify(
-        rt, thread_pool,
+        rt, "executeWithHostObjects", worker_thread,
         [this, query, params]() {
           std::vector<DumbHostObject> results;
           std::shared_ptr<std::vector<SmartHostObject>> metadata =
@@ -594,7 +597,7 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
     to_batch_arguments(rt, batchParams, &commands);
 
     return promisify(
-        rt, thread_pool,
+        rt, "executeBatch", worker_thread,
         [this, commands]() {
 #ifdef OP_SQLITE_USE_LIBSQL
           auto batchResult = opsqlite_libsql_execute_batch(db, &commands);
@@ -655,7 +658,7 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
     const std::string sqlFileName = args[0].asString(rt).utf8(rt);
 
     return promisify(
-        rt, thread_pool,
+        rt, "loadFile", worker_thread,
         [this, sqlFileName]() { return import_sql_file(db, sqlFileName); },
         [](jsi::Runtime &rt, std::any prev) {
           auto result = std::any_cast<BatchResult>(std::move(prev));
@@ -821,8 +824,8 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
     }
 #endif
     auto preparedStatementHostObject =
-        std::make_shared<PreparedStatementHostObject>(db, statement,
-                                                      thread_pool);
+        std::make_shared<PreparedStatementHostObject>(weak_from_this(), db,
+                                                      statement, worker_thread);
 
     return jsi::Object::createFromHostObject(rt, preparedStatementHostObject);
   }));
@@ -862,7 +865,14 @@ void OPDatabase::create_jsi_functions(jsi::Runtime &rt,
         flush_pending_reactive_queries(resolve);
       };
 
-      thread_pool->queue_work(task);
+      try {
+        worker_thread->queue_work(task);
+      } catch (const WorkerThreadStoppedError &) {
+        // Thrown from the executor, so the promise rejects with the same error
+        // as every other call on a closed database.
+        throw std::runtime_error(
+            database_closed_message("flushPendingReactiveQueries"));
+      }
 
       return {};
     }));
@@ -880,17 +890,18 @@ void OPDatabase::invalidate() {
 
   // Abort whatever is currently inside sqlite3_step so the drain below can
   // actually finish. Parity with the close and delete host functions, which
-  // already do this. Without it a long running query holds the pool past React
-  // Native's module invalidation budget, after which the runtime is destroyed
-  // anyway and the drain has bought nothing.
+  // already do this. Without it a long running query holds the worker thread
+  // past React Native's module invalidation budget, after which the runtime is
+  // destroyed anyway and the drain has bought nothing.
 #if !defined(OP_SQLITE_USE_LIBSQL) && !defined(OP_SQLITE_USE_TURSO)
   if (db != nullptr) {
     sqlite3_interrupt(db);
   }
 #endif
 
-  // Drain in-flight thread pool work before closing the db handle.
-  thread_pool->wait_finished();
+  // Drain in-flight work and join the worker thread before closing the db
+  // handle.
+  worker_thread->shutdown();
   release_hooks();
 
 #ifdef OP_SQLITE_USE_LIBSQL
