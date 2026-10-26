@@ -175,14 +175,10 @@ function enhanceDB(db: _InternalDB, options: DBParams): DB {
         bindSync: (params: Scalar[]) => {
           stmt.bindSync(params);
         },
-        bind: async (params: Scalar[]) => {
-          await stmt.bind(params);
-        },
+        bind: async (params: Scalar[]) => stmt.bind(params),
         // async, like bind: a native throw (e.g. database is closed) becomes
         // a rejection, as it does for db.execute
-        execute: async () => {
-          return await stmt.execute();
-        },
+        execute: async () => stmt.execute(),
         executeSync: stmt.executeSync,
       };
     },
