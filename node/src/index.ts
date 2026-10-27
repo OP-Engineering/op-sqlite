@@ -1,8 +1,8 @@
 import * as path from "node:path";
-import { NodeDatabase } from "./database";
-import type { DB, DBParams, OPSQLiteProxy } from "./types";
+import { NodeDatabase } from "./database.js";
+import type { DB, DBParams, OPSQLiteProxy } from "./types.js";
 
-export { NodeDatabase as Database } from "./database";
+export { NodeDatabase as Database } from "./database.js";
 export type {
 	BatchQueryResult,
 	ColumnMetadata,
@@ -16,7 +16,7 @@ export type {
 	SQLBatchTuple,
 	Transaction,
 	UpdateHookOperation,
-} from "./types";
+} from "./types.js";
 
 class OPSQLiteProxyImpl implements OPSQLiteProxy {
 	open(options: {

@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "ESNext",
+    "module": "NodeNext",
     "lib": ["ES2020"],
     "declaration": true,
     "declarationMap": true,
@@ -12,7 +12,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "bundler",
+    "moduleResolution": "NodeNext",
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "types": ["node", "jest"]

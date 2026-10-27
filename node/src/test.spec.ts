@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
-import { isIOSEmbedded, isLibsql, isSQLCipher, open } from "./index";
+import { isIOSEmbedded, isLibsql, isSQLCipher, open } from "./index.js";
 
 describe("op-sqlite Node.js tests", () => {
   let db: ReturnType<typeof open>;

@@ -13,7 +13,7 @@ import type {
   SQLBatchTuple,
   Transaction,
   UpdateHookOperation,
-} from "./types";
+} from "./types.js";
 
 export class NodeDatabase implements DB {
   private db: Database.Database;
