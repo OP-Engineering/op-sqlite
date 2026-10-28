@@ -1,5 +1,6 @@
+// ts-jest needs TypeScript's JavaScript API, which TypeScript 7 doesn't ship, so
+// Babel strips the types instead. tsc type-checks the tests when it builds.
 export default {
-  preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
   extensionsToTreatAsEsm: ['.ts'],
   moduleNameMapper: {
@@ -7,19 +8,11 @@ export default {
   },
   transform: {
     '^.+\\.tsx?$': [
-      'ts-jest',
+      'babel-jest',
       {
-        useESM: true,
-        tsconfig: {
-          module: 'ESNext',
-          moduleResolution: 'bundler',
-          verbatimModuleSyntax: false,
-          esModuleInterop: true,
-          allowSyntheticDefaultImports: true,
-          target: 'ES2020',
-          lib: ['ES2020'],
-          types: ['node', 'jest'],
-        },
+        babelrc: false,
+        configFile: false,
+        presets: ['@babel/preset-typescript'],
       },
     ],
   },
