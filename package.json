@@ -130,6 +130,9 @@
       ]
     ]
   },
+  "swiftpmConfig": {
+    "name": "OpSqlite"
+  },
   "codegenConfig": {
     "name": "OPSQLiteSpec",
     "type": "modules",
