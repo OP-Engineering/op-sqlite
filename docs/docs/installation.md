@@ -49,10 +49,9 @@ Required response headers (for worker/OPFS setup):
 SQLite is very customizable on compilation level. op-sqlite also allows you add extensions or even change the base implementation. You can do this by adding the following to your `package.json`:
 
 > [!IMPORTANT]
-> When using a monorepo, be sure to add the "op-sqlite" config to the monorepo root `package.json` file.
-> This is necessary because the `node_modules/@op-engineering/op-sqlite/op-sqlite.podspec` will search for first the `package.json` file in a parent directory.
-> Alternative, you may be able to solve this by blocking this package from being hoisted to the root `node_modules`.
-> Check your ios/Podfile.lock to see where it's being installed.
+> In a monorepo, put the "op-sqlite" config in your app's `package.json` (the folder above `ios/` and `android/`).
+> On iOS (CocoaPods and SwiftPM) the build walks up from that folder and uses the first `package.json` with an "op-sqlite" key, so a config in the monorepo root `package.json` is still picked up.
+> The build prints which file it used (`[OP-SQLITE] Configuration found at ...` from `pod install`, `[OP-SQLITE] SPM configuration found at ...` from SwiftPM).
 
 ```json
 {
