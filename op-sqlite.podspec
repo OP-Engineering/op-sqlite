@@ -32,6 +32,32 @@ if is_user_app
   end
 
   raise "package.json not found" if package_json_path.nil?
+
+  # Under pnpm, or when hoisted to a monorepo root, the search above ends at
+  # the workspace root and skips the app. Prefer the app, the folder above the
+  # Podfile (the same package.json Android reads): walk up from it, no further
+  # than the folder found above, and take the first package.json with an
+  # "op-sqlite" key. `pod install` finds the Podfile before evaluating any
+  # podspec; when none was found, podfile_path is nil.
+  podfile_path = defined?(Pod::Config) ? Pod::Config.instance.podfile_path : nil
+  if podfile_path
+    stop_dir = File.dirname(package_json_path)
+    current_dir = File.dirname(File.dirname(podfile_path.to_s))
+    while current_dir == stop_dir || current_dir.start_with?(File.join(stop_dir, ""))
+      package_path = File.join(current_dir, "package.json")
+      has_config = File.exist?(package_path) && begin
+        JSON.parse(File.read(package_path)).key?("op-sqlite")
+      rescue JSON::ParserError
+        false
+      end
+      if has_config
+        package_json_path = package_path
+        break
+      end
+      break if current_dir == stop_dir
+      current_dir = File.dirname(current_dir)
+    end
+  end
 else
   package_json_path = File.join(__dir__, "example", "package.json")
 end
