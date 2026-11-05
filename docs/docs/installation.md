@@ -49,9 +49,12 @@ Required response headers (for worker/OPFS setup):
 SQLite is very customizable on compilation level. op-sqlite also allows you add extensions or even change the base implementation. You can do this by adding the following to your `package.json`:
 
 > [!IMPORTANT]
-> In a monorepo, put the "op-sqlite" config in your app's `package.json` (the folder above `ios/` and `android/`).
-> On iOS (CocoaPods and SwiftPM) the build walks up from that folder and uses the first `package.json` with an "op-sqlite" key, so a config in the monorepo root `package.json` is still picked up.
-> The build prints which file it used (`[OP-SQLITE] Configuration found at ...` from `pod install`, `[OP-SQLITE] SPM configuration found at ...` from SwiftPM).
+> In a monorepo, put the "op-sqlite" config in your app's `package.json` (the folder above `ios/` and `android/`). Android reads only that file.
+> On iOS (CocoaPods and SwiftPM), if the app's `package.json` has no "op-sqlite" key, the build falls back to the first `package.json` above the installed package, usually the monorepo root. A config kept only in the root therefore applies to iOS but not to Android. If both have one, the app's is used and the two are not merged.
+> `pod install` prints which file it used (`[OP-SQLITE] Configuration found at ...`). SwiftPM prints `[OP-SQLITE] SPM configuration found at ...`, but only when it evaluates the manifest rather than reusing its cache.
+
+> [!WARNING]
+> SwiftPM caches the evaluated manifest and doesn't notice changes to `package.json`, so with SwiftPM a config change can silently have no effect, even after a clean build. After changing the "op-sqlite" config, run `rm -rf ~/Library/Caches/org.swift.swiftpm/manifests` and do a clean build.
 
 ```json
 {

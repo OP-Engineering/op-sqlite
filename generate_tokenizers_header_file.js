@@ -1,14 +1,6 @@
-#!/usr/bin/env node
-
-// Single source of truth for the generated `tokenizers.h`.
-//
-// Every build pipeline needs this file: CocoaPods (via
-// generate_tokenizers_header_file.rb), SwiftPM (Package.swift) and Gradle
-// (android/build.gradle). They all shell out to this script instead of
-// reimplementing the generation, so the header cannot drift between platforms
-// and TOKENIZER_LIST only has to be kept in sync with cpp/OPBridge.cpp here.
-//
-// Usage: node generate_tokenizers_header_file.js <output-file> <name>...
+// Single source of truth for the generated `tokenizers.h`, used by
+// react-native.config.js. TOKENIZER_LIST only has to be kept in sync with
+// cpp/OPBridge.cpp here.
 
 const fs = require("node:fs");
 const path = require("node:path");
@@ -48,8 +40,8 @@ function generateTokenizersHeader(names) {
  * Returns true when the file was written, false when it was already up to date.
  *
  * Rewriting an identical file would bump its mtime and force a recompile of
- * everything that includes it. Gradle in particular runs this on every
- * configuration.
+ * everything that includes it. The React Native CLI loads the config file that
+ * calls this for most of its commands.
  */
 function writeTokenizersHeader(names, filePath) {
   const contents = generateTokenizersHeader(names);
@@ -64,17 +56,4 @@ function writeTokenizersHeader(names, filePath) {
   return true;
 }
 
-module.exports = { generateTokenizersHeader, writeTokenizersHeader };
-
-if (require.main === module) {
-  const [filePath, ...names] = process.argv.slice(2);
-
-  if (!filePath) {
-    console.error(
-      "[OP-SQLITE] usage: node generate_tokenizers_header_file.js <output-file> <tokenizer-name>...",
-    );
-    process.exit(1);
-  }
-
-  writeTokenizersHeader(names, filePath);
-}
+module.exports = { writeTokenizersHeader };
