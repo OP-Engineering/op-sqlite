@@ -25,7 +25,6 @@
     "node/dist",
     "node/package.json",
     "*.podspec",
-    "*.rb",
     "generate_tokenizers_header_file.js",
     "react-native.config.js",
     "ios/**.xcframework",

@@ -4,12 +4,11 @@ import PackageDescription
 
 // Hand-authored SPM manifest for React Native's experimental SwiftPM support
 // (RN 0.87, "Preview" — see scripts/spm/__doc__/spm-scripts.md in react-native).
-// This is a direct translation of the logic in `op-sqlite.podspec` +
-// `generate_tokenizers_header_file.rb`: CocoaPods evaluates that podspec (and
-// its dynamic per-consumer-app configuration) as Ruby during `pod install`.
+// This is a direct translation of the logic in `op-sqlite.podspec`:
+// CocoaPods evaluates that podspec (and its dynamic per-consumer-app configuration) as Ruby during `pod install`.
 // SwiftPM evaluates *this* file as Swift on every resolve, so the same
-// dynamic logic — reading the consumer app's package.json, generating
-// cpp/tokenizers.h, choosing which SQLite backend & xcframeworks to link —
+// dynamic logic — reading the consumer app's package.json, finding its
+// tokenizers, choosing which SQLite backend & xcframeworks to link —
 // is reproduced here with Foundation instead of Ruby's FileUtils/JSON.
 //
 // Per RN's "hand-authored community library contract"
@@ -25,8 +24,12 @@ import PackageDescription
 
 let packageRoot = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
 
+// #filePath keeps the autolinker's symlink path (see the header), which is not
+// inside node_modules, so this has to look at the real directory.
+let resolvedPackageRoot = packageRoot.resolvingSymlinksInPath()
+
 // In the sample app the dir is not inside of node_modules.
-let isUserApp = packageRoot.path.contains("node_modules")
+let isUserApp = resolvedPackageRoot.path.contains("node_modules")
 
 func readJSONObject(atPath path: String) -> [String: Any] {
   guard let data = FileManager.default.contents(atPath: path),
@@ -38,15 +41,27 @@ func readJSONObject(atPath path: String) -> [String: Any] {
   return dict
 }
 
-// When installed into node_modules, find the consumer's package.json by
-// searching up through parent directories (starting one level above this
-// package, i.e. outside node_modules/@op-engineering/op-sqlite). In the
-// monorepo/dev checkout it's simply example/package.json.
 let appPackageJSONPath: String = {
+  // Prefer the app, the same package.json Android reads. It is the folder above
+  // the one holding build/generated/autolinking; the search further down can't
+  // find it under pnpm or when hoisted, where it ends at the workspace root.
+  // Without the autolinker's symlink the app is unknown.
+  if let marker = packageRoot.path.range(of: "/build/generated/autolinking/libs/") {
+    let candidate = URL(fileURLWithPath: String(packageRoot.path[..<marker.lowerBound]))
+      .deletingLastPathComponent().appendingPathComponent("package.json").path
+    if readJSONObject(atPath: candidate)["op-sqlite"] != nil {
+      return candidate
+    }
+  }
+
+  // In the monorepo/dev checkout it's simply example/package.json.
   guard isUserApp else {
     return packageRoot.appendingPathComponent("example/package.json").path
   }
-  var currentDir = packageRoot.deletingLastPathComponent()
+
+  // Otherwise search up through parent directories, starting one level above
+  // this package, i.e. outside node_modules/@op-engineering/op-sqlite.
+  var currentDir = resolvedPackageRoot.deletingLastPathComponent()
   while true {
     let candidate = currentDir.appendingPathComponent("package.json").path
     if FileManager.default.fileExists(atPath: candidate) {
@@ -102,75 +117,6 @@ if !tokenizers.isEmpty && useTurso {
 
 print("[OP-SQLITE] SPM configuration found at \(appPackageJSONPath)")
 
-// MARK: - Tokenizer header generation
-// The header contents come from generate_tokenizers_header_file.js, the one
-// implementation shared by every build pipeline (CocoaPods and Gradle call the
-// same script). This only has to find node and run it.
-
-func generateTokenizersHeaderFile(names: [String], filePath: String) {
-  let scriptPath = packageRoot.appendingPathComponent("generate_tokenizers_header_file.js").path
-
-  // NODE_BINARY is React Native's own convention (it writes one into
-  // ios/.xcode.env). Xcode does not necessarily inherit the user's shell PATH,
-  // so fall back to a PATH lookup and then to the usual install locations.
-  var candidates: [String] = []
-  if let fromEnv = ProcessInfo.processInfo.environment["NODE_BINARY"], !fromEnv.isEmpty {
-    candidates.append(fromEnv)
-  }
-  candidates += ["node", "/opt/homebrew/bin/node", "/usr/local/bin/node", "/usr/bin/node"]
-
-  for node in candidates {
-    let process = Process()
-    // Going through `env` is what resolves a bare "node" against PATH.
-    process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-    process.arguments = [node, scriptPath, filePath] + names
-    process.standardOutput = FileHandle.standardError
-
-    do {
-      try process.run()
-      process.waitUntilExit()
-      if process.terminationStatus == 0 {
-        return
-      }
-    } catch {
-      continue
-    }
-  }
-
-  // Not fatal, on purpose. Manifest evaluation happens in contexts we do not
-  // control (Xcode's package resolution, `swift package dump-package`), and
-  // SwiftPM sandboxes writes there, so the generation can legitimately fail
-  // while an already up-to-date header sits on disk -- the script exits 0
-  // without writing in that case, so reaching this point means it really could
-  // not produce the file. Killing the manifest would be worse than letting the
-  // compiler report the missing header.
-  FileHandle.standardError.write(
-    Data(
-      ("[OP-SQLITE] warning: could not generate \(filePath) with \(scriptPath). Make sure node is "
-        + "on your PATH or set NODE_BINARY to its location.\n").utf8))
-}
-
-// Mirrors FileUtils.cp_r: copies the contents of `source` into `destination`,
-// creating directories as needed and overwriting existing files.
-func copyDirectoryContents(from source: URL, to destination: URL) {
-  let fm = FileManager.default
-  guard let enumerator = fm.enumerator(at: source, includingPropertiesForKeys: [.isDirectoryKey]) else {
-    return
-  }
-  try? fm.createDirectory(at: destination, withIntermediateDirectories: true)
-  for case let itemURL as URL in enumerator {
-    let relative = itemURL.path.replacingOccurrences(of: source.path + "/", with: "")
-    let destURL = destination.appendingPathComponent(relative)
-    let isDirectory = (try? itemURL.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
-    if isDirectory {
-      try? fm.createDirectory(at: destURL, withIntermediateDirectories: true)
-    } else {
-      try? fm.removeItem(at: destURL)
-      try? fm.copyItem(at: itemURL, to: destURL)
-    }
-  }
-}
-
 // MARK: - Source file collection
 // Mirrors Dir.glob("ios/**/*.{h,hpp,m,mm}") + Dir.glob("cpp/**/*.{hpp,h,cpp,c}")
 
@@ -222,28 +168,21 @@ if !useTurso {
 }
 
 // MARK: - Tokenizers
-// Set to non-user-app value ("../example/c_sources/tokenizers.h") by default;
-// swapped to "../c_sources/tokenizers.h" below when installed as a dependency.
-// Both branches faithfully mirror op-sqlite.podspec, which points at the
-// *original* c_sources dir in dev mode but the *copy* (below) once installed.
-var tokenizersHeaderPath = "../example/c_sources/tokenizers.h"
-
+// The manifest sandbox forbids writing anywhere, so react-native.config.js
+// generates the app's c_sources/tokenizers.h and copies the folder here, as the
+// podspec does. It isn't published with the package, so it may not exist yet.
 if !tokenizers.isEmpty {
   print("[OP-SQLITE] Tokenizers enabled: \(tokenizers)")
 
-  let cSourcesDir =
-    isUserApp
-    ? packageRoot.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-      .appendingPathComponent("c_sources")
-    : packageRoot.appendingPathComponent("example/c_sources")
-  let localCSourcesDir = packageRoot.appendingPathComponent("c_sources")
-
-  generateTokenizersHeaderFile(
-    names: tokenizers, filePath: cSourcesDir.appendingPathComponent("tokenizers.h").path)
-  copyDirectoryContents(from: cSourcesDir, to: localCSourcesDir)
-
-  sourceFiles += globFiles(under: "c_sources", extensions: ["h", "cpp"])
-  tokenizersHeaderPath = isUserApp ? "../c_sources/tokenizers.h" : "../example/c_sources/tokenizers.h"
+  let tokenizersHeader = packageRoot.appendingPathComponent("c_sources/tokenizers.h").path
+  if !FileManager.default.fileExists(atPath: tokenizersHeader) {
+    fatalError(
+      "[OP-SQLITE] Tokenizers \(tokenizers) are enabled, but \(tokenizersHeader) is missing. Run `npx react-native spm update` to create c_sources/tokenizers.h.")
+  }
+  if globFiles(under: "c_sources", extensions: ["cpp"]).isEmpty {
+    fatalError(
+      "[OP-SQLITE] Tokenizers \(tokenizers) are enabled, but there are no .cpp files in c_sources. Create c_sources/tokenizers.cpp with your implementation and run `npx react-native spm update`.")
+  }
 }
 
 // MARK: - Backend selection (exclude_files equivalent)
@@ -271,13 +210,6 @@ if useSqlcipher {
 if phoneVersion {
   print("[OP-SQLITE] using iOS embedded SQLite 📱")
   excludedSources.formUnion(["cpp/sqlite3.c", "cpp/sqlite3.h"])
-}
-
-// A prior manifest evaluation (tokenizers previously enabled) may have left
-// c_sources/*.{h,cpp} on disk even though tokenizers is empty now — exclude
-// the whole dir so a stale copy doesn't get swept into the build.
-if tokenizers.isEmpty {
-  excludedDirs.insert("c_sources")
 }
 
 sourceFiles.removeAll { excludedSources.contains($0) }
@@ -333,7 +265,7 @@ if !sqliteFlags.isEmpty {
   defines += parseDefines(sqliteFlags)
 }
 if !tokenizers.isEmpty {
-  defines.append(("TOKENIZERS_HEADER_PATH", "\\\"\(tokenizersHeaderPath)\\\""))
+  defines.append(("TOKENIZERS_HEADER_PATH", "\\\"../c_sources/tokenizers.h\\\""))
 }
 
 let defineCSettings: [CSetting] = defines.map { name, value in
@@ -389,9 +321,8 @@ targetDependencies += [
 
 // Best-effort translation of `s.dependency "OpenSSL-Universal"`. There's no
 // SwiftPM release of the CocoaPods OpenSSL-Universal binary; this points at
-// the closest maintained SwiftPM OpenSSL package instead. The example app
-// doesn't enable sqlcipher, so this path is untested — verify ABI/symbol
-// compatibility before shipping a sqlcipher-enabled SPM build.
+// the closest maintained SwiftPM OpenSSL package instead. The ios-sqlcipher CI
+// job builds and tests this path through the example app.
 if useSqlcipher {
   packageDependencies.append(
     .package(url: "https://github.com/krzyzanowskim/OpenSSL.git", from: "3.3.3000"))
@@ -408,13 +339,13 @@ if useSqlcipher {
 //
 // NOTE: SwiftPM's manifest evaluation runs in a filesystem sandbox that
 // forbids writes outside temp/build directories (confirmed empirically: an
-// attempt to stage files into a repo-local scratch dir failed with EPERM,
-// even though the tokenizer-header write above degrades gracefully via
-// `try?`). That rules out physically relocating unwanted files at resolve
+// attempt to stage files into a repo-local scratch dir failed with EPERM).
+// That rules out physically relocating unwanted files at resolve
 // time — the fix has to be purely declarative `exclude:` entries instead,
 // which is why the backend-specific sources above are excluded by directory
 // wherever the repo layout allows it.
-let neededTopLevelDirs: Set<String> = ["ios", "cpp", "c_sources"]
+// c_sources stays out when tokenizers are off, in case an earlier run left a copy.
+let neededTopLevelDirs: Set<String> = tokenizers.isEmpty ? ["ios", "cpp"] : ["ios", "cpp", "c_sources"]
 let topLevelExcludes: [String] =
   (try? FileManager.default.contentsOfDirectory(atPath: packageRoot.path))?
   .filter { !neededTopLevelDirs.contains($0) && $0 != "Package.swift" && $0 != "op-sqlite-spm-prefix.h" }

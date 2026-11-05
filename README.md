@@ -29,6 +29,14 @@ Some of the big supported features:
 
 It also contains a simple [Key-Value store](https://op-engineering.github.io/op-sqlite/docs/key_value_storage) you can use without adding one more dependency to your app.
 
+# Custom tokenizers
+
+1. Add `"tokenizers": ["your_tokenizer"]` to the `"op-sqlite"` config in your app's `package.json`.
+2. Run `npx react-native config` from your app's folder. It creates `c_sources/tokenizers.h`.
+3. Write your implementation in `c_sources/tokenizers.cpp` and commit the `c_sources` folder.
+
+Run the command again whenever you change `"tokenizers"`. See the [tokenizers docs](https://op-engineering.github.io/op-sqlite/docs/tokenizers) for the details.
+
 # License
 
 MIT License.
