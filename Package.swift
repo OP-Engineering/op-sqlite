@@ -42,15 +42,21 @@ func readJSONObject(atPath path: String) -> [String: Any] {
 // searching up through parent directories (starting one level above this
 // package, i.e. outside node_modules/@op-engineering/op-sqlite). In the
 // monorepo/dev checkout it's simply example/package.json.
+// #filePath keeps the autolinker's symlink path (see the header), which is not
+// inside node_modules, so the search starts from the real directory.
+let resolvedPackageRoot = packageRoot.resolvingSymlinksInPath()
+
 let appPackageJSONPath: String = {
-  guard isUserApp else {
+  guard resolvedPackageRoot.path.contains("node_modules") else {
     return packageRoot.appendingPathComponent("example/package.json").path
   }
-  var currentDir = packageRoot.deletingLastPathComponent()
+  var packageJSONPath: String
+  var currentDir = resolvedPackageRoot.deletingLastPathComponent()
   while true {
     let candidate = currentDir.appendingPathComponent("package.json").path
     if FileManager.default.fileExists(atPath: candidate) {
-      return candidate
+      packageJSONPath = candidate
+      break
     }
     let parentDir = currentDir.deletingLastPathComponent()
     if parentDir.path == currentDir.path {
@@ -58,6 +64,30 @@ let appPackageJSONPath: String = {
     }
     currentDir = parentDir
   }
+
+  // Under pnpm, or when hoisted to a monorepo root, the search above ends at
+  // the workspace root and skips the app. Prefer the app, the folder above the
+  // one holding build/generated/autolinking (the same package.json Android
+  // reads): walk up from it, no further than the folder found above, and take
+  // the first package.json with an "op-sqlite" key. Without the autolinker's
+  // symlink the app is unknown and the search above stands.
+  guard let marker = packageRoot.path.range(of: "/build/generated/autolinking/libs/") else {
+    return packageJSONPath
+  }
+  let stopDir = URL(fileURLWithPath: packageJSONPath).deletingLastPathComponent().path
+  var appDir = URL(fileURLWithPath: String(packageRoot.path[..<marker.lowerBound]))
+    .resolvingSymlinksInPath().deletingLastPathComponent()
+  while appDir.path == stopDir || appDir.path.hasPrefix(stopDir + "/") {
+    let candidate = appDir.appendingPathComponent("package.json").path
+    if readJSONObject(atPath: candidate)["op-sqlite"] != nil {
+      return candidate
+    }
+    if appDir.path == stopDir {
+      break
+    }
+    appDir = appDir.deletingLastPathComponent()
+  }
+  return packageJSONPath
 }()
 
 let appPackage = readJSONObject(atPath: appPackageJSONPath)
