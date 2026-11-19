@@ -174,6 +174,35 @@ describe("DB setup tests", () => {
     db.delete();
   });
 
+  it("Should delete the -wal and -shm files of a WAL db", async () => {
+    if (isTurso()) {
+      return;
+    }
+    const name = "deleteWalTest.sqlite";
+    // failOnCreate opens only a file that is already there
+    const fileExists = (fileName: string) => {
+      try {
+        open({ name: fileName, failOnCreate: true }).close();
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    const db = open({ name, encryptionKey: "test" });
+    await db.execute("PRAGMA journal_mode = WAL;");
+    await db.execute("CREATE TABLE IF NOT EXISTS t (id INTEGER PRIMARY KEY);");
+    await db.execute("INSERT INTO t DEFAULT VALUES;");
+    expect(fileExists(`${name}-wal`)).toBe(true);
+    expect(fileExists(`${name}-shm`)).toBe(true);
+
+    db.delete();
+
+    expect(fileExists(name)).toBe(false);
+    expect(fileExists(`${name}-wal`)).toBe(false);
+    expect(fileExists(`${name}-shm`)).toBe(false);
+  });
+
   it("Should create db in custom folder", async () => {
     const db = open({
       name: "customFolderTest.sqlite",

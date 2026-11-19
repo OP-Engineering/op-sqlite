@@ -244,7 +244,7 @@ void opsqlite_remove(sqlite3 *db, std::string const &name,
     throw std::runtime_error("op-sqlite: db file not found:" + db_path);
   }
 
-  remove(db_path.c_str());
+  remove_db_files(db_path);
 }
 
 void opsqlite_remove_v2(sqlite3 *db, std::string const &path) {
@@ -254,7 +254,7 @@ void opsqlite_remove_v2(sqlite3 *db, std::string const &path) {
     throw std::runtime_error("[op-sqlite] db file not found: " + path);
   }
 
-  remove(path.c_str());
+  remove_db_files(path);
 }
 
 BridgeResult opsqlite_execute_prepared_statement(

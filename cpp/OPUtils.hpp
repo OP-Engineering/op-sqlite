@@ -92,6 +92,12 @@ bool folder_exists(const std::string &name);
 
 bool file_exists(const std::string &path);
 
+/// Removes a closed database's files: the main file and, if they are there,
+/// its `-wal` and `-shm` (WAL mode) and `-journal` (rollback mode) files.
+/// SQLite keeps a database's latest writes in these files, so removing the
+/// main file alone leaves that data on disk: https://sqlite.org/tempfiles.html
+void remove_db_files(const std::string &path);
+
 void log_to_console(jsi::Runtime &rt, const std::string &message);
 
 /// Creates a JS `Error` with the SQLite result codes attached as `code` and

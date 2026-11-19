@@ -7,6 +7,7 @@
 #endif
 #include "OPMacros.hpp"
 #include "OPWorkerThread.hpp"
+#include <cstdio>
 #include <fstream>
 #include <sys/stat.h>
 #include <utility>
@@ -355,6 +356,13 @@ bool folder_exists(const std::string &name) {
 bool file_exists(const std::string &path) {
   struct stat buffer;
   return (stat(path.c_str(), &buffer) == 0);
+}
+
+void remove_db_files(const std::string &path) {
+  remove(path.c_str());
+  for (const char *suffix : {"-wal", "-shm", "-journal"}) {
+    remove((path + suffix).c_str());
+  }
 }
 
 jsi::Value create_js_error(jsi::Runtime &rt, const std::string &message,
