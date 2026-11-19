@@ -602,7 +602,7 @@ void opsqlite_remove(sqlite3 *db, std::string const &name,
     throw std::runtime_error("[op-sqlite] db file not found:" + db_path);
   }
 
-  remove(db_path.c_str());
+  remove_db_files(db_path);
 }
 
 void opsqlite_attach(sqlite3 *db, std::string const &doc_path,
