@@ -202,7 +202,7 @@ void opsqlite_libsql_remove(DB &db, std::string const &name,
                              full_path);
   }
 
-  remove(full_path.c_str());
+  remove_db_files(full_path);
 }
 
 /// libsql_next_row is where the statement actually runs, so errors raised
